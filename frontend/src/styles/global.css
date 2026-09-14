@@ -1,0 +1,67 @@
+:root {
+  --navy-950: #0a1330;
+  --navy-900: #0f1a3d;
+  --navy-800: #16224f;
+  --navy-700: #202f66;
+  --navy-600: #2d3f82;
+  --gold-500: #f5a623;
+  --gold-600: #dd8f13;
+  --ink-900: #10182b;
+  --ink-700: #3a4256;
+  --ink-500: #6b7290;
+  --line-200: #e4e7f0;
+  --bg-100: #f6f7fb;
+  --white: #ffffff;
+  --danger-500: #d64545;
+  --success-600: #1f9d55;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+  --shadow-card: 0 20px 50px -20px rgba(15, 26, 61, 0.35);
+  font-family: "Segoe UI", "Inter", system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-100);
+  color: var(--ink-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+.container {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}

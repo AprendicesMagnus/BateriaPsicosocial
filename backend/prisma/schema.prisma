@@ -1,0 +1,60 @@
+// Esquema de base de datos - Módulo de autenticación
+// Basado en RF01 (Autenticación y Gestión de Usuarios) y RNF-02 (Seguridad y Protección de Datos)
+// del documento de requerimientos de Magnus|SIG.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  ADMINISTRADOR
+  EVALUADOR_SST
+  TRABAJADOR
+}
+
+enum EstadoUsuario {
+  ACTIVO
+  INACTIVO
+}
+
+enum TipoCodigo {
+  VERIFICACION_EMAIL
+  RESET_PASSWORD
+}
+
+model Usuario {
+  id               String        @id @default(uuid())
+  nombre           String
+  apellido         String
+  email            String        @unique
+  passwordHash     String
+  rol              Rol           @default(TRABAJADOR)
+  estado           EstadoUsuario @default(ACTIVO)
+  emailVerificado  Boolean       @default(false)
+  intentosFallidos Int           @default(0)
+  bloqueadoHasta   DateTime?
+  fechaRegistro    DateTime      @default(now())
+
+  codigos CodigoVerificacion[]
+
+  @@map("usuarios")
+}
+
+model CodigoVerificacion {
+  id        String     @id @default(uuid())
+  usuarioId String
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  codigo    String
+  tipo      TipoCodigo
+  expiraEn  DateTime
+  usado     Boolean    @default(false)
+  creadoEn  DateTime   @default(now())
+
+  @@index([usuarioId, tipo])
+  @@map("codigos_verificacion")
+}
