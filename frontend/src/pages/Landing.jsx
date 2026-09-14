@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import Logo from "../components/Logo";
 import "../styles/landing.css";
 
 const FACTORES = [
@@ -49,7 +48,11 @@ export default function Landing() {
     <div className="landing">
       <header className="nav">
         <div className="container nav__inner">
-          <Logo />
+          <div className="nav__logos" style={{ display: "flex", alignItems: "center", gap: 15 }}>
+            <img src="/logo a 2_Mesa de trabajo 1.jpg" alt="Magnus" style={{ height: 120, marginRight: "auto" }} />
+            <img src="/logo javeriana.jpg" alt="Javeriana" style={{ height: 50 }} />
+            <img src="/ministerio.jpg" alt="ministerio" style={{ height: 110 }} />
+          </div>
           <nav className="nav__links">
             <a href="#como-funciona">Cómo funciona</a>
             <a href="#empresas">Para empresas</a>
@@ -106,10 +109,10 @@ export default function Landing() {
       </div>
 
       <div className="container icon-row">
-        <div className="icon-chip">📋 Intralaboral</div>
-        <div className="icon-chip">🏠 Extralaboral</div>
-        <div className="icon-chip">👤 Sociodemográfico</div>
-        <div className="icon-chip">📊 Informes</div>
+        <div className="icon-chip"> Intralaboral</div>
+        <div className="icon-chip"> Extralaboral</div>
+        <div className="icon-chip"> Sociodemográfico</div>
+        <div className="icon-chip"> Informes</div>
       </div>
 
       <section className="section" id="normativa">
@@ -184,7 +187,7 @@ export default function Landing() {
         <div className="container">
           <div className="footer__grid">
             <div className="footer__brand">
-              <Logo variant="light" />
+              <img src="/logo a 2_Mesa de trabajo 1.jpg" alt="Magnus" style={{ height: 40 }} />
               <p>
                 Prototipo digital para la aplicación de la Batería de Riesgo Psicosocial,
                 desarrollado en el marco del trabajo de grado en Ingeniería de Software, FET.
