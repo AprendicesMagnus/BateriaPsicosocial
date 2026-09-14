@@ -187,7 +187,7 @@ export default function Landing() {
         <div className="container">
           <div className="footer__grid">
             <div className="footer__brand">
-              <img src="/logo a 2_Mesa de trabajo 1.jpg" alt="Magnus" style={{ height: 40 }} />
+              <img src="/logo oscuro.png" alt="Magnus" style={{ height: 80 }} />
               <p>
                 Prototipo digital para la aplicación de la Batería de Riesgo Psicosocial,
                 desarrollado en el marco del trabajo de grado en Ingeniería de Software, FET.
