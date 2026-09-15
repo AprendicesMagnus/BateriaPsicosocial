@@ -1,0 +1,334 @@
+/* =========================================================
+   PÁGINA COMPLETA DEL LOGIN
+   ========================================================= */
+
+.auth-page {
+  width: 100%;
+  min-height: 100vh;
+
+  display: flex;
+
+  background: #ffffff;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   PARTE IZQUIERDA
+   ========================================================= */
+
+.auth-image {
+  width: 55%;
+  min-height: 100vh;
+
+  overflow: hidden;
+
+  background: #e9e9e9;
+}
+
+
+/* =========================================================
+   IMAGEN DEL LADO IZQUIERDO
+
+   Archivo:
+   public/imagen1.png
+   ========================================================= */
+
+.auth-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+/* =========================================================
+   PARTE DERECHA
+   ========================================================= */
+
+.auth-content {
+  width: 45%;
+  min-height: 100vh;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 40px;
+}
+
+
+/* =========================================================
+   CONTENEDOR DEL LOGIN
+   ========================================================= */
+
+.login-container {
+  width: 100%;
+  max-width: 360px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+}
+
+
+/* =========================================================
+   LOGO MAGNUS SIG
+
+   Archivo:
+   public/logo oscu.png
+   ========================================================= */
+
+.login-logo {
+  width: 150px;
+  height: auto;
+
+  display: block;
+
+  object-fit: contain;
+
+  margin-bottom: 18px;
+}
+
+
+/* =========================================================
+   TÍTULO
+   ========================================================= */
+
+.login-container h1 {
+  margin: 0 0 22px;
+
+  font-size: 20px;
+
+  font-weight: 500;
+
+  color: #222222;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   FORMULARIO
+   ========================================================= */
+
+.login-container .auth-form {
+  width: 100%;
+}
+
+
+/* =========================================================
+   CAMPOS DEL FORMULARIO
+
+   Estos estilos ayudan a que los campos sean pequeños
+   como aparecen en el mockup.
+   ========================================================= */
+
+.login-container input {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  min-height: 34px;
+
+  padding: 8px 10px;
+
+  border: 1px solid #dddddd;
+
+  border-radius: 4px;
+
+  background: #eeeeee;
+
+  color: #333333;
+
+  font-size: 11px;
+
+  outline: none;
+}
+
+
+.login-container input:focus {
+  border-color: #b8b8b8;
+
+  background: #f5f5f5;
+}
+
+
+/* =========================================================
+   LABELS
+   ========================================================= */
+
+.login-container label {
+  font-size: 10px;
+
+  color: #555555;
+}
+
+
+/* =========================================================
+   ESPACIO ENTRE LOS CAMPOS
+   ========================================================= */
+
+.login-container .form-group {
+  margin-bottom: 10px;
+}
+
+
+/* =========================================================
+   ENLACES
+   ========================================================= */
+
+.login-container .auth-links {
+  width: 100%;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 6px;
+
+  margin-bottom: 17px;
+
+  font-size: 9px;
+}
+
+
+.login-container .auth-links span {
+  color: #555555;
+}
+
+
+.login-container .link-accent {
+  color: #1d3155;
+
+  text-decoration: none;
+
+  font-weight: 600;
+}
+
+
+.login-container .link-accent:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   BOTÓN PRINCIPAL
+   ========================================================= */
+
+.login-container button {
+  width: 100%;
+
+  min-height: 32px;
+
+  border-radius: 4px;
+}
+
+
+/* =========================================================
+   SEPARADOR
+   ========================================================= */
+
+.login-container .divider {
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  margin: 15px 0 10px;
+
+  color: #777777;
+
+  font-size: 9px;
+}
+
+
+.login-container .divider::before,
+.login-container .divider::after {
+  content: "";
+
+  flex: 1;
+
+  height: 1px;
+
+  background: #dddddd;
+}
+
+
+.login-container .divider span {
+  padding: 0 4px;
+}
+
+
+/* =========================================================
+   BOTÓN GOOGLE
+   ========================================================= */
+
+.login-container .auth-form > button:last-child {
+  background: #ffffff;
+
+  color: #333333;
+
+  border: 1px solid #dddddd;
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   MENSAJES
+   ========================================================= */
+
+.login-container [class*="message"] {
+  font-size: 10px;
+
+  margin-bottom: 8px;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+
+   Para pantallas pequeñas se elimina la imagen y el login
+   ocupa toda la pantalla.
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  .auth-page {
+    min-height: 100vh;
+  }
+
+  .auth-image {
+    display: none;
+  }
+
+  .auth-content {
+    width: 100%;
+
+    min-height: 100vh;
+
+    padding: 30px 25px;
+
+    box-sizing: border-box;
+  }
+
+  .login-container {
+    max-width: 360px;
+  }
+
+}

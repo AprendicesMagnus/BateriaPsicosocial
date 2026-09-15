@@ -15,7 +15,7 @@ export default function Logo({ variant = "dark", size = 22 }) {
       </svg>
       <span
         style={{
-          fontWeight: 800,
+          fontWeight: 100,
           fontSize: size,
           letterSpacing: 0.2,
           color: isLight ? "#ffffff" : "#0F1A3D",

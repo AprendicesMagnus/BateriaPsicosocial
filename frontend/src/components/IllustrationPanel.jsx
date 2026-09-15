@@ -1,5 +1,5 @@
 // Panel decorativo del layout de autenticación de dos columnas.
-// "network": panel oscuro con globo/nodos, como Sign In / Crear cuenta.
+// "network": panel oscuro con imagen1.jpg, como Sign In / Crear cuenta.
 // "chat": ilustración clara de conversación, como verificación / restablecer contraseña.
 // "success": variante oscura con check, para la pantalla de éxito.
 export default function IllustrationPanel({ variant = "network" }) {
@@ -44,24 +44,14 @@ export default function IllustrationPanel({ variant = "network" }) {
     );
   }
 
+  // variant === "network" (usado por SignIn / CreateAccount)
   return (
     <div className="illustration illustration--dark">
-      <svg viewBox="0 0 320 320" width="80%" role="presentation">
-        <circle cx="160" cy="160" r="118" fill="none" stroke="rgba(245,166,35,0.35)" strokeWidth="1.5" />
-        <circle cx="160" cy="160" r="86" fill="none" stroke="rgba(245,166,35,0.25)" strokeWidth="1.5" />
-        <circle cx="160" cy="160" r="52" fill="#F5A623" opacity="0.9" />
-        {[
-          [60, 90], [250, 70], [270, 190], [90, 250], [200, 260], [50, 180], [230, 40],
-        ].map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r={5} fill="#F5A623" opacity={0.85} />
-        ))}
-        <path
-          d="M60 90 L160 160 L250 70 M270 190 L160 160 L90 250 M200 260 L160 160 L50 180 M230 40 L160 160"
-          stroke="rgba(245,166,35,0.45)"
-          strokeWidth="1.2"
-          fill="none"
-        />
-      </svg>
+      <img
+        src="/imagen1.jpg"
+        alt="Magnus SIG"
+        className="illustration-image"
+      />
     </div>
   );
 }
