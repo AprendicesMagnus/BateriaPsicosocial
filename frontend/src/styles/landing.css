@@ -677,7 +677,7 @@
   .hero {
     min-height: 750px;
   }
-  
+
   .hero__inner {
     min-height: 750px;
     padding: 60px 25px;
@@ -780,4 +780,5 @@
     gap: 30px;
   }
 
+  
 }
