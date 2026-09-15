@@ -1,8 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AuthLayout from "../components/AuthLayout";
 import { TextField, PrimaryButton, FormMessage } from "../components/FormControls";
 import { forgotPassword } from "../api/auth";
+import "../styles/auth.css";
+
+// Ilustración de fondo decorativa: dos personas conversando en un sofá,
+// con un reloj y un globo de chat grandes de fondo (placeholder mientras
+// se consigue la imagen definitiva).
+function ForgotPasswordBackground() {
+  return (
+    <img src="/imagen5.jpg" alt="" className="verify-bg" />
+  );
+}
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -25,32 +34,38 @@ export default function ForgotPassword() {
   }
 
   return (
-    <AuthLayout illustration="chat">
-      <h1>Recuperar Contraseña</h1>
-      <p className="auth-subtitle">
-        Ingresa el correo asociado a tu cuenta y te enviaremos un código para restablecer tu contraseña.
-      </p>
+    <div className="verify-shell">
+      <ForgotPasswordBackground />
 
-      <FormMessage type="error">{error}</FormMessage>
+      <div className="verify-card">
+        <img src="/logo oscu.png" alt="Magnus SIG" className="login-logo" />
 
-      <form className="auth-form" onSubmit={handleSubmit}>
-        <TextField
-          label="Correo electrónico"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="nombre@empresa.com"
-        />
+        <h1>Recuperar Contraseña</h1>
+        <p className="auth-subtitle">
+          Ingresa el correo asociado a tu cuenta y te enviaremos un código para restablecer tu contraseña.
+        </p>
 
-        <PrimaryButton type="submit" loading={loading}>
-          Enviar Código
-        </PrimaryButton>
+        <FormMessage type="error">{error}</FormMessage>
 
-        <Link className="back-link" to="/iniciar-sesion">
-          ← Volver a inicio de sesión
-        </Link>
-      </form>
-    </AuthLayout>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <TextField
+            label="Correo electrónico"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="nombre@empresa.com"
+          />
+
+          <PrimaryButton type="submit" loading={loading}>
+            Enviar Código
+          </PrimaryButton>
+
+          <Link className="back-link" to="/iniciar-sesion">
+            ← Volver a inicio de sesión
+          </Link>
+        </form>
+      </div>
+    </div>
   );
 }
