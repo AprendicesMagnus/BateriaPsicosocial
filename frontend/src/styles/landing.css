@@ -21,11 +21,20 @@
 
 .nav__links {
   display: flex;
-  gap: 26px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink-700);
+  justify-content: flex-end;
+  align-items: center;
+  gap: 30px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
+
+
+.nav__links a {
+  font-weight: 700;
+  text-decoration: none;
+}
+
 
 .nav__links a:hover {
   color: var(--navy-900);
@@ -61,18 +70,455 @@
   background: var(--gold-600);
 }
 
+/* =====================================================
+   HERO
+===================================================== */
+
 .hero {
-  background: linear-gradient(160deg, var(--navy-950) 0%, var(--navy-800) 100%);
-  color: var(--white);
-  padding: 72px 0 90px;
   position: relative;
+  width: 100%;
+  min-height: 700px;
+
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+
+  background: #0b1538;
+}
+
+
+/* =====================================================
+   CARRUSEL DE FONDO
+===================================================== */
+
+.hero__background {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 0;
+
   overflow: hidden;
 }
 
-.hero__inner {
-  max-width: 720px;
-  position: relative;
+
+/* Imágenes */
+
+.hero__background-image {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  opacity: 0;
+
+  transition: opacity 1s ease-in-out;
+
+  transform: scale(1.02);
+}
+
+
+/* Imagen actual */
+
+.hero__background-image.active {
+  opacity: 1;
+}
+
+
+/* =====================================================
+   CAPA AZUL OSCURA
+===================================================== */
+
+.hero__overlay {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
   z-index: 1;
+
+  background: rgba(8, 20, 55, 0.72);
+}
+
+
+/* =====================================================
+   CONTENIDO
+===================================================== */
+
+.hero__inner {
+  position: relative;
+
+  z-index: 2;
+
+  width: 100%;
+
+  min-height: 700px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 80px 40px;
+}
+
+
+/* =====================================================
+   TEXTO
+===================================================== */
+
+.hero__content {
+  width: 100%;
+
+  max-width: 850px;
+
+  margin-right: auto;
+}
+
+
+/* =====================================================
+   ETIQUETA
+===================================================== */
+
+.hero__tag {
+  display: inline-block;
+
+  padding: 10px 18px;
+
+  margin-bottom: 25px;
+
+  border-radius: 30px;
+
+  background: rgba(30, 30, 30, 0.75);
+
+  color: #ffad1f;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  backdrop-filter: blur(5px);
+}
+
+
+/* =====================================================
+   TÍTULO
+===================================================== */
+
+.hero h1 {
+  margin: 0 0 25px;
+
+  max-width: 800px;
+
+  color: #ffffff;
+
+  font-size: 60px;
+
+  line-height: 1.08;
+
+  font-weight: 800;
+}
+
+
+.hero .accent {
+  color: #ffad1f;
+}
+
+
+/* =====================================================
+   PÁRRAFO
+===================================================== */
+
+.hero p {
+  max-width: 720px;
+
+  margin: 0 0 35px;
+
+  color: #e6ebfa;
+
+  font-size: 19px;
+
+  line-height: 1.7;
+}
+
+
+/* =====================================================
+   BOTONES
+===================================================== */
+
+.hero__cta {
+  display: flex;
+
+  gap: 16px;
+
+  flex-wrap: wrap;
+}
+
+
+.cta-primary,
+.cta-secondary {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-height: 58px;
+
+  padding: 0 28px;
+
+  border-radius: 12px;
+
+  text-decoration: none;
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  transition: all 0.3s ease;
+}
+
+
+/* Empresas */
+
+.cta-primary {
+  background: #ffad1f;
+
+  color: #0b1538;
+}
+
+
+.cta-primary:hover {
+  background: #ffc04d;
+
+  transform: translateY(-3px);
+}
+
+
+/* Psicólogos */
+
+.cta-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+
+  background: rgba(255, 255, 255, 0.10);
+
+  color: #ffffff;
+
+  backdrop-filter: blur(5px);
+}
+
+
+.cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.20);
+
+  transform: translateY(-3px);
+}
+
+
+/* =====================================================
+   CONTROLES DEL CARRUSEL
+===================================================== */
+
+.hero__controls {
+  position: absolute;
+
+  right: 50px;
+
+  bottom: 40px;
+
+  z-index: 3;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+}
+
+
+/* =====================================================
+   FLECHAS
+===================================================== */
+
+.carousel__arrow {
+  width: 50px;
+
+  height: 50px;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  color: #0b1538;
+
+  font-size: 28px;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  transition: all 0.3s ease;
+}
+
+
+.carousel__arrow:hover {
+  background: #ffad1f;
+
+  transform: scale(1.08);
+}
+
+
+/* =====================================================
+   PUNTOS
+===================================================== */
+
+.carousel__dot {
+  width: 10px;
+
+  height: 10px;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.65);
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+
+/* Punto activo */
+
+.carousel__dot.active {
+  width: 32px;
+
+  border-radius: 10px;
+
+  background: #2fa43a;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+  .hero {
+    min-height: 750px;
+  }
+
+  .hero__inner {
+    min-height: 750px;
+
+    padding: 60px 25px;
+  }
+
+  .hero h1 {
+    font-size: 45px;
+  }
+
+  .hero p {
+    font-size: 17px;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .hero {
+    min-height: 800px;
+  }
+
+  .hero__inner {
+    min-height: 800px;
+
+    padding: 50px 20px;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+  }
+
+  .hero__tag {
+    font-size: 12px;
+  }
+
+  .hero__cta {
+    flex-direction: column;
+  }
+
+  .cta-primary,
+  .cta-secondary {
+    width: 100%;
+  }
+
+  .hero__controls {
+    right: 50%;
+
+    transform: translateX(50%);
+
+    bottom: 25px;
+  }
+
+}
+.carousel__arrow {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy-950);
+  background: #ffffff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+}
+
+.carousel__arrow:hover {
+  background: var(--gold-500);
+}
+
+.carousel__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ccc;
+  cursor: pointer;
+}
+
+.carousel__dot.active {
+  width: 25px;
+  border-radius: 10px;
+  background: #2e7d32;
 }
 
 .hero__tag {
@@ -134,12 +580,12 @@
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 .hero__cta .cta-secondary:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(237, 8, 234, 0.16);
 }
 
 .stats-band {
   background: var(--navy-900);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(206, 17, 190, 0.08);
 }
 
 .stats-band__inner {
@@ -159,6 +605,7 @@
   font-size: 24px;
   color: var(--gold-500);
 }
+/* Este color de la letra */
 .stat span {
   font-size: 12.5px;
   color: #a9b0cc;

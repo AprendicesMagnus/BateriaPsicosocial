@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/landing.css";
+
+const SLIDES = ["/pasare1.jpg", "/pasare2.jpg", "/pasare3.jpg"];
 
 const FACTORES = [
   {
@@ -42,8 +45,18 @@ const CONFIANZA = [
   { titulo: "Custodia profesional", texto: "Solo el evaluador SST y el administrador acceden a resultados individuales." },
   { titulo: "Cumplimiento Ley 1581", texto: "Tratamiento de datos conforme a la normativa colombiana vigente." },
 ];
-
+{/* logos de los convenios */}
 export default function Landing() {
+  const [slide, setSlide] = useState(0);
+
+  const prevSlide = () => setSlide((s) => (s - 1 + SLIDES.length) % SLIDES.length);
+  const nextSlide = () => setSlide((s) => (s + 1) % SLIDES.length);
+
+  useEffect(() => {
+    const id = setInterval(nextSlide, 6000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <div className="landing">
       <header className="nav">
@@ -59,6 +72,7 @@ export default function Landing() {
             <a href="#psicologos">Psicólogos</a>
             <a href="#normativa">Normativa</a>
           </nav>
+          {/* botones de login y registro */}
           <div className="nav__actions">
             <Link className="btn-nav-secondary" to="/iniciar-sesion">
               Iniciar sesión
@@ -71,25 +85,129 @@ export default function Landing() {
       </header>
 
       <section className="hero">
-        <div className="container hero__inner">
-          <span className="hero__tag">Batería de Riesgo Psicosocial · Res. 2764 de 2022</span>
-          <h1>
-            Promover entornos laborales <span className="accent">saludables</span>
-          </h1>
-          <p>
-            Aplica, tabula y analiza la batería de riesgo psicosocial de forma digital y
-            automatizada. Resultados agregados para MiPymes, sin sobrecostos ni procesos manuales.
-          </p>
-          <div className="hero__cta">
-            <Link className="cta-primary" to="/crear-cuenta">
-              Más información — Empresas
-            </Link>
-            <a className="cta-secondary" href="#psicologos">
-              Más información — Psicólogos
-            </a>
-          </div>
-        </div>
-      </section>
+
+  {/* =====================================
+      CARRUSEL COMO FONDO
+  ====================================== */}
+
+  <div className="hero__background">
+
+    {SLIDES.map((src, i) => (
+      <img
+        key={src}
+        src={src}
+        alt=""
+        className={`hero__background-image${
+          i === slide ? " active" : ""
+        }`}
+      />
+    ))}
+
+  </div>
+
+
+  {/* =====================================
+      CAPA OSCURA SOBRE LA IMAGEN
+  ====================================== */}
+
+  <div className="hero__overlay"></div>
+
+
+  {/* =====================================
+      CONTENIDO PRINCIPAL
+  ====================================== */}
+
+  <div className="container hero__inner">
+
+    <div className="hero__content">
+
+      <span className="hero__tag">
+        Batería de Riesgo Psicosocial · Res. 2764 de 2022
+      </span>
+
+
+      <h1>
+        Promover entornos laborales{" "}
+        <span className="accent">
+          saludables
+        </span>
+      </h1>
+
+
+      <p>
+        Aplica, tabula y analiza la batería de riesgo
+        psicosocial de forma digital y automatizada.
+        Resultados agregados para MiPymes, sin
+        sobrecostos ni procesos manuales.
+      </p>
+
+
+      <div className="hero__cta">
+
+        <Link
+          className="cta-primary"
+          to="/crear-cuenta"
+        >
+          Más información — Empresas
+        </Link>
+
+
+        <a
+          className="cta-secondary"
+          href="#psicologos"
+        >
+          Más información — Psicólogos
+        </a>
+
+      </div>
+
+    </div>
+
+
+    {/* =====================================
+        CONTROLES DEL CARRUSEL
+    ====================================== */}
+
+    <div className="hero__controls">
+
+      <button
+        className="carousel__arrow"
+        type="button"
+        onClick={prevSlide}
+        aria-label="Diapositiva anterior"
+      >
+        ‹
+      </button>
+
+
+      {SLIDES.map((src, i) => (
+        <button
+          key={src}
+          type="button"
+          className={`carousel__dot${
+            i === slide ? " active" : ""
+          }`}
+          onClick={() => setSlide(i)}
+          aria-label={`Ir a diapositiva ${i + 1}`}
+        ></button>
+      ))}
+
+
+      <button
+        className="carousel__arrow"
+        type="button"
+        onClick={nextSlide}
+        aria-label="Siguiente diapositiva"
+      >
+        ›
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+      {/* interbalos de estudios realisados */}
 
       <div className="stats-band">
         <div className="container stats-band__inner">
@@ -140,6 +258,7 @@ export default function Landing() {
         </div>
       </section>
 
+            {/* guia rapida de como usar el aplicativo */}
       <section className="section" id="como-funciona" style={{ background: "var(--white)" }}>
         <div className="container">
           <div className="section__header">
@@ -189,8 +308,7 @@ export default function Landing() {
             <div className="footer__brand">
               <img src="/logo oscuro.png" alt="Magnus" style={{ height: 80 }} />
               <p>
-                Prototipo digital para la aplicación de la Batería de Riesgo Psicosocial,
-                desarrollado en el marco del trabajo de grado en Ingeniería de Software, FET.
+                Prototipo digital para la aplicación de la Batería de Riesgo Psicosocial.
               </p>
             </div>
             <div className="footer__col">
@@ -215,6 +333,7 @@ export default function Landing() {
                 <li>direccion_software@fet.edu.co</li>
                 <li>Neiva, Huila — Colombia</li>
               </ul>
+              {/* botones fuera de servicio */}
               <div className="footer__social">
                 <a href="#" aria-label="Facebook">f</a>
                 <a href="#" aria-label="Instagram">in</a>
@@ -224,7 +343,7 @@ export default function Landing() {
           </div>
           <div className="footer__bottom">
             <span>© {new Date().getFullYear()} Magnus|SIG. Todos los derechos reservados.</span>
-            <span>FET — Fundación Escuela Tecnológica de Neiva</span>
+            <span></span>
           </div>
         </div>
       </footer>
