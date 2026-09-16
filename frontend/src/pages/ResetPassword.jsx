@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import AuthLayout from "../components/AuthLayout";
 import { PasswordField, PrimaryButton, FormMessage } from "../components/FormControls";
 import { resetPassword } from "../api/auth";
+import "../styles/auth.css";
+
+// Imagen de fondo a toda pantalla (misma que las demás pantallas de este flujo).
+// El archivo debe estar en: public/fondo-recuperar.jpg
+function ResetPasswordBackground() {
+  return <img src="/imagen5.jpg" alt="" className="verify-bg" />;
+}
 
 export default function ResetPassword() {
   const location = useLocation();
@@ -32,7 +38,9 @@ export default function ResetPassword() {
     setLoading(true);
     try {
       await resetPassword({ resetToken, password });
-      navigate("/contrasena-restablecida", { state: { email } });
+      navigate("/iniciar-sesion", {
+        state: { message: "Contraseña restablecida con éxito. Ya puedes iniciar sesión." },
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -43,36 +51,42 @@ export default function ResetPassword() {
   if (!resetToken) return null;
 
   return (
-    <AuthLayout illustration="chat">
-      <h1>Restablecer Contraseña</h1>
-      <p className="auth-subtitle">Crea una nueva contraseña segura para tu cuenta.</p>
+    <div className="verify-shell">
+      <ResetPasswordBackground />
 
-      <FormMessage type="error">{error}</FormMessage>
+      <div className="verify-card">
+        <img src="/logo oscu.png" alt="Magnus SIG" className="login-logo" />
 
-      <form className="auth-form" onSubmit={handleSubmit}>
-        <PasswordField
-          label="Nueva Contraseña"
-          required
-          minLength={8}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-        />
-        <p className="auth-subtitle" style={{ margin: "-8px 0 0", fontSize: 12 }}>
-          Mínimo 8 caracteres, con mayúsculas, minúsculas y números.
-        </p>
-        <PasswordField
-          label="Confirmar Contraseña"
-          required
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="••••••••"
-        />
+        <h1>Restablecer Contraseña</h1>
+        <p className="auth-subtitle">Crea una nueva contraseña segura para tu cuenta.</p>
 
-        <PrimaryButton type="submit" loading={loading}>
-          Confirmar Contraseña
-        </PrimaryButton>
-      </form>
-    </AuthLayout>
+        <FormMessage type="error">{error}</FormMessage>
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <PasswordField
+            label="Nueva Contraseña"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+          />
+          <p className="auth-subtitle" style={{ margin: "-8px 0 0", fontSize: 12 }}>
+            Mínimo 8 caracteres, con mayúsculas, minúsculas y números.
+          </p>
+          <PasswordField
+            label="Confirmar Contraseña"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="••••••••"
+          />
+
+          <PrimaryButton type="submit" loading={loading}>
+            Confirmar Contraseña
+          </PrimaryButton>
+        </form>
+      </div>
+    </div>
   );
 }

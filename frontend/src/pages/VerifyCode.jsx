@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import AuthLayout from "../components/AuthLayout";
 import { CodeInput, PrimaryButton, FormMessage } from "../components/FormControls";
 import { verifyEmail, verifyResetCode, resendCode } from "../api/auth";
+import "../styles/auth.css";
 
 const RESEND_SECONDS = 45;
+
+// Imagen de fondo a toda pantalla (misma que Recuperar Contraseña).
+// El archivo debe estar en: public/fondo-recuperar.jpg
+function VerifyCodeBackground() {
+  return <img src="/imagen5.jpg" alt="" className="verify-bg" />;
+}
 
 export default function VerifyCode({ mode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const email = location.state?.email;
+  const email = location.state?.email || "prueba@empresa.com"; // TEMPORAL para ver el diseño
 
   const [codigo, setCodigo] = useState("");
   const [error, setError] = useState("");
@@ -17,11 +23,13 @@ export default function VerifyCode({ mode }) {
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
+  const esReset = mode === "reset";
+
   useEffect(() => {
     if (!email) {
-      navigate(mode === "reset" ? "/olvide-contrasena" : "/crear-cuenta", { replace: true });
+      navigate(esReset ? "/olvide-contrasena" : "/crear-cuenta", { replace: true });
     }
-  }, [email, mode, navigate]);
+  }, [email, esReset, navigate]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -35,7 +43,7 @@ export default function VerifyCode({ mode }) {
     setInfo("");
     setLoading(true);
     try {
-      if (mode === "reset") {
+      if (esReset) {
         const data = await verifyResetCode({ email, codigo });
         navigate("/restablecer-contrasena", { state: { email, resetToken: data.resetToken } });
       } else {
@@ -57,7 +65,7 @@ export default function VerifyCode({ mode }) {
     try {
       await resendCode({
         email,
-        tipo: mode === "reset" ? "RESET_PASSWORD" : "VERIFICACION_EMAIL",
+        tipo: esReset ? "RESET_PASSWORD" : "VERIFICACION_EMAIL",
       });
       setInfo("Hemos enviado un nuevo código a tu correo.");
       setCooldown(RESEND_SECONDS);
@@ -69,41 +77,59 @@ export default function VerifyCode({ mode }) {
   if (!email) return null;
 
   return (
-    <AuthLayout illustration="chat">
-      <h1>Correo de Verificación</h1>
-      <p className="auth-subtitle">
-        Hemos enviado un código de verificación a tu correo electrónico:{" "}
-        <span className="verification-email">{email}</span>
-      </p>
+    <div className="verify-shell">
+      <VerifyCodeBackground />
 
-      <FormMessage type="error">{error}</FormMessage>
-      <FormMessage type="success">{info}</FormMessage>
+      <div className="verify-card">
+        <img src="/logo oscu.png" alt="Magnus SIG" className="login-logo" />
 
-      <form className="auth-form" onSubmit={handleSubmit}>
-        <label className="field">
-          <span className="field__label">Código de Verificación</span>
-          <CodeInput value={codigo} onChange={setCodigo} />
-        </label>
+        {/* =================================================
+            TÍTULO
+            Cambia según el uso de la pantalla:
+            - reset  -> viene de "Olvidé mi contraseña"
+            - normal -> viene de "Crear cuenta"
+            ================================================= */}
+        <h1>{esReset ? "Verificar Código" : "Verifica tu Correo"}</h1>
 
-        <PrimaryButton type="submit" loading={loading} disabled={codigo.length !== 6}>
-          {mode === "reset" ? "Restablecer Contraseña" : "Verificar mi cuenta"}
-        </PrimaryButton>
+        <p className="auth-subtitle">
+          Ingresa el código de 6 dígitos que enviamos a{" "}
+          <span className="verification-email">{email}</span>
+        </p>
 
-        <div className="resend-row">
-          ¿No recibiste el código?{" "}
-          {cooldown > 0 ? (
-            <span>Reenviar en {cooldown}s</span>
-          ) : (
-            <button type="button" className="link-accent" onClick={handleResend} style={{ background: "none", border: "none" }}>
-              Reenviar
-            </button>
-          )}
-        </div>
+        <FormMessage type="error">{error}</FormMessage>
+        <FormMessage type="success">{info}</FormMessage>
 
-        <Link className="back-link" to="/iniciar-sesion">
-          ← Volver a inicio de sesión
-        </Link>
-      </form>
-    </AuthLayout>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span className="field__label">Código de Verificación</span>
+            <CodeInput value={codigo} onChange={setCodigo} />
+          </label>
+
+          <PrimaryButton type="submit" loading={loading} disabled={codigo.length !== 6}>
+            {esReset ? "Restablecer Contraseña" : "Verificar mi cuenta"}
+          </PrimaryButton>
+
+          <div className="resend-row">
+            ¿No recibiste el código?{" "}
+            {cooldown > 0 ? (
+              <span>Reenviar en {cooldown}s</span>
+            ) : (
+              <button
+                type="button"
+                className="link-accent"
+                onClick={handleResend}
+                style={{ background: "none", border: "none" }}
+              >
+                Reenviar
+              </button>
+            )}
+          </div>
+
+          <Link className="back-link" to="/iniciar-sesion">
+            ← Volver a inicio de sesión
+          </Link>
+        </form>
+      </div>
+    </div>
   );
 }
