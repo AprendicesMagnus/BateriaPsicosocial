@@ -3,11 +3,12 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Landing from "./pages/Landing";
-import SignIn from "./pages/SignIn";
-import CreateAccount from "./pages/CreateAccount";
+import SignIn from "./pages/login";
+import CreateAccount from "./pages/registrar";
 import VerifyCode from "./pages/VerifyCode";
-import ForgotPassword from "./pages/ForgotPassword";
+import ForgotPassword from "./pages/recuperar contraseña";
 import ResetPassword from "./pages/ResetPassword";
+import ResetSuccessful from "./pages/restablecer-contraseña";
 import Panel from "./pages/Panel";
 
 export default function App() {
