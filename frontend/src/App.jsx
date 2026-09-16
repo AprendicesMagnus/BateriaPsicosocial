@@ -9,6 +9,7 @@ import VerifyCode from "./pages/VerifyCode";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Panel from "./pages/Panel";
+import Dashboard from "./pages/Dashboard";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/olvide-contrasena" element={<ForgotPassword />} />
           <Route path="/verificar-codigo" element={<VerifyCode mode="reset" />} />
           <Route path="/restablecer-contrasena" element={<ResetPassword />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route
             path="/panel"
             element={
