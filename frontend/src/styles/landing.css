@@ -1,3 +1,4 @@
+
 .landing {
   background: var(--bg-100);
 }
@@ -21,10 +22,17 @@
 
 .nav__links {
   display: flex;
-  gap: 26px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink-700);
+  justify-content: flex-end;
+  align-items: center;
+  gap: 30px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.nav__links a {
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .nav__links a:hover {
@@ -45,6 +53,7 @@
   color: var(--navy-900);
   background: transparent;
 }
+
 .btn-nav-secondary:hover {
   background: var(--bg-100);
 }
@@ -57,23 +66,133 @@
   color: var(--navy-950);
   background: var(--gold-500);
 }
+
 .btn-nav-primary:hover {
   background: var(--gold-600);
 }
 
+
+/* =====================================================
+   HERO
+===================================================== */
+
 .hero {
-  background: linear-gradient(160deg, var(--navy-950) 0%, var(--navy-800) 100%);
-  color: var(--white);
-  padding: 72px 0 90px;
   position: relative;
+  width: 100%;
+  min-height: 700px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  background: #0b1538;
+}
+
+
+/* =====================================================
+   CARRUSEL DE FONDO
+===================================================== */
+
+.hero__background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
   overflow: hidden;
 }
 
-.hero__inner {
-  max-width: 720px;
-  position: relative;
-  z-index: 1;
+
+/*
+   TODAS LAS IMÁGENES OCUPAN EXACTAMENTE
+   EL MISMO ESPACIO
+*/
+
+.hero__background-image {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+  object-position: center;
+
+  opacity: 0;
+
+  transition: opacity 1s ease-in-out;
+
+  z-index: 0;
 }
+
+
+/*
+   SOLO LA IMAGEN ACTIVA SE MUESTRA
+*/
+
+.hero__background-image.active {
+  opacity: 3;
+  z-index: 3;
+}
+
+
+/* =====================================================
+   CAPA AZUL SOBRE LAS IMÁGENES
+===================================================== */
+
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 2;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(7, 17, 48, 0.92) 0%,
+      rgba(7, 17, 48, 0.78) 45%,
+      rgba(7, 17, 48, 0.48) 100%
+    );
+}
+
+
+/* =====================================================
+   CONTENIDO DEL HERO
+===================================================== */
+
+.hero__inner {
+  position: relative;
+
+  z-index: 3;
+
+  width: 100%;
+  min-height: 700px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 80px 40px;
+}
+
+
+/* =====================================================
+   CONTENIDO IZQUIERDO
+===================================================== */
+
+.hero__content {
+  width: 100%;
+  max-width: 850px;
+  margin-right: auto;
+}
+
+
+/* =====================================================
+   ETIQUETA
+===================================================== */
 
 .hero__tag {
   display: inline-flex;
@@ -81,112 +200,233 @@
   gap: 8px;
   background: rgba(245, 166, 35, 0.16);
   color: var(--gold-500);
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 999px;
   font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.3px;
   margin-bottom: 22px;
+  backdrop-filter: blur(5px);
 }
 
+
+/* =====================================================
+   TITULO
+===================================================== */
+
 .hero h1 {
-  font-size: clamp(32px, 4.5vw, 48px);
-  line-height: 1.12;
-  margin: 0 0 18px;
+  margin: 0 0 20px;
+  max-width: 800px;
+  color: #ffffff;
+  font-size: clamp(32px, 4.5vw, 60px);
+  line-height: 1.08;
+  font-weight: 800;
 }
 
 .hero h1 .accent {
   color: var(--gold-500);
 }
 
+
+/* =====================================================
+   TEXTO
+===================================================== */
+
 .hero p {
-  color: #c7cde6;
-  font-size: 16px;
-  line-height: 1.6;
-  margin: 0 0 30px;
-  max-width: 560px;
+  max-width: 720px;
+  margin: 0 0 35px;
+  color: #e6ebfa;
+  font-size: 17px;
+  line-height: 1.7;
 }
+
+
+/* =====================================================
+   BOTONES del enunciado 
+===================================================== */
 
 .hero__cta {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
 }
-
-.hero__cta a {
-  padding: 13px 22px;
-  border-radius: 10px;
+.cta-primary,
+.cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  padding: 0 28px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 16px;
   font-weight: 700;
-  font-size: 14.5px;
+  transition: all 0.3s ease;
+  
 }
 
-.hero__cta .cta-primary {
+
+/* EMPRESAS */
+
+.cta-primary {
   background: var(--gold-500);
+
   color: var(--navy-950);
 }
-.hero__cta .cta-primary:hover {
+
+.cta-primary:hover {
   background: var(--gold-600);
+
+  transform: translateY(-3px);
 }
 
-.hero__cta .cta-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--white);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+
+/* PSICÓLOGOS */
+
+.cta-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+  backdrop-filter: blur(5px);
 }
-.hero__cta .cta-secondary:hover {
-  background: rgba(255, 255, 255, 0.16);
+
+.cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.20);
+  transform: translateY(-3px);
 }
+
+
+/* =====================================================
+   CONTROLES DEL CARRUSEL
+===================================================== */
+
+
+
+.carousel__arrow:hover {
+  background: rgba(255, 255, 255, 0.30);
+  border-color: rgba(255, 255, 255, 0.65);
+  transform: translateY(-50%) scale(1.08);
+}
+
+/* PUNTOS */
+.carousel__dots {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  display: flex;
+  gap: 10px;
+
+  pointer-events: auto;
+}
+
+.carousel__dot {
+  width: 9px;
+  height: 9px;
+
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.45);
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+/* =====================================================
+   BANDA DE ESTADÍSTICAS
+===================================================== */
 
 .stats-band {
   background: var(--navy-900);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-top: 1px solid rgba(206, 17, 190, 0.08);
 }
 
 .stats-band__inner {
   display: flex;
+
   justify-content: center;
+
   gap: 60px;
+
   padding: 26px 0;
+
   flex-wrap: wrap;
+
   text-align: center;
 }
 
 .stat {
   color: var(--white);
 }
+
 .stat strong {
   display: block;
+
   font-size: 24px;
+
   color: var(--gold-500);
 }
+
 .stat span {
   font-size: 12.5px;
+
   color: #a9b0cc;
 }
 
+
+/* =====================================================
+   ICONOS
+===================================================== */
+
 .icon-row {
   display: flex;
+
   justify-content: center;
+
   gap: 14px;
+
   flex-wrap: wrap;
+
   margin-top: -28px;
+
   position: relative;
+
   z-index: 2;
 }
 
 .icon-chip {
   background: var(--white);
+
   border: 1px solid var(--line-200);
+
   border-radius: 12px;
+
   padding: 14px 18px;
+
   display: flex;
+
   align-items: center;
+
   gap: 10px;
+
   font-size: 13px;
+
   font-weight: 700;
+
   color: var(--ink-700);
+
   box-shadow: 0 12px 30px -18px rgba(15, 26, 61, 0.35);
 }
+
+
+/* =====================================================
+   SECCIONES
+===================================================== */
 
 .section {
   padding: 80px 0;
@@ -194,29 +434,44 @@
 
 .section__header {
   text-align: center;
+
   max-width: 640px;
+
   margin: 0 auto 44px;
 }
 
 .section__eyebrow {
   color: var(--gold-600);
+
   font-weight: 800;
+
   font-size: 12.5px;
+
   letter-spacing: 0.6px;
+
   text-transform: uppercase;
 }
 
 .section__header h2 {
   font-size: 30px;
+
   margin: 10px 0 12px;
+
   color: var(--ink-900);
 }
 
 .section__header p {
   color: var(--ink-500);
+
   font-size: 15px;
+
   line-height: 1.6;
 }
+
+
+/* =====================================================
+   FACTORES
+===================================================== */
 
 .factor-grid {
   display: grid;
@@ -243,15 +498,22 @@
   padding: 7px 0;
   border-top: 1px dashed var(--line-200);
 }
+
 .factor-card ul li:first-child {
   border-top: none;
 }
+
 .factor-card ul li::before {
   content: "•";
   color: var(--gold-500);
   font-weight: 900;
   margin-right: 8px;
 }
+
+
+/* =====================================================
+   PASOS
+===================================================== */
 
 .steps-grid {
   display: grid;
@@ -282,6 +544,7 @@
   font-size: 15px;
   color: var(--ink-900);
 }
+
 .step-card p {
   margin: 0;
   font-size: 13px;
@@ -289,8 +552,14 @@
   line-height: 1.5;
 }
 
+
+/* =====================================================
+   CONFIDENCIALIDAD
+===================================================== */
+
 .confidence-section {
   background: var(--navy-950);
+
   color: var(--white);
 }
 
@@ -324,12 +593,18 @@
   margin: 0 0 6px;
   font-size: 14.5px;
 }
+
 .confidence-card p {
   margin: 0;
   font-size: 12.5px;
   color: #b7bdd6;
   line-height: 1.5;
 }
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
 
 .footer {
   background: var(--navy-950);
@@ -362,6 +637,7 @@
   font-size: 13px;
   padding: 6px 0;
 }
+
 .footer__col li a:hover {
   color: var(--white);
 }
@@ -371,6 +647,7 @@
   gap: 10px;
   margin-top: 16px;
 }
+
 .footer__social a {
   width: 32px;
   height: 32px;
@@ -391,28 +668,117 @@
   gap: 10px;
 }
 
+/* =====================================================
+   RESPONSIVE TABLET
+===================================================== */
+
 @media (max-width: 900px) {
+
+  .hero {
+    min-height: 750px;
+  }
+
+  .hero__inner {
+    min-height: 750px;
+    padding: 60px 25px;
+  }
+
+  .hero h1 {
+    font-size: 45px;
+  }
+
+  .hero p {
+    font-size: 17px;
+  }
+
   .factor-grid,
   .steps-grid,
   .confidence-grid {
     grid-template-columns: 1fr 1fr;
   }
+
   .footer__grid {
     grid-template-columns: 1fr 1fr;
   }
+
   .nav__links {
     display: none;
   }
+
+  .hero__controls {
+    right: 30px;
+
+    bottom: 30px;
+  }
 }
 
-@media (max-width: 560px) {
+
+/* =====================================================
+   RESPONSIVE CELULAR
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .hero {
+    min-height: 800px;
+  }
+
+  .hero__inner {
+    min-height: 800px;
+
+    padding: 50px 20px;
+
+    align-items: flex-start;
+
+    padding-top: 80px;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+  }
+
+  .hero__tag {
+    font-size: 12px;
+  }
+
+  .hero p {
+    font-size: 15px;
+  }
+
+  .hero__cta {
+    flex-direction: column;
+  }
+
+  .cta-primary,
+  .cta-secondary {
+    width: 100%;
+  }
+
+  .hero__controls {
+    right: 50%;
+
+    transform: translateX(50%);
+
+    bottom: 25px;
+  }
+
+  .carousel__arrow {
+    width: 42px;
+    height: 42px;
+
+    font-size: 22px;
+  }
+
   .factor-grid,
   .steps-grid,
   .confidence-grid,
   .footer__grid {
     grid-template-columns: 1fr;
   }
+
   .stats-band__inner {
     gap: 30px;
   }
+
+  
 }
