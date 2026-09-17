@@ -1,0 +1,439 @@
+import { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import "../styles/checkout.css";
+
+// ==================================================
+// Datos de ejemplo — ajusta según venga de tu API
+// ==================================================
+// Valores de ejemplo, usados solo como respaldo mientras no exista
+// el módulo real de empresas/baterías que envíe estos datos.
+const TARIFA_POR_BATERIA_DEFECTO = 10000; // COP
+const IVA_PORCENTAJE = 0.19;
+
+// Bancos más comunes disponibles en PSE en Colombia.
+// Nota: son representaciones estilizadas (monograma + color de marca),
+// no los archivos de logo oficiales de cada banco.
+const BANCOS_PSE = [
+  { nombre: "Bancolombia", sigla: "B", color: "#FFDD00", textColor: "#111111" },
+  { nombre: "Davivienda", sigla: "D", color: "#DA291C", textColor: "#ffffff" },
+  { nombre: "BBVA", sigla: "BBVA", color: "#004481", textColor: "#ffffff" },
+  { nombre: "Banco de Bogotá", sigla: "BB", color: "#A6192E", textColor: "#ffffff" },
+  { nombre: "Banco Popular", sigla: "BP", color: "#EE3124", textColor: "#ffffff" },
+  { nombre: "Nequi", sigla: "N", color: "#EE2E7B", textColor: "#ffffff" },
+  { nombre: "Banco Caja Social", sigla: "CS", color: "#00558C", textColor: "#ffffff" },
+  { nombre: "Banco AV Villas", sigla: "AV", color: "#F58220", textColor: "#ffffff" },
+];
+
+function formatCOP(valor) {
+  return "$" + Math.round(valor).toLocaleString("es-CO");
+}
+
+function detectarMarca(numero) {
+  const limpio = numero.replace(/\s/g, "");
+  if (/^4/.test(limpio)) return "VISA";
+  if (/^5[1-5]/.test(limpio)) return "MASTERCARD";
+  return null;
+}
+
+function formatearNumeroTarjeta(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 16);
+  return digits.replace(/(.{4})/g, "$1 ").trim();
+}
+
+function formatearVencimiento(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+}
+
+function LockIcon({ small }) {
+  const size = small ? 12 : 16;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}
+    >
+      <rect x="5" y="11" width="14" height="9" rx="2" fill="currentColor" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" strokeWidth="2" fill="none" />
+    </svg>
+  );
+}
+
+function VisaIcon({ size = 16 }) {
+  return (
+    <svg width={size * 1.7} height={size} viewBox="0 0 48 30" aria-label="Visa">
+      <rect width="48" height="30" rx="4" fill="#ffffff" stroke="#E4E7F0" />
+      <text
+        x="24"
+        y="20"
+        textAnchor="middle"
+        fontFamily="Arial, sans-serif"
+        fontStyle="italic"
+        fontWeight="700"
+        fontSize="13"
+        fill="#1A1F71"
+      >
+        VISA
+      </text>
+    </svg>
+  );
+}
+
+function MastercardIcon({ size = 16 }) {
+  return (
+    <svg width={size * 1.7} height={size} viewBox="0 0 48 30" aria-label="Mastercard">
+      <rect width="48" height="30" rx="4" fill="#ffffff" stroke="#E4E7F0" />
+      <circle cx="20" cy="15" r="8.5" fill="#EB001B" />
+      <circle cx="28" cy="15" r="8.5" fill="#F79E1B" />
+      <path d="M24 8.2a8.5 8.5 0 0 1 0 13.6 8.5 8.5 0 0 1 0-13.6z" fill="#FF5F00" />
+    </svg>
+  );
+}
+
+function PseIcon({ size = 16 }) {
+  return (
+    <svg width={size * 1.7} height={size} viewBox="0 0 48 30" aria-label="PSE">
+      <rect width="48" height="30" rx="4" fill="#ffffff" stroke="#E4E7F0" />
+      <rect x="5" y="7" width="6" height="6" fill="#00A19A" />
+      <rect x="12" y="7" width="6" height="6" fill="#8DC63F" />
+      <rect x="5" y="14" width="6" height="6" fill="#0072BC" />
+      <rect x="12" y="14" width="6" height="6" fill="#00A19A" />
+      <text
+        x="34"
+        y="20"
+        textAnchor="middle"
+        fontFamily="Arial, sans-serif"
+        fontWeight="700"
+        fontSize="10"
+        fill="#0072BC"
+      >
+        PSE
+      </text>
+    </svg>
+  );
+}
+
+export default function Checkout() {
+  // Ajusta estos nombres de campo si tu AuthContext guarda el usuario distinto.
+  const { usuario } = useAuth();
+  const location = useLocation();
+
+  // =================================================
+  // Datos reales de la compra (batería, empresa, tarifa).
+  // Deben llegar navegando desde el flujo real, por ejemplo:
+  // navigate("/pago", { state: { bateriaNombre, empresaNombre, tarifaPorBateria, cantidadInicial } })
+  // Mientras ese módulo no exista, se usan valores de ejemplo.
+  // =================================================
+  const {
+    bateriaNombre = "Batería de Riesgo Psicosocial",
+    empresaNombre = "Agrocampo S.A.S.",
+    tarifaPorBateria = TARIFA_POR_BATERIA_DEFECTO,
+    cantidadInicial = 1,
+  } = location.state || {};
+
+  const [metodo, setMetodo] = useState("tarjeta"); // "tarjeta" | "pse"
+  const [bancoSeleccionado, setBancoSeleccionado] = useState(null);
+  const [cantidad, setCantidad] = useState(cantidadInicial);
+  const [numeroTarjeta, setNumeroTarjeta] = useState("");
+  const [nombreTarjeta, setNombreTarjeta] = useState("");
+  const [vencimiento, setVencimiento] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [guardarTarjeta, setGuardarTarjeta] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const subtotal = cantidad * tarifaPorBateria;
+  const iva = subtotal * IVA_PORCENTAJE;
+  const total = subtotal + iva;
+
+  const marca = useMemo(() => detectarMarca(numeroTarjeta), [numeroTarjeta]);
+
+  function ajustarCantidad(delta) {
+    setCantidad((c) => Math.max(1, c + delta));
+  }
+
+  async function handlePagar(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      // ==================================================
+      // TODO: Conectar aquí con la pasarela de pago real.
+      // Ejemplo de lo que se enviaría al backend:
+      // { metodo, numeroTarjeta, nombreTarjeta, vencimiento, cvv, cantidad, total }
+      // ==================================================
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    } catch (err) {
+      setError(err.message || "No se pudo procesar el pago.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const nombreUsuario = usuario
+    ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
+    : "Usuario";
+  const rolUsuario = usuario?.rol ?? "";
+  const iniciales =
+    nombreUsuario
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "U";
+
+  return (
+    <div className="checkout-page">
+      {/* =================================================
+          BARRA SUPERIOR: logo a la izquierda, perfil a la derecha
+          ================================================= */}
+      <header className="checkout-topbar">
+        <img src="/logo oscu.png" alt="Magnus SIG" className="checkout-topbar-logo" />
+
+        <div className="checkout-profile">
+          <div className="checkout-avatar">{iniciales}</div>
+          <div className="checkout-profile-text">
+            <span className="checkout-profile-name">{nombreUsuario}</span>
+            {rolUsuario && <span className="checkout-profile-role">{rolUsuario}</span>}
+          </div>
+        </div>
+      </header>
+
+      {/* =================================================
+          FONDO OSCURO + CONTENIDO
+          ================================================= */}
+      <main className="checkout-hero">
+        <div className="checkout-decor checkout-decor--1" />
+        <div className="checkout-decor checkout-decor--2" />
+        <div className="checkout-decor checkout-decor--3" />
+
+        <div className="checkout-content">
+          <nav className="checkout-breadcrumb">
+            Evaluaciones <span>›</span> Pago de la batería
+          </nav>
+          <h1 className="checkout-title">Completa tu pago</h1>
+          <p className="checkout-subtitle">
+            {bateriaNombre} · aplicación única para {empresaNombre}
+          </p>
+
+          <div className="checkout-grid">
+            {/* ===================== FORMULARIO DE PAGO ===================== */}
+            <section className="checkout-card checkout-form-card">
+              <div className="checkout-tabs">
+                <button
+                  type="button"
+                  className={`checkout-tab ${metodo === "tarjeta" ? "checkout-tab--active" : ""}`}
+                  onClick={() => setMetodo("tarjeta")}
+                >
+                  Tarjeta de crédito o débito
+                </button>
+                <button
+                  type="button"
+                  className={`checkout-tab ${metodo === "pse" ? "checkout-tab--active" : ""}`}
+                  onClick={() => setMetodo("pse")}
+                >
+                  PSE
+                </button>
+              </div>
+
+              {metodo === "tarjeta" ? (
+                <form className="checkout-form" onSubmit={handlePagar}>
+                  <label className="field">
+                    <span className="field__label">Número de tarjeta</span>
+                    <div className="checkout-input-with-badge">
+                      <input
+                        className="field__input"
+                        inputMode="numeric"
+                        placeholder="0000 0000 0000 0000"
+                        value={numeroTarjeta}
+                        onChange={(e) => setNumeroTarjeta(formatearNumeroTarjeta(e.target.value))}
+                        required
+                      />
+                      {marca === "VISA" && (
+                        <span className="checkout-input-icon">
+                          <VisaIcon />
+                        </span>
+                      )}
+                      {marca === "MASTERCARD" && (
+                        <span className="checkout-input-icon">
+                          <MastercardIcon />
+                        </span>
+                      )}
+                    </div>
+                  </label>
+
+                  <label className="field">
+                    <span className="field__label">Nombre en la tarjeta</span>
+                    <input
+                      className="field__input"
+                      placeholder="Como aparece en la tarjeta"
+                      value={nombreTarjeta}
+                      onChange={(e) => setNombreTarjeta(e.target.value.toUpperCase())}
+                      required
+                    />
+                  </label>
+
+                  <div className="form-row">
+                    <label className="field">
+                      <span className="field__label">Vencimiento (MM/AA)</span>
+                      <input
+                        className="field__input"
+                        placeholder="MM/AA"
+                        inputMode="numeric"
+                        value={vencimiento}
+                        onChange={(e) => setVencimiento(formatearVencimiento(e.target.value))}
+                        required
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="field__label">CVV</span>
+                      <input
+                        className="field__input"
+                        placeholder="•••"
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={cvv}
+                        onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                        required
+                      />
+                    </label>
+                  </div>
+
+                  <label className="checkout-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={guardarTarjeta}
+                      onChange={(e) => setGuardarTarjeta(e.target.checked)}
+                    />
+                    Guardar esta tarjeta para futuros pagos
+                  </label>
+
+                  <div className="checkout-accepted">
+                    <span>Aceptamos</span>
+                    <VisaIcon />
+                    <MastercardIcon />
+                    <PseIcon />
+                  </div>
+
+                  {error && <div className="form-message form-message--error">{error}</div>}
+
+                  <button type="submit" className="btn-primary checkout-pay-btn" disabled={loading}>
+                    <LockIcon /> {loading ? "Procesando..." : `Pagar ${formatCOP(total)}`}
+                  </button>
+
+                  <p className="checkout-terms">
+                    Al confirmar aceptas los términos del servicio y la política de privacidad.
+                  </p>
+                </form>
+              ) : (
+                <div className="checkout-form">
+                  <p className="auth-subtitle" style={{ margin: 0 }}>
+                    Selecciona tu banco para continuar con el pago por PSE.
+                  </p>
+
+                  <div className="checkout-bank-grid">
+                    {BANCOS_PSE.map((banco) => (
+                      <button
+                        key={banco.nombre}
+                        type="button"
+                        className={`checkout-bank-btn ${
+                          bancoSeleccionado === banco.nombre ? "checkout-bank-btn--active" : ""
+                        }`}
+                        onClick={() => setBancoSeleccionado(banco.nombre)}
+                      >
+                        <span
+                          className="checkout-bank-icon"
+                          style={{ background: banco.color, color: banco.textColor }}
+                        >
+                          {banco.sigla}
+                        </span>
+                        <span className="checkout-bank-name">{banco.nombre}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {error && <div className="form-message form-message--error">{error}</div>}
+
+                  <button
+                    type="button"
+                    className="btn-primary checkout-pay-btn"
+                    onClick={handlePagar}
+                    disabled={loading || !bancoSeleccionado}
+                  >
+                    {loading
+                      ? "Redirigiendo..."
+                      : `Continuar con ${bancoSeleccionado || "tu banco"} · ${formatCOP(total)}`}
+                  </button>
+                </div>
+              )}
+            </section>
+
+            {/* ===================== RESUMEN DEL PAGO ===================== */}
+            <aside className="checkout-card checkout-summary-card">
+              <h2 className="checkout-summary-title">Resumen del pago</h2>
+
+              <div className="checkout-summary-item">
+                <strong>{bateriaNombre}</strong>
+                <span className="checkout-summary-muted">Aplicación única · {empresaNombre}</span>
+              </div>
+
+              <div className="checkout-summary-row checkout-summary-row--stepper">
+                <span>Cantidad de Baterías a comprar</span>
+                <div className="checkout-stepper">
+                  <button type="button" onClick={() => ajustarCantidad(-1)} aria-label="Restar">
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    className="checkout-stepper-input"
+                    value={cantidad}
+                    onChange={(e) => {
+                      const valor = parseInt(e.target.value, 10);
+                      setCantidad(Number.isNaN(valor) ? 1 : Math.max(1, valor));
+                    }}
+                  />
+                  <button type="button" onClick={() => ajustarCantidad(1)} aria-label="Sumar">
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="checkout-summary-row">
+                <span>Tarifa por Batería</span>
+                <span>{formatCOP(tarifaPorBateria)}</span>
+              </div>
+
+              <div className="checkout-summary-row">
+                <span>
+                  Subtotal ({cantidad} x {formatCOP(tarifaPorBateria)})
+                </span>
+                <span>{formatCOP(subtotal)}</span>
+              </div>
+
+              <div className="checkout-summary-row">
+                <span>IVA (19%)</span>
+                <span>{formatCOP(iva)}</span>
+              </div>
+
+              <div className="checkout-summary-divider" />
+
+              <div className="checkout-summary-row checkout-summary-row--total">
+                <span>Total a pagar</span>
+                <span>{formatCOP(total)}</span>
+              </div>
+
+              <p className="checkout-secure-note">
+                <LockIcon small /> Pago seguro · tus datos viajan cifrados SSL.
+              </p>
+            </aside>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

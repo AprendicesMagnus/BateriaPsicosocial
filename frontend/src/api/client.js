@@ -29,4 +29,5 @@ async function request(path, { method = "GET", body, token } = {}) {
   return data;
 }
 
+export { request };
 export default request;
