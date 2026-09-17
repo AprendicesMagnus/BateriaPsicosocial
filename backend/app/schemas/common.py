@@ -1,0 +1,193 @@
+from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, EmailStr, Field
+
+
+class UsuarioPublico(BaseModel):
+    id: UUID
+    nombre: str
+    apellido: str
+    email: EmailStr
+    rol: str
+    emailVerificado: bool
+    estado: str
+    organizacionId: UUID | None = None
+    areaId: UUID | None = None
+    numeroIdentificacion: str | None = None
+    cargo: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class RegistroRequest(BaseModel):
+    nombre: str
+    apellido: str
+    email: EmailStr
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class VerificarEmailRequest(BaseModel):
+    email: EmailStr
+    codigo: str
+
+
+class ReenviarCodigoRequest(BaseModel):
+    email: EmailStr
+    tipo: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class VerifyResetCodeRequest(BaseModel):
+    email: EmailStr
+    codigo: str
+
+
+class ResetPasswordRequest(BaseModel):
+    resetToken: str
+    password: str
+
+
+class UsuarioCreate(BaseModel):
+    nombre: str
+    apellido: str
+    email: EmailStr
+    password: str
+    rolCodigo: str
+    organizacionId: UUID | None = None
+    areaId: UUID | None = None
+    numeroIdentificacion: str | None = None
+    cargo: str | None = None
+
+
+class UsuarioUpdate(BaseModel):
+    nombre: str | None = None
+    apellido: str | None = None
+    rolCodigo: str | None = None
+    estado: str | None = None
+    organizacionId: UUID | None = None
+    areaId: UUID | None = None
+    numeroIdentificacion: str | None = None
+    cargo: str | None = None
+
+
+class RolCreate(BaseModel):
+    codigo: str = Field(min_length=3, max_length=50)
+    nombre: str
+    descripcion: str | None = None
+    permisos: list[str] = []
+
+
+class RolUpdate(BaseModel):
+    nombre: str | None = None
+    descripcion: str | None = None
+    permisos: list[str] | None = None
+    activo: bool | None = None
+
+
+class OrganizacionCreate(BaseModel):
+    nombre: str
+    nit: str
+    sector: str | None = None
+    municipio: str | None = None
+    telefono: str | None = None
+    email: EmailStr | None = None
+
+
+class OrganizacionUpdate(BaseModel):
+    nombre: str | None = None
+    nit: str | None = None
+    sector: str | None = None
+    municipio: str | None = None
+    telefono: str | None = None
+    email: EmailStr | None = None
+    activa: bool | None = None
+
+
+class AreaCreate(BaseModel):
+    organizacionId: UUID
+    nombre: str
+
+
+class AreaUpdate(BaseModel):
+    nombre: str | None = None
+    activa: bool | None = None
+
+
+class PreguntaCreate(BaseModel):
+    codigo: str
+    enunciado: str
+    orden: int
+    inversa: bool = False
+    valorMinimo: int = 1
+    valorMaximo: int = 5
+
+
+class DimensionCreate(BaseModel):
+    codigo: str
+    nombre: str
+    dominio: str
+    orden: int
+    preguntas: list[PreguntaCreate] = []
+
+
+class BaremoCreate(BaseModel):
+    dimensionCodigo: str
+    nivel: str
+    minimo: float
+    maximo: float
+    orden: int
+
+
+class CuestionarioCreate(BaseModel):
+    codigo: str
+    nombre: str
+    descripcion: str | None = None
+    dimensiones: list[DimensionCreate]
+    baremos: list[BaremoCreate] = []
+
+
+class EvaluacionCreate(BaseModel):
+    organizacionId: UUID
+    nombre: str
+    versionId: UUID | None = None
+    trabajadoresIds: list[UUID] = []
+
+
+class EvaluacionCierre(BaseModel):
+    justificacion: str | None = None
+
+
+class ConsentimientoRequest(BaseModel):
+    aceptado: bool = True
+
+
+class RespuestaRequest(BaseModel):
+    preguntaId: UUID
+    valor: int
+
+
+class InformeRequest(BaseModel):
+    tipo: str
+    formato: str = "PDF"
+    trabajadorId: UUID | None = None
+    areaId: UUID | None = None
+
+
+class AuditoriaOut(BaseModel):
+    id: UUID
+    usuarioId: UUID | None
+    accion: str
+    entidad: str | None
+    entidadId: str | None
+    ipOrigen: str | None
+    detalle: dict | None
+    registradoEn: datetime
