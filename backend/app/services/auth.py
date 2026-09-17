@@ -1,0 +1,234 @@
+from datetime import datetime, timedelta
+from random import randint
+from uuid import UUID
+
+from sqlalchemy.orm import Session, joinedload
+
+from app.core.config import get_settings
+from app.core.crypto import email_valido, hash_password, password_valida, utcnow, verificar_password
+from app.core.errors import AppError
+from app.core.security import crear_token_reset, crear_token_sesion, decodificar_token
+from app.models.user import CodigoVerificacion, Rol, Usuario
+from app.services.correo import enviar_codigo_verificacion
+
+settings = get_settings()
+
+
+def usuario_publico(usuario: Usuario) -> dict:
+    return {
+        "id": str(usuario.id),
+        "nombre": usuario.nombre,
+        "apellido": usuario.apellido,
+        "email": usuario.email,
+        "rol": usuario.rol.codigo,
+        "emailVerificado": usuario.email_verificado,
+        "estado": usuario.estado,
+        "organizacionId": str(usuario.organizacion_id) if usuario.organizacion_id else None,
+        "areaId": str(usuario.area_id) if usuario.area_id else None,
+        "numeroIdentificacion": usuario.numero_identificacion,
+        "cargo": usuario.cargo,
+    }
+
+
+def _obtener_rol(db: Session, codigo: str) -> Rol:
+    rol = db.query(Rol).filter(Rol.codigo == codigo).first()
+    if rol is None:
+        raise AppError(500, "El catálogo de roles no está inicializado.")
+    return rol
+
+
+def _generar_codigo() -> str:
+    return str(randint(100000, 999999))
+
+
+def crear_y_enviar_codigo(db: Session, usuario: Usuario, tipo: str) -> None:
+    codigo = _generar_codigo()
+    registro = CodigoVerificacion(
+        usuario_id=usuario.id,
+        codigo=codigo,
+        tipo=tipo,
+        expira_en=utcnow() + timedelta(minutes=settings.codigo_expira_minutos),
+    )
+    db.add(registro)
+    db.commit()
+    enviar_codigo_verificacion(usuario.email, usuario.nombre, codigo, tipo)
+
+
+def registrar(db: Session, data) -> dict:
+    if not data.nombre or not data.apellido or not data.email or not data.password:
+        raise AppError(400, "Todos los campos son obligatorios.")
+    if not email_valido(str(data.email)):
+        raise AppError(400, "El formato del correo electrónico no es válido.")
+    if not password_valida(data.password):
+        raise AppError(
+            400,
+            "La contraseña debe tener mínimo 8 caracteres, e incluir mayúsculas, minúsculas y números.",
+        )
+    if db.query(Usuario).filter(Usuario.email == str(data.email).lower()).first():
+        raise AppError(409, "Ya existe una cuenta registrada con este correo.")
+
+    usuario = Usuario(
+        nombre=data.nombre.strip(),
+        apellido=data.apellido.strip(),
+        email=str(data.email).lower(),
+        password_hash=hash_password(data.password),
+        rol_id=_obtener_rol(db, "TRABAJADOR").id,
+        email_verificado=False,
+        estado="ACTIVO",
+    )
+    db.add(usuario)
+    db.commit()
+    db.refresh(usuario)
+    usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario.id).one()
+    crear_y_enviar_codigo(db, usuario, "VERIFICACION_EMAIL")
+    return {
+        "message": "Cuenta creada. Revisa tu correo para verificar tu cuenta.",
+        "email": usuario.email,
+    }
+
+
+def verificar_email(db: Session, email: str, codigo: str) -> dict:
+    usuario = db.query(Usuario).filter(Usuario.email == email.lower()).first()
+    if usuario is None:
+        raise AppError(404, "No existe una cuenta con este correo.")
+    if usuario.email_verificado:
+        return {"message": "La cuenta ya estaba verificada."}
+
+    registro = (
+        db.query(CodigoVerificacion)
+        .filter(
+            CodigoVerificacion.usuario_id == usuario.id,
+            CodigoVerificacion.tipo == "VERIFICACION_EMAIL",
+            CodigoVerificacion.codigo == codigo,
+            CodigoVerificacion.usado.is_(False),
+            CodigoVerificacion.expira_en > utcnow(),
+        )
+        .order_by(CodigoVerificacion.creado_en.desc())
+        .first()
+    )
+    if registro is None:
+        raise AppError(400, "El código es inválido o ha expirado.")
+
+    usuario.email_verificado = True
+    registro.usado = True
+    db.commit()
+    return {"message": "Cuenta verificada correctamente."}
+
+
+def reenviar_codigo(db: Session, email: str, tipo: str) -> dict:
+    if tipo not in {"VERIFICACION_EMAIL", "RESET_PASSWORD"}:
+        raise AppError(400, "Solicitud inválida.")
+    usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.email == email.lower()).first()
+    if usuario is None:
+        return {"message": "Si el correo existe, se ha enviado un nuevo código."}
+    if tipo == "VERIFICACION_EMAIL" and usuario.email_verificado:
+        return {"message": "La cuenta ya estaba verificada."}
+    crear_y_enviar_codigo(db, usuario, tipo)
+    return {"message": "Se ha enviado un nuevo código."}
+
+
+def login(db: Session, email: str, password: str) -> dict:
+    if not email or not password:
+        raise AppError(400, "Correo y contraseña son obligatorios.")
+    usuario = (
+        db.query(Usuario)
+        .options(joinedload(Usuario.rol))
+        .filter(Usuario.email == email.lower())
+        .first()
+    )
+    if usuario is None:
+        raise AppError(401, "Credenciales incorrectas.")
+
+    ahora = utcnow()
+    if usuario.bloqueado_hasta and usuario.bloqueado_hasta > ahora:
+        minutos = int((usuario.bloqueado_hasta - ahora).total_seconds() // 60) + 1
+        raise AppError(
+            423,
+            f"Cuenta bloqueada temporalmente por múltiples intentos fallidos. Intenta de nuevo en {minutos} minuto(s).",
+        )
+    if usuario.estado != "ACTIVO":
+        raise AppError(403, "Esta cuenta se encuentra inactiva.")
+
+    if not verificar_password(password, usuario.password_hash):
+        intentos = usuario.intentos_fallidos + 1
+        bloqueado = intentos >= settings.max_intentos_login
+        usuario.intentos_fallidos = 0 if bloqueado else intentos
+        usuario.bloqueado_hasta = ahora + timedelta(minutes=settings.bloqueo_minutos) if bloqueado else None
+        db.commit()
+        if bloqueado:
+            raise AppError(
+                423,
+                f"Cuenta bloqueada temporalmente por {settings.bloqueo_minutos} minutos tras 5 intentos fallidos.",
+            )
+        raise AppError(401, "Credenciales incorrectas.")
+
+    if not usuario.email_verificado:
+        raise AppError(
+            403,
+            "Debes verificar tu correo antes de iniciar sesión.",
+            requiresVerification=True,
+            email=usuario.email,
+        )
+
+    usuario.intentos_fallidos = 0
+    usuario.bloqueado_hasta = None
+    db.commit()
+    token = crear_token_sesion(str(usuario.id), usuario.rol.codigo, usuario.email)
+    return {"token": token, "usuario": usuario_publico(usuario)}
+
+
+def forgot_password(db: Session, email: str) -> dict:
+    usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.email == email.lower()).first()
+    if usuario:
+        crear_y_enviar_codigo(db, usuario, "RESET_PASSWORD")
+    return {
+        "message": "Si el correo está registrado, recibirás un código para restablecer tu contraseña."
+    }
+
+
+def verify_reset_code(db: Session, email: str, codigo: str) -> dict:
+    usuario = db.query(Usuario).filter(Usuario.email == email.lower()).first()
+    if usuario is None:
+        raise AppError(400, "El código es inválido o ha expirado.")
+    registro = (
+        db.query(CodigoVerificacion)
+        .filter(
+            CodigoVerificacion.usuario_id == usuario.id,
+            CodigoVerificacion.tipo == "RESET_PASSWORD",
+            CodigoVerificacion.codigo == codigo,
+            CodigoVerificacion.usado.is_(False),
+            CodigoVerificacion.expira_en > utcnow(),
+        )
+        .order_by(CodigoVerificacion.creado_en.desc())
+        .first()
+    )
+    if registro is None:
+        raise AppError(400, "El código es inválido o ha expirado.")
+    registro.usado = True
+    db.commit()
+    return {"resetToken": crear_token_reset(str(usuario.id))}
+
+
+def reset_password(db: Session, reset_token: str, password: str) -> dict:
+    if not reset_token or not password:
+        raise AppError(400, "Solicitud inválida.")
+    if not password_valida(password):
+        raise AppError(
+            400,
+            "La contraseña debe tener mínimo 8 caracteres, e incluir mayúsculas, minúsculas y números.",
+        )
+    payload = decodificar_token(reset_token, error_sesion=False)
+    if payload.get("purpose") != "reset_password":
+        raise AppError(400, "Token inválido.")
+    usuario = db.query(Usuario).filter(Usuario.id == payload.get("sub")).first()
+    if usuario is None:
+        raise AppError(400, "Token inválido.")
+    usuario.password_hash = hash_password(password)
+    usuario.intentos_fallidos = 0
+    usuario.bloqueado_hasta = None
+    db.commit()
+    return {"message": "Contraseña restablecida correctamente."}
+
+
+def me(usuario: Usuario) -> dict:
+    return {"usuario": usuario_publico(usuario)}

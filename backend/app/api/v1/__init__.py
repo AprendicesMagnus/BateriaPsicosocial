@@ -1,0 +1,29 @@
+from fastapi import APIRouter
+
+from app.api.v1 import (
+    auth,
+    auditoria,
+    cuestionarios,
+    evaluaciones,
+    indicadores,
+    informes,
+    notificaciones,
+    organizaciones,
+    prediccion,
+    roles,
+    usuarios,
+)
+
+router = APIRouter(prefix="/api")
+
+router.include_router(auth.router, prefix="/auth", tags=["Autenticacion"])
+router.include_router(usuarios.router, prefix="/usuarios", tags=["Usuarios"])
+router.include_router(roles.router, prefix="/roles", tags=["Roles"])
+router.include_router(organizaciones.router, prefix="/organizaciones", tags=["Organizaciones"])
+router.include_router(cuestionarios.router, prefix="/cuestionarios", tags=["Cuestionarios"])
+router.include_router(evaluaciones.router, prefix="/evaluaciones", tags=["Evaluaciones"])
+router.include_router(informes.router, prefix="/informes", tags=["Informes"])
+router.include_router(indicadores.router, prefix="/indicadores", tags=["Indicadores"])
+router.include_router(prediccion.router, prefix="/prediccion", tags=["Prediccion"])
+router.include_router(notificaciones.router, prefix="/notificaciones", tags=["Notificaciones"])
+router.include_router(auditoria.router, prefix="/auditoria", tags=["Auditoria"])
