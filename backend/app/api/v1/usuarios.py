@@ -3,10 +3,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, require_gestor
+from app.api.deps import get_current_user, require_admin, require_gestor
 from app.db.session import get_db
 from app.models.user import Usuario
-from app.schemas.common import UsuarioCreate, UsuarioUpdate
+from app.schemas.common import CambioRolRequest, UsuarioCreate, UsuarioUpdate
 from app.services import auditoria as auditoria_service
 from app.services import usuarios as usuarios_service
 
@@ -75,6 +75,32 @@ def desactivar_usuario(
         entidad="Usuario",
         entidad_id=str(usuario_id),
         request=request,
+    )
+    return res
+
+
+@router.patch("/{usuario_id}/rol")
+def cambiar_rol_usuario(
+    usuario_id: UUID,
+    data: CambioRolRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_admin),
+):
+    """Cambia el rol de un usuario existente.
+
+    Solo los Administradores pueden invocar este endpoint.
+    No se permite quitar el rol ADMINISTRADOR al único administrador activo del sistema.
+    """
+    res = usuarios_service.cambiar_rol_usuario(db, usuario_id, data.rol_codigo, actual)
+    auditoria_service.registrar_auditoria(
+        db,
+        usuario=actual,
+        accion="CAMBIAR_ROL_USUARIO",
+        entidad="Usuario",
+        entidad_id=str(usuario_id),
+        request=request,
+        detalle={"rol_anterior": res.get("rol_anterior"), "rol_nuevo": data.rol_codigo},
     )
     return res
 

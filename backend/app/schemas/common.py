@@ -93,6 +93,10 @@ class RolUpdate(BaseModel):
     activo: bool | None = None
 
 
+class CambioRolRequest(BaseModel):
+    rol_codigo: str = Field(min_length=2, max_length=50)
+
+
 class OrganizacionCreate(BaseModel):
     nombre: str
     nit: str
