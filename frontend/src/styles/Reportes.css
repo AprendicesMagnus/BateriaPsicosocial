@@ -1,0 +1,128 @@
+/* ============================================
+   Reportes
+   (barra superior, fondo oscuro, breadcrumb y título
+   vienen de app-shell.css)
+   ============================================ */
+
+.reportes-tag {
+  background: #eaf5e9;
+  color: #2f8a3e;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.reportes-legal-note {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  margin: 0 0 24px;
+}
+
+.reportes-card {
+  border: 2px solid var(--gold-500);
+  overflow: hidden;
+}
+
+.reportes-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line-200);
+}
+.reportes-item:last-child {
+  border-bottom: none;
+}
+
+.reportes-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reportes-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.reportes-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.reportes-item-desc {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.reportes-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.reportes-status--listo {
+  background: #e9f8ee;
+  color: var(--success-600);
+}
+.reportes-status--restringido {
+  background: #eef1fb;
+  color: var(--ink-500);
+}
+
+.reportes-download-btn {
+  display: flex;
+  align-items: center;
+  background: var(--navy-900);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.reportes-download-btn:hover:not(:disabled) {
+  background: var(--navy-800);
+}
+.reportes-download-btn--disabled,
+.reportes-download-btn:disabled {
+  background: #c7cce4;
+  color: #ffffff;
+  cursor: not-allowed;
+}
+
+.reportes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 60px 24px;
+  color: var(--ink-500);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 680px) {
+  .reportes-item {
+    flex-wrap: wrap;
+  }
+  .reportes-item-info {
+    flex-basis: 100%;
+    order: 2;
+  }
+}

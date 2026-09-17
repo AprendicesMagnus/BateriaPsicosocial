@@ -1,0 +1,160 @@
+import { useAuth } from "../context/AuthContext";
+import AppTopbar from "../components/AppTopbar";
+import "../styles/app-shell.css";
+import "../styles/perfil.css";
+
+// ==================================================
+// Datos de ejemplo — reemplaza por tu API real cuando exista
+// ==================================================
+// Cuando haya backend, esto debería venir de algo como:
+//   const { data: compras } = await api.get(`/usuarios/${usuario.id}/compras`)
+// Mientras tanto, se deja un arreglo local. Si está vacío ([]), la tarjeta
+// muestra el estado "aún no has comprado ninguna batería".
+const HISTORIAL_COMPRAS_MOCK = [
+  { id: 1, cantidad: 3, fecha: "2026-08-27" },
+  { id: 2, cantidad: 1, fecha: "2026-08-14" },
+  { id: 3, cantidad: 2, fecha: "2026-07-30" },
+];
+
+function formatearFecha(fechaIso) {
+  return new Intl.DateTimeFormat("es-CO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(fechaIso));
+}
+
+function ReceiptIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path
+        d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3Z"
+        strokeLinejoin="round"
+      />
+      <path d="M9 8h6M9 12h6M9 16h3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export default function Perfil() {
+  // Ajusta estos nombres de campo según lo que realmente guarde tu AuthContext.
+  const { usuario } = useAuth();
+
+  const nombreUsuario = usuario
+    ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
+    : "Usuario";
+  const rolUsuario = usuario?.rol ?? "Sin rol asignado";
+  const correoUsuario = usuario?.email ?? usuario?.correo ?? "—";
+  const empresaUsuario = usuario?.empresa ?? "—";
+  const iniciales =
+    nombreUsuario
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "U";
+
+  return (
+    <div className="app-shell-page">
+      <AppTopbar />
+
+      <main className="app-hero">
+        <div className="app-decor app-decor--1" />
+        <div className="app-decor app-decor--2" />
+        <div className="app-decor app-decor--3" />
+
+        <div className="app-content">
+          <nav className="app-breadcrumb">
+            Mi cuenta <span>›</span> Perfil
+          </nav>
+          <h1 className="app-title">Mi Perfil</h1>
+          <p className="app-subtitle">Consulta y administra la información de tu cuenta.</p>
+
+          <div className="perfil-layout">
+            <div className="app-card perfil-card">
+              <div className="perfil-header">
+                {/* ANTES: <div className="perfil-avatar">{iniciales}</div>
+                    Ahora: si usuario.fotoUrl existe, se muestra la foto; si no, las iniciales de siempre. */}
+                {usuario?.fotoUrl ? (
+                  <img
+                    src={usuario.fotoUrl}
+                    alt={nombreUsuario}
+                    className="perfil-avatar perfil-avatar--foto"
+                  />
+                ) : (
+                  <div className="perfil-avatar">{iniciales}</div>
+                )}
+                <div>
+                  <h2 className="perfil-nombre">{nombreUsuario}</h2>
+                  <span className="perfil-rol">{rolUsuario}</span>
+                </div>
+              </div>
+
+              <div className="perfil-divider" />
+
+              <div className="perfil-grid">
+                <div className="perfil-field">
+                  <span className="perfil-field-label">Nombre</span>
+                  <span className="perfil-field-value">{usuario?.nombre ?? "—"}</span>
+                </div>
+                <div className="perfil-field">
+                  <span className="perfil-field-label">Apellido</span>
+                  <span className="perfil-field-value">{usuario?.apellido ?? "—"}</span>
+                </div>
+                <div className="perfil-field">
+                  <span className="perfil-field-label">Correo electrónico</span>
+                  <span className="perfil-field-value">{correoUsuario}</span>
+                </div>
+                <div className="perfil-field">
+                  <span className="perfil-field-label">Rol</span>
+                  <span className="perfil-field-value">{rolUsuario}</span>
+                </div>
+                <div className="perfil-field">
+                  <span className="perfil-field-label">Empresa</span>
+                  <span className="perfil-field-value">{empresaUsuario}</span>
+                </div>
+              </div>
+
+              <div className="perfil-actions">
+                <button type="button" className="app-btn-secondary" disabled title="Disponible próximamente">
+                  Editar perfil
+                </button>
+                <button type="button" className="app-btn-secondary" disabled title="Disponible próximamente">
+                  Cambiar contraseña
+                </button>
+              </div>
+            </div>
+
+            {/* ===================== HISTORIAL DE COMPRAS ===================== */}
+            <div className="app-card compras-card">
+              <h2 className="compras-titulo">Historial de compras</h2>
+              <p className="compras-subtitulo">Baterías de riesgo psicosocial compradas</p>
+
+              {HISTORIAL_COMPRAS_MOCK.length > 0 ? (
+                <div className="compras-list">
+                  {HISTORIAL_COMPRAS_MOCK.map((compra) => (
+                    <div className="compras-row" key={compra.id}>
+                      <span className="compras-row-icon">
+                        <ReceiptIcon />
+                      </span>
+                      <div className="compras-row-main">
+                        <span className="compras-row-qty">
+                          {compra.cantidad} {compra.cantidad === 1 ? "batería" : "baterías"}
+                        </span>
+                        <span className="compras-row-date">{formatearFecha(compra.fecha)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="compras-empty">
+                  <p>Aún no has comprado ninguna batería.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
