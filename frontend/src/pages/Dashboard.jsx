@@ -434,17 +434,17 @@ export default function Dashboard() {
 
             <div className="questionnaire-options">
 
-              <button type="button" onClick={() => navigate("/cuestionarios")}>
+              <button type="button" onClick={() => navigate("/cuestionario-estres")}>
                 <strong>Cuestionario de Estrés</strong>
                 <span>Evaluación de síntomas relacionados con estrés.</span>
               </button>
 
-              <button type="button" onClick={() => navigate("/cuestionarios")}>
+              <button type="button" onClick={() => navigate("/cuestionario-estres")}>
                 <strong>Evaluación Extralaboral</strong>
                 <span>Evaluación de factores externos al trabajo.</span>
               </button>
 
-              <button type="button" onClick={() => navigate("/cuestionarios")}>
+              <button type="button" onClick={() => navigate("/cuestionario-estres")}>
                 <strong>Evaluación Intralaboral</strong>
                 <span>Evaluación de las condiciones dentro del entorno laboral.</span>
               </button>

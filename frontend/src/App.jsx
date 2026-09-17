@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Panel from "./pages/Panel";
 import Dashboard from "./pages/Dashboard";
+import CuestionarioEstres from "./pages/CuestionarioEstres";
 
 export default function App() {
   return (
@@ -24,6 +25,8 @@ export default function App() {
           <Route path="/verificar-codigo" element={<VerifyCode mode="reset" />} />
           <Route path="/restablecer-contrasena" element={<ResetPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/cuestionario-estres" element={<CuestionarioEstres />}/>
+          
           <Route
             path="/panel"
             element={
