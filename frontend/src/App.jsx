@@ -8,7 +8,7 @@ import CreateAccount from "./pages/CreateAccount";
 import VerifyCode from "./pages/VerifyCode";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import ResetSuccessful from "./pages/ResetSuccessful";
+import Checkout from "./pages/Checkout";
 import Panel from "./pages/Panel";
 
 export default function App() {
@@ -23,6 +23,9 @@ export default function App() {
           <Route path="/olvide-contrasena" element={<ForgotPassword />} />
           <Route path="/verificar-codigo" element={<VerifyCode mode="reset" />} />
           <Route path="/restablecer-contrasena" element={<ResetPassword />} />
+          {/* TEMPORAL: sin ProtectedRoute para poder ver el diseño sin loguearse.
+              Volver a envolver con <ProtectedRoute> cuando se termine de revisar. */}
+          <Route path="/pago" element={<Checkout />} />
           <Route
             path="/panel"
             element={

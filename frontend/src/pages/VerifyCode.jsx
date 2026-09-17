@@ -15,7 +15,7 @@ function VerifyCodeBackground() {
 export default function VerifyCode({ mode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const email = location.state?.email || "prueba@empresa.com"; // TEMPORAL para ver el diseño
+  const email = location.state?.email;
 
   const [codigo, setCodigo] = useState("");
   const [error, setError] = useState("");

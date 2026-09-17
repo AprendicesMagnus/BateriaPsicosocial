@@ -9,3 +9,4 @@ storage/
 backend/node_modules/
 backend/.venv/
 *.log
+node_modules/
