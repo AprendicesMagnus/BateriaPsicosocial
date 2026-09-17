@@ -25,7 +25,14 @@ export default function App() {
           <Route path="/olvide-contrasena" element={<ForgotPassword />} />
           <Route path="/verificar-codigo" element={<VerifyCode mode="reset" />} />
           <Route path="/restablecer-contrasena" element={<ResetPassword />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/cuestionario-estres" element={<CuestionarioEstres />}/>
           {/* TEMPORAL: sin ProtectedRoute para poder ver el diseño sin loguearse.
               Volver a envolver con <ProtectedRoute> cuando se termine de revisar. */}
