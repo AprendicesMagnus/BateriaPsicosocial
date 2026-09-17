@@ -14,6 +14,8 @@ import Perfil from "./pages/Perfil";
 import VerificarNit from "./pages/VerificarNit";
 import CrearEmpresa from "./pages/Crearempresa";
 import Panel from "./pages/Panel";
+import Dashboard from "./pages/Dashboard";
+import CuestionarioEstres from "./pages/CuestionarioEstres";
 
 export default function App() {
   return (
@@ -27,6 +29,8 @@ export default function App() {
           <Route path="/olvide-contrasena" element={<ForgotPassword />} />
           <Route path="/verificar-codigo" element={<VerifyCode mode="reset" />} />
           <Route path="/restablecer-contrasena" element={<ResetPassword />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/cuestionario-estres" element={<CuestionarioEstres />}/>
           {/* TEMPORAL: sin ProtectedRoute para poder ver el diseño sin loguearse.
               Volver a envolver con <ProtectedRoute> cuando se termine de revisar. */}
           <Route path="/pago" element={<Checkout />} />
