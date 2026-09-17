@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/cuestionario-estres.css";
 
 const preguntas = [
@@ -47,9 +47,17 @@ const opciones = [
   "Nunca",
 ];
 
+// Rutas usadas para saber qué botón resaltar en el menú/pestañas
+const RUTAS = {
+  estres: "/cuestionario-estresB",
+  extralaboral: "/cuestionario-extralaboralB",
+  intralaboral: "/cuestionario-intralaboralB",
+};
+
 export default function CuestionarioEstres() {
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [respuestas, setRespuestas] = useState({});
   const [pagina, setPagina] = useState(0); // 0 = primera página (preguntas 1-8)
@@ -139,9 +147,11 @@ export default function CuestionarioEstres() {
         <nav className="questionnaire-menu">
 
           <button
-            className="questionnaire-menu-item active"
+            className={`questionnaire-menu-item ${
+              location.pathname === RUTAS.estres ? "active" : ""
+            }`}
             type="button"
-            onClick={() => navigate("/cuestionario-estres")}
+            onClick={() => navigate(RUTAS.estres)}
           >
             <span>▣</span>
 
@@ -154,9 +164,11 @@ export default function CuestionarioEstres() {
 
 
           <button
-            className="questionnaire-menu-item"
+            className={`questionnaire-menu-item ${
+              location.pathname === RUTAS.extralaboral ? "active" : ""
+            }`}
             type="button"
-            onClick={() => navigate("/cuestionario-extralaboral")}
+            onClick={() => navigate(RUTAS.extralaboral)}
           >
             <span>▣</span>
 
@@ -169,15 +181,17 @@ export default function CuestionarioEstres() {
 
 
           <button
-            className="questionnaire-menu-item"
+            className={`questionnaire-menu-item ${
+              location.pathname === RUTAS.intralaboral ? "active" : ""
+            }`}
             type="button"
-            onClick={() => navigate("/cuestionario-intralaboral")}
+            onClick={() => navigate(RUTAS.intralaboral)}
           >
             <span>▣</span>
 
             <div>
               <strong>Factores intralaborales</strong>
-              <small>Forma A · 123 preguntas</small>
+              <small>Forma B · 88 preguntas</small>
             </div>
 
           </button>
@@ -185,7 +199,6 @@ export default function CuestionarioEstres() {
         </nav>
 
 
-       
         {/* PIE DEL MENÚ */}
 
         <div className="questionnaire-sidebar-footer">
@@ -202,7 +215,7 @@ export default function CuestionarioEstres() {
 
       {/* =====================================================
           CONTENIDO
-          (se quitó el encabezado "Hola, Diego Fernando")
+          
       ===================================================== */}
 
       <main className="questionnaire-main">
@@ -244,26 +257,28 @@ export default function CuestionarioEstres() {
 
           <button
             type="button"
-            className="active"
-            onClick={() => navigate("/cuestionario-estres")}
+            className={location.pathname === RUTAS.estres ? "active" : ""}
+            onClick={() => navigate(RUTAS.estres)}
           >
-            <strong>Estrés</strong>
+            <strong>Estrés B</strong>
             <span>31</span>
           </button>
 
           <button
             type="button"
-            onClick={() => navigate("/cuestionario-extralaboral")}
+            className={location.pathname === RUTAS.extralaboral ? "active" : ""}
+            onClick={() => navigate(RUTAS.extralaboral)}
           >
-            <strong>Extralaboral</strong>
+            <strong>Extralaboral B</strong>
             <span>31</span>
           </button>
 
           <button
             type="button"
-            onClick={() => navigate("/cuestionario-intralaboral")}
+            className={location.pathname === RUTAS.intralaboral ? "active" : ""}
+            onClick={() => navigate(RUTAS.intralaboral)}
           >
-            <strong>Intralaboral - Forma A</strong>
+            <strong>Intralaboral - Forma B</strong>
             <span>123</span>
           </button>
 

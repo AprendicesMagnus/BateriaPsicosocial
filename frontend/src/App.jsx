@@ -12,6 +12,12 @@ import Checkout from "./pages/Checkout";
 import Panel from "./pages/Panel";
 import Dashboard from "./pages/Dashboard";
 import CuestionarioEstres from "./pages/CuestionarioEstres";
+import CuestionarioExtralaboral from "./pages/CuestionarioExtralaboral";
+import CuestionarioIntralaboral from "./pages/CuestionarioIntralaboral";
+
+import CuestionarioEstresB from "./pages/CuestionarioEstresB";
+import CuestionarioExtralaboralB from "./pages/CuestionarioExtralaboralB";
+import CuestionarioIntralaboralB from "./pages/CuestionarioIntralaboralB";
 
 export default function App() {
   return (
@@ -25,15 +31,21 @@ export default function App() {
           <Route path="/olvide-contrasena" element={<ForgotPassword />} />
           <Route path="/verificar-codigo" element={<VerifyCode mode="reset" />} />
           <Route path="/restablecer-contrasena" element={<ResetPassword />} />
-<<<<<<< HEAD
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/cuestionario-estres" element={<CuestionarioEstres />}/>
-          
-=======
+          {/* preguntas tipo a. */}
+          <Route path="/cuestionario-estres" element={<CuestionarioEstres />} />
+          <Route path="/cuestionario-extralaboral" element={<CuestionarioExtralaboral />} />
+          <Route path="/cuestionario-intralaboral" element={<CuestionarioIntralaboral />} />
+
+{/* preguntas tipo B. */}
+          <Route path="/cuestionario-estresB" element={<CuestionarioEstresB />} />
+          <Route path="/cuestionario-extralaboralB" element={<CuestionarioExtralaboralB />} />
+          <Route path="/cuestionario-intralaboralB" element={<CuestionarioIntralaboralB />} />
           {/* TEMPORAL: sin ProtectedRoute para poder ver el diseño sin loguearse.
               Volver a envolver con <ProtectedRoute> cuando se termine de revisar. */}
           <Route path="/pago" element={<Checkout />} />
->>>>>>> 2773a46ea68b457a2f1b4a4574f859f9ddd4d40e
+
+          <Route path="/dashboard" element={<Dashboard />} />
+
           <Route
             path="/panel"
             element={

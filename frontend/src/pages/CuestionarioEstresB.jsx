@@ -141,7 +141,7 @@ export default function CuestionarioEstres() {
           <button
             className="questionnaire-menu-item active"
             type="button"
-            onClick={() => navigate("/cuestionario-estres")}
+            onClick={() => navigate("/cuestionario-estresB")}
           >
             <span>▣</span>
 
@@ -156,7 +156,7 @@ export default function CuestionarioEstres() {
           <button
             className="questionnaire-menu-item"
             type="button"
-            onClick={() => navigate("/cuestionario-extralaboral")}
+            onClick={() => navigate("/cuestionario-extralaboralB")}
           >
             <span>▣</span>
 
@@ -171,21 +171,19 @@ export default function CuestionarioEstres() {
           <button
             className="questionnaire-menu-item"
             type="button"
-            onClick={() => navigate("/cuestionario-intralaboral")}
+            onClick={() => navigate("/cuestionario-intralaboralB")}
           >
             <span>▣</span>
 
             <div>
               <strong>Factores intralaborales</strong>
-              <small>Forma A · 123 preguntas</small>
+              <small>Forma B · 123 preguntas</small>
             </div>
 
           </button>
 
         </nav>
 
-
-       
         {/* PIE DEL MENÚ */}
 
         <div className="questionnaire-sidebar-footer">
@@ -202,7 +200,7 @@ export default function CuestionarioEstres() {
 
       {/* =====================================================
           CONTENIDO
-          (se quitó el encabezado "Hola, Diego Fernando")
+          
       ===================================================== */}
 
       <main className="questionnaire-main">
@@ -245,26 +243,32 @@ export default function CuestionarioEstres() {
           <button
             type="button"
             className="active"
-            onClick={() => navigate("/cuestionario-estres")}
+            onClick={() => navigate("/cuestionario-estresB")}
           >
-            <strong>Estrés</strong>
+            <strong>Estrés B</strong>
             <span>31</span>
           </button>
 
+
+{/* =================================================
+            esta fallando el link
+        ================================================= */}
           <button
             type="button"
-            onClick={() => navigate("/cuestionario-extralaboral")}
+            onClick={() => navigate("/cuestionario-extralaboralB")}
           >
-            <strong>Extralaboral</strong>
+            <strong>Extralaboral B</strong>
             <span>31</span>
           </button>
-
+{/* =================================================
+            mal hay
+        ================================================= */}
           <button
             type="button"
-            onClick={() => navigate("/cuestionario-intralaboral")}
+            onClick={() => navigate("/cuestionario-intralaboralB")}
           >
-            <strong>Intralaboral - Forma A</strong>
-            <span>123</span>
+            <strong>Intralaboral - Forma B</strong>
+            <span>88</span>
           </button>
 
           <div className="general-progress">

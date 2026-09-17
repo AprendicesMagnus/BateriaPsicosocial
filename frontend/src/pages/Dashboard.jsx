@@ -3,15 +3,28 @@ import { useNavigate } from "react-router-dom";
 import "../styles/dashboard.css";
 
 /* =========================================================
-   CATEGORÍAS
+   CATEGORÍAS (fila principal)
 ========================================================= */
 
 const CATEGORIAS = [
   { id: 1, nombre: "Estrés", totalPreguntas: 31 },
-  { id: 2, nombre: "Extralaboral", totalPreguntas: 31 },
+  { id: 2, nombre: "Extralaboral A", totalPreguntas: 31 },
   { id: 3, nombre: "Intralaboral - Forma A", totalPreguntas: 123 },
-  { id: 4, nombre: "Socio demográfico", totalPreguntas: 31 },
+  { id: 4, nombre: "Socio demográfico A", totalPreguntas: 31 },
 ];
+
+/* =========================================================
+   CATEGORÍAS B (segunda fila, mismas funciones que las de arriba)
+========================================================= */
+
+const CATEGORIAS_B = [
+  { id: 5, nombre: "Estrés B", totalPreguntas: 31 },
+  { id: 6, nombre: "Extralaboral B", totalPreguntas: 31 },
+  { id: 7, nombre: "Intralaboral B", totalPreguntas: 123 },
+  { id: 7, nombre: "Socio demográfico B", totalPreguntas: 123 },
+];
+
+const TODAS_CATEGORIAS = [...CATEGORIAS, ...CATEGORIAS_B];
 
 /* =========================================================
    DATOS DE EJEMPLO (MOCK)
@@ -100,15 +113,69 @@ const DB_SIMULADA = {
       { id: 402, nombre: "Nicolás Vargas", fecha: "2026-09-06", puntaje: 22, nivelRiesgo: "Bajo" },
     ],
   },
+  5: {
+    poblacion: 31,
+    incremento: "+2 vs. mes ant.",
+    riesgo: { nivel: "Bajo", score: 44 },
+    distribucion: [
+      ["Bajo", "68%"],
+      ["Medio", "25%"],
+      ["Alto", "7%"],
+    ],
+    chart: {
+      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
+      puntaje: [50, 52, 54, 53, 56, 55, 57, 58, 56],
+      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
+    },
+    respondientes: [
+      { id: 501, nombre: "Sofía Ramírez", fecha: "2026-09-02", puntaje: 57, nivelRiesgo: "Medio" },
+      { id: 502, nombre: "Miguel Castro", fecha: "2026-09-04", puntaje: 41, nivelRiesgo: "Bajo" },
+    ],
+  },
+  6: {
+    poblacion: 31,
+    incremento: "+3 vs. mes ant.",
+    riesgo: { nivel: "Medio", score: 60 },
+    distribucion: [
+      ["Bajo", "55%"],
+      ["Medio", "36%"],
+      ["Alto", "9%"],
+    ],
+    chart: {
+      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
+      puntaje: [52, 55, 58, 59, 57, 61, 63, 60, 62],
+      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
+    },
+    respondientes: [
+      { id: 601, nombre: "Daniela Vega", fecha: "2026-09-03", puntaje: 63, nivelRiesgo: "Medio" },
+      { id: 602, nombre: "Andrés Molina", fecha: "2026-09-05", puntaje: 45, nivelRiesgo: "Bajo" },
+    ],
+  },
+  7: {
+    poblacion: 123,
+    incremento: "+9 vs. mes ant.",
+    riesgo: { nivel: "Medio", score: 53 },
+    distribucion: [
+      ["Bajo", "52%"],
+      ["Medio", "35%"],
+      ["Alto", "13%"],
+    ],
+    chart: {
+      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
+      puntaje: [46, 49, 51, 54, 52, 55, 57, 56, 58],
+      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
+    },
+    respondientes: [
+      { id: 701, nombre: "Laura Salazar", fecha: "2026-09-02", puntaje: 58, nivelRiesgo: "Medio" },
+      { id: 702, nombre: "Jorge Peña", fecha: "2026-09-06", puntaje: 36, nivelRiesgo: "Bajo" },
+    ],
+  },
 };
 
 /**
  * Simula la llamada a la base de datos / API.
  * Reemplaza el cuerpo por tu fetch real cuando tengas el backend:
- *
- *   const res = await fetch(`/api/categorias/${categoriaId}/resultados`);
- *   if (!res.ok) throw new Error("Error al cargar la categoría");
- *   return await res.json();
+ *();
  */
 function obtenerDatosCategoria(categoriaId) {
   return new Promise((resolve, reject) => {
@@ -123,9 +190,39 @@ function obtenerDatosCategoria(categoriaId) {
   });
 }
 
+/* =========================================================
+   CUESTIONARIOS DISPONIBLES EN EL MODAL
+   (cada uno tiene ruta para Tipo A y Tipo B)
+========================================================= */
+
+const CUESTIONARIOS_MODAL = [
+  {
+    clave: "estres",
+    titulo: "Cuestionario de Estrés",
+    descripcion: "Evaluación de síntomas relacionados con estrés.",
+    rutaA: "/cuestionario-estres",
+    rutaB: "/cuestionario-estresB",
+  },
+  {
+    clave: "extralaboral",
+    titulo: "Evaluación Extralaboral",
+    descripcion: "Evaluación de factores externos al trabajo.",
+    rutaA: "/cuestionario-extralaboral",
+    rutaB: "/cuestionario-extralaboralB",
+  },
+  {
+    clave: "intralaboral",
+    titulo: "Evaluación Intralaboral",
+    descripcion: "Evaluación de las condiciones dentro del entorno laboral.",
+    rutaA: "/cuestionario-intralaboral",
+    rutaB: "/cuestionario-intralaboralB",
+  },
+];
+
 export default function Dashboard() {
 
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [cuestionarioSeleccionado, setCuestionarioSeleccionado] = useState(null);
   const [categoriaActivaId, setCategoriaActivaId] = useState(2);
   const [datosCategoria, setDatosCategoria] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -133,7 +230,7 @@ export default function Dashboard() {
 
   const navigate = useNavigate();
 
-  const categoriaActiva = CATEGORIAS.find((c) => c.id === categoriaActivaId);
+  const categoriaActiva = TODAS_CATEGORIAS.find((c) => c.id === categoriaActivaId);
 
   const cargarCategoria = useCallback((id) => {
     setCargando(true);
@@ -155,6 +252,16 @@ export default function Dashboard() {
   useEffect(() => {
     cargarCategoria(categoriaActivaId);
   }, [categoriaActivaId, cargarCategoria]);
+
+  const cerrarModal = () => {
+    setMostrarModal(false);
+    setCuestionarioSeleccionado(null);
+  };
+
+  const elegirTipo = (ruta) => {
+    cerrarModal();
+    navigate(ruta);
+  };
 
   return (
     <div className="dashboard">
@@ -259,6 +366,25 @@ export default function Dashboard() {
 
         </div>
 
+        {/* Segunda fila: versiones "B" de Estrés, Extralaboral e Intralaboral,
+            con exactamente la misma funcionalidad que la fila de arriba. */}
+        <div className="category-tabs category-tabs--b" style={{ marginTop: 10 }}>
+
+          {CATEGORIAS_B.map((categoria) => (
+            <button
+              key={categoria.id}
+              type="button"
+              className={categoria.id === categoriaActivaId ? "selected" : ""}
+              onClick={() => setCategoriaActivaId(categoria.id)}
+              aria-pressed={categoria.id === categoriaActivaId}
+            >
+              {categoria.nombre}
+              <small>{categoria.totalPreguntas}</small>
+            </button>
+          ))}
+
+        </div>
+
         {error && (
           <p className="error-text">
             No se pudieron cargar los datos de "{categoriaActiva?.nombre}": {error}
@@ -328,7 +454,7 @@ export default function Dashboard() {
 
         <section className="indicators">
 
-          {CATEGORIAS.map((categoria) => {
+          {TODAS_CATEGORIAS.map((categoria) => {
             const esActiva = categoria.id === categoriaActivaId;
             const datos = esActiva ? datosCategoria : null;
 
@@ -410,50 +536,93 @@ export default function Dashboard() {
 
       {mostrarModal && (
 
-        <div className="modal-overlay" onClick={() => setMostrarModal(false)}>
+        <div className="modal-overlay" onClick={cerrarModal}>
 
           <div className="questionnaire-modal" onClick={(e) => e.stopPropagation()}>
 
-            <button className="modal-close" type="button" onClick={() => setMostrarModal(false)} aria-label="Cerrar ventana">
+            <button className="modal-close" type="button" onClick={cerrarModal} aria-label="Cerrar ventana">
               ×
             </button>
 
-            <div className="modal-icon">
-              <img
-                src="/logo a 2_Mesa de trabajo 1.jpg"
-                alt="Magnus"
-                style={{ height: 160, marginRight: "auto" }}
-              />
-            </div>
+            {!cuestionarioSeleccionado ? (
+              <>
+                <div className="modal-icon">
+                  <img
+                    src="/logo a 2_Mesa de trabajo 1.jpg"
+                    alt="Magnus"
+                    style={{ height: 160, marginRight: "auto" }}
+                  />
+                </div>
 
-            <h2>¿Qué cuestionario deseas realizar?</h2>
-            <p>
-              Selecciona el cuestionario que deseas realizar
-              para continuar con la evaluación.
-            </p>
+                <h2>¿Qué cuestionario deseas realizar?</h2>
+                <p>
+                  Selecciona el cuestionario que deseas realizar
+                  para continuar con la evaluación.
+                </p>
 
-            <div className="questionnaire-options">
+                <div className="questionnaire-options">
 
-              <button type="button" onClick={() => navigate("/cuestionario-estres")}>
-                <strong>Cuestionario de Estrés</strong>
-                <span>Evaluación de síntomas relacionados con estrés.</span>
-              </button>
+                  {CUESTIONARIOS_MODAL.map((c) => (
+                    <button
+                      key={c.clave}
+                      type="button"
+                      onClick={() => setCuestionarioSeleccionado(c)}
+                    >
+                      <strong>{c.titulo}</strong>
+                      <span>{c.descripcion}</span>
+                    </button>
+                  ))}
 
-              <button type="button" onClick={() => navigate("/cuestionario-estres")}>
-                <strong>Evaluación Extralaboral</strong>
-                <span>Evaluación de factores externos al trabajo.</span>
-              </button>
+                </div>
 
-              <button type="button" onClick={() => navigate("/cuestionario-estres")}>
-                <strong>Evaluación Intralaboral</strong>
-                <span>Evaluación de las condiciones dentro del entorno laboral.</span>
-              </button>
+                <button className="modal-main-button" type="button" onClick={() => navigate("/cuestionarios")}>
+                  Ir a cuestionarios
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="modal-back"
+                  type="button"
+                  onClick={() => setCuestionarioSeleccionado(null)}
+                  aria-label="Volver"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    alignSelf: "flex-start",
+                    marginBottom: 8,
+                    fontSize: 14,
+                    color: "#2e7869",
+                  }}
+                >
+                  ← Volver
+                </button>
 
-            </div>
+                <h2>{cuestionarioSeleccionado.titulo}</h2>
+                <p>Elige el tipo de cuestionario que deseas realizar.</p>
 
-            <button className="modal-main-button" type="button" onClick={() => navigate("/cuestionarios")}>
-              Ir a cuestionarios
-            </button>
+                <div className="questionnaire-options">
+
+                  <button
+                    type="button"
+                    onClick={() => elegirTipo(cuestionarioSeleccionado.rutaA)}
+                  >
+                    <strong>Tipo A</strong>
+                    <span>Versión estándar del cuestionario.</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => elegirTipo(cuestionarioSeleccionado.rutaB)}
+                  >
+                    <strong>Tipo B</strong>
+                    <span>Versión alternativa del cuestionario.</span>
+                  </button>
+
+                </div>
+              </>
+            )}
 
           </div>
         </div>
