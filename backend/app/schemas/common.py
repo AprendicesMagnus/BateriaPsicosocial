@@ -34,7 +34,7 @@ class LoginRequest(BaseModel):
 
 class VerificarEmailRequest(BaseModel):
     email: EmailStr
-    codigo: str
+    codigo: str = Field(pattern=r"^\d{6}$", description="Código de 6 dígitos")
 
 
 class ReenviarCodigoRequest(BaseModel):
@@ -48,7 +48,7 @@ class ForgotPasswordRequest(BaseModel):
 
 class VerifyResetCodeRequest(BaseModel):
     email: EmailStr
-    codigo: str
+    codigo: str = Field(pattern=r"^\d{6}$", description="Código de 6 dígitos")
 
 
 class ResetPasswordRequest(BaseModel):
@@ -102,7 +102,7 @@ class OrganizacionCreate(BaseModel):
     nit: str = Field(pattern=r"^\d{9}$", description="NIT debe contener 9 dígitos")
     sector: str | None = None
     municipio: str | None = None
-    telefono: str | None = None
+    telefono: str | None = Field(default=None, pattern=r"^\d{7,10}$", description="Teléfono debe contener 7-10 dígitos")
     email: EmailStr | None = None
 
 
@@ -111,7 +111,7 @@ class OrganizacionUpdate(BaseModel):
     nit: str | None = None
     sector: str | None = None
     municipio: str | None = None
-    telefono: str | None = None
+    telefono: str | None = Field(default=None, pattern=r"^\d{7,10}$", description="Teléfono debe contener 7-10 dígitos")
     email: EmailStr | None = None
     activa: bool | None = None
 
@@ -204,7 +204,7 @@ class OrganizacionAutorregistroCreate(BaseModel):
     numeroTrabajadores: int | None = None
     municipio: str | None = None
     email: EmailStr | None = None
-    telefono: str | None = None
+    telefono: str | None = Field(default=None, pattern=r"^\d{7,10}$", description="Teléfono debe contener 7-10 dígitos")
     usuarioNombre: str
     usuarioApellido: str
     usuarioEmail: EmailStr
