@@ -225,5 +225,5 @@ class PagoCreate(BaseModel):
     vencimiento: str | None = None
     cvv: str | None = None
     banco: str | None = None
-    monto: float | None = None
+    monto: float | None = Field(default=None, gt=0, description="Monto del pago debe ser mayor a 0")
 

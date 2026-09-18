@@ -105,6 +105,9 @@ def procesar_pago(db: Session, data, actual: Usuario) -> dict:
     if compra.estado == "PAGADA":
         raise AppError(400, "Esta compra ya ha sido pagada previamente.")
 
+    if data.monto is not None and round(data.monto, 2) != round(compra.total, 2):
+        raise AppError(400, "El monto del pago no coincide con el total de la compra.")
+
     metodo = (data.metodo or "tarjeta").lower()
     prefix = "PAY-PSE" if metodo == "pse" else "PAY-CARD"
     referencia = f"{prefix}-{uuid.uuid4().hex[:10].upper()}"
