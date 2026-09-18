@@ -176,7 +176,7 @@ class ConsentimientoRequest(BaseModel):
 
 class RespuestaRequest(BaseModel):
     preguntaId: UUID
-    valor: int
+    valor: int = Field(ge=1, le=5, description="Valor Likert entre 1 y 5")
 
 
 class InformeRequest(BaseModel):
