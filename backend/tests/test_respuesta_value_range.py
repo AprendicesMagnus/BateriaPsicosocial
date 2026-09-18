@@ -34,18 +34,81 @@ class TestRespuestaValorRangeSchema:
 
 
 class TestRespuestaEndpointRange:
-    """Pruebas de integración HTTP via FastAPI client."""
+    """Pruebas de integración HTTP autenticadas via FastAPI client."""
 
-    def test_endpoint_rechaza_valor_fuera_de_rango(self, client):
-        eval_id = uuid.uuid4()
-        preg_id = str(uuid.uuid4())
+    def test_endpoint_rechaza_valor_fuera_de_rango_autenticado(self, client):
+        # 1. Login admin
+        res = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
+        assert res.status_code == 200
+        headers_admin = {"Authorization": f"Bearer {res.json()['token']}"}
 
-        # Probar valor=0 -> 401 (sin auth) o 422 (pydantic valida body antes o junto con auth dependiendo de FastAPI)
-        # Con token o sin token: enviando payload con valor 0 o 6 debe dar 422 o 401.
-        # Para verificar 422 específicamente:
-        res = client.post(
+        # 2. Crear Org, Area, Trabajador y Evaluacion
+        nit_rnd = f"9{str(uuid.uuid4().int)[:8]}"
+        res_org = client.post("/api/organizaciones", headers=headers_admin, json={
+            "nombre": "Empresa Test Likert SAS",
+            "nit": nit_rnd,
+        })
+        org_id = res_org.json()["id"]
+
+        res_area = client.post("/api/organizaciones/areas", headers=headers_admin, json={
+            "organizacionId": org_id,
+            "nombre": "TI Likert"
+        })
+        area_id = res_area.json()["id"]
+
+        email_trab = f"trab_likert_{uuid.uuid4().hex[:5]}@test.com"
+        res_trab = client.post("/api/usuarios", headers=headers_admin, json={
+            "nombre": "Luis",
+            "apellido": "Likert",
+            "email": email_trab,
+            "password": "Trabajador1234",
+            "rolCodigo": "TRABAJADOR",
+            "organizacionId": org_id,
+            "areaId": area_id,
+            "numeroIdentificacion": f"CC{uuid.uuid4().hex[:8]}",
+            "cargo": "Analista"
+        })
+        trabajador_id = res_trab.json()["id"]
+
+        version_id = client.get("/api/cuestionarios", headers=headers_admin).json()[0]["id"]
+        res_eval = client.post("/api/evaluaciones", headers=headers_admin, json={
+            "organizacionId": org_id,
+            "nombre": "Evaluacion Likert 2026",
+            "versionId": version_id,
+            "trabajadoresIds": [trabajador_id]
+        })
+        eval_id = res_eval.json()["id"]
+
+        client.post(f"/api/evaluaciones/{eval_id}/iniciar", headers=headers_admin)
+
+        # 3. Login Trabajador y consentimiento
+        res_login_trab = client.post("/api/auth/login", json={"email": email_trab, "password": "Trabajador1234"})
+        headers_trab = {"Authorization": f"Bearer {res_login_trab.json()['token']}"}
+        client.post(f"/api/evaluaciones/{eval_id}/consentimiento", headers=headers_trab)
+
+        preguntas = client.get(f"/api/evaluaciones/{eval_id}/cuestionario", headers=headers_trab).json()["preguntas"]
+        pregunta_id = preguntas[0]["id"]
+
+        # 4. Probar envío de valor=6 autenticado -> debe retornar 422 específicamente por Pydantic validation
+        res_rechazo_6 = client.post(
             f"/api/evaluaciones/{eval_id}/respuestas",
-            json={"preguntaId": preg_id, "valor": 6},
+            headers=headers_trab,
+            json={"preguntaId": pregunta_id, "valor": 6},
         )
-        # FastAPI valida Pydantic body; si no hay auth header devuelve 401 o 422. Probar con payload inválido:
-        assert res.status_code in (401, 422)
+        assert res_rechazo_6.status_code == 422
+
+        # Probar valor=0 -> 422
+        res_rechazo_0 = client.post(
+            f"/api/evaluaciones/{eval_id}/respuestas",
+            headers=headers_trab,
+            json={"preguntaId": pregunta_id, "valor": 0},
+        )
+        assert res_rechazo_0.status_code == 422
+
+        # Probar valor=3 -> 200 (caso feliz)
+        res_exitoso = client.post(
+            f"/api/evaluaciones/{eval_id}/respuestas",
+            headers=headers_trab,
+            json={"preguntaId": pregunta_id, "valor": 3},
+        )
+        assert res_exitoso.status_code == 200
