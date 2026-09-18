@@ -14,9 +14,9 @@ export default function VerificarNit() {
     e.preventDefault();
     setError("");
 
-    const nitLimpio = nit.replace(/\D/g, "");
-    if (nitLimpio.length < 9) {
-      setError("Ingresa un NIT válido.");
+    const nitLimpio = nit.trim();
+    if (!/^\d{9}$/.test(nitLimpio)) {
+      setError("El NIT debe contener exactamente 9 dígitos numéricos.");
       return;
     }
 
@@ -66,6 +66,10 @@ export default function VerificarNit() {
                 <input
                   className="field__input"
                   inputMode="numeric"
+                  pattern="\d{9}"
+                  minLength={9}
+                  maxLength={9}
+                  title="El NIT debe contener exactamente 9 dígitos numéricos"
                   placeholder="900123456"
                   value={nit}
                   onChange={(e) => setNit(e.target.value)}
