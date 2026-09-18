@@ -6,6 +6,7 @@ Criterio: el valor de una respuesta en escala Likert debe ser un entero entre 1 
 import uuid
 import pytest
 from pydantic import ValidationError
+from app.core.nit_utils import calcular_digito_verificador_nit
 from app.schemas.common import RespuestaRequest
 
 
@@ -43,7 +44,8 @@ class TestRespuestaEndpointRange:
         headers_admin = {"Authorization": f"Bearer {res.json()['token']}"}
 
         # 2. Crear Org, Area, Trabajador y Evaluacion
-        nit_rnd = f"9{str(uuid.uuid4().int)[:8]}"
+        nit_base = f"9{str(uuid.uuid4().int)[:8]}"
+        nit_rnd = f"{nit_base}-{calcular_digito_verificador_nit(nit_base)}"
         res_org = client.post("/api/organizaciones", headers=headers_admin, json={
             "nombre": "Empresa Test Likert SAS",
             "nit": nit_rnd,

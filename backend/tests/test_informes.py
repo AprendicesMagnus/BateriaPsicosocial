@@ -1,5 +1,6 @@
 import os
 import uuid
+from app.core.nit_utils import calcular_digito_verificador_nit
 
 def test_informe_individual_y_rechazo_anonimato(client):
     # 1. Login admin
@@ -8,7 +9,8 @@ def test_informe_individual_y_rechazo_anonimato(client):
     headers = {"Authorization": f"Bearer {token_admin}"}
 
     # 2. Crear org, area, trabajador y evaluacion completada
-    nit_rnd = f"9{str(uuid.uuid4().int)[:8]}"
+    nit_base = f"9{str(uuid.uuid4().int)[:8]}"
+    nit_rnd = f"{nit_base}-{calcular_digito_verificador_nit(nit_base)}"
     res = client.post("/api/organizaciones", headers=headers, json={"nombre": "Org Informe Test", "nit": nit_rnd})
     org_id = res.json()["id"]
 

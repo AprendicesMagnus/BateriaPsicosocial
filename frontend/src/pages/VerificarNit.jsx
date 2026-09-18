@@ -15,15 +15,15 @@ export default function VerificarNit() {
     setError("");
 
     const nitLimpio = nit.trim();
-    if (!/^\d{9}$/.test(nitLimpio)) {
-      setError("El NIT debe contener exactamente 9 dígitos numéricos.");
+    if (!/^\d{9}-\d$/.test(nitLimpio)) {
+      setError("El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador).");
       return;
     }
 
     setVerificando(true);
 
     try {
-      const res = await request(`/organizaciones/existe?nit=${nitLimpio}`);
+      const res = await request(`/organizaciones/existe?nit=${encodeURIComponent(nitLimpio)}`);
 
       if (res.existe) {
         setError(
@@ -62,15 +62,14 @@ export default function VerificarNit() {
 
             <form className="empresas-form" onSubmit={handleSubmit}>
               <label className="field">
-                <span className="field__label">NIT de la empresa</span>
+                <span className="field__label">NIT de la empresa (con dígito verificador)</span>
                 <input
                   className="field__input"
-                  inputMode="numeric"
-                  pattern="\d{9}"
-                  minLength={9}
-                  maxLength={9}
-                  title="El NIT debe contener exactamente 9 dígitos numéricos"
-                  placeholder="900123456"
+                  pattern="\d{9}-\d"
+                  minLength={11}
+                  maxLength={11}
+                  title="Formato requerido: 900123456-7 (9 dígitos base, guion y dígito verificador)"
+                  placeholder="900123456-7"
                   value={nit}
                   onChange={(e) => setNit(e.target.value)}
                   required
