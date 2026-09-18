@@ -22,7 +22,7 @@ import CuestionarioIntralaboral from "./pages/CuestionarioIntralaboral";
 import CuestionarioEstresB from "./pages/CuestionarioEstresB";
 import CuestionarioExtralaboralB from "./pages/CuestionarioExtralaboralB";
 import CuestionarioIntralaboralB from "./pages/CuestionarioIntralaboralB";
-import FichaDatosGenerales from "./pages/FichaDatosGenerales";
+import FichaDatosGenerales from "./pages/Fichadatosgenerales";
 
 
 export default function App() {
