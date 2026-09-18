@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppTopbar from "../components/AppTopbar";
 import "../styles/app-shell.css";
 import "../styles/checkout.css";
+import { useAuth } from "../context/AuthContext";
+import { request } from "../api/client";
 
 // ==================================================
 // Datos de ejemplo — ajusta según venga de tu API
@@ -120,16 +122,12 @@ function PseIcon({ size = 16 }) {
 
 export default function Checkout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { usuario, token } = useAuth();
 
-  // =================================================
-  // Datos reales de la compra (batería, empresa, tarifa).
-  // Deben llegar navegando desde el flujo real, por ejemplo:
-  // navigate("/pago", { state: { bateriaNombre, empresaNombre, tarifaPorBateria, cantidadInicial } })
-  // Mientras ese módulo no exista, se usan valores de ejemplo.
-  // =================================================
   const {
     bateriaNombre = "Batería de Riesgo Psicosocial",
-    empresaNombre = "Agrocampo S.A.S.",
+    empresaNombre = usuario?.empresa || "Tu empresa",
     tarifaPorBateria = TARIFA_POR_BATERIA_DEFECTO,
     cantidadInicial = 1,
   } = location.state || {};
@@ -156,16 +154,43 @@ export default function Checkout() {
   }
 
   async function handlePagar(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      // ==================================================
-      // TODO: Conectar aquí con la pasarela de pago real.
-      // Ejemplo de lo que se enviaría al backend:
-      // { metodo, numeroTarjeta, nombreTarjeta, vencimiento, cvv, cantidad, total }
-      // ==================================================
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const resCompra = await request("/compras", {
+        method: "POST",
+        body: {
+          cantidad,
+          bateriaNombre,
+          organizacionId: usuario?.organizacionId || null,
+        },
+        token,
+      });
+
+      const resPago = await request("/pagos", {
+        method: "POST",
+        body: {
+          compraId: resCompra.id,
+          metodo,
+          numeroTarjeta: metodo === "tarjeta" ? numeroTarjeta : null,
+          nombreTarjeta: metodo === "tarjeta" ? nombreTarjeta : null,
+          vencimiento: metodo === "tarjeta" ? vencimiento : null,
+          cvv: metodo === "tarjeta" ? cvv : null,
+          banco: metodo === "pse" ? bancoSeleccionado : null,
+          monto: total,
+        },
+        token,
+      });
+
+      if (resPago.estado === "RECHAZADO") {
+        setError(resPago.mensajeRespuesta || "El pago fue rechazado por la pasarela de pagos.");
+        return;
+      }
+
+      navigate("/perfil", {
+        state: { message: `¡Pago exitoso! Referencia: ${resPago.referencia}. Tu compra ha sido registrada.` },
+      });
     } catch (err) {
       setError(err.message || "No se pudo procesar el pago.");
     } finally {

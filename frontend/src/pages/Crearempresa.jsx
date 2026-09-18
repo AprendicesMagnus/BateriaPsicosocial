@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
 import "../styles/empresas.css";
+import { request } from "../api/client";
 
 const SECTORES = ["Agropecuario", "Energético", "Turístico", "Comercial", "Otro"];
 
@@ -9,8 +10,6 @@ export default function CrearEmpresa() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // El NIT llega desde VerificarNit.jsx (navigate con state).
-  // Si alguien entra directo a esta URL sin pasar por ahí, lo mandamos de vuelta.
   const nit = location.state?.nit;
 
   useEffect(() => {
@@ -24,30 +23,40 @@ export default function CrearEmpresa() {
   const [numeroTrabajadores, setNumeroTrabajadores] = useState("");
   const [ciudad, setCiudad] = useState("");
   const [correoContacto, setCorreoContacto] = useState("");
+
+  const [usuarioNombre, setUsuarioNombre] = useState("");
+  const [usuarioApellido, setUsuarioApellido] = useState("");
+  const [usuarioEmail, setUsuarioEmail] = useState("");
+  const [usuarioPassword, setUsuarioPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  if (!nit) return null; // evita el parpadeo del formulario mientras redirige
+  if (!nit) return null;
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      // ==================================================
-      // TODO: conectar con el endpoint real de creación de empresas.
-      // Lo que se enviaría: { nit, razonSocial, sector, numeroTrabajadores, ciudad, correoContacto }
-      //
-      // A propósito este formulario solo pide lo básico para identificar
-      // la empresa. Cosas como dirección detallada, logo, usuarios
-      // adicionales o los módulos habilitados se configuran después,
-      // desde la ficha de la empresa ya creada — no hace falta pedirlas
-      // todas de una vez aquí.
-      // ==================================================
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await request("/organizaciones/autorregistro", {
+        method: "POST",
+        body: {
+          nit,
+          nombre: razonSocial,
+          sector,
+          numeroTrabajadores: parseInt(numeroTrabajadores, 10) || null,
+          municipio: ciudad,
+          email: correoContacto,
+          usuarioNombre,
+          usuarioApellido,
+          usuarioEmail,
+          usuarioPassword,
+        },
+      });
 
-      navigate("/iniciar-sesion", {
-        state: { message: "Empresa creada correctamente. Ahora puedes iniciar sesión para continuar." },
+      navigate("/verificar-cuenta", {
+        state: { email: usuarioEmail },
       });
     } catch (err) {
       setError(err.message || "No se pudo crear la empresa.");
@@ -71,13 +80,16 @@ export default function CrearEmpresa() {
 
         <div className="empresas-center">
           <div className="app-card empresas-card empresas-card--ancho">
-            <h1 className="empresas-titulo">Crear empresa</h1>
+            <h1 className="empresas-titulo">Crear empresa y usuario responsable</h1>
             <p className="empresas-subtitulo">
-              NIT verificado: <strong>{nit}</strong>. Completa los datos básicos para registrar tu
-              empresa — el resto lo puedes ajustar después.
+              NIT verificado: <strong>{nit}</strong>. Registra los datos de tu empresa y el primer usuario Evaluador SST responsable.
             </p>
 
             <form className="empresas-form" onSubmit={handleSubmit}>
+              <h3 style={{ fontSize: "16px", color: "var(--ink-900, #12314b)", margin: "8px 0 4px" }}>
+                Datos de la Empresa
+              </h3>
+
               <label className="field">
                 <span className="field__label">Razón social</span>
                 <input
@@ -123,33 +135,91 @@ export default function CrearEmpresa() {
                 </label>
               </div>
 
-              <label className="field">
-                <span className="field__label">Ciudad</span>
-                <input
-                  className="field__input"
-                  placeholder="Ej. Neiva"
-                  value={ciudad}
-                  onChange={(e) => setCiudad(e.target.value)}
-                  required
-                />
-              </label>
+              <div className="empresas-form-row">
+                <label className="field">
+                  <span className="field__label">Ciudad / Municipio</span>
+                  <input
+                    className="field__input"
+                    placeholder="Ej. Neiva"
+                    value={ciudad}
+                    onChange={(e) => setCiudad(e.target.value)}
+                    required
+                  />
+                </label>
 
-              <label className="field">
-                <span className="field__label">Correo de contacto</span>
-                <input
-                  className="field__input"
-                  type="email"
-                  placeholder="contacto@empresa.com"
-                  value={correoContacto}
-                  onChange={(e) => setCorreoContacto(e.target.value)}
-                  required
-                />
-              </label>
+                <label className="field">
+                  <span className="field__label">Correo institucional de la empresa</span>
+                  <input
+                    className="field__input"
+                    type="email"
+                    placeholder="contacto@empresa.com"
+                    value={correoContacto}
+                    onChange={(e) => setCorreoContacto(e.target.value)}
+                    required
+                  />
+                </label>
+              </div>
+
+              <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "16px 0" }} />
+
+              <h3 style={{ fontSize: "16px", color: "var(--ink-900, #12314b)", margin: "4px 0 4px" }}>
+                Datos del Usuario Evaluador SST (Responsable)
+              </h3>
+
+              <div className="empresas-form-row">
+                <label className="field">
+                  <span className="field__label">Nombre del responsable</span>
+                  <input
+                    className="field__input"
+                    placeholder="Ej. Carlos"
+                    value={usuarioNombre}
+                    onChange={(e) => setUsuarioNombre(e.target.value)}
+                    required
+                  />
+                </label>
+
+                <label className="field">
+                  <span className="field__label">Apellido del responsable</span>
+                  <input
+                    className="field__input"
+                    placeholder="Ej. Rodríguez"
+                    value={usuarioApellido}
+                    onChange={(e) => setUsuarioApellido(e.target.value)}
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="empresas-form-row">
+                <label className="field">
+                  <span className="field__label">Correo personal del usuario</span>
+                  <input
+                    className="field__input"
+                    type="email"
+                    placeholder="carlos.rodriguez@empresa.com"
+                    value={usuarioEmail}
+                    onChange={(e) => setUsuarioEmail(e.target.value)}
+                    required
+                  />
+                </label>
+
+                <label className="field">
+                  <span className="field__label">Contraseña (mín. 8 caracteres, números y mayúsculas)</span>
+                  <input
+                    className="field__input"
+                    type="password"
+                    placeholder="••••••••"
+                    value={usuarioPassword}
+                    onChange={(e) => setUsuarioPassword(e.target.value)}
+                    required
+                  />
+                </label>
+              </div>
 
               {error && <div className="form-message form-message--error">{error}</div>}
 
               <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? "Creando empresa..." : "Crear empresa"}
+                {loading ? "Registrando empresa y usuario..." : "Registrar empresa y continuar"}
               </button>
             </form>
           </div>

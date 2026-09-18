@@ -7,7 +7,13 @@ from app.api.deps import get_current_user, require_admin, require_gestor
 from app.db.session import get_db
 from app.models.organization import Area, Organizacion
 from app.models.user import Usuario
-from app.schemas.common import AreaCreate, AreaUpdate, OrganizacionCreate, OrganizacionUpdate
+from app.schemas.common import (
+    AreaCreate,
+    AreaUpdate,
+    OrganizacionAutorregistroCreate,
+    OrganizacionCreate,
+    OrganizacionUpdate,
+)
 from app.services import organizaciones as organizaciones_service
 
 router = APIRouter()
@@ -35,6 +41,19 @@ def _area_publica(area: Area) -> dict:
         "activa": area.activa,
         "creadoEn": area.creado_en.isoformat(),
     }
+
+
+@router.get("/existe")
+def verificar_existe_nit(nit: str, db: Session = Depends(get_db)):
+    return organizaciones_service.existe_organizacion_nit(db, nit)
+
+
+@router.post("/autorregistro")
+def autorregistrar_organizacion(
+    data: OrganizacionAutorregistroCreate,
+    db: Session = Depends(get_db),
+):
+    return organizaciones_service.autorregistrar_organizacion(db, data)
 
 
 @router.get("")

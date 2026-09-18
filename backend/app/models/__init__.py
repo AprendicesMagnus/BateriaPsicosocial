@@ -1,4 +1,5 @@
 from app.models.audit import Auditoria
+from app.models.commercial import Compra, Pago
 from app.models.evaluation import (
     Consentimiento,
     Evaluacion,
@@ -14,6 +15,8 @@ from app.models.user import CodigoVerificacion, Permiso, Rol, RolPermiso, Usuari
 
 __all__ = [
     "Auditoria",
+    "Compra",
+    "Pago",
     "Consentimiento",
     "Evaluacion",
     "EvaluacionParticipante",

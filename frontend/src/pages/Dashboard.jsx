@@ -154,7 +154,12 @@ export default function Dashboard() {
             <p>Tu bienestar también es parte del trabajo</p>
           </div>
 
-          <div className="profile" aria-label="Perfil de usuario">
+          <div
+            className="profile"
+            aria-label="Perfil de usuario"
+            onClick={() => navigate("/perfil")}
+            style={{ cursor: "pointer" }}
+          >
             <img
               src="/icono.png"
               alt="Magnus"

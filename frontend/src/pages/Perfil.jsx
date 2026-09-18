@@ -1,22 +1,12 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import AppTopbar from "../components/AppTopbar";
 import "../styles/app-shell.css";
 import "../styles/perfil.css";
-
-// ==================================================
-// Datos de ejemplo — reemplaza por tu API real cuando exista
-// ==================================================
-// Cuando haya backend, esto debería venir de algo como:
-//   const { data: compras } = await api.get(`/usuarios/${usuario.id}/compras`)
-// Mientras tanto, se deja un arreglo local. Si está vacío ([]), la tarjeta
-// muestra el estado "aún no has comprado ninguna batería".
-const HISTORIAL_COMPRAS_MOCK = [
-  { id: 1, cantidad: 3, fecha: "2026-08-27" },
-  { id: 2, cantidad: 1, fecha: "2026-08-14" },
-  { id: 3, cantidad: 2, fecha: "2026-07-30" },
-];
+import { request } from "../api/client";
 
 function formatearFecha(fechaIso) {
+  if (!fechaIso) return "—";
   return new Intl.DateTimeFormat("es-CO", {
     day: "numeric",
     month: "long",
@@ -37,8 +27,20 @@ function ReceiptIcon() {
 }
 
 export default function Perfil() {
-  // Ajusta estos nombres de campo según lo que realmente guarde tu AuthContext.
-  const { usuario } = useAuth();
+  const { usuario, token } = useAuth();
+  const [compras, setCompras] = useState([]);
+  const [loadingCompras, setLoadingCompras] = useState(false);
+  const [errorCompras, setErrorCompras] = useState(null);
+
+  useEffect(() => {
+    if (usuario?.id && token) {
+      setLoadingCompras(true);
+      request(`/usuarios/${usuario.id}/compras`, { token })
+        .then((data) => setCompras(data))
+        .catch((err) => setErrorCompras(err.message))
+        .finally(() => setLoadingCompras(false));
+    }
+  }, [usuario?.id, token]);
 
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
@@ -130,23 +132,26 @@ export default function Perfil() {
               <h2 className="compras-titulo">Historial de compras</h2>
               <p className="compras-subtitulo">Baterías de riesgo psicosocial compradas</p>
 
-              {HISTORIAL_COMPRAS_MOCK.length > 0 ? (
+              {loadingCompras && <p style={{ fontSize: "14px", color: "#64748b" }}>Cargando compras...</p>}
+              {errorCompras && <p style={{ fontSize: "14px", color: "#b91c1c" }}>{errorCompras}</p>}
+
+              {!loadingCompras && compras.length > 0 ? (
                 <div className="compras-list">
-                  {HISTORIAL_COMPRAS_MOCK.map((compra) => (
+                  {compras.map((compra) => (
                     <div className="compras-row" key={compra.id}>
                       <span className="compras-row-icon">
                         <ReceiptIcon />
                       </span>
                       <div className="compras-row-main">
                         <span className="compras-row-qty">
-                          {compra.cantidad} {compra.cantidad === 1 ? "batería" : "baterías"}
+                          {compra.cantidad} {compra.cantidad === 1 ? "batería" : "baterías"} ({compra.estado})
                         </span>
                         <span className="compras-row-date">{formatearFecha(compra.fecha)}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : (
+              ) : !loadingCompras && (
                 <div className="compras-empty">
                   <p>Aún no has comprado ninguna batería.</p>
                 </div>

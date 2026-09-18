@@ -105,6 +105,16 @@ def cambiar_rol_usuario(
     return res
 
 
+@router.get("/{usuario_id}/compras")
+def listar_compras_usuario(
+    usuario_id: UUID,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    from app.services import compras as compras_service
+    return compras_service.listar_compras_usuario(db, usuario_id, actual)
+
+
 @router.get("/trabajadores/{organizacion_id}")
 def listar_trabajadores(
     organizacion_id: UUID,
