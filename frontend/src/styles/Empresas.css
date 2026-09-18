@@ -1,0 +1,63 @@
+/* ============================================
+   Empresas — verificar NIT y crear empresa
+   (barra superior, fondo oscuro y decoraciones
+   vienen de app-shell.css)
+   ============================================ */
+
+.empresas-center {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  padding-top: 24px;
+}
+
+.empresas-card {
+  padding: 36px 40px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.empresas-card--ancho {
+  max-width: 560px;
+}
+
+.empresas-titulo {
+  margin: 0 0 6px;
+  font-size: 22px;
+  color: var(--ink-900);
+}
+
+.empresas-subtitulo {
+  margin: 0 0 24px;
+  font-size: 13.5px;
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+
+.empresas-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empresas-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .empresas-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.empresas-nota {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-500);
+  margin: 20px 0 0;
+}
