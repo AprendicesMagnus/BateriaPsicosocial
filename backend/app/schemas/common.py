@@ -99,7 +99,7 @@ class CambioRolRequest(BaseModel):
 
 class OrganizacionCreate(BaseModel):
     nombre: str
-    nit: str
+    nit: str = Field(pattern=r"^\d{9}$", description="NIT debe contener 9 dígitos")
     sector: str | None = None
     municipio: str | None = None
     telefono: str | None = None
@@ -198,7 +198,7 @@ class AuditoriaOut(BaseModel):
 
 
 class OrganizacionAutorregistroCreate(BaseModel):
-    nit: str
+    nit: str = Field(pattern=r"^\d{9}$", description="NIT debe contener 9 dígitos")  # solo longitud y dígitos
     nombre: str
     sector: str | None = None
     numeroTrabajadores: int | None = None

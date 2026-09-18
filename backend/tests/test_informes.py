@@ -8,7 +8,7 @@ def test_informe_individual_y_rechazo_anonimato(client):
     headers = {"Authorization": f"Bearer {token_admin}"}
 
     # 2. Crear org, area, trabajador y evaluacion completada
-    nit_rnd = f"900{uuid.uuid4().hex[:6]}"
+    nit_rnd = f"9{str(uuid.uuid4().int)[:8]}"
     res = client.post("/api/organizaciones", headers=headers, json={"nombre": "Org Informe Test", "nit": nit_rnd})
     org_id = res.json()["id"]
 

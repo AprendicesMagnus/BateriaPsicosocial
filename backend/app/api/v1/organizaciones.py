@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_admin, require_gestor
@@ -44,7 +44,10 @@ def _area_publica(area: Area) -> dict:
 
 
 @router.get("/existe")
-def verificar_existe_nit(nit: str, db: Session = Depends(get_db)):
+def verificar_existe_nit(
+    nit: str = Query(..., pattern=r"^\d{9}$", description="NIT debe contener 9 dígitos"),
+    db: Session = Depends(get_db),
+):
     return organizaciones_service.existe_organizacion_nit(db, nit)
 
 

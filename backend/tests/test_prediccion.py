@@ -1,4 +1,4 @@
-﻿import uuid
+import uuid
 
 def test_analisis_predictivo_kmeans(client):
     # 1. Login admin
@@ -8,7 +8,7 @@ def test_analisis_predictivo_kmeans(client):
     headers_admin = {"Authorization": f"Bearer {token_admin}"}
 
     # 2. Crear Organizacion y Area
-    nit_rnd = f"900{uuid.uuid4().hex[:6]}"
+    nit_rnd = f"9{str(uuid.uuid4().int)[:8]}"
     res = client.post("/api/organizaciones", headers=headers_admin, json={
         "nombre": "Empresa Predictivo K-Means SAS",
         "nit": nit_rnd,
