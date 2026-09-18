@@ -90,9 +90,10 @@ def generar_informe_individual(
         spaceAfter=6,
     )
     normal_style = styles["Normal"]
-    cell_style = ParagraphStyle("TableCell", parent=normal_style, fontSize=9, leading=11)
-    cell_bold_style = ParagraphStyle("TableCellBold", parent=normal_style, fontSize=9, leading=11, fontName="Helvetica-Bold")
-    header_cell_style = ParagraphStyle("HeaderCell", parent=normal_style, fontSize=9, leading=11, textColor=colors.HexColor("#1E3A8A"), fontName="Helvetica-Bold")
+    cell_style = ParagraphStyle("TableCellInd", parent=normal_style, fontSize=8.5, leading=11)
+    cell_bold_style = ParagraphStyle("TableCellBoldInd", parent=normal_style, fontSize=8.5, leading=11, fontName="Helvetica-Bold")
+    cell_center_style = ParagraphStyle("TableCellCenterInd", parent=cell_style, alignment=1)
+    header_cell_style = ParagraphStyle("HeaderCellInd", parent=normal_style, fontSize=8.5, leading=11, textColor=colors.HexColor("#1E3A8A"), fontName="Helvetica-Bold", alignment=1)
 
     story = []
 
@@ -117,6 +118,7 @@ def generar_informe_individual(
     t_datos.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
         ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#E2E8F0")),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('PADDING', (0,0), (-1,-1), 6),
     ]))
     story.append(t_datos)
@@ -141,24 +143,28 @@ def generar_informe_individual(
         "MUY_ALTO": colors.HexColor("#B91C1C"),
     }
 
+    nivel_styles = {
+        nivel: ParagraphStyle(f"Nivel_{nivel}", parent=cell_style, textColor=color, fontName="Helvetica-Bold", alignment=1)
+        for nivel, color in color_nivel_map.items()
+    }
+
     for res in sorted(participante.resultados, key=lambda r: r.dimension.orden):
         dim = res.dimension
-        c_color = color_nivel_map.get(res.nivel, colors.black)
-        nivel_style = ParagraphStyle('NivelStyle', parent=cell_style, textColor=c_color, fontName="Helvetica-Bold")
+        n_style = nivel_styles.get(res.nivel, cell_center_style)
         res_rows.append([
             Paragraph(dim.nombre, cell_style),
             Paragraph(dim.dominio, cell_style),
-            Paragraph(str(res.puntaje_bruto), cell_style),
-            Paragraph(f"{res.puntaje_transformado:.1f}", cell_style),
-            Paragraph(res.nivel.replace("_", " "), nivel_style),
+            Paragraph(str(res.puntaje_bruto), cell_center_style),
+            Paragraph(f"{res.puntaje_transformado:.1f}", cell_center_style),
+            Paragraph(res.nivel.replace("_", " "), n_style),
         ])
 
-    t_res = Table(res_rows, colWidths=[160, 150, 70, 80, 80])
+    t_res = Table(res_rows, colWidths=[155, 135, 70, 80, 100])
     t_res.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#F1F5F9")),
         ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
-        ('ALIGN', (2,1), (3,-1), 'CENTER'),
-        ('PADDING', (0,0), (-1,-1), 6),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('PADDING', (0,0), (-1,-1), 5),
     ]))
     story.append(t_res)
 
@@ -298,9 +304,9 @@ def generar_informe_agrupado(
         subtitle_style = ParagraphStyle("DocSubtitle", parent=styles["Normal"], fontSize=11, leading=14, textColor=colors.HexColor("#475569"), alignment=1)
         section_style = ParagraphStyle("SectionHeading", parent=styles["Heading2"], fontSize=13, leading=16, textColor=colors.HexColor("#1E293B"), spaceBefore=12, spaceAfter=6)
         normal_style = styles["Normal"]
-        cell_style = ParagraphStyle("TableCell", parent=normal_style, fontSize=8.5, leading=11)
-        cell_center_style = ParagraphStyle("TableCellCenter", parent=cell_style, alignment=1)
-        header_cell_style = ParagraphStyle("HeaderCell", parent=normal_style, fontSize=8.5, leading=11, textColor=colors.HexColor("#1E3A8A"), fontName="Helvetica-Bold", alignment=1)
+        cell_style = ParagraphStyle("TableCellAgr", parent=normal_style, fontSize=8.5, leading=11)
+        cell_center_style = ParagraphStyle("TableCellCenterAgr", parent=cell_style, alignment=1)
+        header_cell_style = ParagraphStyle("HeaderCellAgr", parent=normal_style, fontSize=8.5, leading=11, textColor=colors.HexColor("#1E3A8A"), fontName="Helvetica-Bold", alignment=1)
 
         story = [
             Paragraph("INFORME AGRUPADO DE RIESGO PSICOSOCIAL", title_style),
@@ -336,7 +342,7 @@ def generar_informe_agrupado(
                 Paragraph(str(n["MUY_ALTO"]), cell_center_style),
             ])
 
-        t = Table(table_data, colWidths=[140, 140, 60, 50, 50, 50, 50, 50])
+        t = Table(table_data, colWidths=[145, 135, 50, 42, 42, 42, 42, 42])
         t.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#F1F5F9")),
             ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),

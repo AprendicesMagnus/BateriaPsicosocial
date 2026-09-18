@@ -72,6 +72,7 @@ class Usuario(Base):
     organizacion: Mapped["Organizacion | None"] = relationship(back_populates="usuarios")
     area: Mapped["Area | None"] = relationship(back_populates="trabajadores")
     codigos: Mapped[list["CodigoVerificacion"]] = relationship(back_populates="usuario", cascade="all, delete-orphan")
+    compras: Mapped[list["Compra"]] = relationship(back_populates="usuario", cascade="all, delete-orphan")
 
 
 class CodigoVerificacion(Base):

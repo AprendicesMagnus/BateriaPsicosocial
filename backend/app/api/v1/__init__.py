@@ -3,12 +3,14 @@ from fastapi import APIRouter
 from app.api.v1 import (
     auth,
     auditoria,
+    compras,
     cuestionarios,
     evaluaciones,
     indicadores,
     informes,
     notificaciones,
     organizaciones,
+    pagos,
     prediccion,
     roles,
     usuarios,
@@ -27,3 +29,5 @@ router.include_router(indicadores.router, prefix="/indicadores", tags=["Indicado
 router.include_router(prediccion.router, prefix="/prediccion", tags=["Prediccion"])
 router.include_router(notificaciones.router, prefix="/notificaciones", tags=["Notificaciones"])
 router.include_router(auditoria.router, prefix="/auditoria", tags=["Auditoria"])
+router.include_router(compras.router, prefix="/compras", tags=["Compras"])
+router.include_router(pagos.router, prefix="/pagos", tags=["Pagos"])

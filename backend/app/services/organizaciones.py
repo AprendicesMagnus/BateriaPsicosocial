@@ -14,6 +14,93 @@ def listar_organizaciones(db: Session, actual: Usuario) -> list[Organizacion]:
     return query.order_by(Organizacion.nombre.asc()).all()
 
 
+def existe_organizacion_nit(db: Session, nit: str) -> dict:
+    nit_limpio = nit.strip()
+    org = db.query(Organizacion).filter(Organizacion.nit == nit_limpio).first()
+    if org:
+        return {"existe": True, "organizacionId": str(org.id)}
+    return {"existe": False, "organizacionId": None}
+
+
+from app.core.crypto import email_valido, hash_password, password_valida
+from app.models.user import Rol, Usuario
+from app.services.auth import crear_y_enviar_codigo
+
+
+def autorregistrar_organizacion(db: Session, data) -> dict:
+    """Registra de forma atómica una empresa y su primer usuario (EVALUADOR_SST).
+
+    Garantías de Seguridad y Diseño:
+    1. Se asigna el rol EVALUADOR_SST (no ADMINISTRADOR global) para evitar exposición
+       de datos entre empresas.
+    2. Si falla cualquier validación (NIT o Email duplicado, clave débil), se revierte
+       toda la transacción sin dejar huérfanos.
+    3. Se genera y envía el código de verificación de correo electrónico obligando
+       a verificar la cuenta antes del login.
+    """
+    nit_limpio = data.nit.strip()
+    if db.query(Organizacion).filter(Organizacion.nit == nit_limpio).first():
+        raise AppError(409, "Ya existe una organización registrada con este NIT.")
+
+    email_usuario = str(data.usuarioEmail).lower().strip()
+    if not data.usuarioNombre or not data.usuarioApellido or not email_usuario or not data.usuarioPassword:
+        raise AppError(400, "Todos los datos del usuario responsable de la empresa son obligatorios.")
+
+    if not email_valido(email_usuario):
+        raise AppError(400, "El correo electrónico del usuario no es válido.")
+
+    if not password_valida(data.usuarioPassword):
+        raise AppError(
+            400,
+            "La contraseña debe tener mínimo 8 caracteres, e incluir mayúsculas, minúsculas y números.",
+        )
+
+    if db.query(Usuario).filter(Usuario.email == email_usuario).first():
+        raise AppError(409, "Ya existe una cuenta registrada con este correo electrónico.")
+
+    rol_evaluador = db.query(Rol).filter(Rol.codigo == "EVALUADOR_SST").first()
+    if rol_evaluador is None:
+        raise AppError(500, "El catálogo de roles (EVALUADOR_SST) no está inicializado.")
+
+    org = Organizacion(
+        nombre=data.nombre.strip(),
+        nit=nit_limpio,
+        sector=data.sector,
+        municipio=data.municipio,
+        email=str(data.email) if data.email else None,
+        telefono=data.telefono,
+        activa=True,
+    )
+    db.add(org)
+    db.flush()
+
+    usuario = Usuario(
+        nombre=data.usuarioNombre.strip(),
+        apellido=data.usuarioApellido.strip(),
+        email=email_usuario,
+        password_hash=hash_password(data.usuarioPassword),
+        rol_id=rol_evaluador.id,
+        organizacion_id=org.id,
+        email_verificado=False,
+        estado="ACTIVO",
+    )
+    db.add(usuario)
+    db.commit()
+
+    db.refresh(org)
+    db.refresh(usuario)
+
+    crear_y_enviar_codigo(db, usuario, "VERIFICACION_EMAIL")
+
+    return {
+        "message": "Empresa y cuenta creadas con éxito. Revisa tu correo para verificar tu cuenta.",
+        "organizacionId": str(org.id),
+        "usuarioId": str(usuario.id),
+        "email": usuario.email,
+        "rol": rol_evaluador.codigo,
+    }
+
+
 def crear_organizacion(db: Session, data) -> Organizacion:
     if db.query(Organizacion).filter(Organizacion.nit == data.nit).first():
         raise AppError(409, "Ya existe una organización con ese NIT.")

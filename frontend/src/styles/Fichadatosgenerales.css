@@ -1,0 +1,192 @@
+/* =========================================================
+   TARJETA CONTENEDORA DEL FORMULARIO
+   (usa los mismos tonos que questions-card, pero con
+   estructura de formulario en vez de tabla)
+========================================================= */
+
+.ficha-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.ficha-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.ficha-header strong {
+  font-size: 16px;
+  color: #1f2937;
+}
+
+.ficha-header span {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* =========================================================
+   CAMPOS DEL FORMULARIO
+========================================================= */
+
+.ficha-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.ficha-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.ficha-field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.ficha-field input[type="text"],
+.ficha-field input[type="number"] {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s ease;
+  max-width: 420px;
+}
+
+.ficha-field input[type="text"]:focus,
+.ficha-field input[type="number"]:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Campo marcado como incompleto al intentar guardar */
+.ficha-field-error {
+  background: #fef2f2;
+}
+
+.ficha-field-error label {
+  color: #b91c1c;
+}
+
+.ficha-field-error input[type="text"],
+.ficha-field-error input[type="number"] {
+  border-color: #fca5a5;
+}
+
+/* =========================================================
+   GRUPOS DE CAMPOS (ej: ciudad + departamento)
+========================================================= */
+
+.ficha-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ficha-field-group-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  padding: 0 12px;
+}
+
+.ficha-field-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ficha-field-row .ficha-field {
+  flex: 1;
+  min-width: 220px;
+}
+
+/* =========================================================
+   OPCIONES TIPO RADIO
+========================================================= */
+
+.ficha-opciones {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.ficha-opciones-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.ficha-opcion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.ficha-opcion input[type="radio"],
+.ficha-opcion input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* =========================================================
+   ANTIGÜEDAD (checkbox "menos de 1 año" + input numérico)
+========================================================= */
+
+.ficha-antiguedad {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.ficha-antiguedad input[type="number"] {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  max-width: 220px;
+}
+
+.ficha-antiguedad input[type="number"]:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 720px) {
+  .ficha-card {
+    padding: 18px;
+  }
+
+  .ficha-field input[type="text"],
+  .ficha-field input[type="number"] {
+    max-width: 100%;
+  }
+
+  .ficha-field-row {
+    flex-direction: column;
+  }
+}

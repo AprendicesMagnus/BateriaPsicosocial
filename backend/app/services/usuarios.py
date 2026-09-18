@@ -125,3 +125,46 @@ def listar_trabajadores(db: Session, organizacion_id, actual: Usuario) -> list[d
         .all()
     )
     return [usuario_publico(u) for u in trabajadores]
+
+
+def cambiar_rol_usuario(db: Session, usuario_id, rol_codigo: str, actual: Usuario) -> dict:
+    """Cambia el rol de un usuario existente.
+
+    Restricciones:
+    - Solo ADMINISTRADOR puede invocar esta función (la verifica el router).
+    - El rol_codigo debe existir y estar activo.
+    - No se permite quitar el rol ADMINISTRADOR al único administrador activo del sistema.
+    """
+    usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario_id).first()
+    if usuario is None:
+        raise AppError(404, "Usuario no encontrado.")
+
+    nuevo_rol = db.query(Rol).filter(Rol.codigo == rol_codigo, Rol.activo.is_(True)).first()
+    if nuevo_rol is None:
+        raise AppError(400, f"El rol '{rol_codigo}' no existe o no está activo.")
+
+    # Protección: no permitir que el único administrador activo se quite ese rol
+    if usuario.rol.codigo == "ADMINISTRADOR" and rol_codigo != "ADMINISTRADOR":
+        conteo_admins_activos = (
+            db.query(Usuario)
+            .join(Rol)
+            .filter(
+                Rol.codigo == "ADMINISTRADOR",
+                Usuario.estado == "ACTIVO",
+                Usuario.id != usuario_id,
+            )
+            .count()
+        )
+        if conteo_admins_activos == 0:
+            raise AppError(
+                409,
+                "No es posible quitar el rol de Administrador a este usuario porque es el "
+                "único administrador activo del sistema. Asigna primero el rol a otro usuario.",
+            )
+
+    rol_anterior = usuario.rol.codigo
+    usuario.rol_id = nuevo_rol.id
+    db.commit()
+    usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario.id).one()
+    return {**usuario_publico(usuario), "rol_anterior": rol_anterior}
+

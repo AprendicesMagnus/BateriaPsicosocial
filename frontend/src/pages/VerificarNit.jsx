@@ -2,14 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
 import "../styles/empresas.css";
-
-// ==================================================
-// Datos de ejemplo — reemplaza por tu API real cuando exista
-// ==================================================
-// Cuando haya backend, esto debería ser algo como:
-//   const { data } = await api.get(`/empresas/existe?nit=${nit}`)
-// Mientras tanto, se simula con una lista local de NITs ya "registrados".
-const NITS_REGISTRADOS_MOCK = ["900123456", "901234567", "800555444"];
+import { request } from "../api/client";
 
 export default function VerificarNit() {
   const navigate = useNavigate();
@@ -17,7 +10,7 @@ export default function VerificarNit() {
   const [error, setError] = useState("");
   const [verificando, setVerificando] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
@@ -29,12 +22,10 @@ export default function VerificarNit() {
 
     setVerificando(true);
 
-    // TODO: reemplazar por la verificación real contra el backend.
-    setTimeout(() => {
-      setVerificando(false);
-      const yaExiste = NITS_REGISTRADOS_MOCK.includes(nitLimpio);
+    try {
+      const res = await request(`/organizaciones/existe?nit=${nitLimpio}`);
 
-      if (yaExiste) {
+      if (res.existe) {
         setError(
           "Ya existe una empresa registrada con este NIT. Si crees que es un error, inicia sesión o contacta a soporte."
         );
@@ -42,7 +33,11 @@ export default function VerificarNit() {
       }
 
       navigate("/crear-empresa", { state: { nit: nitLimpio } });
-    }, 500);
+    } catch (err) {
+      setError(err.message || "No se pudo verificar el NIT. Intenta de nuevo.");
+    } finally {
+      setVerificando(false);
+    }
   }
 
   return (

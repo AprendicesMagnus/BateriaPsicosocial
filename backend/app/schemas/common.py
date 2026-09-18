@@ -93,6 +93,10 @@ class RolUpdate(BaseModel):
     activo: bool | None = None
 
 
+class CambioRolRequest(BaseModel):
+    rol_codigo: str = Field(min_length=2, max_length=50)
+
+
 class OrganizacionCreate(BaseModel):
     nombre: str
     nit: str
@@ -191,3 +195,35 @@ class AuditoriaOut(BaseModel):
     ipOrigen: str | None
     detalle: dict | None
     registradoEn: datetime
+
+
+class OrganizacionAutorregistroCreate(BaseModel):
+    nit: str
+    nombre: str
+    sector: str | None = None
+    numeroTrabajadores: int | None = None
+    municipio: str | None = None
+    email: EmailStr | None = None
+    telefono: str | None = None
+    usuarioNombre: str
+    usuarioApellido: str
+    usuarioEmail: EmailStr
+    usuarioPassword: str
+
+
+class CompraCreate(BaseModel):
+    cantidad: int = Field(gt=0)
+    bateriaNombre: str | None = "Batería de Riesgo Psicosocial"
+    organizacionId: UUID | None = None
+
+
+class PagoCreate(BaseModel):
+    compraId: UUID
+    metodo: str
+    numeroTarjeta: str | None = None
+    nombreTarjeta: str | None = None
+    vencimiento: str | None = None
+    cvv: str | None = None
+    banco: str | None = None
+    monto: float | None = None
+
