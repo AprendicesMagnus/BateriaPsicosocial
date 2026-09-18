@@ -9,6 +9,10 @@ import VerifyCode from "./pages/VerifyCode";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Checkout from "./pages/Checkout";
+import Reportes from "./pages/Reportes";
+import Perfil from "./pages/Perfil";
+import VerificarNit from "./pages/VerificarNit";
+import CrearEmpresa from "./pages/Crearempresa";
 import Panel from "./pages/Panel";
 import Dashboard from "./pages/Dashboard";
 import CuestionarioEstres from "./pages/CuestionarioEstres";
@@ -31,6 +35,7 @@ export default function App() {
           <Route path="/olvide-contrasena" element={<ForgotPassword />} />
           <Route path="/verificar-codigo" element={<VerifyCode mode="reset" />} />
           <Route path="/restablecer-contrasena" element={<ResetPassword />} />
+
           {/* preguntas tipo a. */}
           <Route path="/cuestionario-estres" element={<CuestionarioEstres />} />
           <Route path="/cuestionario-extralaboral" element={<CuestionarioExtralaboral />} />
@@ -46,6 +51,16 @@ export default function App() {
 
           <Route path="/dashboard" element={<Dashboard />} />
 
+
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/cuestionario-estres" element={<CuestionarioEstres />}/>
+          {/* TEMPORAL: sin ProtectedRoute para poder ver el diseño sin loguearse.
+              Volver a envolver con <ProtectedRoute> cuando se termine de revisar. */}
+          <Route path="/pago" element={<Checkout />} />
+          <Route path="/reportes" element={<Reportes />} />
+          <Route path="/perfil" element={<Perfil />} />
+          <Route path="/verificar-nit" element={<VerificarNit />} />
+          <Route path="/crear-empresa" element={<CrearEmpresa />} />
           <Route
             path="/panel"
             element={

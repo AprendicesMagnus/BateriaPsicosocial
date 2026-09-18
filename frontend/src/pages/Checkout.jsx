@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import AppTopbar from "../components/AppTopbar";
+import "../styles/app-shell.css";
 import "../styles/checkout.css";
 
 // ==================================================
@@ -118,8 +119,6 @@ function PseIcon({ size = 16 }) {
 }
 
 export default function Checkout() {
-  // Ajusta estos nombres de campo si tu AuthContext guarda el usuario distinto.
-  const { usuario } = useAuth();
   const location = useLocation();
 
   // =================================================
@@ -174,55 +173,30 @@ export default function Checkout() {
     }
   }
 
-  const nombreUsuario = usuario
-    ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
-    : "Usuario";
-  const rolUsuario = usuario?.rol ?? "";
-  const iniciales =
-    nombreUsuario
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase())
-      .join("") || "U";
-
   return (
-    <div className="checkout-page">
-      {/* =================================================
-          BARRA SUPERIOR: logo a la izquierda, perfil a la derecha
-          ================================================= */}
-      <header className="checkout-topbar">
-        <img src="/logo oscu.png" alt="Magnus SIG" className="checkout-topbar-logo" />
-
-        <div className="checkout-profile">
-          <div className="checkout-avatar">{iniciales}</div>
-          <div className="checkout-profile-text">
-            <span className="checkout-profile-name">{nombreUsuario}</span>
-            {rolUsuario && <span className="checkout-profile-role">{rolUsuario}</span>}
-          </div>
-        </div>
-      </header>
+    <div className="app-shell-page">
+      <AppTopbar />
 
       {/* =================================================
           FONDO OSCURO + CONTENIDO
           ================================================= */}
-      <main className="checkout-hero">
-        <div className="checkout-decor checkout-decor--1" />
-        <div className="checkout-decor checkout-decor--2" />
-        <div className="checkout-decor checkout-decor--3" />
+      <main className="app-hero">
+        <div className="app-decor app-decor--1" />
+        <div className="app-decor app-decor--2" />
+        <div className="app-decor app-decor--3" />
 
-        <div className="checkout-content">
-          <nav className="checkout-breadcrumb">
+        <div className="app-content">
+          <nav className="app-breadcrumb">
             Evaluaciones <span>›</span> Pago de la batería
           </nav>
-          <h1 className="checkout-title">Completa tu pago</h1>
-          <p className="checkout-subtitle">
+          <h1 className="app-title">Completa tu pago</h1>
+          <p className="app-subtitle">
             {bateriaNombre} · aplicación única para {empresaNombre}
           </p>
 
           <div className="checkout-grid">
             {/* ===================== FORMULARIO DE PAGO ===================== */}
-            <section className="checkout-card checkout-form-card">
+            <section className="app-card checkout-form-card">
               <div className="checkout-tabs">
                 <button
                   type="button"
@@ -373,7 +347,7 @@ export default function Checkout() {
             </section>
 
             {/* ===================== RESUMEN DEL PAGO ===================== */}
-            <aside className="checkout-card checkout-summary-card">
+            <aside className="app-card checkout-summary-card">
               <h2 className="checkout-summary-title">Resumen del pago</h2>
 
               <div className="checkout-summary-item">

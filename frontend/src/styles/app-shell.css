@@ -1,0 +1,209 @@
+/* ============================================
+   App Shell — barra superior + fondo oscuro con
+   breadcrumb/título, compartido entre las pantallas
+   internas de la app (Pago, Reportes, etc.)
+   ============================================ */
+
+.app-shell-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--navy-950);
+}
+
+/* ---------- Barra superior ---------- */
+.app-topbar {
+  background: var(--white);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 0 rgba(15, 26, 61, 0.06);
+  position: relative;
+  z-index: 2;
+}
+
+.app-topbar-logo {
+  height: 50px;
+  width: auto;
+}
+
+.app-profile-menu {
+  position: relative;
+}
+
+.app-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.app-profile:hover {
+  background: var(--bg-100);
+}
+
+.app-profile-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.app-profile-dropdown button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-900);
+  border-radius: var(--radius-md);
+}
+.app-profile-dropdown button:hover {
+  background: var(--bg-100);
+}
+
+.app-profile-dropdown-danger {
+  color: var(--danger-500) !important;
+}
+
+.app-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--navy-900);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Variante cuando usuario.fotoUrl existe (ver AppTopbar.jsx) */
+.app-avatar--foto {
+  object-fit: cover;
+}
+
+.app-profile-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.app-profile-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.app-profile-role {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+/* ---------- Fondo oscuro con decoraciones ---------- */
+.app-hero {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  padding: 40px 32px 60px;
+}
+
+.app-decor {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.app-decor--1 {
+  width: 420px;
+  height: 420px;
+  top: -140px;
+  right: -100px;
+  background: rgba(45, 63, 130, 0.45);
+}
+.app-decor--2 {
+  width: 260px;
+  height: 260px;
+  bottom: -90px;
+  left: 8%;
+  background: rgba(45, 63, 130, 0.3);
+}
+.app-decor--3 {
+  width: 180px;
+  height: 180px;
+  bottom: 40px;
+  right: 12%;
+  background: rgba(245, 166, 35, 0.08);
+}
+
+.app-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.app-breadcrumb {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 10px;
+}
+.app-breadcrumb span {
+  margin: 0 6px;
+}
+
+.app-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.app-title {
+  color: var(--white);
+  font-size: 28px;
+  margin: 0;
+}
+
+.app-subtitle {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  margin: 0 0 28px;
+}
+
+.app-btn-secondary {
+  background: var(--white);
+  color: var(--ink-900);
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.app-btn-secondary:hover:not(:disabled) {
+  background: var(--bg-100);
+}
+.app-btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- Tarjeta blanca genérica ---------- */
+.app-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
