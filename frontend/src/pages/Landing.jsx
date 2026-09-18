@@ -184,6 +184,7 @@ export default function Landing() {
                   color: "inherit",
                   cursor: "pointer",
                   padding: 0,
+                  fontWeight: "bold"
                 }}
               >
                 Empresas
