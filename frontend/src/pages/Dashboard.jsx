@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../styles/dashboard.css";
 import { useAuth } from "../context/AuthContext";
 import { fetchIndicadores } from "../api/indicadores";
+import { fetchAnalisisPredictivo } from "../api/prediccion";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 
 const CATEGORIAS = [
@@ -59,10 +60,17 @@ export default function Dashboard() {
   const [cuestionarioSeleccionado, setCuestionarioSeleccionado] = useState(null);
   const [categoriaActivaId, setCategoriaActivaId] = useState(1);
 
+  // 1. fetchIndicadores
   const [indicadores, setIndicadores] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
+  // 2. fetchAnalisisPredictivo
+  const [prediccion, setPrediccion] = useState(null);
+  const [cargandoPrediccion, setCargandoPrediccion] = useState(false);
+  const [errorPrediccion, setErrorPrediccion] = useState(null);
+
+  // 3 & 4. generarInformeAgrupado, descargarInforme
   const [mensajeDescarga, setMensajeDescarga] = useState(null);
   const [generandoInforme, setGenerandoInforme] = useState(false);
 
@@ -86,11 +94,25 @@ export default function Dashboard() {
     }
   }
 
+  async function handleEjecutarPrediccion(evaluacionId) {
+    if (!evaluacionId) return;
+    setCargandoPrediccion(true);
+    setErrorPrediccion(null);
+    try {
+      const data = await fetchAnalisisPredictivo(token, evaluacionId);
+      setPrediccion(data);
+    } catch (err) {
+      setErrorPrediccion(err.message || "No fue posible generar el análisis predictivo.");
+      setPrediccion(null);
+    } finally {
+      setCargandoPrediccion(false);
+    }
+  }
+
   async function handleDescargarInforme() {
     setGenerandoInforme(true);
     setMensajeDescarga(null);
     try {
-      // Intenta generar el informe agrupado global de la organización
       const res = await generarInformeAgrupado(token, null, null, "PDF");
       if (res.id) {
         await descargarInforme(token, res.id);
@@ -408,6 +430,118 @@ export default function Dashboard() {
               ],
             ]}
           />
+        </section>
+
+        {/* =========================================================
+            SECCIÓN DE ANÁLISIS PREDICTIVO CON IA (K-MEANS)
+        ========================================================= */}
+        <section className="responders-card" style={{ marginTop: "24px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <div>
+              <h3>Análisis Predictivo (K-Means Clustering IA)</h3>
+              <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>
+                Identificación de perfiles de riesgo no supervisados y alertas tempranas en tiempo real.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="modal-main-button"
+              onClick={() => handleEjecutarPrediccion(indicadores?.evaluacionId || "eval-actual")}
+              disabled={cargandoPrediccion}
+            >
+              {cargandoPrediccion ? "Analizando con IA..." : "🤖 Analizar con IA (K-Means)"}
+            </button>
+          </div>
+
+          {errorPrediccion && (
+            <p className="error-text" style={{ marginTop: "12px" }}>
+              {errorPrediccion}
+            </p>
+          )}
+
+          {prediccion && (
+            <div style={{ marginTop: "16px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: "12px",
+                  marginBottom: "16px",
+                }}
+              >
+                {prediccion.perfilesClusterKMeans?.map((cluster) => (
+                  <div
+                    key={cluster.clusterId}
+                    style={{
+                      padding: "14px",
+                      background: "#f8fafc",
+                      borderRadius: "8px",
+                      border: "1px solid #cbd5e1",
+                    }}
+                  >
+                    <span style={{ fontSize: "12px", fontWeight: "bold", color: "#2563eb" }}>
+                      Clúster #{cluster.clusterId} ({cluster.porcentajeGrupo}%)
+                    </span>
+                    <h4 style={{ margin: "6px 0", fontSize: "14px", color: "#1e293b" }}>
+                      {cluster.etiqueta}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                      {cluster.numTrabajadores} trabajador(es) · Promedio: {cluster.promedioGlobalPuntaje} pts
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {prediccion.alertasTempranas?.length > 0 && (
+                <div style={{ marginBottom: "16px" }}>
+                  <h4 style={{ fontSize: "14px", color: "#b91c1c", marginBottom: "8px" }}>
+                    ⚠️ Alertas Tempranas Identificadas ({prediccion.alertasTempranas.length})
+                  </h4>
+                  <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#475569" }}>
+                    {prediccion.alertasTempranas.map((alerta, idx) => (
+                      <li key={idx} style={{ marginBottom: "4px" }}>
+                        <strong>[{alerta.nivelAlerta}]</strong> {alerta.mensaje}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* NOTA METODOLÓGICA Y ESTRATEGIA DE ENTRENAMIENTO */}
+              <div
+                style={{
+                  padding: "16px",
+                  background: "#f0fdf4",
+                  borderRadius: "8px",
+                  border: "1px solid #bbf7d0",
+                  marginTop: "12px",
+                }}
+              >
+                <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
+                  🤖 <strong>Nota Metodológica del Modelo:</strong>
+                </p>
+                <p style={{ margin: "0 0 10px 0", fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
+                  {prediccion.notaMetodologica}
+                </p>
+
+                <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
+                  ⚡ <strong>Estrategia de Entrenamiento:</strong>
+                </p>
+                <p style={{ margin: 0, fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
+                  {prediccion.estrategiaEntrenamiento}
+                </p>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="responders-card">
