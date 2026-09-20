@@ -366,7 +366,7 @@ export default function CuestionarioIntralaboralB() {
           <button
             type="button"
             className="active"
-            onClick={() => navigate("/cuestionario-intralaboral-b")}
+            onClick={() => navigate("/cuestionario-intralaboralB")}
           >
             <strong>Intralaboral - Forma B</strong>
             <span>88</span>
