@@ -19,6 +19,7 @@ export default function CrearEmpresa() {
   }, [nit, navigate]);
 
   const [razonSocial, setRazonSocial] = useState("");
+  const [codigoVerificacion, setCodigoVerificacion] = useState("");
   const [sector, setSector] = useState("");
   const [numeroTrabajadores, setNumeroTrabajadores] = useState("");
   const [ciudad, setCiudad] = useState("");
@@ -44,6 +45,7 @@ export default function CrearEmpresa() {
         body: {
           nit,
           nombre: razonSocial,
+          codigoVerificacion,
           sector,
           numeroTrabajadores: parseInt(numeroTrabajadores, 10) || null,
           municipio: ciudad,
@@ -80,7 +82,10 @@ export default function CrearEmpresa() {
 
         <div className="empresas-center">
           <div className="app-card empresas-card empresas-card--ancho">
-            <h1 className="empresas-titulo">Crear empresa y usuario responsable</h1>
+            <div className="empresas-title-row">
+              <h1 className="empresas-titulo">Crear empresa y usuario responsable</h1>
+              <span className="empresas-badge">Empresa no registrada</span>
+            </div>
             <p className="empresas-subtitulo">
               NIT verificado: <strong>{nit}</strong>. Registra los datos de tu empresa y el primer usuario Evaluador SST responsable.
             </p>
@@ -97,6 +102,18 @@ export default function CrearEmpresa() {
                   placeholder="Nombre de la empresa"
                   value={razonSocial}
                   onChange={(e) => setRazonSocial(e.target.value)}
+                  required
+                />
+              </label>
+
+              <label className="field">
+                <span className="field__label">Código de verificación</span>
+                <input
+                  className="field__input"
+                  placeholder="Ej. 112209393"
+                  inputMode="numeric"
+                  value={codigoVerificacion}
+                  onChange={(e) => setCodigoVerificacion(e.target.value.replace(/\D/g, ""))}
                   required
                 />
               </label>

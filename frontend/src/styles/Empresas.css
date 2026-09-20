@@ -24,6 +24,29 @@
   max-width: 560px;
 }
 
+.empresas-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.empresas-title-row .empresas-titulo {
+  margin: 0;
+}
+
+.empresas-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #fff4e5;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .empresas-titulo {
   margin: 0 0 6px;
   font-size: 22px;
@@ -60,4 +83,49 @@
   font-size: 13px;
   color: var(--ink-500);
   margin: 20px 0 0;
+}
+
+/* ---------- Empresa encontrada (NIT ya registrado) ---------- */
+.empresas-info-box {
+  background: var(--bg-100);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.empresas-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.empresas-info-label {
+  color: var(--ink-500);
+  font-weight: 600;
+}
+
+.empresas-info-value {
+  color: var(--ink-900);
+  font-weight: 700;
+  text-align: right;
+}
+
+.empresas-btn-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.empresas-otro-nit {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: none;
+  border: none;
+  margin-top: 14px;
+  font-size: 13px;
 }
