@@ -12,6 +12,7 @@ from app.api.v1 import (
     organizaciones,
     pagos,
     prediccion,
+    reportes,
     roles,
     usuarios,
 )
@@ -25,6 +26,7 @@ router.include_router(organizaciones.router, prefix="/organizaciones", tags=["Or
 router.include_router(cuestionarios.router, prefix="/cuestionarios", tags=["Cuestionarios"])
 router.include_router(evaluaciones.router, prefix="/evaluaciones", tags=["Evaluaciones"])
 router.include_router(informes.router, prefix="/informes", tags=["Informes"])
+router.include_router(reportes.router, prefix="/reportes", tags=["Reportes"])
 router.include_router(indicadores.router, prefix="/indicadores", tags=["Indicadores"])
 router.include_router(prediccion.router, prefix="/prediccion", tags=["Prediccion"])
 router.include_router(notificaciones.router, prefix="/notificaciones", tags=["Notificaciones"])

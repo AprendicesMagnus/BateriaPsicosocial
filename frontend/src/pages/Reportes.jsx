@@ -1,56 +1,11 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import AppTopbar from "../components/AppTopbar";
+import { useAuth } from "../context/AuthContext";
+import { fetchReportes } from "../api/reportes";
+import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import "../styles/app-shell.css";
-import "../styles/reportes.css";
-
-// =================================================
-// Datos de ejemplo — se usan solo mientras no exista
-// el módulo real que entregue reportes generados.
-// =================================================
-const REPORTES_EJEMPLO = [
-  {
-    id: "general",
-    titulo: "Reporte general",
-    descripcion: "Resumen consolidado de todos los instrumentos · 86 trabajadores evaluados",
-    color: "#2D6CDF",
-    estado: "listo",
-  },
-  {
-    id: "intralaboral-a",
-    titulo: "Cuestionario intralaboral · Forma A",
-    descripcion: "Jefes, profesionales y técnicos · 34 respuestas registradas",
-    color: "#1F9D55",
-    estado: "listo",
-  },
-  {
-    id: "intralaboral-b",
-    titulo: "Cuestionario intralaboral · Forma B",
-    descripcion: "Auxiliares y operarios · 52 respuestas registradas",
-    color: "#6C4FD4",
-    estado: "listo",
-  },
-  {
-    id: "extralaboral",
-    titulo: "Cuestionario extralaboral",
-    descripcion: "Aplicado a todos los niveles del cargo · 86 respuestas registradas",
-    color: "#DD8F13",
-    estado: "listo",
-  },
-  {
-    id: "ficha-general",
-    titulo: "Ficha de datos generales",
-    descripcion: "Información sociodemográfica y ocupacional · 86 registros",
-    color: "#6B7290",
-    estado: "listo",
-  },
-  {
-    id: "analisis-individual",
-    titulo: "Guía de análisis individual",
-    descripcion: "Casos de riesgo alto o muy alto · 7 casos identificados",
-    color: "#D64545",
-    estado: "restringido",
-  },
-];
+import "../styles/Reportes.css";
 
 function IconoDocumento({ color }) {
   return (
@@ -90,27 +45,60 @@ function IconoDescargar() {
 }
 
 export default function Reportes() {
+  const { token, usuario } = useAuth();
   const location = useLocation();
 
-  // =================================================
-  // Datos reales de la empresa/batería y sus reportes.
-  // Deben llegar navegando desde el flujo real, por ejemplo:
-  // navigate("/reportes", { state: { empresaNombre, sector, bateriaNombre, rangoFechas, reportes } })
-  // Mientras ese módulo no exista, se usan valores de ejemplo.
-  // Si "reportes" llega como un arreglo vacío ([]), se muestra el estado vacío.
-  // =================================================
+  const [reportes, setReportes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [descargandoId, setDescargandoId] = useState(null);
+
   const {
-    empresaNombre = "Agrocampo S.A.S.",
-    sector = "Agropecuario",
+    empresaNombre = usuario?.organizacionNombre || "Organización",
+    sector = usuario?.sector || "General",
     bateriaNombre = "Batería de riesgo psicosocial",
-    rangoFechas = "aplicada del 12 al 26 de agosto de 2026",
-    reportes = REPORTES_EJEMPLO,
+    rangoFechas = "vigente 2026",
   } = location.state || {};
 
-  function handleDescargar(reporte) {
+  useEffect(() => {
+    if (token) {
+      cargarReportes();
+    }
+  }, [token]);
+
+  async function cargarReportes() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchReportes(token);
+      setReportes(data || []);
+    } catch (err) {
+      setError(err.message || "Error al cargar la lista de reportes.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDescargar(reporte) {
     if (reporte.estado === "restringido") return;
-    // TODO: conectar con el endpoint real que genera/descarga el archivo del reporte.
-    console.log("Descargando reporte:", reporte.id);
+    setDescargandoId(reporte.id);
+    setError(null);
+    try {
+      if (!reporte.evaluacionId) {
+        throw new Error("No hay una evaluación registrada para esta área.");
+      }
+      const resInforme = await generarInformeAgrupado(
+        token,
+        reporte.evaluacionId,
+        reporte.areaId,
+        "PDF"
+      );
+      await descargarInforme(token, resInforme.id);
+    } catch (err) {
+      setError(`Error al descargar informe de ${reporte.areaNombre}: ${err.message}`);
+    } finally {
+      setDescargandoId(null);
+    }
   }
 
   return (
@@ -140,17 +128,27 @@ export default function Reportes() {
           </p>
 
           <p className="reportes-legal-note">
-            Desglosados por instrumento de la batería, según la Resolución 2764 de 2022
+            Desglosados por área de la organización, según la Resolución 2764 de 2022 (Anonimizado mín. 5 participantes)
           </p>
 
+          {error && (
+            <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
+              ⚠️ {error}
+            </div>
+          )}
+
           <div className="app-card reportes-card">
-            {reportes.length === 0 ? (
+            {loading ? (
+              <div style={{ padding: "32px", textAlign: "center", color: "#64748B" }}>
+                Cargando reportes por área...
+              </div>
+            ) : reportes.length === 0 ? (
               <div className="reportes-empty">
                 <IconoDocumento color="#9AA1BD" />
                 <p>
-                  Todavía no hay reportes disponibles para esta batería.
+                  Todavía no hay áreas registradas o reportes disponibles para esta organización.
                   <br />
-                  Aparecerán aquí automáticamente cuando la aplicación esté completa.
+                  Aparecerán aquí automáticamente cuando existan áreas y evaluaciones asignadas.
                 </p>
               </div>
             ) : (
@@ -177,12 +175,12 @@ export default function Reportes() {
                   <button
                     type="button"
                     className={`reportes-download-btn ${
-                      reporte.estado === "restringido" ? "reportes-download-btn--disabled" : ""
+                      reporte.estado === "restringido" || descargandoId === reporte.id ? "reportes-download-btn--disabled" : ""
                     }`}
                     onClick={() => handleDescargar(reporte)}
-                    disabled={reporte.estado === "restringido"}
+                    disabled={reporte.estado === "restringido" || descargandoId === reporte.id}
                   >
-                    <IconoDescargar /> Descargar
+                    <IconoDescargar /> {descargandoId === reporte.id ? "Generando..." : "Descargar"}
                   </button>
                 </div>
               ))

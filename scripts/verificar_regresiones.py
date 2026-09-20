@@ -23,11 +23,7 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_SRC = ROOT_DIR / "frontend" / "src"
 
-# Archivos exceptuados del escaneo general de mocks/datos de ejemplo
-# y la razón documentada de su excepción:
-EXCEPCIONES_MOCK = {
-    "Reportes.jsx": "Pendiente de módulo backend real para listar reportes generados; usa REPORTES_EJEMPLO por diseño.",
-}
+EXCEPCIONES_MOCK = {}
 
 
 class Checker:
