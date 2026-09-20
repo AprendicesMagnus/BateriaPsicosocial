@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_pass: str = ""
     smtp_from: str = "Magnus|SIG <no-reply@magnussig.local>"
-    admin_email: str = "admin@magnussig.local"
+    admin_email: str = "admin@magnussig.com"
     admin_password: str = "Admin1234"
     admin_nombre: str = "Administrador"
     admin_apellido: str = "Sistema"

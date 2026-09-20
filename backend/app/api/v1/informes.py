@@ -5,10 +5,10 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
-from app.api.deps import get_current_user, require_gestor
+from app.api.deps import asegurar_acceso_organizacion, get_current_user, require_gestor
 from app.core.errors import AppError
 from app.db.session import get_db
-from app.models.evaluation import Informe
+from app.models.evaluation import Evaluacion, Informe
 from app.models.user import Usuario
 from app.services import auditoria as auditoria_service
 from app.services import informes as informes_service
@@ -27,6 +27,23 @@ class InformeAgrupadoCreateRequest(BaseModel):
     formato: str = "PDF"
 
 
+def _asegurar_evaluacion_accesible(db: Session, evaluacion_id: UUID, actual: Usuario) -> None:
+    evaluacion = db.query(Evaluacion).filter(Evaluacion.id == evaluacion_id).first()
+    if evaluacion is None:
+        raise AppError(404, "Evaluación no encontrada.")
+    asegurar_acceso_organizacion(actual, evaluacion.organizacion_id)
+
+
+@router.get("")
+def listar_informes(
+    evaluacion_id: UUID | None = None,
+    tipo: str | None = None,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    return informes_service.listar_informes(db, actual, evaluacion_id=evaluacion_id, tipo=tipo)
+
+
 @router.post("/individual")
 def generar_informe_individual(
     data: InformeIndividualCreateRequest,
@@ -34,6 +51,7 @@ def generar_informe_individual(
     db: Session = Depends(get_db),
     actual: Usuario = Depends(require_gestor),
 ):
+    _asegurar_evaluacion_accesible(db, data.evaluacionId, actual)
     informe = informes_service.generar_informe_individual(
         db, data.evaluacionId, data.participanteId, actual.id
     )
@@ -62,6 +80,7 @@ def generar_informe_agrupado(
     db: Session = Depends(get_db),
     actual: Usuario = Depends(require_gestor),
 ):
+    _asegurar_evaluacion_accesible(db, data.evaluacionId, actual)
     informe = informes_service.generar_informe_agrupado(
         db, data.evaluacionId, data.areaId, actual.id, data.formato
     )

@@ -1,9 +1,11 @@
-﻿from uuid import UUID
+from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, require_gestor
+from app.api.deps import asegurar_acceso_organizacion, require_gestor
+from app.core.errors import AppError
 from app.db.session import get_db
+from app.models.evaluation import Evaluacion
 from app.models.user import Usuario
 from app.services import prediccion as prediccion_service
 
@@ -16,4 +18,9 @@ def obtener_analisis_predictivo(
     db: Session = Depends(get_db),
     actual: Usuario = Depends(require_gestor),
 ):
+    evaluacion = db.query(Evaluacion).filter(Evaluacion.id == evaluacion_id).first()
+    if evaluacion is None:
+        raise AppError(404, "Evaluación no encontrada.")
+    asegurar_acceso_organizacion(actual, evaluacion.organizacion_id)
     return prediccion_service.analizar_riesgo_predictivo(db, evaluacion_id, area_id)
+

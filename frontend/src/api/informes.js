@@ -1,4 +1,12 @@
-﻿import { request } from "./client";
+import { request } from "./client";
+
+export async function listarInformes(token, { evaluacionId = null, tipo = null } = {}) {
+  const params = new URLSearchParams();
+  if (evaluacionId) params.set("evaluacion_id", evaluacionId);
+  if (tipo) params.set("tipo", tipo);
+  const query = params.toString();
+  return request(query ? `/informes?${query}` : "/informes", { token });
+}
 
 export async function generarInformeIndividual(token, evaluacionId, participanteId) {
   return request("/informes/individual", {

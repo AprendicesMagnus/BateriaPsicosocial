@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -36,4 +38,18 @@ async def manejar_app_error(_request: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(status_code=exc.status_code, content=exc.detail)
 
 
+@app.exception_handler(RequestValidationError)
+async def manejar_error_validacion(_request: Request, exc: RequestValidationError) -> JSONResponse:
+    errores = exc.errors()
+    primero = errores[0] if errores else {}
+    campo = ".".join(str(parte) for parte in primero.get("loc", ()) if parte not in ("body", "query", "path"))
+    motivo = primero.get("msg", "Datos inválidos.")
+    mensaje = f"Dato inválido en '{campo}': {motivo}" if campo else f"Dato inválido: {motivo}"
+    return JSONResponse(
+        status_code=422,
+        content={"error": mensaje, "detail": jsonable_encoder(errores)},
+    )
+
+
 app.include_router(api_v1_router)
+

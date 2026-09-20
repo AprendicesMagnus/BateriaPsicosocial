@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/cuestionario-estres.css";
-import "../styles/fichadatosgenerales.css";
+import "../styles/Fichadatosgenerales.css";
 
 // =======================================================
 // OPCIONES DE CADA PREGUNTA

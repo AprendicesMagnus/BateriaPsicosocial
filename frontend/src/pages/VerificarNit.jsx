@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
-import "../styles/empresas.css";
+import "../styles/Empresas.css";
 import { request } from "../api/client";
 
 export default function VerificarNit() {

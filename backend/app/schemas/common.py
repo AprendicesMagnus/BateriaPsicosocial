@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import AliasChoices, BaseModel, EmailStr, Field
 
 
 class UsuarioPublico(BaseModel):
@@ -94,7 +94,7 @@ class RolUpdate(BaseModel):
 
 
 class CambioRolRequest(BaseModel):
-    rol_codigo: str = Field(min_length=2, max_length=50)
+    rolCodigo: str = Field(min_length=2, max_length=50, validation_alias=AliasChoices("rolCodigo", "rol_codigo"))
 
 
 class OrganizacionCreate(BaseModel):

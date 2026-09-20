@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
-import "../styles/empresas.css";
+import "../styles/Empresas.css";
 import { request } from "../api/client";
 
 const SECTORES = ["Agropecuario", "Energético", "Turístico", "Comercial", "Otro"];
