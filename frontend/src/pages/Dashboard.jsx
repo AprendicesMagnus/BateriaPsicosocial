@@ -1,222 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/dashboard.css";
 import { useAuth } from "../context/AuthContext";
 import { fetchIndicadores } from "../api/indicadores";
-import { fetchAnalisisPredictivo } from "../api/prediccion";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 
-/* =========================================================
-   CATEGORÍAS (fila principal)
-========================================================= */
-
 const CATEGORIAS = [
-  { id: 1, nombre: "Estrés", totalPreguntas: 31 },
-  { id: 2, nombre: "Extralaboral A", totalPreguntas: 31 },
-  { id: 3, nombre: "Intralaboral - Forma A", totalPreguntas: 123 },
-  { id: 4, nombre: "Socio demográfico A", totalPreguntas: 31 },
+  { id: 1, nombre: "Estrés", totalPreguntas: 31, ruta: "/cuestionario-estres" },
+  { id: 2, nombre: "Extralaboral A", totalPreguntas: 31, ruta: "/cuestionario-extralaboral" },
+  { id: 3, nombre: "Intralaboral - Forma A", totalPreguntas: 123, ruta: "/cuestionario-intralaboral" },
+  { id: 4, nombre: "Socio demográfico A", totalPreguntas: 31, ruta: "/ficha-datos-generales" },
 ];
-
-/* =========================================================
-   CATEGORÍAS B (segunda fila, mismas funciones que las de arriba)
-========================================================= */
 
 const CATEGORIAS_B = [
-  { id: 5, nombre: "Estrés B", totalPreguntas: 31 },
-  { id: 6, nombre: "Extralaboral B", totalPreguntas: 31 },
-  { id: 7, nombre: "Intralaboral B", totalPreguntas: 123 },
-  { id: 8, nombre: "Socio demográfico B", totalPreguntas: 123 }, // FIX: id duplicado (era 7)
+  { id: 5, nombre: "Estrés B", totalPreguntas: 31, ruta: "/cuestionario-estresB" },
+  { id: 6, nombre: "Extralaboral B", totalPreguntas: 31, ruta: "/cuestionario-extralaboralB" },
+  { id: 7, nombre: "Intralaboral B", totalPreguntas: 123, ruta: "/cuestionario-intralaboralB" },
+  { id: 8, nombre: "Socio demográfico B", totalPreguntas: 123, ruta: "/ficha-datos-generales" },
 ];
-
-const TODAS_CATEGORIAS = [...CATEGORIAS, ...CATEGORIAS_B];
-
-/* =========================================================
-   DATOS DE EJEMPLO (MOCK)
-========================================================= */
-
-const DB_SIMULADA = {
-  1: {
-    poblacion: 31,
-    incremento: "+3 vs. mes ant.",
-    riesgo: { nivel: "Bajo", score: 48 },
-    distribucion: [
-      ["Bajo", "65%"],
-      ["Medio", "28%"],
-      ["Alto", "7%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [55, 58, 60, 57, 62, 59, 61, 63, 60],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 101, nombre: "Laura Gómez", fecha: "2026-09-02", puntaje: 61, nivelRiesgo: "Medio" },
-      { id: 102, nombre: "Carlos Pérez", fecha: "2026-09-03", puntaje: 45, nivelRiesgo: "Bajo" },
-      { id: 103, nombre: "Andrea Ruiz", fecha: "2026-09-05", puntaje: 78, nivelRiesgo: "Alto" },
-      { id: 104, nombre: "Julián Torres", fecha: "2026-09-06", puntaje: 52, nivelRiesgo: "Bajo" },
-    ],
-  },
-  2: {
-    poblacion: 31,
-    incremento: "+4 vs. mes ant.",
-    riesgo: { nivel: "Medio", score: 62 },
-    distribucion: [
-      ["Bajo", "58%"],
-      ["Medio", "33%"],
-      ["Alto", "9%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [50, 53, 57, 60, 58, 63, 65, 62, 64],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 201, nombre: "Mariana López", fecha: "2026-09-01", puntaje: 64, nivelRiesgo: "Medio" },
-      { id: 202, nombre: "Santiago Rojas", fecha: "2026-09-04", puntaje: 80, nivelRiesgo: "Alto" },
-      { id: 203, nombre: "Valentina Díaz", fecha: "2026-09-07", puntaje: 40, nivelRiesgo: "Bajo" },
-      { id: 204, nombre: "Esteban Cárdenas", fecha: "2026-09-08", puntaje: 58, nivelRiesgo: "Medio" },
-      { id: 205, nombre: "Paula Herrera", fecha: "2026-09-10", puntaje: 62, nivelRiesgo: "Medio" },
-    ],
-  },
-  3: {
-    poblacion: 123,
-    incremento: "+12 vs. mes ant.",
-    riesgo: { nivel: "Medio", score: 55 },
-    distribucion: [
-      ["Bajo", "50%"],
-      ["Medio", "37%"],
-      ["Alto", "13%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [48, 50, 52, 55, 53, 56, 58, 57, 59],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 301, nombre: "Diego Martínez", fecha: "2026-09-02", puntaje: 59, nivelRiesgo: "Medio" },
-      { id: 302, nombre: "Camila Suárez", fecha: "2026-09-03", puntaje: 71, nivelRiesgo: "Alto" },
-      { id: 303, nombre: "Felipe Ortiz", fecha: "2026-09-05", puntaje: 38, nivelRiesgo: "Bajo" },
-    ],
-  },
-  4: {
-    poblacion: 31,
-    incremento: "+1 vs. mes ant.",
-    riesgo: { nivel: "Bajo", score: 20 },
-    distribucion: [
-      ["Bajo", "90%"],
-      ["Medio", "8%"],
-      ["Alto", "2%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [15, 16, 18, 17, 19, 18, 20, 19, 20],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 401, nombre: "Isabella Moreno", fecha: "2026-09-01", puntaje: 19, nivelRiesgo: "Bajo" },
-      { id: 402, nombre: "Nicolás Vargas", fecha: "2026-09-06", puntaje: 22, nivelRiesgo: "Bajo" },
-    ],
-  },
-  5: {
-    poblacion: 31,
-    incremento: "+2 vs. mes ant.",
-    riesgo: { nivel: "Bajo", score: 44 },
-    distribucion: [
-      ["Bajo", "68%"],
-      ["Medio", "25%"],
-      ["Alto", "7%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [50, 52, 54, 53, 56, 55, 57, 58, 56],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 501, nombre: "Sofía Ramírez", fecha: "2026-09-02", puntaje: 57, nivelRiesgo: "Medio" },
-      { id: 502, nombre: "Miguel Castro", fecha: "2026-09-04", puntaje: 41, nivelRiesgo: "Bajo" },
-    ],
-  },
-  6: {
-    poblacion: 31,
-    incremento: "+3 vs. mes ant.",
-    riesgo: { nivel: "Medio", score: 60 },
-    distribucion: [
-      ["Bajo", "55%"],
-      ["Medio", "36%"],
-      ["Alto", "9%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [52, 55, 58, 59, 57, 61, 63, 60, 62],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 601, nombre: "Daniela Vega", fecha: "2026-09-03", puntaje: 63, nivelRiesgo: "Medio" },
-      { id: 602, nombre: "Andrés Molina", fecha: "2026-09-05", puntaje: 45, nivelRiesgo: "Bajo" },
-    ],
-  },
-  7: {
-    poblacion: 123,
-    incremento: "+9 vs. mes ant.",
-    riesgo: { nivel: "Medio", score: 53 },
-    distribucion: [
-      ["Bajo", "52%"],
-      ["Medio", "35%"],
-      ["Alto", "13%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [46, 49, 51, 54, 52, 55, 57, 56, 58],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 701, nombre: "Laura Salazar", fecha: "2026-09-02", puntaje: 58, nivelRiesgo: "Medio" },
-      { id: 702, nombre: "Jorge Peña", fecha: "2026-09-06", puntaje: 36, nivelRiesgo: "Bajo" },
-    ],
-  },
-  // FIX: se agregó la entrada 8 correspondiente al nuevo id de "Socio demográfico B"
-  8: {
-    poblacion: 123,
-    incremento: "+5 vs. mes ant.",
-    riesgo: { nivel: "Bajo", score: 30 },
-    distribucion: [
-      ["Bajo", "80%"],
-      ["Medio", "15%"],
-      ["Alto", "5%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [25, 26, 28, 27, 29, 28, 30, 29, 30],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 801, nombre: "Ricardo Nieto", fecha: "2026-09-02", puntaje: 30, nivelRiesgo: "Bajo" },
-      { id: 802, nombre: "Manuela Cortés", fecha: "2026-09-05", puntaje: 33, nivelRiesgo: "Bajo" },
-    ],
-  },
-};
-
-/**
- * Simula la llamada a la base de datos / API.
- * Reemplaza el cuerpo por tu fetch real cuando tengas el backend.
- */
-function obtenerDatosCategoria(categoriaId) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const datos = DB_SIMULADA[categoriaId];
-      if (datos) {
-        resolve(datos);
-      } else {
-        reject(new Error("No hay datos para esta categoría"));
-      }
-    }, 350);
-  });
-}
-
-/* =========================================================
-   CUESTIONARIOS DISPONIBLES EN EL MODAL
-   (cada uno tiene ruta para Tipo A y Tipo B)
-========================================================= */
 
 const CUESTIONARIOS_MODAL = [
   {
@@ -252,16 +53,11 @@ const LABEL_NIVEL = {
 
 export default function Dashboard() {
   const { usuario, token, cerrarSesion } = useAuth();
-  const navigate = useNavigate(); // FIX: declarado una sola vez
+  const navigate = useNavigate();
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [cuestionarioSeleccionado, setCuestionarioSeleccionado] = useState(null);
-  const [categoriaActivaId, setCategoriaActivaId] = useState(2);
-  const [datosCategoria, setDatosCategoria] = useState(null);
-
-  // FIX: nombres distintos para no chocar con el estado de "indicadores"
-  const [cargandoCategoria, setCargandoCategoria] = useState(true);
-  const [errorCategoria, setErrorCategoria] = useState(null);
+  const [categoriaActivaId, setCategoriaActivaId] = useState(1);
 
   const [indicadores, setIndicadores] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -270,36 +66,10 @@ export default function Dashboard() {
   const [mensajeDescarga, setMensajeDescarga] = useState(null);
   const [generandoInforme, setGenerandoInforme] = useState(false);
 
-  const categoriaActiva = TODAS_CATEGORIAS.find((c) => c.id === categoriaActivaId);
-
-  // FIX: useCallback ahora está importado correctamente
-  const cargarCategoria = useCallback((id) => {
-    setCargandoCategoria(true);
-    setErrorCategoria(null);
-
-    obtenerDatosCategoria(id)
-      .then((datos) => {
-        setDatosCategoria(datos);
-      })
-      .catch((err) => {
-        setErrorCategoria(err.message);
-        setDatosCategoria(null);
-      })
-      .finally(() => {
-        setCargandoCategoria(false);
-      });
-  }, []);
-
-  // FIX: ahora sí se dispara la carga cuando cambia la categoría activa
-  useEffect(() => {
-    cargarCategoria(categoriaActivaId);
-  }, [categoriaActivaId, cargarCategoria]);
-
   useEffect(() => {
     if (token) {
       cargarDatosIndicadores();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   async function cargarDatosIndicadores() {
@@ -309,27 +79,27 @@ export default function Dashboard() {
       const data = await fetchIndicadores(token);
       setIndicadores(data);
     } catch (err) {
-      setError(err.message || "Ocurrió un error al cargar los indicadores.");
+      setError(err.message || "Ocurrió un error al cargar los indicadores de la base de datos.");
       setIndicadores(null);
     } finally {
       setCargando(false);
     }
   }
 
-  // FIX: handler que efectivamente usa generarInformeAgrupado / descargarInforme
-  // (antes se importaban pero nunca se llamaban).
-  // Ajusta la firma según la API real de tu backend.
   async function handleDescargarInforme() {
     setGenerandoInforme(true);
     setMensajeDescarga(null);
     try {
-      const informe = await generarInformeAgrupado(token, categoriaActivaId);
-      await descargarInforme(informe);
-      setMensajeDescarga("Informe generado y descargado correctamente.");
+      // Intenta generar el informe agrupado global de la organización
+      const res = await generarInformeAgrupado(token, null, null, "PDF");
+      if (res.id) {
+        await descargarInforme(token, res.id);
+        setMensajeDescarga("Informe generado y descargado correctamente.");
+      } else {
+        setMensajeDescarga("Informe solicitado con éxito.");
+      }
     } catch (err) {
-      setMensajeDescarga(
-        err.message || "No se pudo generar el informe. Intenta nuevamente."
-      );
+      setMensajeDescarga(err.message || "No se pudo generar el informe. Intenta nuevamente.");
     } finally {
       setGenerandoInforme(false);
     }
@@ -465,46 +235,46 @@ export default function Dashboard() {
           </button>
         </section>
 
+        {/* Pestañas de categorías del formulario A */}
         <div className="category-tabs">
           {CATEGORIAS.map((categoria) => (
             <button
               key={categoria.id}
               type="button"
               className={categoria.id === categoriaActivaId ? "selected" : ""}
-              onClick={() => setCategoriaActivaId(categoria.id)}
+              onClick={() => {
+                setCategoriaActivaId(categoria.id);
+                navigate(categoria.ruta);
+              }}
               aria-pressed={categoria.id === categoriaActivaId}
             >
               {categoria.nombre}
-              <small>{categoria.totalPreguntas}</small>
+              <small>{categoria.totalPreguntas} preguntas</small>
             </button>
           ))}
         </div>
 
-        {/* Segunda fila: versiones "B" de Estrés, Extralaboral e Intralaboral,
-            con exactamente la misma funcionalidad que la fila de arriba. */}
+        {/* Pestañas de categorías del formulario B */}
         <div className="category-tabs category-tabs--b" style={{ marginTop: 10 }}>
           {CATEGORIAS_B.map((categoria) => (
             <button
               key={categoria.id}
               type="button"
               className={categoria.id === categoriaActivaId ? "selected" : ""}
-              onClick={() => setCategoriaActivaId(categoria.id)}
+              onClick={() => {
+                setCategoriaActivaId(categoria.id);
+                navigate(categoria.ruta);
+              }}
               aria-pressed={categoria.id === categoriaActivaId}
             >
               {categoria.nombre}
-              <small>{categoria.totalPreguntas}</small>
+              <small>{categoria.totalPreguntas} preguntas</small>
             </button>
           ))}
         </div>
 
         {error && (
           <p className="error-text">No se pudieron cargar los indicadores del servidor: {error}</p>
-        )}
-
-        {errorCategoria && (
-          <p className="error-text">
-            No se pudieron cargar los datos de "{categoriaActiva?.nombre}": {errorCategoria}
-          </p>
         )}
 
         {mensajeDescarga && (
@@ -535,11 +305,11 @@ export default function Dashboard() {
 
             <div className="chart">
               {cargando ? (
-                <p className="chart-loading">Cargando indicadores reales...</p>
+                <p className="chart-loading">Cargando indicadores reales del servidor...</p>
               ) : indicadores?.anonimizado ? (
                 <div style={{ padding: "30px 20px", textAlign: "center", color: "#64748b" }}>
                   <p style={{ fontWeight: 600, fontSize: "15px", marginBottom: "8px" }}>
-                    Datos Anonimizados
+                    🔒 Datos Anonimizados
                   </p>
                   <p style={{ fontSize: "13px" }}>
                     {indicadores.mensajeAnonimato ||
@@ -578,7 +348,7 @@ export default function Dashboard() {
                     ? ""
                     : indicadores?.anonimizado
                     ? "Grupo pequeño (<5)"
-                    : `${nivelPrevalente.total} dimensiones medidas`}
+                    : `${nivelPrevalente.total} respuestas registradas`}
                 </small>
               </div>
             </div>
@@ -596,31 +366,6 @@ export default function Dashboard() {
               ["Borrador", `${indicadores?.evaluacionesPorEstado?.BORRADOR ?? 0}`],
             ]}
           />
-
-          {TODAS_CATEGORIAS.map((categoria) => {
-            const esActiva = categoria.id === categoriaActivaId;
-            const datos = esActiva ? datosCategoria : null;
-
-            return (
-              // FIX: "Indicator" no existía; el componente definido es "IndicatorCard"
-              <IndicatorCard
-                key={categoria.id}
-                title={categoria.nombre}
-                subtitle={`${categoria.totalPreguntas} preguntas`}
-                active={esActiva}
-                values={
-                  esActiva && datos
-                    ? datos.distribucion
-                    : [
-                        ["Bajo", "—"],
-                        ["Medio", "—"],
-                        ["Alto", "—"],
-                      ]
-                }
-                onClick={() => setCategoriaActivaId(categoria.id)}
-              />
-            );
-          })}
 
           <IndicatorCard
             title="Desglose Nivel de Riesgo"
@@ -677,7 +422,6 @@ export default function Dashboard() {
           >
             <h3>Participación y Resumen de Cuestionarios</h3>
 
-            {/* FIX: botón que efectivamente usa generarInformeAgrupado / descargarInforme */}
             <button
               type="button"
               className="modal-main-button"
@@ -761,9 +505,6 @@ export default function Dashboard() {
         </section>
       </main>
 
-      {/* FIX: se eliminó el segundo modal duplicado/mal anidado que quedaba
-          dentro de este mismo bloque y rompía el JSX. Se conserva un único
-          modal con flujo de selección (cuestionario -> tipo A/B). */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="questionnaire-modal" onClick={(e) => e.stopPropagation()}>
@@ -775,9 +516,9 @@ export default function Dashboard() {
               <>
                 <div className="modal-icon">
                   <img
-                    src="/logo a 2_Mesa de trabajo 1.jpg"
+                    src="/logob1.png"
                     alt="Magnus"
-                    style={{ height: 160, marginRight: "auto" }}
+                    style={{ height: 60, marginRight: "auto" }}
                   />
                 </div>
 
@@ -793,42 +534,32 @@ export default function Dashboard() {
                   ))}
                 </div>
 
-                <button className="modal-main-button" type="button" onClick={() => navigate("/cuestionarios")}>
+                <button className="modal-main-button" type="button" onClick={() => navigate("/cuestionario-estres")}>
                   Ir a cuestionarios
                 </button>
               </>
             ) : (
               <>
-                <button
-                  className="modal-back"
-                  type="button"
-                  onClick={() => setCuestionarioSeleccionado(null)}
-                  aria-label="Volver"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    alignSelf: "flex-start",
-                    marginBottom: 8,
-                    fontSize: 14,
-                    color: "#2e7869",
-                  }}
-                >
-                  ← Volver
-                </button>
-
                 <h2>{cuestionarioSeleccionado.titulo}</h2>
-                <p>Elige el tipo de cuestionario que deseas realizar.</p>
+                <p>Selecciona la modalidad según el tipo de trabajador:</p>
 
-                <div className="questionnaire-options">
-                  <button type="button" onClick={() => elegirTipo(cuestionarioSeleccionado.rutaA)}>
-                    <strong>Tipo A</strong>
-                    <span>Versión estándar del cuestionario.</span>
+                <div className="modal-type-buttons">
+                  <button
+                    type="button"
+                    className="modal-type-btn"
+                    onClick={() => elegirTipo(cuestionarioSeleccionado.rutaA)}
+                  >
+                    <strong>Forma A</strong>
+                    <span>Para cargos de jefatura, profesionales o técnicos</span>
                   </button>
 
-                  <button type="button" onClick={() => elegirTipo(cuestionarioSeleccionado.rutaB)}>
-                    <strong>Tipo B</strong>
-                    <span>Versión alternativa del cuestionario.</span>
+                  <button
+                    type="button"
+                    className="modal-type-btn"
+                    onClick={() => elegirTipo(cuestionarioSeleccionado.rutaB)}
+                  >
+                    <strong>Forma B</strong>
+                    <span>Para cargos de auxiliares u operarios</span>
                   </button>
                 </div>
               </>
@@ -874,11 +605,31 @@ function DistribucionRiesgoChart({ distribucion }) {
 
         return (
           <g key={n.clave}>
-            <rect x={x} y={y} width={barWidth} height={Math.max(barHeight, 4)} fill={n.color} rx="4" />
-            <text x={x + barWidth / 2} y={y - 6} fontSize="12" fontWeight="bold" textAnchor="middle" fill="#1e293b">
+            <rect
+              x={x}
+              y={y}
+              width={barWidth}
+              height={Math.max(barHeight, 4)}
+              fill={n.color}
+              rx="4"
+            />
+            <text
+              x={x + barWidth / 2}
+              y={y - 6}
+              fontSize="12"
+              fontWeight="bold"
+              textAnchor="middle"
+              fill="#1e293b"
+            >
               {val}
             </text>
-            <text x={x + barWidth / 2} y={height + 16} fontSize="11" textAnchor="middle" fill="#64748b">
+            <text
+              x={x + barWidth / 2}
+              y={height + 16}
+              fontSize="11"
+              textAnchor="middle"
+              fill="#64748b"
+            >
               {n.etiqueta}
             </text>
           </g>
@@ -890,7 +641,11 @@ function DistribucionRiesgoChart({ distribucion }) {
 
 function IndicatorCard({ title, subtitle, values, active, onClick }) {
   return (
-    <div className={`indicator-card ${active ? "indicator-active" : ""}`} onClick={onClick} role={onClick ? "button" : undefined}>
+    <div
+      className={`indicator-card ${active ? "indicator-active" : ""}`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+    >
       <div className="indicator-header">
         <div>
           <h3>{title}</h3>
@@ -907,7 +662,7 @@ function IndicatorCard({ title, subtitle, values, active, onClick }) {
               <div
                 className="progress-fill bajo"
                 style={{
-                  width: val.includes("%") ? val : "60%",
+                  width: typeof val === "string" && val.includes("%") ? val : "60%",
                 }}
               ></div>
             </div>

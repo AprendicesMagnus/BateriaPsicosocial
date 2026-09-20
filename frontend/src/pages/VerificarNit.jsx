@@ -15,16 +15,16 @@ export default function VerificarNit() {
     e.preventDefault();
     setError("");
 
-    const nitLimpio = nit.replace(/\D/g, "");
-    if (nitLimpio.length !== 9) {
-      setError("El NIT debe tener exactamente 9 dígitos.");
+    const nitLimpio = nit.trim();
+    if (!/^\d{9}-\d$/.test(nitLimpio)) {
+      setError("El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador).");
       return;
     }
 
     setVerificando(true);
 
     try {
-      const res = await request(`/organizaciones/existe?nit=${nitLimpio}`);
+      const res = await request(`/organizaciones/existe?nit=${encodeURIComponent(nitLimpio)}`);
 
       if (res.existe) {
         // Ajusta estos campos si tu backend devuelve la empresa con otra forma.
@@ -34,8 +34,8 @@ export default function VerificarNit() {
 
       navigate("/crear-empresa", { state: { nit: nitLimpio } });
     } catch (err) {
-  setError(err.message || "No se pudo verificar el NIT. Intenta de nuevo.");
-} finally {
+      setError(err.message || "No se pudo verificar el NIT. Intenta de nuevo.");
+    } finally {
       setVerificando(false);
     }
   }
@@ -110,14 +110,16 @@ export default function VerificarNit() {
 
                 <form className="empresas-form" onSubmit={handleSubmit}>
                   <label className="field">
-                    <span className="field__label">NIT de la empresa</span>
+                    <span className="field__label">NIT de la empresa (con dígito verificador)</span>
                     <input
                       className="field__input"
-                      inputMode="numeric"
-                      placeholder="900123456"
-                      maxLength={9}
+                      pattern="\d{9}-\d"
+                      minLength={11}
+                      maxLength={11}
+                      title="Formato requerido: 900123456-7 (9 dígitos base, guion y dígito verificador)"
+                      placeholder="900123456-7"
                       value={nit}
-                      onChange={(e) => setNit(e.target.value.replace(/\D/g, "").slice(0, 9))}
+                      onChange={(e) => setNit(e.target.value)}
                       required
                     />
                   </label>
