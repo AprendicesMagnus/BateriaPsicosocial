@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/cuestionario-estres.css";
 
 /* =========================================================
    PREGUNTAS PRINCIPALES (1-88) — Forma B
+
+   ⚠️ NO MODIFICAR el texto, el orden ni los ids: son parte
+   del instrumento oficial (Batería de Riesgo Psicosocial,
+   Forma B). Los ids se usan como clave de calificación por
+   dominio/dimensión; cambiarlos rompe los resultados.
 ========================================================= */
 
 const preguntasPrincipales = [
@@ -102,10 +107,17 @@ const preguntasPrincipales = [
    Solo se muestra si la pregunta filtro "clientes" = "Sí".
    (La Forma B no tiene bloque de jefatura, a diferencia de
    la Forma A.)
+
+   ⚠️ NO MODIFICAR el texto, el orden ni los ids 89-97: son
+   parte del instrumento oficial (Batería de Riesgo
+   Psicosocial, Forma B). Los ids se usan como clave de
+   calificación; cambiarlos rompe los resultados.
 ========================================================= */
 
+const ID_FILTRO_CLIENTES = "clientes";
+
 const preguntaClientes = {
-  id: "clientes",
+  id: ID_FILTRO_CLIENTES,
   tipo: "si_no",
   texto: "En mi trabajo debo brindar servicio a clientes o usuarios:",
 };
@@ -124,6 +136,8 @@ const preguntasClientes = [
 
 const PREGUNTAS_POR_PAGINA = 8;
 
+// ⚠️ NO MODIFICAR: escala oficial Forma B. El orden importa
+// (Siempre → Nunca) porque de él depende la puntuación.
 const opciones = [
   "Siempre",
   "Casi siempre",
@@ -132,34 +146,140 @@ const opciones = [
   "Nunca",
 ];
 
+const OPCIONES_SI_NO = ["Sí", "No"];
+
+// Las respuestas se guardan en sessionStorage para no perderlas
+// al recargar o al navegar a otro cuestionario. Se borran al
+// cerrar la pestaña (son datos sensibles del trabajador).
+const CLAVE_RESPUESTAS = "magnussing:intralaboralB:respuestas";
+
+// Navegación entre cuestionarios de la Forma B (menú lateral y pestañas).
+// Un solo lugar para las rutas: deben coincidir con App.jsx.
+const NAVEGACION = [
+  { clave: "estres", ruta: "/cuestionario-estresB", titulo: "Estrés", tituloPestana: "Estrés", detalle: "31 preguntas", cantidad: "31" },
+  { clave: "extralaboral", ruta: "/cuestionario-extralaboralB", titulo: "Factores extralaborales", tituloPestana: "Extralaboral", detalle: "31 preguntas", cantidad: "31" },
+  { clave: "intralaboral", ruta: "/cuestionario-intralaboralB", titulo: "Factores intralaborales", tituloPestana: "Intralaboral - Forma B", detalle: "Forma B · 88 a 97 preguntas", cantidad: "88-97" },
+];
+
+const CLAVE_ACTIVA = "intralaboral";
+
 /**
+ * ⚠️ NO MODIFICAR sin revisar la calificación.
  * Devuelve la lista de preguntas visibles según la respuesta a
- * la pregunta filtro "clientes". Si es "No", las 9 preguntas de
- * atención a clientes ni se muestran ni cuentan para el total.
+ * la pregunta filtro "clientes". Si es "No" (o aún sin responder),
+ * las 9 preguntas de atención a clientes ni se muestran ni cuentan
+ * para el total.
  */
 function obtenerPreguntasVisibles(respuestas) {
   const visibles = [...preguntasPrincipales, preguntaClientes];
 
-  if (respuestas[preguntaClientes.id] === "Sí") {
+  if (respuestas[ID_FILTRO_CLIENTES] === "Sí") {
     visibles.push(...preguntasClientes);
   }
 
   return visibles;
 }
 
+/**
+ * ⚠️ NO MODIFICAR: evita datos corruptos en el resultado.
+ * Descarta las respuestas de preguntas que ya no son visibles.
+ * Caso típico: el usuario contesta "Sí", responde 89-97 y luego
+ * cambia el filtro a "No". Sin esta limpieza esas 9 respuestas
+ * quedarían guardadas y se enviarían/calificarían aunque el
+ * trabajador dijo que no atiende clientes.
+ */
+function limpiarRespuestasHuerfanas(respuestas) {
+  const idsVisibles = new Set(
+    obtenerPreguntasVisibles(respuestas).map((p) => String(p.id))
+  );
+
+  return Object.fromEntries(
+    Object.entries(respuestas).filter(([id]) => idsVisibles.has(id))
+  );
+}
+
+function leerRespuestasGuardadas() {
+  try {
+    const guardado = JSON.parse(sessionStorage.getItem(CLAVE_RESPUESTAS));
+    return guardado && typeof guardado === "object" ? guardado : {};
+  } catch {
+    // sessionStorage bloqueado o contenido corrupto: empezamos vacío.
+    return {};
+  }
+}
+
+/* =========================================================
+   FILA DE PREGUNTA
+   Una sola implementación para la pregunta filtro (Sí/No) y
+   las preguntas Likert, para que ambas se comporten igual.
+========================================================= */
+
+function FilaPregunta({ pregunta, respuesta, sinResponder, onSeleccionar }) {
+  const esFiltro = pregunta.tipo === "si_no";
+  const listaOpciones = esFiltro ? OPCIONES_SI_NO : opciones;
+
+  const clases = ["question-row"];
+  if (esFiltro) clases.push("question-row-gate");
+  if (sinResponder) clases.push("question-row-error");
+
+  return (
+    // El id de la fila lo usa irSiguiente() para hacer scroll a la
+    // primera pregunta sin responder. No lo quites.
+    <div className={clases.join(" ")} id={`fila-pregunta-${pregunta.id}`}>
+
+      <div className="question-number">
+        {esFiltro ? "?" : pregunta.id}
+      </div>
+
+      <div className="question-text">
+        {esFiltro ? pregunta.texto : `${pregunta.id}. ${pregunta.texto}`}
+      </div>
+
+      {listaOpciones.map((opcion) => (
+        <label className="answer-option" key={opcion}>
+          <input
+            type="radio"
+            name={`pregunta-${pregunta.id}`}
+            value={opcion}
+            checked={respuesta === opcion}
+            onChange={() => onSeleccionar(pregunta.id, opcion)}
+          />
+          <span className="custom-radio"></span>
+          <small>{opcion}</small>
+        </label>
+      ))}
+
+    </div>
+  );
+}
+
 export default function CuestionarioIntralaboralB() {
 
   const navigate = useNavigate();
 
-  const [respuestas, setRespuestas] = useState({});
+  const [respuestas, setRespuestas] = useState(() =>
+    limpiarRespuestasHuerfanas(leerRespuestasGuardadas())
+  );
   const [pagina, setPagina] = useState(0);
   const [intentoFinalizar, setIntentoFinalizar] = useState(false);
+  const [preguntaAEnfocar, setPreguntaAEnfocar] = useState(null);
 
+  // Persistencia local de las respuestas (ver CLAVE_RESPUESTAS).
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CLAVE_RESPUESTAS, JSON.stringify(respuestas));
+    } catch {
+      // Sin almacenamiento disponible: el cuestionario sigue funcionando.
+    }
+  }, [respuestas]);
+
+  // ⚠️ Forma funcional (prev) + limpieza de huérfanas: no volver a
+  // `setRespuestas({ ...respuestas, ... })`; con clics rápidos pierde
+  // respuestas y no descarta las del bloque de clientes.
   const seleccionarRespuesta = (preguntaId, respuesta) => {
-    setRespuestas({
-      ...respuestas,
-      [preguntaId]: respuesta,
-    });
+    setRespuestas((prev) =>
+      limpiarRespuestasHuerfanas({ ...prev, [preguntaId]: respuesta })
+    );
   };
 
   const preguntasVisibles = obtenerPreguntasVisibles(respuestas);
@@ -172,6 +292,17 @@ export default function CuestionarioIntralaboralB() {
   const inicio = paginaSegura * PREGUNTAS_POR_PAGINA;
   const fin = Math.min(inicio + PREGUNTAS_POR_PAGINA, preguntasVisibles.length);
   const preguntasPagina = preguntasVisibles.slice(inicio, fin);
+
+  // Scroll hasta la pregunta pendiente una vez renderizada su página.
+  useEffect(() => {
+    if (preguntaAEnfocar === null) return;
+
+    const fila = document.getElementById(`fila-pregunta-${preguntaAEnfocar}`);
+    if (fila) {
+      fila.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    setPreguntaAEnfocar(null);
+  }, [preguntaAEnfocar, paginaSegura]);
 
   const irAnterior = () => {
     if (paginaSegura === 0) {
@@ -189,36 +320,54 @@ export default function CuestionarioIntralaboralB() {
       return;
     }
 
-    const preguntaSinResponder = preguntasVisibles.find(
+    // Última página: no se puede finalizar con preguntas sin responder.
+    const sinResponder = preguntasVisibles.filter(
       (p) => respuestas[p.id] === undefined
     );
 
-    if (preguntaSinResponder) {
-      const faltantes = preguntasVisibles.filter(
-        (p) => respuestas[p.id] === undefined
-      ).length;
-
-      const indiceFaltante = preguntasVisibles.indexOf(preguntaSinResponder);
-      const paginaFaltante = Math.floor(indiceFaltante / PREGUNTAS_POR_PAGINA);
+    if (sinResponder.length > 0) {
+      const primera = sinResponder[0];
+      const indicePrimera = preguntasVisibles.indexOf(primera);
 
       setIntentoFinalizar(true);
 
       alert(
-        `Te faltan ${faltantes} pregunta(s) por responder. Te llevamos a la primera pregunta sin responder.`
+        `Te faltan ${sinResponder.length} pregunta(s) por responder. Te llevamos a la primera pregunta sin responder.`
       );
 
-      setPagina(paginaFaltante);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setPagina(Math.floor(indicePrimera / PREGUNTAS_POR_PAGINA));
+      setPreguntaAEnfocar(primera.id);
       return;
     }
 
-    alert("Las respuestas han sido guardadas correctamente.");
+    setIntentoFinalizar(false);
+
+    // Respuestas listas para enviar: solo las de preguntas visibles.
+    // TODO(backend): enviar `respuestasFinales` al servidor. El endpoint
+    // existente (POST /evaluaciones/:id/respuestas) trabaja con el id de
+    // evaluación y los ids de pregunta de la BD, que esta pantalla aún no
+    // tiene; hay que definir ese mapeo antes de conectarlo.
+    // eslint-disable-next-line no-unused-vars
+    const respuestasFinales = limpiarRespuestasHuerfanas(respuestas);
+
+    alert(
+      "Cuestionario completo. Tus respuestas quedaron guardadas en este navegador; el envío al servidor todavía no está conectado."
+    );
   };
 
   const respondidas = preguntasVisibles.filter(
     (p) => respuestas[p.id] !== undefined
   ).length;
   const progreso = Math.round((respondidas / preguntasVisibles.length) * 100);
+
+  // Encabezado: solo cuentan las preguntas numeradas (88, o 97 con
+  // clientes). La pregunta filtro no tiene número y no se cuenta.
+  const numeradasPagina = preguntasPagina.filter((p) => p.tipo === "likert");
+  const totalNumeradas = preguntasVisibles.filter((p) => p.tipo === "likert").length;
+  const textoRango =
+    numeradasPagina.length === 0
+      ? "Pregunta filtro: atención a clientes"
+      : `Pregunta ${numeradasPagina[0].id}–${numeradasPagina[numeradasPagina.length - 1].id} de ${totalNumeradas}`;
 
   return (
     <div className="questionnaire-page">
@@ -248,49 +397,24 @@ export default function CuestionarioIntralaboralB() {
 
         <nav className="questionnaire-menu">
 
-          <button
-            className="questionnaire-menu-item"
-            type="button"
-            onClick={() => navigate("/cuestionario-estresB")}
-          >
-            <span>▣</span>
+          {NAVEGACION.map((item) => (
+            <button
+              key={item.clave}
+              className={`questionnaire-menu-item ${
+                item.clave === CLAVE_ACTIVA ? "active" : ""
+              }`}
+              type="button"
+              onClick={() => navigate(item.ruta)}
+            >
+              <span>▣</span>
 
-            <div>
-              <strong>Estrés</strong>
-              <small>31 preguntas</small>
-            </div>
+              <div>
+                <strong>{item.titulo}</strong>
+                <small>{item.detalle}</small>
+              </div>
 
-          </button>
-
-
-          <button
-            className="questionnaire-menu-item"
-            type="button"
-            onClick={() => navigate("/cuestionario-extralaboralB")}
-          >
-            <span>▣</span>
-
-            <div>
-              <strong>Factores extralaborales</strong>
-              <small>31 preguntas</small>
-            </div>
-
-          </button>
-
-
-          <button
-            className="questionnaire-menu-item active"
-            type="button"
-            onClick={() => navigate("/cuestionario-intralaboralB")}
-          >
-            <span>▣</span>
-
-            <div>
-              <strong>Factores intralaborales</strong>
-              <small>Forma B · 88 preguntas</small>
-            </div>
-
-          </button>
+            </button>
+          ))}
 
         </nav>
 
@@ -347,39 +471,21 @@ export default function CuestionarioIntralaboralB() {
 
         <div className="questionnaire-tabs">
 
-          <button
-            type="button"
+          {NAVEGACION.map((item) => (
+            <button
+              key={item.clave}
+              type="button"
+              className={item.clave === CLAVE_ACTIVA ? "active" : undefined}
+              onClick={() => navigate(item.ruta)}
+            >
+              <strong>{item.tituloPestana}</strong>
+              <span>{item.cantidad}</span>
+            </button>
+          ))}
 
-            onClick={() => navigate("/cuestionario-estres")}
-
-            onClick={() => navigate("/cuestionario-estresB")}
-          >
-            <strong>Estrés</strong>
-            <span>31</span>
-          </button>
-
-          <button
-            type="button"
-
-            onClick={() => navigate("/cuestionario-extralaboral")}
-            onClick={() => navigate("/cuestionario-extralaboralB")}
-          >
-            <strong>Extralaboral</strong>
-            <span>31</span>
-          </button>
-
-          <button
-            type="button"
-            className="active"
-            onClick={() => navigate("/cuestionario-intralaboral-b")}
-            onClick={() => navigate("/cuestionario-intralaboralB")}
-          >
-            <strong>Intralaboral - Forma B</strong>
-            <span>88</span>
-          </button>
-
+          {/* Este porcentaje es solo de ESTE cuestionario. */}
           <div className="general-progress">
-            <span>Progreso general</span>
+            <span>Progreso</span>
             <div className="general-progress-bar">
               <div style={{ width: `${progreso}%` }}></div>
             </div>
@@ -401,9 +507,7 @@ export default function CuestionarioIntralaboralB() {
 
             <div>
 
-              <strong>
-                Pregunta {inicio + 1}–{fin} de {preguntasVisibles.length}
-              </strong>
+              <strong>{textoRango}</strong>
 
               <div className="questions-progress">
                 <div style={{ width: `${progreso}%` }}></div>
@@ -439,82 +543,17 @@ export default function CuestionarioIntralaboralB() {
 
           <div className="questions-list">
 
-            {preguntasPagina.map((pregunta) => {
-
-              const sinResponder =
-                intentoFinalizar && respuestas[pregunta.id] === undefined;
-
-              if (pregunta.tipo === "si_no") {
-                return (
-                  <div
-                    className={`question-row question-row-gate ${
-                      sinResponder ? "question-row-error" : ""
-                    }`}
-                    key={pregunta.id}
-                  >
-
-                    <div className="question-number">?</div>
-
-                    <div className="question-text">
-                      {pregunta.texto}
-                    </div>
-
-                    {["Sí", "No"].map((opcion) => (
-                      <label className="answer-option" key={opcion}>
-                        <input
-                          type="radio"
-                          name={`pregunta-${pregunta.id}`}
-                          value={opcion}
-                          checked={respuestas[pregunta.id] === opcion}
-                          onChange={() =>
-                            seleccionarRespuesta(pregunta.id, opcion)
-                          }
-                        />
-                        <span className="custom-radio"></span>
-                        <small>{opcion}</small>
-                      </label>
-                    ))}
-
-                  </div>
-                );
-              }
-
-              return (
-                <div
-                  className={`question-row ${
-                    sinResponder ? "question-row-error" : ""
-                  }`}
-                  key={pregunta.id}
-                >
-
-                  <div className="question-number">
-                    {pregunta.id}
-                  </div>
-
-                  <div className="question-text">
-                    {pregunta.id}. {pregunta.texto}
-                  </div>
-
-                  {opciones.map((opcion) => (
-                    <label className="answer-option" key={opcion}>
-                      <input
-                        type="radio"
-                        name={`pregunta-${pregunta.id}`}
-                        value={opcion}
-                        checked={respuestas[pregunta.id] === opcion}
-                        onChange={() =>
-                          seleccionarRespuesta(pregunta.id, opcion)
-                        }
-                      />
-                      <span className="custom-radio"></span>
-                      <small>{opcion}</small>
-                    </label>
-                  ))}
-
-                </div>
-              );
-
-            })}
+            {preguntasPagina.map((pregunta) => (
+              <FilaPregunta
+                key={pregunta.id}
+                pregunta={pregunta}
+                respuesta={respuestas[pregunta.id]}
+                sinResponder={
+                  intentoFinalizar && respuestas[pregunta.id] === undefined
+                }
+                onSeleccionar={seleccionarRespuesta}
+              />
+            ))}
 
           </div>
 
