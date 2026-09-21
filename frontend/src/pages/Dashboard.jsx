@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+
 import "../styles/dashboard.css";
+
 import { useAuth } from "../context/AuthContext";
 import { fetchIndicadores } from "../api/indicadores";
 import { fetchAnalisisPredictivo } from "../api/prediccion";
+
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 
 /* =========================================================
@@ -267,6 +270,12 @@ export default function Dashboard() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
+  // 2. fetchAnalisisPredictivo
+  const [prediccion, setPrediccion] = useState(null);
+  const [cargandoPrediccion, setCargandoPrediccion] = useState(false);
+  const [errorPrediccion, setErrorPrediccion] = useState(null);
+
+  // 3 & 4. generarInformeAgrupado, descargarInforme
   const [mensajeDescarga, setMensajeDescarga] = useState(null);
   const [generandoInforme, setGenerandoInforme] = useState(false);
 
@@ -309,7 +318,7 @@ export default function Dashboard() {
       const data = await fetchIndicadores(token);
       setIndicadores(data);
     } catch (err) {
-      setError(err.message || "Ocurrió un error al cargar los indicadores.");
+      setError(err.message || "Ocurrió un error al cargar los indicadores de la base de datos.");
       setIndicadores(null);
     } finally {
       setCargando(false);
@@ -465,49 +474,62 @@ export default function Dashboard() {
           </button>
         </section>
 
-        <div className="category-tabs">
-          {CATEGORIAS.map((categoria) => (
-            <button
-              key={categoria.id}
-              type="button"
-              className={categoria.id === categoriaActivaId ? "selected" : ""}
-              onClick={() => setCategoriaActivaId(categoria.id)}
-              aria-pressed={categoria.id === categoriaActivaId}
-            >
-              {categoria.nombre}
-              <small>{categoria.totalPreguntas}</small>
-            </button>
-          ))}
-        </div>
+{/* Pestañas de categorías del formulario A */}
+<div className="category-tabs">
+  {CATEGORIAS.map((categoria) => (
+    <button
+      key={categoria.id}
+      type="button"
+      className={categoria.id === categoriaActivaId ? "selected" : ""}
+      onClick={() => {
+        setCategoriaActivaId(categoria.id);
+        navigate(categoria.ruta);
+      }}
+      aria-pressed={categoria.id === categoriaActivaId}
+    >
+      {categoria.nombre}
+      <small>{categoria.totalPreguntas} preguntas</small>
+    </button>
+  ))}
+</div>
 
-        {/* Segunda fila: versiones "B" de Estrés, Extralaboral e Intralaboral,
-            con exactamente la misma funcionalidad que la fila de arriba. */}
-        <div className="category-tabs category-tabs--b" style={{ marginTop: 10 }}>
-          {CATEGORIAS_B.map((categoria) => (
-            <button
-              key={categoria.id}
-              type="button"
-              className={categoria.id === categoriaActivaId ? "selected" : ""}
-              onClick={() => setCategoriaActivaId(categoria.id)}
-              aria-pressed={categoria.id === categoriaActivaId}
-            >
-              {categoria.nombre}
-              <small>{categoria.totalPreguntas}</small>
-            </button>
-          ))}
-        </div>
+{/* Segunda fila: versiones "B" de Estrés, Extralaboral e Intralaboral */}
+{/* Pestañas de categorías del formulario B */}
+<div
+  className="category-tabs category-tabs--b"
+  style={{ marginTop: 10 }}
+>
+  {CATEGORIAS_B.map((categoria) => (
+    <button
+      key={categoria.id}
+      type="button"
+      className={categoria.id === categoriaActivaId ? "selected" : ""}
+      onClick={() => {
+        setCategoriaActivaId(categoria.id);
+        navigate(categoria.ruta);
+      }}
+      aria-pressed={categoria.id === categoriaActivaId}
+    >
+      {categoria.nombre}
+      <small>{categoria.totalPreguntas} preguntas</small>
+    </button>
+  ))}
+</div>
 
-        {error && (
-          <p className="error-text">No se pudieron cargar los indicadores del servidor: {error}</p>
-        )}
+{error && (
+  <p className="error-text">
+    No se pudieron cargar los indicadores del servidor: {error}
+  </p>
+)}
 
-        {errorCategoria && (
-          <p className="error-text">
-            No se pudieron cargar los datos de "{categoriaActiva?.nombre}": {errorCategoria}
-          </p>
-        )}
+{errorCategoria && (
+  <p className="error-text">
+    No se pudieron cargar los datos de "{categoriaActiva?.nombre}": {errorCategoria}
+  </p>
+)}
 
-        {mensajeDescarga && (
+
+{mensajeDescarga && (
           <p className="error-text" style={{ background: "#e0f2fe", color: "#0369a1" }}>
             {mensajeDescarga}
           </p>
@@ -535,11 +557,11 @@ export default function Dashboard() {
 
             <div className="chart">
               {cargando ? (
-                <p className="chart-loading">Cargando indicadores reales...</p>
+                <p className="chart-loading">Cargando indicadores reales del servidor...</p>
               ) : indicadores?.anonimizado ? (
                 <div style={{ padding: "30px 20px", textAlign: "center", color: "#64748b" }}>
                   <p style={{ fontWeight: 600, fontSize: "15px", marginBottom: "8px" }}>
-                    Datos Anonimizados
+                    🔒 Datos Anonimizados
                   </p>
                   <p style={{ fontSize: "13px" }}>
                     {indicadores.mensajeAnonimato ||
@@ -578,7 +600,7 @@ export default function Dashboard() {
                     ? ""
                     : indicadores?.anonimizado
                     ? "Grupo pequeño (<5)"
-                    : `${nivelPrevalente.total} dimensiones medidas`}
+                    : `${nivelPrevalente.total} respuestas registradas`}
                 </small>
               </div>
             </div>
@@ -663,6 +685,118 @@ export default function Dashboard() {
               ],
             ]}
           />
+        </section>
+
+        {/* =========================================================
+            SECCIÓN DE ANÁLISIS PREDICTIVO CON IA (K-MEANS)
+        ========================================================= */}
+        <section className="responders-card" style={{ marginTop: "24px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <div>
+              <h3>Análisis Predictivo (K-Means Clustering IA)</h3>
+              <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>
+                Identificación de perfiles de riesgo no supervisados y alertas tempranas en tiempo real.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="modal-main-button"
+              onClick={() => handleEjecutarPrediccion(indicadores?.evaluacionId || "eval-actual")}
+              disabled={cargandoPrediccion}
+            >
+              {cargandoPrediccion ? "Analizando con IA..." : "🤖 Analizar con IA (K-Means)"}
+            </button>
+          </div>
+
+          {errorPrediccion && (
+            <p className="error-text" style={{ marginTop: "12px" }}>
+              {errorPrediccion}
+            </p>
+          )}
+
+          {prediccion && (
+            <div style={{ marginTop: "16px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: "12px",
+                  marginBottom: "16px",
+                }}
+              >
+                {prediccion.perfilesClusterKMeans?.map((cluster) => (
+                  <div
+                    key={cluster.clusterId}
+                    style={{
+                      padding: "14px",
+                      background: "#f8fafc",
+                      borderRadius: "8px",
+                      border: "1px solid #cbd5e1",
+                    }}
+                  >
+                    <span style={{ fontSize: "12px", fontWeight: "bold", color: "#2563eb" }}>
+                      Clúster #{cluster.clusterId} ({cluster.porcentajeGrupo}%)
+                    </span>
+                    <h4 style={{ margin: "6px 0", fontSize: "14px", color: "#1e293b" }}>
+                      {cluster.etiqueta}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                      {cluster.numTrabajadores} trabajador(es) · Promedio: {cluster.promedioGlobalPuntaje} pts
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {prediccion.alertasTempranas?.length > 0 && (
+                <div style={{ marginBottom: "16px" }}>
+                  <h4 style={{ fontSize: "14px", color: "#b91c1c", marginBottom: "8px" }}>
+                    ⚠️ Alertas Tempranas Identificadas ({prediccion.alertasTempranas.length})
+                  </h4>
+                  <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#475569" }}>
+                    {prediccion.alertasTempranas.map((alerta, idx) => (
+                      <li key={idx} style={{ marginBottom: "4px" }}>
+                        <strong>[{alerta.nivelAlerta}]</strong> {alerta.mensaje}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* NOTA METODOLÓGICA Y ESTRATEGIA DE ENTRENAMIENTO */}
+              <div
+                style={{
+                  padding: "16px",
+                  background: "#f0fdf4",
+                  borderRadius: "8px",
+                  border: "1px solid #bbf7d0",
+                  marginTop: "12px",
+                }}
+              >
+                <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
+                  🤖 <strong>Nota Metodológica del Modelo:</strong>
+                </p>
+                <p style={{ margin: "0 0 10px 0", fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
+                  {prediccion.notaMetodologica}
+                </p>
+
+                <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
+                  ⚡ <strong>Estrategia de Entrenamiento:</strong>
+                </p>
+                <p style={{ margin: 0, fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
+                  {prediccion.estrategiaEntrenamiento}
+                </p>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="responders-card">
@@ -775,9 +909,9 @@ export default function Dashboard() {
               <>
                 <div className="modal-icon">
                   <img
-                    src="/logo a 2_Mesa de trabajo 1.jpg"
+                    src="/logob1.png"
                     alt="Magnus"
-                    style={{ height: 160, marginRight: "auto" }}
+                    style={{ height: 60, marginRight: "auto" }}
                   />
                 </div>
 
@@ -793,42 +927,32 @@ export default function Dashboard() {
                   ))}
                 </div>
 
-                <button className="modal-main-button" type="button" onClick={() => navigate("/cuestionarios")}>
+                <button className="modal-main-button" type="button" onClick={() => navigate("/cuestionario-estres")}>
                   Ir a cuestionarios
                 </button>
               </>
             ) : (
               <>
-                <button
-                  className="modal-back"
-                  type="button"
-                  onClick={() => setCuestionarioSeleccionado(null)}
-                  aria-label="Volver"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    alignSelf: "flex-start",
-                    marginBottom: 8,
-                    fontSize: 14,
-                    color: "#2e7869",
-                  }}
-                >
-                  ← Volver
-                </button>
-
                 <h2>{cuestionarioSeleccionado.titulo}</h2>
-                <p>Elige el tipo de cuestionario que deseas realizar.</p>
+                <p>Selecciona la modalidad según el tipo de trabajador:</p>
 
-                <div className="questionnaire-options">
-                  <button type="button" onClick={() => elegirTipo(cuestionarioSeleccionado.rutaA)}>
-                    <strong>Tipo A</strong>
-                    <span>Versión estándar del cuestionario.</span>
+                <div className="modal-type-buttons">
+                  <button
+                    type="button"
+                    className="modal-type-btn"
+                    onClick={() => elegirTipo(cuestionarioSeleccionado.rutaA)}
+                  >
+                    <strong>Forma A</strong>
+                    <span>Para cargos de jefatura, profesionales o técnicos</span>
                   </button>
 
-                  <button type="button" onClick={() => elegirTipo(cuestionarioSeleccionado.rutaB)}>
-                    <strong>Tipo B</strong>
-                    <span>Versión alternativa del cuestionario.</span>
+                  <button
+                    type="button"
+                    className="modal-type-btn"
+                    onClick={() => elegirTipo(cuestionarioSeleccionado.rutaB)}
+                  >
+                    <strong>Forma B</strong>
+                    <span>Para cargos de auxiliares u operarios</span>
                   </button>
                 </div>
               </>
@@ -907,7 +1031,7 @@ function IndicatorCard({ title, subtitle, values, active, onClick }) {
               <div
                 className="progress-fill bajo"
                 style={{
-                  width: val.includes("%") ? val : "60%",
+                  width: typeof val === "string" && val.includes("%") ? val : "60%",
                 }}
               ></div>
             </div>

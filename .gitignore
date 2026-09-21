@@ -11,4 +11,7 @@ backend/.venv/
 *.log
 dist/
 node_modules/
+bash.exe.stackdump
 
+
+/generated/prisma

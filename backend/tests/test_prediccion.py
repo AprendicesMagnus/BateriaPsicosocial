@@ -1,4 +1,5 @@
-﻿import uuid
+import uuid
+from app.core.nit_utils import calcular_digito_verificador_nit
 
 def test_analisis_predictivo_kmeans(client):
     # 1. Login admin
@@ -8,7 +9,8 @@ def test_analisis_predictivo_kmeans(client):
     headers_admin = {"Authorization": f"Bearer {token_admin}"}
 
     # 2. Crear Organizacion y Area
-    nit_rnd = f"900{uuid.uuid4().hex[:6]}"
+    nit_base = f"9{str(uuid.uuid4().int)[:8]}"
+    nit_rnd = f"{nit_base}-{calcular_digito_verificador_nit(nit_base)}"
     res = client.post("/api/organizaciones", headers=headers_admin, json={
         "nombre": "Empresa Predictivo K-Means SAS",
         "nit": nit_rnd,
@@ -35,14 +37,14 @@ def test_analisis_predictivo_kmeans(client):
     for i in range(6):
         email_trab = f"trab_pred_{i}_{uuid.uuid4().hex[:4]}@test.com"
         res = client.post("/api/usuarios", headers=headers_admin, json={
-            "nombre": f"Trabajador{i+1}",
+            "nombre": "Trabajador",
             "apellido": "Test",
             "email": email_trab,
             "password": "Trabajador1234",
             "rolCodigo": "TRABAJADOR",
             "organizacionId": org_id,
             "areaId": area_id,
-            "numeroIdentificacion": f"CC{uuid.uuid4().hex[:8]}",
+            "numeroIdentificacion": f"{str(uuid.uuid4().int)[:10]}",
             "cargo": "Operario"
         })
         assert res.status_code == 200

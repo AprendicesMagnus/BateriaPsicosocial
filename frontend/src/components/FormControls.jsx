@@ -1,23 +1,47 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 
-export function TextField({ label, ...props }) {
+export function TextField({ label, error, invalid, id, className, ...props }) {
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const errorId = `${inputId}-error`;
+  const isInvalid = Boolean(invalid || error);
+
   return (
-    <label className="field">
-      <span className="field__label">{label}</span>
-      <input className="field__input" {...props} />
+    <label className="field" htmlFor={inputId}>
+      {label && <span className="field__label">{label}</span>}
+      <input
+        id={inputId}
+        className={`field__input ${isInvalid ? "field__input--invalid" : ""} ${className || ""}`.trim()}
+        aria-invalid={isInvalid ? "true" : "false"}
+        aria-describedby={error ? errorId : undefined}
+        {...props}
+      />
+      {error && (
+        <span className="field__error" id={errorId}>
+          {error}
+        </span>
+      )}
     </label>
   );
 }
 
-export function PasswordField({ label, ...props }) {
+export function PasswordField({ label, error, invalid, id, className, ...props }) {
   const [visible, setVisible] = useState(false);
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const errorId = `${inputId}-error`;
+  const isInvalid = Boolean(invalid || error);
+
   return (
-    <label className="field">
-      <span className="field__label">{label}</span>
+    <label className="field" htmlFor={inputId}>
+      {label && <span className="field__label">{label}</span>}
       <div className="field__password-wrap">
         <input
-          className="field__input"
+          id={inputId}
+          className={`field__input ${isInvalid ? "field__input--invalid" : ""} ${className || ""}`.trim()}
           type={visible ? "text" : "password"}
+          aria-invalid={isInvalid ? "true" : "false"}
+          aria-describedby={error ? errorId : undefined}
           {...props}
         />
         <button
@@ -47,6 +71,11 @@ export function PasswordField({ label, ...props }) {
           )}
         </button>
       </div>
+      {error && (
+        <span className="field__error" id={errorId}>
+          {error}
+        </span>
+      )}
     </label>
   );
 }
@@ -72,19 +101,32 @@ export function FormMessage({ type = "error", children }) {
   return <div className={`form-message form-message--${type}`}>{children}</div>;
 }
 
-export function CodeInput({ value, onChange, length = 6 }) {
-  function handleChange(e) {
-    const digits = e.target.value.replace(/\D/g, "").slice(0, length);
-    onChange(digits);
-  }
+export function CodeInput({ value, onChange, length = 6, error, invalid, id, onBlur, ...props }) {
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const errorId = `${inputId}-error`;
+  const isInvalid = Boolean(invalid || error);
+
   return (
-    <input
-      className="field__input field__input--code"
-      inputMode="numeric"
-      maxLength={length}
-      value={value}
-      onChange={handleChange}
-      placeholder={"•".repeat(length)}
-    />
+    <label className="field" htmlFor={inputId}>
+      <input
+        id={inputId}
+        className={`field__input field__input--code ${isInvalid ? "field__input--invalid" : ""}`.trim()}
+        inputMode="numeric"
+        maxLength={length}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        placeholder={"•".repeat(length)}
+        aria-invalid={isInvalid ? "true" : "false"}
+        aria-describedby={error ? errorId : undefined}
+        {...props}
+      />
+      {error && (
+        <span className="field__error" id={errorId} style={{ textAlign: "center" }}>
+          {error}
+        </span>
+      )}
+    </label>
   );
 }

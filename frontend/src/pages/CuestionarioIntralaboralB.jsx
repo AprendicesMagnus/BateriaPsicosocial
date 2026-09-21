@@ -349,7 +349,10 @@ export default function CuestionarioIntralaboralB() {
 
           <button
             type="button"
+
             onClick={() => navigate("/cuestionario-estres")}
+
+            onClick={() => navigate("/cuestionario-estresB")}
           >
             <strong>Estrés</strong>
             <span>31</span>
@@ -357,7 +360,9 @@ export default function CuestionarioIntralaboralB() {
 
           <button
             type="button"
+
             onClick={() => navigate("/cuestionario-extralaboral")}
+            onClick={() => navigate("/cuestionario-extralaboralB")}
           >
             <strong>Extralaboral</strong>
             <span>31</span>
@@ -367,6 +372,7 @@ export default function CuestionarioIntralaboralB() {
             type="button"
             className="active"
             onClick={() => navigate("/cuestionario-intralaboral-b")}
+            onClick={() => navigate("/cuestionario-intralaboralB")}
           >
             <strong>Intralaboral - Forma B</strong>
             <span>88</span>

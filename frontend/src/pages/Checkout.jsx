@@ -1,22 +1,26 @@
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import AppTopbar from "../components/AppTopbar";
 import "../styles/app-shell.css";
-import "../styles/checkout.css";
-import { useAuth } from "../context/AuthContext";
+import "../styles/Checkout.css";
 import { request } from "../api/client";
+import {
+  nombrePersonaValido,
+  formatearVencimiento,
+  vencimientoValido,
+  enteroEnRango,
+  formatearTarjeta,
+  soloDigitos,
+  filtrarNombrePersona,
+} from "../utils/validaciones";
 
 // ==================================================
 // Datos de ejemplo — ajusta según venga de tu API
 // ==================================================
-// Valores de ejemplo, usados solo como respaldo mientras no exista
-// el módulo real de empresas/baterías que envíe estos datos.
 const TARIFA_POR_BATERIA_DEFECTO = 10000; // COP
 const IVA_PORCENTAJE = 0.19;
 
-// Bancos más comunes disponibles en PSE en Colombia.
-// Nota: son representaciones estilizadas (monograma + color de marca),
-// no los archivos de logo oficiales de cada banco.
 const BANCOS_PSE = [
   { nombre: "Bancolombia", sigla: "B", color: "#FFDD00", textColor: "#111111" },
   { nombre: "Davivienda", sigla: "D", color: "#DA291C", textColor: "#ffffff" },
@@ -33,21 +37,10 @@ function formatCOP(valor) {
 }
 
 function detectarMarca(numero) {
-  const limpio = numero.replace(/\s/g, "");
+  const limpio = (numero || "").replace(/\s/g, "");
   if (/^4/.test(limpio)) return "VISA";
   if (/^5[1-5]/.test(limpio)) return "MASTERCARD";
   return null;
-}
-
-function formatearNumeroTarjeta(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 16);
-  return digits.replace(/(.{4})/g, "$1 ").trim();
-}
-
-function formatearVencimiento(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
 function LockIcon({ small }) {
@@ -142,26 +135,104 @@ export default function Checkout() {
   const [guardarTarjeta, setGuardarTarjeta] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [tocados, setTocados] = useState({});
+  const [intento, setIntento] = useState(false);
 
-  const subtotal = cantidad * tarifaPorBateria;
+  const cantidadTexto = String(cantidad).trim();
+  const cantidadNumerica = enteroEnRango(cantidadTexto, 1, 100000) ? Number(cantidadTexto) : 0;
+
+  const subtotal = cantidadNumerica * tarifaPorBateria;
   const iva = subtotal * IVA_PORCENTAJE;
   const total = subtotal + iva;
 
   const marca = useMemo(() => detectarMarca(numeroTarjeta), [numeroTarjeta]);
 
+  const marcarTocado = (campo) => {
+    setTocados((prev) => ({ ...prev, [campo]: true }));
+  };
+
+  const errores = useMemo(() => {
+    const errs = {};
+    if (!enteroEnRango(cantidadTexto, 1, 100000)) {
+      errs.cantidad = "La cantidad debe ser un número entero entre 1 y 100,000.";
+    }
+
+    if (metodo === "tarjeta") {
+      const numLimpio = numeroTarjeta.replace(/\s/g, "");
+      if (!numLimpio) {
+        errs.numeroTarjeta = "Ingresa el número de tarjeta.";
+      } else if (!/^\d{13,19}$/.test(numLimpio)) {
+        errs.numeroTarjeta = "El número de tarjeta debe tener entre 13 y 19 dígitos.";
+      }
+
+      if (!nombreTarjeta.trim()) {
+        errs.nombreTarjeta = "Ingresa el nombre en la tarjeta.";
+      } else if (!nombrePersonaValido(nombreTarjeta)) {
+        errs.nombreTarjeta = "Ingresa un nombre válido (solo letras, mín. 2 letras).";
+      }
+
+      if (!vencimiento.trim()) {
+        errs.vencimiento = "Ingresa la fecha de vencimiento.";
+      } else if (!vencimientoValido(vencimiento)) {
+        errs.vencimiento = "Fecha de vencimiento inválida o tarjeta vencida.";
+      }
+
+      if (!cvv.trim()) {
+        errs.cvv = "Ingresa el CVV.";
+      } else if (!/^\d{3,4}$/.test(cvv)) {
+        errs.cvv = "El CVV debe tener 3 o 4 dígitos.";
+      }
+    } else if (metodo === "pse") {
+      if (!bancoSeleccionado) {
+        errs.banco = "Selecciona tu banco para continuar con el pago PSE.";
+      }
+    }
+
+    return errs;
+  }, [cantidadTexto, metodo, numeroTarjeta, nombreTarjeta, vencimiento, cvv, bancoSeleccionado]);
+
   function ajustarCantidad(delta) {
-    setCantidad((c) => Math.max(1, c + delta));
+    setCantidad((c) => {
+      const actual = enteroEnRango(String(c).trim(), 1, 100000) ? Number(String(c).trim()) : 0;
+      return Math.min(100000, Math.max(1, actual + delta));
+    });
   }
 
   async function handlePagar(e) {
     if (e) e.preventDefault();
     setError("");
+    setIntento(true);
+
+    const numCantidad = cantidadNumerica;
+
+    if (metodo === "tarjeta") {
+      if (errores.cantidad || errores.numeroTarjeta || errores.nombreTarjeta || errores.vencimiento || errores.cvv) {
+        setTimeout(() => {
+          const primInvalido = document.querySelector(".field__input--invalid, .field__error");
+          if (primInvalido && typeof primInvalido.focus === "function") {
+            primInvalido.focus();
+          }
+        }, 0);
+        return;
+      }
+    } else if (metodo === "pse") {
+      if (errores.cantidad || errores.banco) {
+        setTimeout(() => {
+          const primInvalido = document.querySelector(".field__input--invalid, .checkout-bank-grid, .field__error");
+          if (primInvalido && typeof primInvalido.focus === "function") {
+            primInvalido.focus();
+          }
+        }, 0);
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const resCompra = await request("/compras", {
         method: "POST",
         body: {
-          cantidad,
+          cantidad: numCantidad,
           bateriaNombre,
           organizacionId: usuario?.organizacionId || null,
         },
@@ -173,7 +244,7 @@ export default function Checkout() {
         body: {
           compraId: resCompra.id,
           metodo,
-          numeroTarjeta: metodo === "tarjeta" ? numeroTarjeta : null,
+          numeroTarjeta: metodo === "tarjeta" ? numeroTarjeta.replace(/\s/g, "") : null,
           nombreTarjeta: metodo === "tarjeta" ? nombreTarjeta : null,
           vencimiento: metodo === "tarjeta" ? vencimiento : null,
           cvv: metodo === "tarjeta" ? cvv : null,
@@ -202,9 +273,6 @@ export default function Checkout() {
     <div className="app-shell-page">
       <AppTopbar />
 
-      {/* =================================================
-          FONDO OSCURO + CONTENIDO
-          ================================================= */}
       <main className="app-hero">
         <div className="app-decor app-decor--1" />
         <div className="app-decor app-decor--2" />
@@ -240,17 +308,24 @@ export default function Checkout() {
               </div>
 
               {metodo === "tarjeta" ? (
-                <form className="checkout-form" onSubmit={handlePagar}>
+                <form className="checkout-form" onSubmit={handlePagar} noValidate>
                   <label className="field">
                     <span className="field__label">Número de tarjeta</span>
                     <div className="checkout-input-with-badge">
                       <input
-                        className="field__input"
+                        className={`field__input ${
+                          errores.numeroTarjeta && (intento || tocados.numeroTarjeta) ? "field__input--invalid" : ""
+                        }`}
                         inputMode="numeric"
+                        maxLength={23}
                         placeholder="0000 0000 0000 0000"
                         value={numeroTarjeta}
-                        onChange={(e) => setNumeroTarjeta(formatearNumeroTarjeta(e.target.value))}
-                        required
+                        onChange={(e) => setNumeroTarjeta(formatearTarjeta(e.target.value))}
+                        onBlur={() => marcarTocado("numeroTarjeta")}
+                        aria-invalid={!!(errores.numeroTarjeta && (intento || tocados.numeroTarjeta))}
+                        aria-describedby={
+                          errores.numeroTarjeta && (intento || tocados.numeroTarjeta) ? "numeroTarjeta-error" : undefined
+                        }
                       />
                       {marca === "VISA" && (
                         <span className="checkout-input-icon">
@@ -263,42 +338,80 @@ export default function Checkout() {
                         </span>
                       )}
                     </div>
+                    {errores.numeroTarjeta && (intento || tocados.numeroTarjeta) && (
+                      <span className="field__error" id="numeroTarjeta-error">
+                        {errores.numeroTarjeta}
+                      </span>
+                    )}
                   </label>
 
                   <label className="field">
                     <span className="field__label">Nombre en la tarjeta</span>
                     <input
-                      className="field__input"
+                      className={`field__input ${
+                        errores.nombreTarjeta && (intento || tocados.nombreTarjeta) ? "field__input--invalid" : ""
+                      }`}
                       placeholder="Como aparece en la tarjeta"
+                      maxLength={100}
                       value={nombreTarjeta}
-                      onChange={(e) => setNombreTarjeta(e.target.value.toUpperCase())}
-                      required
+                      onChange={(e) => setNombreTarjeta(filtrarNombrePersona(e.target.value, 100))}
+                      onBlur={() => marcarTocado("nombreTarjeta")}
+                      aria-invalid={!!(errores.nombreTarjeta && (intento || tocados.nombreTarjeta))}
+                      aria-describedby={
+                        errores.nombreTarjeta && (intento || tocados.nombreTarjeta) ? "nombreTarjeta-error" : undefined
+                      }
                     />
+                    {errores.nombreTarjeta && (intento || tocados.nombreTarjeta) && (
+                      <span className="field__error" id="nombreTarjeta-error">
+                        {errores.nombreTarjeta}
+                      </span>
+                    )}
                   </label>
 
                   <div className="form-row">
                     <label className="field">
                       <span className="field__label">Vencimiento (MM/AA)</span>
                       <input
-                        className="field__input"
+                        className={`field__input ${
+                          errores.vencimiento && (intento || tocados.vencimiento) ? "field__input--invalid" : ""
+                        }`}
                         placeholder="MM/AA"
                         inputMode="numeric"
+                        maxLength={5}
                         value={vencimiento}
                         onChange={(e) => setVencimiento(formatearVencimiento(e.target.value))}
-                        required
+                        onBlur={() => marcarTocado("vencimiento")}
+                        aria-invalid={!!(errores.vencimiento && (intento || tocados.vencimiento))}
+                        aria-describedby={
+                          errores.vencimiento && (intento || tocados.vencimiento) ? "vencimiento-error" : undefined
+                        }
                       />
+                      {errores.vencimiento && (intento || tocados.vencimiento) && (
+                        <span className="field__error" id="vencimiento-error">
+                          {errores.vencimiento}
+                        </span>
+                      )}
                     </label>
                     <label className="field">
                       <span className="field__label">CVV</span>
                       <input
-                        className="field__input"
+                        className={`field__input ${
+                          errores.cvv && (intento || tocados.cvv) ? "field__input--invalid" : ""
+                        }`}
                         placeholder="•••"
                         inputMode="numeric"
                         maxLength={4}
                         value={cvv}
-                        onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                        required
+                        onChange={(e) => setCvv(soloDigitos(e.target.value, 4))}
+                        onBlur={() => marcarTocado("cvv")}
+                        aria-invalid={!!(errores.cvv && (intento || tocados.cvv))}
+                        aria-describedby={errores.cvv && (intento || tocados.cvv) ? "cvv-error" : undefined}
                       />
+                      {errores.cvv && (intento || tocados.cvv) && (
+                        <span className="field__error" id="cvv-error">
+                          {errores.cvv}
+                        </span>
+                      )}
                     </label>
                   </div>
 
@@ -342,7 +455,10 @@ export default function Checkout() {
                         className={`checkout-bank-btn ${
                           bancoSeleccionado === banco.nombre ? "checkout-bank-btn--active" : ""
                         }`}
-                        onClick={() => setBancoSeleccionado(banco.nombre)}
+                        onClick={() => {
+                          setBancoSeleccionado(banco.nombre);
+                          marcarTocado("banco");
+                        }}
                       >
                         <span
                           className="checkout-bank-icon"
@@ -355,13 +471,19 @@ export default function Checkout() {
                     ))}
                   </div>
 
+                  {errores.banco && intento && (
+                    <span className="field__error" id="banco-error">
+                      {errores.banco}
+                    </span>
+                  )}
+
                   {error && <div className="form-message form-message--error">{error}</div>}
 
                   <button
                     type="button"
                     className="btn-primary checkout-pay-btn"
                     onClick={handlePagar}
-                    disabled={loading || !bancoSeleccionado}
+                    disabled={loading}
                   >
                     {loading
                       ? "Redirigiendo..."
@@ -387,20 +509,26 @@ export default function Checkout() {
                     −
                   </button>
                   <input
-                    type="number"
-                    min="1"
-                    className="checkout-stepper-input"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className={`checkout-stepper-input ${
+                      errores.cantidad && (intento || tocados.cantidad) ? "field__input--invalid" : ""
+                    }`}
                     value={cantidad}
-                    onChange={(e) => {
-                      const valor = parseInt(e.target.value, 10);
-                      setCantidad(Number.isNaN(valor) ? 1 : Math.max(1, valor));
-                    }}
+                    onChange={(e) => setCantidad(soloDigitos(e.target.value, 6))}
+                    onBlur={() => marcarTocado("cantidad")}
                   />
                   <button type="button" onClick={() => ajustarCantidad(1)} aria-label="Sumar">
                     +
                   </button>
                 </div>
               </div>
+              {errores.cantidad && (intento || tocados.cantidad) && (
+                <span className="field__error" id="cantidad-error">
+                  {errores.cantidad}
+                </span>
+              )}
 
               <div className="checkout-summary-row">
                 <span>Tarifa por Batería</span>

@@ -1,6 +1,6 @@
 import os
 import uuid
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, contains_eager, joinedload
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -396,3 +396,57 @@ def generar_informe_agrupado(
     db.commit()
     db.refresh(informe_obj)
     return informe_obj
+
+
+def _serializar_informe(informe: Informe) -> dict:
+    evaluacion = informe.evaluacion
+    return {
+        "id": str(informe.id),
+        "evaluacionId": str(informe.evaluacion_id),
+        "evaluacionNombre": evaluacion.nombre,
+        "organizacionId": str(evaluacion.organizacion_id),
+        "organizacionNombre": evaluacion.organizacion.nombre,
+        "tipo": informe.tipo,
+        "formato": informe.formato,
+        "areaId": str(informe.area_id) if informe.area_id else None,
+        "generadoEn": informe.generado_en.isoformat(),
+        "anonimizado": informe.anonimizado,
+    }
+
+
+def listar_informes(
+    db: Session,
+    actual: Usuario,
+    evaluacion_id: uuid.UUID | None = None,
+    tipo: str | None = None,
+) -> list[dict]:
+    """Lista los informes visibles para el usuario, con el mismo alcance que la descarga.
+
+    - ADMINISTRADOR: informes de todas las organizaciones.
+    - EVALUADOR_SST: informes de su propia organizacion.
+    - TRABAJADOR: unicamente sus propios informes individuales.
+    """
+    query = (
+        db.query(Informe)
+        .join(Informe.evaluacion)
+        .options(contains_eager(Informe.evaluacion).joinedload(Evaluacion.organizacion))
+    )
+
+    rol = actual.rol.codigo
+    if rol == "ADMINISTRADOR":
+        pass
+    elif rol == "EVALUADOR_SST":
+        query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
+    elif rol == "TRABAJADOR":
+        query = query.filter(Informe.tipo == "INDIVIDUAL", Informe.trabajador_id == actual.id)
+    else:
+        raise AppError(403, "No tiene permisos para consultar informes.")
+
+    if evaluacion_id is not None:
+        query = query.filter(Informe.evaluacion_id == evaluacion_id)
+    if tipo is not None:
+        query = query.filter(Informe.tipo == tipo.upper())
+
+    informes = query.order_by(Informe.generado_en.desc()).all()
+    return [_serializar_informe(informe) for informe in informes]
+

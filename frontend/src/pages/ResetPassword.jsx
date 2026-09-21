@@ -3,9 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { PasswordField, PrimaryButton, FormMessage } from "../components/FormControls";
 import { resetPassword } from "../api/auth";
 import "../styles/auth.css";
+import { TEXTO_AYUDA_PASSWORD, passwordValida } from "../utils/validaciones";
 
-// Imagen de fondo a toda pantalla (misma que las demás pantallas de este flujo).
-// El archivo debe estar en: public/fondo-recuperar.jpg
 function ResetPasswordBackground() {
   return <img src="/imagen5.jpg" alt="" className="verify-bg" />;
 }
@@ -13,10 +12,13 @@ function ResetPasswordBackground() {
 export default function ResetPassword() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { resetToken, email } = location.state || {};
+  const { resetToken } = location.state || {};
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [tocados, setTocados] = useState({});
+  const [intento, setIntento] = useState(false);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,12 +28,35 @@ export default function ResetPassword() {
     }
   }, [resetToken, navigate]);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
+  const marcar = (campo) => {
+    setTocados((prev) => ({ ...prev, [campo]: true }));
+  };
 
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+  const errores = {
+    password: !password
+      ? "Este campo es obligatorio."
+      : !passwordValida(password)
+      ? TEXTO_AYUDA_PASSWORD
+      : "",
+    confirmPassword: !confirmPassword
+      ? "Este campo es obligatorio."
+      : password !== confirmPassword
+      ? "Las contraseñas no coinciden."
+      : "",
+  };
+
+  const mostrarError = (campo) => Boolean((tocados[campo] || intento) && errores[campo]);
+
+  async function handleSubmit(e) {
+    if (e) e.preventDefault();
+    setError("");
+    setIntento(true);
+
+    const hayErrores = Object.keys(errores).some((campo) => Boolean(errores[campo]));
+    if (hayErrores) {
+      setTimeout(() => {
+        document.querySelector(".field__input--invalid")?.focus();
+      }, 0);
       return;
     }
 
@@ -42,7 +67,7 @@ export default function ResetPassword() {
         state: { message: "Contraseña restablecida con éxito. Ya puedes iniciar sesión." },
       });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "No se pudo restablecer la contraseña.");
     } finally {
       setLoading(false);
     }
@@ -62,23 +87,24 @@ export default function ResetPassword() {
 
         <FormMessage type="error">{error}</FormMessage>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <PasswordField
             label="Nueva Contraseña"
-            required
-            minLength={8}
+            maxLength={72}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value.slice(0, 72))}
+            onBlur={() => marcar("password")}
+            error={mostrarError("password") ? errores.password : ""}
             placeholder="••••••••"
           />
-          <p className="auth-subtitle" style={{ margin: "-8px 0 0", fontSize: 12 }}>
-            Mínimo 8 caracteres, con mayúsculas, minúsculas y números.
-          </p>
+
           <PasswordField
             label="Confirmar Contraseña"
-            required
+            maxLength={72}
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => setConfirmPassword(e.target.value.slice(0, 72))}
+            onBlur={() => marcar("confirmPassword")}
+            error={mostrarError("confirmPassword") ? errores.confirmPassword : ""}
             placeholder="••••••••"
           />
 

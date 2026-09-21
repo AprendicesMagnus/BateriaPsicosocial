@@ -92,7 +92,7 @@ def cambiar_rol_usuario(
     Solo los Administradores pueden invocar este endpoint.
     No se permite quitar el rol ADMINISTRADOR al único administrador activo del sistema.
     """
-    res = usuarios_service.cambiar_rol_usuario(db, usuario_id, data.rol_codigo, actual)
+    res = usuarios_service.cambiar_rol_usuario(db, usuario_id, data.rolCodigo, actual)
     auditoria_service.registrar_auditoria(
         db,
         usuario=actual,
@@ -100,7 +100,7 @@ def cambiar_rol_usuario(
         entidad="Usuario",
         entidad_id=str(usuario_id),
         request=request,
-        detalle={"rol_anterior": res.get("rol_anterior"), "rol_nuevo": data.rol_codigo},
+        detalle={"rol_anterior": res.get("rol_anterior"), "rol_nuevo": data.rolCodigo},
     )
     return res
 

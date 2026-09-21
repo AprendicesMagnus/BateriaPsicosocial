@@ -23,6 +23,7 @@ def existe_organizacion_nit(db: Session, nit: str) -> dict:
 
 
 from app.core.crypto import email_valido, hash_password, password_valida
+from app.core.nit_utils import calcular_digito_verificador_nit
 from app.models.user import Rol, Usuario
 from app.services.auth import crear_y_enviar_codigo
 
@@ -39,6 +40,10 @@ def autorregistrar_organizacion(db: Session, data) -> dict:
        a verificar la cuenta antes del login.
     """
     nit_limpio = data.nit.strip()
+    # Validar dígito de verificación (Módulo 11 DIAN)
+    nit_base, dv_str = nit_limpio.split("-")
+    if calcular_digito_verificador_nit(nit_base) != int(dv_str):
+        raise AppError(400, "El dígito de verificación del NIT no es válido.")
     if db.query(Organizacion).filter(Organizacion.nit == nit_limpio).first():
         raise AppError(409, "Ya existe una organización registrada con este NIT.")
 
@@ -102,11 +107,16 @@ def autorregistrar_organizacion(db: Session, data) -> dict:
 
 
 def crear_organizacion(db: Session, data) -> Organizacion:
-    if db.query(Organizacion).filter(Organizacion.nit == data.nit).first():
+    nit_limpio = data.nit.strip()
+    if "-" in nit_limpio:
+        nit_base, dv_str = nit_limpio.split("-")
+        if calcular_digito_verificador_nit(nit_base) != int(dv_str):
+            raise AppError(400, "El dígito de verificación del NIT no es válido.")
+    if db.query(Organizacion).filter(Organizacion.nit == nit_limpio).first():
         raise AppError(409, "Ya existe una organización con ese NIT.")
     org = Organizacion(
         nombre=data.nombre.strip(),
-        nit=data.nit.strip(),
+        nit=nit_limpio,
         sector=data.sector,
         municipio=data.municipio,
         telefono=data.telefono,
@@ -122,6 +132,12 @@ def actualizar_organizacion(db: Session, org_id, data) -> Organizacion:
     org = db.query(Organizacion).filter(Organizacion.id == org_id).first()
     if org is None:
         raise AppError(404, "Organización no encontrada.")
+    if data.nit is not None:
+        nit_limpio = data.nit.strip()
+        if "-" in nit_limpio:
+            nit_base, dv_str = nit_limpio.split("-")
+            if calcular_digito_verificador_nit(nit_base) != int(dv_str):
+                raise AppError(400, "El dígito de verificación del NIT no es válido.")
     for campo, valor in {
         "nombre": data.nombre,
         "nit": data.nit,

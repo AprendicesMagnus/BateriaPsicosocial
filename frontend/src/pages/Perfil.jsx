@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import AppTopbar from "../components/AppTopbar";
 import "../styles/app-shell.css";
-import "../styles/perfil.css";
+import "../styles/Perfil.css";
 import { request } from "../api/client";
 
 function formatearFecha(fechaIso) {

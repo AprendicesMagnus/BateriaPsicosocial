@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_gestor
@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 class PreguntaActualizarRequest(BaseModel):
-    enunciado: str | None = None
+    enunciado: str | None = Field(default=None, min_length=5, max_length=2000)
     inversa: bool | None = None
 
 

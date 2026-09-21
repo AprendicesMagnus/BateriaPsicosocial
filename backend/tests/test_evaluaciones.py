@@ -1,4 +1,5 @@
-﻿import uuid
+import uuid
+from app.core.nit_utils import calcular_digito_verificador_nit
 
 def test_flujo_completo_evaluacion(client):
     # 1. Login admin
@@ -8,7 +9,8 @@ def test_flujo_completo_evaluacion(client):
     headers_admin = {"Authorization": f"Bearer {token_admin}"}
 
     # 2. Crear Organizacion y Area
-    nit_rnd = f"900{uuid.uuid4().hex[:6]}"
+    nit_base = f"9{str(uuid.uuid4().int)[:8]}"
+    nit_rnd = f"{nit_base}-{calcular_digito_verificador_nit(nit_base)}"
     res = client.post("/api/organizaciones", headers=headers_admin, json={
         "nombre": "Empresa Test Pytest SAS",
         "nit": nit_rnd,
@@ -37,7 +39,7 @@ def test_flujo_completo_evaluacion(client):
         "rolCodigo": "TRABAJADOR",
         "organizacionId": org_id,
         "areaId": area_id,
-        "numeroIdentificacion": f"CC{uuid.uuid4().hex[:8]}",
+        "numeroIdentificacion": f"{str(uuid.uuid4().int)[:10]}",
         "cargo": "Desarrolladora Senior"
     })
     assert res.status_code == 200
