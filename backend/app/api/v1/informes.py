@@ -2,7 +2,7 @@ import os
 from uuid import UUID
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import asegurar_acceso_organizacion, get_current_user, require_gestor
@@ -24,7 +24,7 @@ class InformeIndividualCreateRequest(BaseModel):
 class InformeAgrupadoCreateRequest(BaseModel):
     evaluacionId: UUID
     areaId: UUID | None = None
-    formato: str = "PDF"
+    formato: str = Field(default="PDF", pattern=r"^(PDF|EXCEL|CSV)$")
 
 
 def _asegurar_evaluacion_accesible(db: Session, evaluacion_id: UUID, actual: Usuario) -> None:

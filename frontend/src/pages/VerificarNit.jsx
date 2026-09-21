@@ -3,31 +3,51 @@ import { Link, useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
 import "../styles/Empresas.css";
 import { request } from "../api/client";
+import { formatearNit } from "../utils/validaciones";
 
 export default function VerificarNit() {
   const navigate = useNavigate();
   const [nit, setNit] = useState("");
+  const [tocados, setTocados] = useState({});
+  const [intento, setIntento] = useState(false);
+
   const [error, setError] = useState("");
   const [verificando, setVerificando] = useState(false);
   const [empresaEncontrada, setEmpresaEncontrada] = useState(null);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
+  const marcar = (campo) => {
+    setTocados((prev) => ({ ...prev, [campo]: true }));
+  };
 
-    const nitLimpio = nit.trim();
-    if (!/^\d{9}-\d$/.test(nitLimpio)) {
-      setError("El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador).");
+  const errores = {
+    nit: !nit
+      ? "Este campo es obligatorio."
+      : !/^\d{9}-\d$/.test(nit.trim())
+      ? "El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador)."
+      : "",
+  };
+
+  const mostrarError = (campo) => Boolean((tocados[campo] || intento) && errores[campo]);
+
+  async function handleSubmit(e) {
+    if (e) e.preventDefault();
+    setError("");
+    setIntento(true);
+
+    if (errores.nit) {
+      setTimeout(() => {
+        document.querySelector(".field__input--invalid")?.focus();
+      }, 0);
       return;
     }
 
+    const nitLimpio = nit.trim();
     setVerificando(true);
 
     try {
       const res = await request(`/organizaciones/existe?nit=${encodeURIComponent(nitLimpio)}`);
 
       if (res.existe) {
-        // Ajusta estos campos si tu backend devuelve la empresa con otra forma.
         setEmpresaEncontrada(res.empresa ?? { nit: nitLimpio });
         return;
       }
@@ -44,6 +64,8 @@ export default function VerificarNit() {
     setEmpresaEncontrada(null);
     setNit("");
     setError("");
+    setTocados({});
+    setIntento(false);
   }
 
   return (
@@ -108,20 +130,24 @@ export default function VerificarNit() {
                   Antes de crear tu empresa, verifiquemos que no esté registrada todavía.
                 </p>
 
-                <form className="empresas-form" onSubmit={handleSubmit}>
+                <form className="empresas-form" onSubmit={handleSubmit} noValidate>
                   <label className="field">
                     <span className="field__label">NIT de la empresa (con dígito verificador)</span>
                     <input
-                      className="field__input"
-                      pattern="\d{9}-\d"
-                      minLength={11}
-                      maxLength={11}
-                      title="Formato requerido: 900123456-7 (9 dígitos base, guion y dígito verificador)"
+                      className={`field__input ${mostrarError("nit") ? "field__input--invalid" : ""}`}
+                      aria-invalid={mostrarError("nit") ? "true" : "false"}
+                      aria-describedby={mostrarError("nit") ? "nit-error" : undefined}
                       placeholder="900123456-7"
+                      maxLength={11}
                       value={nit}
-                      onChange={(e) => setNit(e.target.value)}
-                      required
+                      onChange={(e) => setNit(formatearNit(e.target.value))}
+                      onBlur={() => marcar("nit")}
                     />
+                    {mostrarError("nit") && (
+                      <span className="field__error" id="nit-error">
+                        {errores.nit}
+                      </span>
+                    )}
                   </label>
 
                   {error && <div className="form-message form-message--error">{error}</div>}

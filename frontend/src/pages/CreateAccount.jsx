@@ -3,9 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import { TextField, PasswordField, PrimaryButton, SecondaryButton, FormMessage } from "../components/FormControls";
 import { register } from "../api/auth";
-
-const PASSWORD_HINT =
-  "Mínimo 8 caracteres, con mayúsculas, minúsculas y números.";
+import {
+  TEXTO_AYUDA_PASSWORD,
+  emailValido,
+  filtrarNombrePersona,
+  nombrePersonaValido,
+  normalizarEmail,
+  passwordValida,
+} from "../utils/validaciones";
 
 export default function CreateAccount() {
   const [form, setForm] = useState({
@@ -15,34 +20,74 @@ export default function CreateAccount() {
     password: "",
     confirmPassword: "",
   });
+  const [tocados, setTocados] = useState({});
+  const [intento, setIntento] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  function update(field) {
-    return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
-  }
+  const marcar = (campo) => {
+    setTocados((prev) => ({ ...prev, [campo]: true }));
+  };
+
+  const errores = {
+    nombre: !form.nombre
+      ? "Este campo es obligatorio."
+      : !nombrePersonaValido(form.nombre.trim(), 100)
+      ? "Solo letras y espacios (mínimo 2 caracteres)."
+      : "",
+    apellido: !form.apellido
+      ? "Este campo es obligatorio."
+      : !nombrePersonaValido(form.apellido.trim(), 100)
+      ? "Solo letras y espacios (mínimo 2 caracteres)."
+      : "",
+    email: !form.email
+      ? "Este campo es obligatorio."
+      : !emailValido(normalizarEmail(form.email))
+      ? "Ingresa un correo válido."
+      : "",
+    password: !form.password
+      ? "Este campo es obligatorio."
+      : !passwordValida(form.password)
+      ? TEXTO_AYUDA_PASSWORD
+      : "",
+    confirmPassword: !form.confirmPassword
+      ? "Este campo es obligatorio."
+      : form.password !== form.confirmPassword
+      ? "Las contraseñas no coinciden."
+      : "",
+  };
+
+  const mostrarError = (campo) => Boolean((tocados[campo] || intento) && errores[campo]);
 
   async function handleSubmit(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError("");
+    setIntento(true);
 
-    if (form.password !== form.confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+    const hayErrores = Object.keys(errores).some((campo) => Boolean(errores[campo]));
+    if (hayErrores) {
+      setTimeout(() => {
+        document.querySelector(".field__input--invalid")?.focus();
+      }, 0);
       return;
     }
+
+    const nomTrim = form.nombre.trim();
+    const apeTrim = form.apellido.trim();
+    const correoNorm = normalizarEmail(form.email);
 
     setLoading(true);
     try {
       await register({
-        nombre: form.nombre,
-        apellido: form.apellido,
-        email: form.email,
+        nombre: nomTrim,
+        apellido: apeTrim,
+        email: correoNorm,
         password: form.password,
       });
-      navigate("/verificar-cuenta", { state: { email: form.email } });
+      navigate("/verificar-cuenta", { state: { email: correoNorm } });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "No se pudo crear la cuenta.");
     } finally {
       setLoading(false);
     }
@@ -55,20 +100,24 @@ export default function CreateAccount() {
 
       <FormMessage type="error">{error}</FormMessage>
 
-      <form className="auth-form" onSubmit={handleSubmit}>
+      <form className="auth-form" onSubmit={handleSubmit} noValidate>
         <div className="form-row">
           <TextField
             label="Nombre"
-            required
+            maxLength={100}
             value={form.nombre}
-            onChange={update("nombre")}
+            onChange={(e) => setForm((f) => ({ ...f, nombre: filtrarNombrePersona(e.target.value, 100) }))}
+            onBlur={() => marcar("nombre")}
+            error={mostrarError("nombre") ? errores.nombre : ""}
             placeholder="Nombre"
           />
           <TextField
             label="Apellido"
-            required
+            maxLength={100}
             value={form.apellido}
-            onChange={update("apellido")}
+            onChange={(e) => setForm((f) => ({ ...f, apellido: filtrarNombrePersona(e.target.value, 100) }))}
+            onBlur={() => marcar("apellido")}
+            error={mostrarError("apellido") ? errores.apellido : ""}
             placeholder="Apellido"
           />
         </div>
@@ -76,27 +125,31 @@ export default function CreateAccount() {
         <TextField
           label="Correo electrónico"
           type="email"
-          required
+          maxLength={180}
           value={form.email}
-          onChange={update("email")}
+          onChange={(e) => setForm((f) => ({ ...f, email: normalizarEmail(e.target.value) }))}
+          onBlur={() => marcar("email")}
+          error={mostrarError("email") ? errores.email : ""}
           placeholder="nombre@empresa.com"
         />
+
         <PasswordField
           label="Contraseña"
-          required
-          minLength={8}
+          maxLength={72}
           value={form.password}
-          onChange={update("password")}
+          onChange={(e) => setForm((f) => ({ ...f, password: e.target.value.slice(0, 72) }))}
+          onBlur={() => marcar("password")}
+          error={mostrarError("password") ? errores.password : ""}
           placeholder="••••••••"
         />
-        <p className="auth-subtitle" style={{ margin: "-8px 0 0", fontSize: 12 }}>
-          {PASSWORD_HINT}
-        </p>
+
         <PasswordField
           label="Confirmar contraseña"
-          required
+          maxLength={72}
           value={form.confirmPassword}
-          onChange={update("confirmPassword")}
+          onChange={(e) => setForm((f) => ({ ...f, confirmPassword: e.target.value.slice(0, 72) }))}
+          onBlur={() => marcar("confirmPassword")}
+          error={mostrarError("confirmPassword") ? errores.confirmPassword : ""}
           placeholder="••••••••"
         />
 

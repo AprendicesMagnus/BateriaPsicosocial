@@ -159,3 +159,52 @@ def test_reportes_requiere_autenticacion(client):
 def test_trabajador_sin_acceso_reportes(client, escenario_reportes):
     res = client.get("/api/reportes", headers=escenario_reportes["headers_trabajador_a"])
     assert res.status_code == 403
+
+
+def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session):
+    """Demuestra que el conteo de anonimato se calcula únicamente sobre la evaluación más reciente de la organización."""
+    res_login = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
+    assert res_login.status_code == 200
+    headers_admin = {"Authorization": f"Bearer {res_login.json()['token']}"}
+
+    org_id = _crear_organizacion(client, headers_admin, "Org Dos Evaluaciones Test")
+    _, email_eval = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_id, PASSWORD_EVALUADOR)
+    headers_eval = _encabezados(client, email_eval, PASSWORD_EVALUADOR)
+
+    area = Area(organizacion_id=uuid.UUID(org_id), nombre=f"Area Doble Eval {uuid.uuid4().hex[:4]}")
+    db_session.add(area)
+    db_session.commit()
+    db_session.refresh(area)
+
+    version_id = client.get("/api/cuestionarios", headers=headers_admin).json()[0]["id"]
+
+    # Evaluacion 1 (antigua): 3 participantes completados
+    res_ev1 = client.post("/api/evaluaciones", headers=headers_admin, json={
+        "organizacionId": org_id, "nombre": "Eval 1 Antigua", "versionId": version_id, "trabajadoresIds": []
+    })
+    ev1_id = uuid.UUID(res_ev1.json()["id"])
+    for i in range(3):
+        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_id, PASSWORD_TRABAJADOR, area_id=area.id)
+        db_session.add(EvaluacionParticipante(evaluacion_id=ev1_id, trabajador_id=t_id, estado="COMPLETADA"))
+    db_session.commit()
+
+    # Evaluacion 2 (reciente): 2 participantes completados
+    res_ev2 = client.post("/api/evaluaciones", headers=headers_admin, json={
+        "organizacionId": org_id, "nombre": "Eval 2 Reciente", "versionId": version_id, "trabajadoresIds": []
+    })
+    ev2_id = uuid.UUID(res_ev2.json()["id"])
+    for i in range(2):
+        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_id, PASSWORD_TRABAJADOR, area_id=area.id)
+        db_session.add(EvaluacionParticipante(evaluacion_id=ev2_id, trabajador_id=t_id, estado="COMPLETADA"))
+    db_session.commit()
+
+    # Consultar reportes
+    res_rep = client.get("/api/reportes", headers=headers_eval)
+    assert res_rep.status_code == 200
+    item = next(r for r in res_rep.json() if r["areaId"] == str(area.id))
+
+    # El conteo debe ser 2 (solo la reciente), NO 5 (sumando la antigua), por lo que estado debe ser 'restringido' (<5)
+    assert item["evaluacionId"] == str(ev2_id)
+    assert item["participantesCompletados"] == 2
+    assert item["estado"] == "restringido"
+

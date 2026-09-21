@@ -65,3 +65,20 @@ svg {
   margin: 0 auto;
   padding: 0 24px;
 }
+
+.field__input--invalid {
+  border-color: var(--danger-500) !important;
+}
+
+.field__input--invalid:focus {
+  border-color: var(--danger-500) !important;
+  box-shadow: 0 0 0 3px rgba(214, 69, 69, 0.18) !important;
+}
+
+.field__error {
+  color: var(--danger-500);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  display: block;
+}

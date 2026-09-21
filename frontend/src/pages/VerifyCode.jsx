@@ -3,11 +3,10 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import { CodeInput, PrimaryButton, FormMessage } from "../components/FormControls";
 import { verifyEmail, verifyResetCode, resendCode } from "../api/auth";
 import "../styles/auth.css";
+import { soloDigitos } from "../utils/validaciones";
 
 const RESEND_SECONDS = 45;
 
-// Imagen de fondo a toda pantalla (misma que Recuperar Contraseña).
-// El archivo debe estar en: public/fondo-recuperar.jpg
 function VerifyCodeBackground() {
   return <img src="/imagen5.jpg" alt="" className="verify-bg" />;
 }
@@ -18,6 +17,9 @@ export default function VerifyCode({ mode }) {
   const email = location.state?.email;
 
   const [codigo, setCodigo] = useState("");
+  const [tocados, setTocados] = useState({});
+  const [intento, setIntento] = useState(false);
+
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,23 +39,47 @@ export default function VerifyCode({ mode }) {
     return () => clearInterval(timer);
   }, [cooldown]);
 
+  const marcar = (campo) => {
+    setTocados((prev) => ({ ...prev, [campo]: true }));
+  };
+
+  const errores = {
+    codigo: !codigo
+      ? "Este campo es obligatorio."
+      : !/^\d{6}$/.test(codigo.trim())
+      ? "El código debe tener exactamente 6 dígitos."
+      : "",
+  };
+
+  const mostrarError = (campo) => Boolean((tocados[campo] || intento) && errores[campo]);
+
   async function handleSubmit(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError("");
     setInfo("");
+    setIntento(true);
+
+    if (errores.codigo) {
+      setTimeout(() => {
+        document.querySelector(".field__input--invalid")?.focus();
+      }, 0);
+      return;
+    }
+
+    const codTrim = codigo.trim();
     setLoading(true);
     try {
       if (esReset) {
-        const data = await verifyResetCode({ email, codigo });
+        const data = await verifyResetCode({ email, codigo: codTrim });
         navigate("/restablecer-contrasena", { state: { email, resetToken: data.resetToken } });
       } else {
-        await verifyEmail({ email, codigo });
+        await verifyEmail({ email, codigo: codTrim });
         navigate("/iniciar-sesion", {
           state: { message: "Cuenta verificada correctamente. Ya puedes iniciar sesión." },
         });
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Código inválido o expirado.");
     } finally {
       setLoading(false);
     }
@@ -83,12 +109,6 @@ export default function VerifyCode({ mode }) {
       <div className="verify-card">
         <img src="/logo oscu.png" alt="Magnus SIG" className="login-logo" />
 
-        {/* =================================================
-            TÍTULO
-            Cambia según el uso de la pantalla:
-            - reset  -> viene de "Olvidé mi contraseña"
-            - normal -> viene de "Crear cuenta"
-            ================================================= */}
         <h1>{esReset ? "Verificar Código" : "Verifica tu Correo"}</h1>
 
         <p className="auth-subtitle">
@@ -99,13 +119,18 @@ export default function VerifyCode({ mode }) {
         <FormMessage type="error">{error}</FormMessage>
         <FormMessage type="success">{info}</FormMessage>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label className="field">
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          <div className="field">
             <span className="field__label">Código de Verificación</span>
-            <CodeInput value={codigo} onChange={setCodigo} />
-          </label>
+            <CodeInput
+              value={codigo}
+              onChange={(val) => setCodigo(soloDigitos(val, 6))}
+              onBlur={() => marcar("codigo")}
+              error={mostrarError("codigo") ? errores.codigo : ""}
+            />
+          </div>
 
-          <PrimaryButton type="submit" loading={loading} disabled={codigo.length !== 6}>
+          <PrimaryButton type="submit" loading={loading}>
             {esReset ? "Restablecer Contraseña" : "Verificar mi cuenta"}
           </PrimaryButton>
 

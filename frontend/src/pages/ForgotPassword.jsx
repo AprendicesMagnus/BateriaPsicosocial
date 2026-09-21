@@ -3,31 +3,54 @@ import { Link, useNavigate } from "react-router-dom";
 import { TextField, PrimaryButton, FormMessage } from "../components/FormControls";
 import { forgotPassword } from "../api/auth";
 import "../styles/auth.css";
+import { emailValido, normalizarEmail } from "../utils/validaciones";
 
-// Ilustración de fondo decorativa: dos personas conversando en un sofá,
-// con un reloj y un globo de chat grandes de fondo (placeholder mientras
-// se consigue la imagen definitiva).
 function ForgotPasswordBackground() {
-  return (
-    <img src="/imagen5.jpg" alt="" className="verify-bg" />
-  );
+  return <img src="/imagen5.jpg" alt="" className="verify-bg" />;
 }
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [tocados, setTocados] = useState({});
+  const [intento, setIntento] = useState(false);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const marcar = (campo) => {
+    setTocados((prev) => ({ ...prev, [campo]: true }));
+  };
+
+  const errores = {
+    email: !email
+      ? "Este campo es obligatorio."
+      : !emailValido(normalizarEmail(email))
+      ? "Ingresa un correo válido."
+      : "",
+  };
+
+  const mostrarError = (campo) => Boolean((tocados[campo] || intento) && errores[campo]);
+
   async function handleSubmit(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError("");
+    setIntento(true);
+
+    if (errores.email) {
+      setTimeout(() => {
+        document.querySelector(".field__input--invalid")?.focus();
+      }, 0);
+      return;
+    }
+
+    const correoNorm = normalizarEmail(email);
     setLoading(true);
     try {
-      await forgotPassword({ email });
-      navigate("/verificar-codigo", { state: { email } });
+      await forgotPassword({ email: correoNorm });
+      navigate("/verificar-codigo", { state: { email: correoNorm } });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "No se pudo enviar el código de recuperación.");
     } finally {
       setLoading(false);
     }
@@ -47,13 +70,15 @@ export default function ForgotPassword() {
 
         <FormMessage type="error">{error}</FormMessage>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <TextField
             label="Correo electrónico"
             type="email"
-            required
+            maxLength={180}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(normalizarEmail(e.target.value))}
+            onBlur={() => marcar("email")}
+            error={mostrarError("email") ? errores.email : ""}
             placeholder="nombre@empresa.com"
           />
 

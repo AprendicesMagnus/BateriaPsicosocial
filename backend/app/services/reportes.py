@@ -30,19 +30,6 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
 
     reportes = []
     for area in areas:
-        # Constar trabajadores con evaluación completada en esta área
-        count_completados = (
-            db.query(func.count(func.distinct(EvaluacionParticipante.trabajador_id)))
-            .join(Usuario, Usuario.id == EvaluacionParticipante.trabajador_id)
-            .filter(
-                Usuario.area_id == area.id,
-                EvaluacionParticipante.estado == "COMPLETADA",
-            )
-            .scalar()
-            or 0
-        )
-
-        # Buscar la evaluación más reciente asociada a la organización de esta área
         evaluacion_reciente = (
             db.query(Evaluacion)
             .filter(Evaluacion.organizacion_id == area.organizacion_id)
@@ -50,6 +37,20 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
             .first()
         )
         evaluacion_id = str(evaluacion_reciente.id) if evaluacion_reciente else None
+
+        count_completados = 0
+        if evaluacion_reciente:
+            count_completados = (
+                db.query(func.count(func.distinct(EvaluacionParticipante.trabajador_id)))
+                .join(Usuario, Usuario.id == EvaluacionParticipante.trabajador_id)
+                .filter(
+                    EvaluacionParticipante.evaluacion_id == evaluacion_reciente.id,
+                    Usuario.area_id == area.id,
+                    EvaluacionParticipante.estado == "COMPLETADA",
+                )
+                .scalar()
+                or 0
+            )
 
         estado = "listo" if count_completados >= settings.min_grupo_anonimato else "restringido"
         color = "#1F9D55" if estado == "listo" else "#D64545"

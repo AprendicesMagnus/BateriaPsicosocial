@@ -49,6 +49,7 @@ export default function App() {
           <Route path="/cuestionario-intralaboralB" element={<CuestionarioIntralaboralB />} />
 
           <Route path="/ficha-datos-generales" element={<FichaDatosGenerales />} />
+          <Route path="/ficha-datos-generalesB" element={<FichaDatosGenerales />} />
           <Route
             path="/dashboard"
             element={

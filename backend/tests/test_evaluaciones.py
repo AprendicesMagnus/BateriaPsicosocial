@@ -39,7 +39,7 @@ def test_flujo_completo_evaluacion(client):
         "rolCodigo": "TRABAJADOR",
         "organizacionId": org_id,
         "areaId": area_id,
-        "numeroIdentificacion": f"CC{uuid.uuid4().hex[:8]}",
+        "numeroIdentificacion": f"{str(uuid.uuid4().int)[:10]}",
         "cargo": "Desarrolladora Senior"
     })
     assert res.status_code == 200

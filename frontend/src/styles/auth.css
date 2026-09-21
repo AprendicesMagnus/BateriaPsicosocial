@@ -146,6 +146,17 @@
   display: flex;
 }
 
+.field__password-wrap .field__input {
+  padding-right: 48px;
+}
+
+.field__password-wrap input::-ms-reveal,
+.field__password-wrap input::-ms-clear {
+  display: none;
+}
+
+
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -10,14 +10,14 @@ const CATEGORIAS = [
   { id: 1, nombre: "Estrés", totalPreguntas: 31, ruta: "/cuestionario-estres" },
   { id: 2, nombre: "Extralaboral A", totalPreguntas: 31, ruta: "/cuestionario-extralaboral" },
   { id: 3, nombre: "Intralaboral - Forma A", totalPreguntas: 123, ruta: "/cuestionario-intralaboral" },
-  { id: 4, nombre: "Socio demográfico A", totalPreguntas: 31, ruta: "/ficha-datos-generales" },
+  { id: 4, nombre: "Socio demográfico A", totalPreguntas: 19, ruta: "/ficha-datos-generales" },
 ];
 
 const CATEGORIAS_B = [
   { id: 5, nombre: "Estrés B", totalPreguntas: 31, ruta: "/cuestionario-estresB" },
   { id: 6, nombre: "Extralaboral B", totalPreguntas: 31, ruta: "/cuestionario-extralaboralB" },
-  { id: 7, nombre: "Intralaboral B", totalPreguntas: 123, ruta: "/cuestionario-intralaboralB" },
-  { id: 8, nombre: "Socio demográfico B", totalPreguntas: 123, ruta: "/ficha-datos-generales" },
+  { id: 7, nombre: "Intralaboral B", totalPreguntas: 97, ruta: "/cuestionario-intralaboralB" },
+  { id: 8, nombre: "Socio demográfico B", totalPreguntas: 19, ruta: "/ficha-datos-generalesB" },
 ];
 
 const CUESTIONARIOS_MODAL = [

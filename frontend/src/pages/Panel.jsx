@@ -7,6 +7,7 @@ import { generarInformeAgrupado, generarInformeIndividual, descargarInforme } fr
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 import ListaEvaluacionesTrabajador from "../components/ListaEvaluacionesTrabajador";
 import CuestionarioTrabajador from "../components/CuestionarioTrabajador";
+import { uuidValido } from "../utils/validaciones";
 
 const ROL_LABEL = {
   ADMINISTRADOR: "Administrador",
@@ -54,8 +55,8 @@ export default function Panel() {
   }
 
   async function handleGenerarAgrupado(formato = "PDF") {
-    if (!evaluacionIdInput.trim()) {
-      setErrorInforme("Debe ingresar un ID de evaluación válido.");
+    if (!uuidValido(evaluacionIdInput.trim())) {
+      setErrorInforme("Ingresa un identificador válido (formato UUID).");
       return;
     }
     setGenerando(true);
@@ -73,8 +74,8 @@ export default function Panel() {
   }
 
   async function handleGenerarIndividual() {
-    if (!evaluacionIdInput.trim() || !participanteIdInput.trim()) {
-      setErrorInforme("Debe ingresar el ID de evaluación y de participante.");
+    if (!uuidValido(evaluacionIdInput.trim()) || !uuidValido(participanteIdInput.trim())) {
+      setErrorInforme("Ingresa un identificador válido (formato UUID).");
       return;
     }
     setGenerando(true);
@@ -92,8 +93,8 @@ export default function Panel() {
   }
 
   async function handleDescargar() {
-    if (!informeId.trim()) {
-      setErrorInforme("Debe ingresar o seleccionar un ID de informe para descargar.");
+    if (!uuidValido(informeId.trim())) {
+      setErrorInforme("Ingresa un identificador válido (formato UUID).");
       return;
     }
     setErrorInforme(null);
@@ -106,8 +107,8 @@ export default function Panel() {
   }
 
   async function handleCargarPrediccion() {
-    if (!evaluacionIdInput.trim()) {
-      setErrorInforme("Ingrese un ID de evaluación para ejecutar el análisis predictivo.");
+    if (!uuidValido(evaluacionIdInput.trim())) {
+      setErrorInforme("Ingresa un identificador válido (formato UUID).");
       return;
     }
     setLoadingPrediccion(true);
@@ -229,6 +230,7 @@ export default function Panel() {
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "4px" }}>ID Evaluación</label>
                 <input
                   type="text"
+                  maxLength={36}
                   placeholder="UUID de la Evaluación"
                   value={evaluacionIdInput}
                   onChange={(e) => setEvaluacionIdInput(e.target.value)}
@@ -239,6 +241,7 @@ export default function Panel() {
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "4px" }}>ID Participante (para informe individual)</label>
                 <input
                   type="text"
+                  maxLength={36}
                   placeholder="UUID del Participante"
                   value={participanteIdInput}
                   onChange={(e) => setParticipanteIdInput(e.target.value)}
@@ -273,6 +276,7 @@ export default function Panel() {
               <div style={{ display: "flex", gap: "12px" }}>
                 <input
                   type="text"
+                  maxLength={36}
                   placeholder="ID del Informe a descargar"
                   value={informeId}
                   onChange={(e) => setInformeId(e.target.value)}

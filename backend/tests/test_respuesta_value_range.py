@@ -67,7 +67,7 @@ class TestRespuestaEndpointRange:
             "rolCodigo": "TRABAJADOR",
             "organizacionId": org_id,
             "areaId": area_id,
-            "numeroIdentificacion": f"CC{uuid.uuid4().hex[:8]}",
+            "numeroIdentificacion": f"{str(uuid.uuid4().int)[:10]}",
             "cargo": "Analista"
         })
         trabajador_id = res_trab.json()["id"]

@@ -37,14 +37,14 @@ def test_analisis_predictivo_kmeans(client):
     for i in range(6):
         email_trab = f"trab_pred_{i}_{uuid.uuid4().hex[:4]}@test.com"
         res = client.post("/api/usuarios", headers=headers_admin, json={
-            "nombre": f"Trabajador{i+1}",
+            "nombre": "Trabajador",
             "apellido": "Test",
             "email": email_trab,
             "password": "Trabajador1234",
             "rolCodigo": "TRABAJADOR",
             "organizacionId": org_id,
             "areaId": area_id,
-            "numeroIdentificacion": f"CC{uuid.uuid4().hex[:8]}",
+            "numeroIdentificacion": f"{str(uuid.uuid4().int)[:10]}",
             "cargo": "Operario"
         })
         assert res.status_code == 200
