@@ -232,8 +232,6 @@ export default function CuestionarioEstres() {
 
         </section>
 
-
-
         {/* =================================================
             PESTAÑAS
         ================================================= */}
@@ -248,7 +246,6 @@ export default function CuestionarioEstres() {
             <strong>Estrés B</strong>
             <span>31</span>
           </button>
-
 
 {/* =================================================
             esta fallando el link

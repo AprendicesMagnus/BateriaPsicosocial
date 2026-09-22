@@ -1,14 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 import "../styles/Inicio.css";
-import "../styles/app-shell.css";
 
-const SLIDES = [
-  "/pasare1.jpg",
-  "/pasare2.jpg",
-  "/pasare3.jpg",
-];
 
 const FACTORES = [
   {
@@ -90,70 +83,6 @@ export default function Inicio() {
   const [menuTiendaAbierto, setMenuTiendaAbierto] = useState(false);
   const menuEmpresasRef = useRef(null);
   const menuTiendaRef = useRef(null);
-
-  // --- Sesión / perfil ---
-  const { usuario, cerrarSesion } = useAuth();
-  const navigate = useNavigate();
-  const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
-  const menuPerfilRef = useRef(null);
-
-  // Cierra el desplegable "Empresas" si se hace clic fuera de él.
-  useEffect(() => {
-    function handleClickFuera(e) {
-      if (menuEmpresasRef.current && !menuEmpresasRef.current.contains(e.target)) {
-        setMenuEmpresasAbierto(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickFuera);
-    return () => document.removeEventListener("mousedown", handleClickFuera);
-  }, []);
-
-  // Cierra el desplegable "Tienda" si se hace clic fuera de él.
-  useEffect(() => {
-    function handleClickFuera(e) {
-      if (menuTiendaRef.current && !menuTiendaRef.current.contains(e.target)) {
-        setMenuTiendaAbierto(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickFuera);
-    return () => document.removeEventListener("mousedown", handleClickFuera);
-  }, []);
-
-  // Cierra el desplegable "Perfil" si se hace clic fuera de él.
-  useEffect(() => {
-    function handleClickFuera(e) {
-      if (menuPerfilRef.current && !menuPerfilRef.current.contains(e.target)) {
-        setMenuPerfilAbierto(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickFuera);
-    return () => document.removeEventListener("mousedown", handleClickFuera);
-  }, []);
-
-  // Imagen anterior
-  const prevSlide = () => {
-    setSlide((actual) =>
-      actual === 0 ? SLIDES.length - 1 : actual - 1
-    );
-  };
-
-  // Imagen siguiente
-  const nextSlide = () => {
-    setSlide((actual) =>
-      actual === SLIDES.length - 1 ? 0 : actual + 1
-    );
-  };
-
-  // Cambio automático cada 6 segundos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSlide((actual) =>
-        actual === SLIDES.length - 1 ? 0 : actual + 1
-      );
-    }, 6000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
@@ -345,54 +274,7 @@ export default function Inicio() {
             <Link to="/dashboard" className="boton-encuestas"> Encuestas</Link>
           </nav>
 
-          {/* =====================================================
-              PERFIL DEL USUARIO (solo visible con sesión iniciada)
-          ====================================================== */}
-          {usuario && (
-            <div
-              className="app-profile-menu"
-              ref={menuPerfilRef}
-              style={{ marginLeft: 24 }}
-            >
-              <button
-                type="button"
-                className="app-profile"
-                onClick={() => setMenuPerfilAbierto((v) => !v)}
-                aria-haspopup="true"
-                aria-expanded={menuPerfilAbierto}
-              >
-                {usuario?.fotoUrl ? (
-                  <img
-                    src={usuario.fotoUrl}
-                    alt={nombreUsuario}
-                    className="app-avatar app-avatar--foto"
-                  />
-                ) : (
-                  <div className="app-avatar">{iniciales}</div>
-                )}
-                <div className="app-profile-text">
-                  <span className="app-profile-name">{nombreUsuario}</span>
-                  {rolUsuario && <span className="app-profile-role">{rolUsuario}</span>}
-                </div>
-              </button>
-
-              {menuPerfilAbierto && (
-                <div className="app-profile-dropdown">
-                  <button type="button" onClick={handleVerPerfil}>
-                    Ver perfil
-                  </button>
-                  <button
-                    type="button"
-                    className="app-profile-dropdown-danger"
-                    onClick={handleCerrarSesion}
-                  >
-                    Cerrar sesión
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
+          
         </div>
       </header>
 
@@ -405,18 +287,15 @@ export default function Inicio() {
 
         {/* CARRUSEL DE IMÁGENES */}
         <div className="hero__background">
-
-          {SLIDES.map((src, index) => (
-            <img
-              key={src}
-              src={src}
-              alt={`Fondo ${index + 1}`}
-              className={`hero__background-image ${
-                index === slide ? "active" : ""
-              }`}
-            />
-          ))}
-
+          <video
+            className="hero__background-video"
+            src="/fondo-seguridad.mp4"
+            poster="/pasare1.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
         </div>
 
 

@@ -159,7 +159,7 @@ export default function VerificarNit() {
 
                 <p className="empresas-nota">
                   ¿Tu empresa ya está registrada?{" "}
-                  <Link className="link-accent" to="/iniciar-sesion">
+                  <Link className="link-accent" to="/Inicio">
                     Inicia sesión
                   </Link>
                 </p>
