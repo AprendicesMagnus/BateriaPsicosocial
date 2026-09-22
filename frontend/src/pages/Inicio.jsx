@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import "../styles/landing.css";
+import "../styles/Inicio.css";
 
 const SLIDES = [
   "/pasare1.jpg",
@@ -85,13 +85,26 @@ const CONFIANZA = [
 export default function Landing() {
   const [slide, setSlide] = useState(0);
   const [menuEmpresasAbierto, setMenuEmpresasAbierto] = useState(false);
+  const [menuTiendaAbierto, setMenuTiendaAbierto] = useState(false);
   const menuEmpresasRef = useRef(null);
+  const menuTiendaRef = useRef(null);
 
   // Cierra el desplegable "Empresas" si se hace clic fuera de él.
   useEffect(() => {
     function handleClickFuera(e) {
       if (menuEmpresasRef.current && !menuEmpresasRef.current.contains(e.target)) {
         setMenuEmpresasAbierto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickFuera);
+    return () => document.removeEventListener("mousedown", handleClickFuera);
+  }, []);
+
+  // Cierra el desplegable "Tienda" si se hace clic fuera de él.
+  useEffect(() => {
+    function handleClickFuera(e) {
+      if (menuTiendaRef.current && !menuTiendaRef.current.contains(e.target)) {
+        setMenuTiendaAbierto(false);
       }
     }
     document.addEventListener("mousedown", handleClickFuera);
@@ -206,7 +219,7 @@ export default function Landing() {
                   }}
                 >
                   <Link
-                    to="/verificar-nit"
+                    to="/crear-empresa"
                     onClick={() => setMenuEmpresasAbierto(false)}
                     style={{
                       display: "block",
@@ -217,31 +230,80 @@ export default function Landing() {
                       color: "var(--ink-900, #12314b)",
                     }}
                   >
-                    Crear empresa
+                    <Link to="/crear-empresa" className="boton-encuestas"> Crear empresa</Link>
                   </Link>
                 </div>
               )}
             </div>
 
-            <a href="#psicologos">Clientes</a>
-            <a href="#normativa">Normativa</a>
+            <div className="nav__dropdown" ref={menuTiendaRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                className="nav__dropdown-trigger"
+                onClick={() => setMenuTiendaAbierto((v) => !v)}
+                aria-haspopup="true"
+                aria-expanded={menuTiendaAbierto}
+                style={{
+                  background: "none",
+                  border: "none",
+                  font: "inherit",
+                  fontWeight: 600,
+                  color: "var(--ink-900, #12314b)",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                Tienda
+              </button>
+
+              {menuTiendaAbierto && (
+                <div
+                  className="nav__dropdown-menu"
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 12px)",
+                    left: 0,
+                    background: "var(--white)",
+                    borderRadius: "var(--radius-md, 10px)",
+                    boxShadow: "var(--shadow-card, 0 8px 24px rgba(15,26,61,0.12))",
+                    padding: 6,
+                    minWidth: 170,
+                    zIndex: 20,
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="nav__dropdown-option"
+                    onClick={() => {
+                      // Aquí puedes colocar la acción para comprar
+                      console.log("Comprar baterías");
+                      setMenuTiendaAbierto(false);
+                    }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      background: "none",
+                      border: "none",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "var(--ink-900, #12314b)",
+                      cursor: "pointer",
+                    }}
+                  >
+                     <Link to="/pago" className="boton-encuestas"> Comprar baterías</Link>
+                    
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <Link to="/dashboard" className="boton-encuestas"> Encuestas</Link>
           </nav>
 
-          <div className="nav__actions">
-            <Link
-              className="btn-nav-secondary"
-              to="/iniciar-sesion"
-            >
-              Iniciar sesión
-            </Link>
-
-            <Link
-              className="btn-nav-primary"
-              to="/crear-cuenta"
-            >
-              Crear cuenta
-            </Link>
-          </div>
+          
         </div>
       </header>
 
@@ -693,20 +755,6 @@ export default function Landing() {
                   aria-label="Facebook"
                 >
                   f
-                </a>
-
-                <a
-                  href="#"
-                  aria-label="Instagram"
-                >
-                  in
-                </a>
-
-                <a
-                  href="#"
-                  aria-label="X"
-                >
-                  x
                 </a>
 
               </div>

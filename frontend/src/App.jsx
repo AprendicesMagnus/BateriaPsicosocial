@@ -61,14 +61,7 @@ export default function App() {
           {/* portal de informacion en la web */}
           <Route path="/dashboard" element={<ProtectedRoute> <Dashboard /> </ProtectedRoute> } />
 
-          <Route
-            path="/pago"
-            element={
-              <ProtectedRoute>
-                <Checkout />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/pago"  element={<ProtectedRoute> <Checkout /> </ProtectedRoute> } />
           <Route
             path="/reportes"
             element={

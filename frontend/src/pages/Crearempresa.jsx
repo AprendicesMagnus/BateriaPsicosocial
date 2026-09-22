@@ -8,6 +8,7 @@ import {
   emailValido,
   enteroEnRango,
   filtrarLugar,
+  formatearNit,
   filtrarNombrePersona,
   filtrarTextoLibre,
   lugarValido,
@@ -24,15 +25,16 @@ export default function CrearEmpresa() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const nit = location.state?.nit;
+  const nitInicial = location.state?.nit;
 
   useEffect(() => {
-    if (!nit) {
+    if (!nitInicial) {
       navigate("/verificar-nit", { replace: true });
     }
-  }, [nit, navigate]);
+  }, [nitInicial, navigate]);
 
   const [razonSocial, setRazonSocial] = useState("");
+  const [nit, setNit] = useState(nitInicial ?? "");
   const [codigoVerificacion, setCodigoVerificacion] = useState("");
   const [sector, setSector] = useState("");
   const [numeroTrabajadores, setNumeroTrabajadores] = useState("");
@@ -50,7 +52,7 @@ export default function CrearEmpresa() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  if (!nit) return null;
+  if (!nitInicial) return null;
 
   const marcar = (campo) => {
     setTocados((prev) => ({ ...prev, [campo]: true }));
@@ -64,6 +66,11 @@ export default function CrearEmpresa() {
       ? "Este campo es obligatorio."
       : !textoLibreValido(razonSocial.trim(), 180)
       ? "La razón social debe tener al menos 2 letras y solo puede incluir letras, números y . , & ' ( ) / -"
+      : "",
+    nit: !nit
+      ? "Este campo es obligatorio."
+      : !/^\d{9}-\d$/.test(nit.trim())
+      ? "El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador)."
       : "",
     codigoVerificacion: !codigoVerificacion
       ? "Este campo es obligatorio."
@@ -123,6 +130,7 @@ export default function CrearEmpresa() {
       return;
     }
 
+    const nitTrim = nit.trim();
     const rSocialTrim = razonSocial.trim();
     const ciudadTrim = ciudad.trim();
     const correoEmpresaNorm = normalizarEmail(correoContacto);
@@ -135,7 +143,7 @@ export default function CrearEmpresa() {
       await request("/organizaciones/autorregistro", {
         method: "POST",
         body: {
-          nit,
+          nit: nitTrim,
           nombre: rSocialTrim,
           codigoVerificacion,
           sector,
@@ -179,7 +187,7 @@ export default function CrearEmpresa() {
               <span className="empresas-badge">Empresa no registrada</span>
             </div>
             <p className="empresas-subtitulo">
-              NIT verificado: <strong>{nit}</strong>. Registra los datos de tu empresa y el primer usuario Evaluador SST responsable.
+              NIT verificado: <strong>{nitInicial}</strong>. Registra los datos de tu empresa y el primer usuario Evaluador SST responsable.
             </p>
 
             <form className="empresas-form" onSubmit={handleSubmit} noValidate>
@@ -202,6 +210,28 @@ export default function CrearEmpresa() {
                 {mostrarError("razonSocial") && (
                   <span className="field__error" id="razonSocial-error">
                     {errores.razonSocial}
+                  </span>
+                )}
+              </label>
+
+
+{/* nit */}
+              <label className="field">
+                <span className="field__label">NIT de la empresa </span>
+                <input
+                  className={`field__input ${mostrarError("nit") ? "field__input--invalid" : ""}`}
+                  aria-invalid={mostrarError("nit") ? "true" : "false"}
+                  aria-describedby={mostrarError("nit") ? "nit-error" : undefined}
+                  placeholder="900123456-7"
+                  inputMode="numeric"
+                  maxLength={11}
+                  value={nit}
+                  onChange={(e) => setNit(formatearNit(e.target.value))}
+                  onBlur={() => marcar("nit")}
+                />
+                {mostrarError("nit") && (
+                  <span className="field__error" id="nit-error">
+                    {errores.nit}
                   </span>
                 )}
               </label>
@@ -315,6 +345,8 @@ export default function CrearEmpresa() {
                   )}
                 </label>
               </div>
+
+              
 
               <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "16px 0" }} />
 
