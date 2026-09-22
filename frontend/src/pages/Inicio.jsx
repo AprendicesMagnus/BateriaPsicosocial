@@ -2,11 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/Inicio.css";
 
-const SLIDES = [
-  "/pasare1.jpg",
-  "/pasare2.jpg",
-  "/pasare3.jpg",
-];
 
 const FACTORES = [
   {
@@ -89,52 +84,6 @@ export default function Landing() {
   const menuEmpresasRef = useRef(null);
   const menuTiendaRef = useRef(null);
 
-  // Cierra el desplegable "Empresas" si se hace clic fuera de él.
-  useEffect(() => {
-    function handleClickFuera(e) {
-      if (menuEmpresasRef.current && !menuEmpresasRef.current.contains(e.target)) {
-        setMenuEmpresasAbierto(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickFuera);
-    return () => document.removeEventListener("mousedown", handleClickFuera);
-  }, []);
-
-  // Cierra el desplegable "Tienda" si se hace clic fuera de él.
-  useEffect(() => {
-    function handleClickFuera(e) {
-      if (menuTiendaRef.current && !menuTiendaRef.current.contains(e.target)) {
-        setMenuTiendaAbierto(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickFuera);
-    return () => document.removeEventListener("mousedown", handleClickFuera);
-  }, []);
-
-  // Imagen anterior
-  const prevSlide = () => {
-    setSlide((actual) =>
-      actual === 0 ? SLIDES.length - 1 : actual - 1
-    );
-  };
-
-  // Imagen siguiente
-  const nextSlide = () => {
-    setSlide((actual) =>
-      actual === SLIDES.length - 1 ? 0 : actual + 1
-    );
-  };
-
-  // Cambio automático cada 6 segundos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSlide((actual) =>
-        actual === SLIDES.length - 1 ? 0 : actual + 1
-      );
-    }, 6000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div className="landing">
@@ -316,18 +265,15 @@ export default function Landing() {
 
         {/* CARRUSEL DE IMÁGENES */}
         <div className="hero__background">
-
-          {SLIDES.map((src, index) => (
-            <img
-              key={src}
-              src={src}
-              alt={`Fondo ${index + 1}`}
-              className={`hero__background-image ${
-                index === slide ? "active" : ""
-              }`}
-            />
-          ))}
-
+          <video
+            className="hero__background-video"
+            src="/fondo-seguridad.mp4"
+            poster="/pasare1.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
         </div>
 
 

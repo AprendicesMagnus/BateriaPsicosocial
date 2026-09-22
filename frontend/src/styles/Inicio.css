@@ -780,4 +780,19 @@
     gap: 30px;
   }
 
+
+.hero__background {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.hero__background-video {
+  width: 100%;
+  height: 90%;
+  object-fit: cover;
+}
+
+
 }
