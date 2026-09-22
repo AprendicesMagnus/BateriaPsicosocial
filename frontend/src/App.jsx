@@ -54,8 +54,15 @@ export default function App() {
           <Route path="/ficha-datos-generales" element={<FichaDatosGenerales />} />
           <Route path="/ficha-datos-generalesB" element={<FichaDatosGenerales />} />
 
-           {/* apartado inicial  en la web */}
-          <Route path="/Inicio" element={<Inicio />} />
+           {/* apartado inicial tras iniciar sesion (protegido) */}
+          <Route
+            path="/Inicio"
+            element={
+              <ProtectedRoute>
+                <Inicio />
+              </ProtectedRoute>
+            }
+          />
 
 
           {/* portal de informacion en la web */}

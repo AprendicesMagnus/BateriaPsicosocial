@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import "../styles/landing.css";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import "../styles/Inicio.css";
+import "../styles/app-shell.css";
 
 const SLIDES = [
   "/pasare1.jpg",
@@ -82,16 +84,46 @@ const CONFIANZA = [
   },
 ];
 
-export default function Landing() {
+export default function Inicio() {
   const [slide, setSlide] = useState(0);
   const [menuEmpresasAbierto, setMenuEmpresasAbierto] = useState(false);
+  const [menuTiendaAbierto, setMenuTiendaAbierto] = useState(false);
   const menuEmpresasRef = useRef(null);
+  const menuTiendaRef = useRef(null);
+
+  // --- Sesión / perfil ---
+  const { usuario, cerrarSesion } = useAuth();
+  const navigate = useNavigate();
+  const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
+  const menuPerfilRef = useRef(null);
 
   // Cierra el desplegable "Empresas" si se hace clic fuera de él.
   useEffect(() => {
     function handleClickFuera(e) {
       if (menuEmpresasRef.current && !menuEmpresasRef.current.contains(e.target)) {
         setMenuEmpresasAbierto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickFuera);
+    return () => document.removeEventListener("mousedown", handleClickFuera);
+  }, []);
+
+  // Cierra el desplegable "Tienda" si se hace clic fuera de él.
+  useEffect(() => {
+    function handleClickFuera(e) {
+      if (menuTiendaRef.current && !menuTiendaRef.current.contains(e.target)) {
+        setMenuTiendaAbierto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickFuera);
+    return () => document.removeEventListener("mousedown", handleClickFuera);
+  }, []);
+
+  // Cierra el desplegable "Perfil" si se hace clic fuera de él.
+  useEffect(() => {
+    function handleClickFuera(e) {
+      if (menuPerfilRef.current && !menuPerfilRef.current.contains(e.target)) {
+        setMenuPerfilAbierto(false);
       }
     }
     document.addEventListener("mousedown", handleClickFuera);
@@ -122,6 +154,29 @@ export default function Landing() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const nombreUsuario = usuario
+    ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
+    : "";
+  const rolUsuario = usuario?.rol ?? "";
+  const iniciales =
+    nombreUsuario
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("") || "U";
+
+  function handleVerPerfil() {
+    setMenuPerfilAbierto(false);
+    navigate("/perfil");
+  }
+
+  function handleCerrarSesion() {
+    setMenuPerfilAbierto(false);
+    cerrarSesion?.();
+    navigate("/iniciar-sesion");
+  }
 
   return (
     <div className="landing">
@@ -206,7 +261,7 @@ export default function Landing() {
                   }}
                 >
                   <Link
-                    to="/verificar-nit"
+                    to="/crear-empresa"
                     onClick={() => setMenuEmpresasAbierto(false)}
                     style={{
                       display: "block",
@@ -217,31 +272,127 @@ export default function Landing() {
                       color: "var(--ink-900, #12314b)",
                     }}
                   >
-                    Crear empresa
+                    <Link to="/crear-empresa" className="boton-encuestas"> Crear empresa</Link>
                   </Link>
                 </div>
               )}
             </div>
 
-            <a href="#psicologos">Clientes</a>
-            <a href="#normativa">Normativa</a>
+            <div className="nav__dropdown" ref={menuTiendaRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                className="nav__dropdown-trigger"
+                onClick={() => setMenuTiendaAbierto((v) => !v)}
+                aria-haspopup="true"
+                aria-expanded={menuTiendaAbierto}
+                style={{
+                  background: "none",
+                  border: "none",
+                  font: "inherit",
+                  fontWeight: 600,
+                  color: "var(--ink-900, #12314b)",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                Tienda
+              </button>
+
+              {menuTiendaAbierto && (
+                <div
+                  className="nav__dropdown-menu"
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 12px)",
+                    left: 0,
+                    background: "var(--white)",
+                    borderRadius: "var(--radius-md, 10px)",
+                    boxShadow: "var(--shadow-card, 0 8px 24px rgba(15,26,61,0.12))",
+                    padding: 6,
+                    minWidth: 170,
+                    zIndex: 20,
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="nav__dropdown-option"
+                    onClick={() => {
+                      // Aquí puedes colocar la acción para comprar
+                      console.log("Comprar baterías");
+                      setMenuTiendaAbierto(false);
+                    }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      background: "none",
+                      border: "none",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "var(--ink-900, #12314b)",
+                      cursor: "pointer",
+                    }}
+                  >
+                     <Link to="/pago" className="boton-encuestas"> Comprar baterías</Link>
+                    
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <Link to="/dashboard" className="boton-encuestas"> Encuestas</Link>
           </nav>
 
-          <div className="nav__actions">
-            <Link
-              className="btn-nav-secondary"
-              to="/iniciar-sesion"
+          {/* =====================================================
+              PERFIL DEL USUARIO (solo visible con sesión iniciada)
+          ====================================================== */}
+          {usuario && (
+            <div
+              className="app-profile-menu"
+              ref={menuPerfilRef}
+              style={{ marginLeft: 24 }}
             >
-              Iniciar sesión
-            </Link>
+              <button
+                type="button"
+                className="app-profile"
+                onClick={() => setMenuPerfilAbierto((v) => !v)}
+                aria-haspopup="true"
+                aria-expanded={menuPerfilAbierto}
+              >
+                {usuario?.fotoUrl ? (
+                  <img
+                    src={usuario.fotoUrl}
+                    alt={nombreUsuario}
+                    className="app-avatar app-avatar--foto"
+                  />
+                ) : (
+                  <div className="app-avatar">{iniciales}</div>
+                )}
+                <div className="app-profile-text">
+                  <span className="app-profile-name">{nombreUsuario}</span>
+                  {rolUsuario && <span className="app-profile-role">{rolUsuario}</span>}
+                </div>
+              </button>
 
-            <Link
-              className="btn-nav-primary"
-              to="/crear-cuenta"
-            >
-              Crear cuenta
-            </Link>
-          </div>
+              {menuPerfilAbierto && (
+                <div className="app-profile-dropdown">
+                  <button type="button" onClick={handleVerPerfil}>
+                    Ver perfil
+                  </button>
+                  <button
+                    type="button"
+                    className="app-profile-dropdown-danger"
+                    onClick={handleCerrarSesion}
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </header>
 
@@ -289,25 +440,42 @@ export default function Landing() {
               </span>
             </h1>
 
-            <p>
-              hola este es el inicio 
-            </p>
+            {usuario ? (
+              <p>Bienvenido de nuevo, {nombreUsuario.split(" ")[0] || "de nuevo"}.</p>
+            ) : (
+              <p>
+                hola este es el inicio 
+              </p>
+            )}
 
             <div className="hero__cta">
 
-              <Link
-                className="cta-primary"
-                to="/crear-cuenta"
-              >
-                Más información — Empresas
-              </Link>
+              {usuario ? (
+                <>
+                  <Link className="cta-primary" to="/pago">
+                    Comprar batería
+                  </Link>
+                  <Link className="cta-secondary" to="/reportes">
+                    Ver mis reportes
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    className="cta-primary"
+                    to="/crear-cuenta"
+                  >
+                    Más información — Empresas
+                  </Link>
 
-              <a
-                className="cta-secondary"
-                href="#psicologos"
-              >
-                Más información — Clientes
-              </a>
+                  <a
+                    className="cta-secondary"
+                    href="#psicologos"
+                  >
+                    Más información — Clientes
+                  </a>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -656,11 +824,19 @@ export default function Landing() {
                   </a>
                 </li>
 
-                <li>
-                  <Link to="/iniciar-sesion">
-                    Iniciar sesión
-                  </Link>
-                </li>
+                {usuario ? (
+                  <li>
+                    <Link to="/perfil">
+                      Mi perfil
+                    </Link>
+                  </li>
+                ) : (
+                  <li>
+                    <Link to="/iniciar-sesion">
+                      Iniciar sesión
+                    </Link>
+                  </li>
+                )}
 
               </ul>
 
@@ -693,20 +869,6 @@ export default function Landing() {
                   aria-label="Facebook"
                 >
                   f
-                </a>
-
-                <a
-                  href="#"
-                  aria-label="Instagram"
-                >
-                  in
-                </a>
-
-                <a
-                  href="#"
-                  aria-label="X"
-                >
-                  x
                 </a>
 
               </div>
