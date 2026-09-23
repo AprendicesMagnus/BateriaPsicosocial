@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "../styles/Inicio.css";
+import "../styles/app-shell.css";
 
 
 const FACTORES = [
@@ -81,8 +83,31 @@ export default function Inicio() {
   const [slide, setSlide] = useState(0);
   const [menuEmpresasAbierto, setMenuEmpresasAbierto] = useState(false);
   const [menuTiendaAbierto, setMenuTiendaAbierto] = useState(false);
+  const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
   const menuEmpresasRef = useRef(null);
   const menuTiendaRef = useRef(null);
+  const menuPerfilRef = useRef(null);
+
+  // Ajusta "cerrarSesion" si tu AuthContext la expone con otro nombre.
+  const { usuario, cerrarSesion } = useAuth();
+  const navigate = useNavigate();
+
+  // Cierra cualquier desplegable si se hace clic fuera de él.
+  useEffect(() => {
+    function handleClickFuera(e) {
+      if (menuEmpresasRef.current && !menuEmpresasRef.current.contains(e.target)) {
+        setMenuEmpresasAbierto(false);
+      }
+      if (menuTiendaRef.current && !menuTiendaRef.current.contains(e.target)) {
+        setMenuTiendaAbierto(false);
+      }
+      if (menuPerfilRef.current && !menuPerfilRef.current.contains(e.target)) {
+        setMenuPerfilAbierto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickFuera);
+    return () => document.removeEventListener("mousedown", handleClickFuera);
+  }, []);
 
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
@@ -192,6 +217,7 @@ export default function Inicio() {
                   <Link
                     to="/crear-empresa"
                     onClick={() => setMenuEmpresasAbierto(false)}
+                    className="boton-encuestas"
                     style={{
                       display: "block",
                       padding: "10px 12px",
@@ -201,7 +227,7 @@ export default function Inicio() {
                       color: "var(--ink-900, #12314b)",
                     }}
                   >
-                    <Link to="/crear-empresa" className="boton-encuestas"> Crear empresa</Link>
+                    Crear empresa
                   </Link>
                 </div>
               )}
@@ -244,10 +270,10 @@ export default function Inicio() {
                 >
                   <button
                     type="button"
-                    className="nav__dropdown-option"
+                    className="nav__dropdown-option boton-encuestas"
                     onClick={() => {
-                      // Aquí puedes colocar la acción para comprar
                       setMenuTiendaAbierto(false);
+                      navigate("/pago");
                     }}
                     style={{
                       display: "block",
@@ -263,8 +289,7 @@ export default function Inicio() {
                       cursor: "pointer",
                     }}
                   >
-                     <Link to="/pago" className="boton-encuestas"> Comprar baterías</Link>
-                    
+                    Comprar baterías
                   </button>
                 </div>
               )}
@@ -273,7 +298,48 @@ export default function Inicio() {
             <Link to="/dashboard" className="boton-encuestas"> Encuestas</Link>
           </nav>
 
-          
+          {/* =====================================================
+              PERFIL DEL USUARIO (esquina derecha, ya logueado)
+          ====================================================== */}
+          <div className="app-profile-menu" ref={menuPerfilRef}>
+            <button
+              type="button"
+              className="app-profile"
+              onClick={() => setMenuPerfilAbierto((v) => !v)}
+              aria-haspopup="true"
+              aria-expanded={menuPerfilAbierto}
+            >
+              {usuario?.fotoUrl ? (
+                <img
+                  src={usuario.fotoUrl}
+                  alt={nombreUsuario}
+                  className="app-avatar app-avatar--foto"
+                />
+              ) : (
+                <div className="app-avatar">{iniciales}</div>
+              )}
+              <div className="app-profile-text">
+                <span className="app-profile-name">{nombreUsuario || "Usuario"}</span>
+                {rolUsuario && <span className="app-profile-role">{rolUsuario}</span>}
+              </div>
+            </button>
+
+            {menuPerfilAbierto && (
+              <div className="app-profile-dropdown">
+                <button type="button" onClick={handleVerPerfil}>
+                  Ver perfil
+                </button>
+                <button
+                  type="button"
+                  className="app-profile-dropdown-danger"
+                  onClick={handleCerrarSesion}
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
+          </div>
+
         </div>
       </header>
 
@@ -284,7 +350,7 @@ export default function Inicio() {
 
       <section className="hero">
 
-        {/* CARRUSEL DE IMÁGENES */}
+        {/* VIDEO DE FONDO */}
         <div className="hero__background">
           <video
             className="hero__background-video"
