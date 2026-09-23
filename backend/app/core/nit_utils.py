@@ -55,3 +55,24 @@ def nit_valido(nit_completo: str) -> bool:
         return int(dv_str) == dv_calculado
     except ValueError:
         return False
+
+
+def validar_nit_con_dv(nit: str) -> None:
+    """
+    Valida que un NIT no sea vacío, tenga formato '#########-#' y que su Dígito de Verificación coincida.
+    Lanza AppError(400, ...) en caso de cualquier inconsistencia.
+    """
+    from app.core.errors import AppError
+
+    if not nit or not isinstance(nit, str):
+        raise AppError(400, "El NIT es obligatorio.")
+    nit_limpio = nit.strip()
+    if "-" not in nit_limpio:
+        raise AppError(400, "El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador).")
+    partes = nit_limpio.split("-")
+    if len(partes) != 2 or not partes[0].isdigit() or not partes[1].isdigit() or len(partes[0]) != 9 or len(partes[1]) != 1:
+        raise AppError(400, "El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador).")
+    nit_base, dv_str = partes[0], partes[1]
+    if calcular_digito_verificador_nit(nit_base) != int(dv_str):
+        raise AppError(400, "El dígito de verificación del NIT no es válido.")
+

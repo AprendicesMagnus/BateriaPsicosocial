@@ -16,13 +16,16 @@ app = FastAPI(
     description="API para la aplicacion de la Bateria de Riesgo Psicosocial en MiPymes",
 )
 
-cors_origins = list({
-    settings.frontend_url,
-    "http://localhost:5173",
-    "http://localhost:5176",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5176",
-})
+if settings.env.lower() == "production":
+    cors_origins = [settings.frontend_url]
+else:
+    cors_origins = list({
+        settings.frontend_url,
+        "http://localhost:5173",
+        "http://localhost:5176",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5176",
+    })
 
 app.add_middleware(
     CORSMiddleware,

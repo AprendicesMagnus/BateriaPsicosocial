@@ -104,23 +104,28 @@ export function formatearNit(valor) {
   if (!valor) return "";
   const limpio = String(valor).replace(/[^\d-]/g, "");
   const partes = limpio.split("-");
-  const base = partes[0].replace(/\D/g, "").slice(0, 9);
+  const base = partes[0].replace(/\D/g, "");
   if (partes.length > 1) {
-    const dv = partes.slice(1).join("").replace(/\D/g, "").slice(0, 1);
+    const dv = partes.slice(1).join("").replace(/\D/g, "");
     return `${base}-${dv}`;
   }
   if (base.length > 9) {
-    return `${base.slice(0, 9)}-${base.slice(9, 10)}`;
+    return `${base.slice(0, 9)}-${base.slice(9)}`;
   }
   return base;
 }
 
+export function nitValido(valor) {
+  if (!valor) return false;
+  return /^\d{9}-\d$/.test(String(valor).trim());
+}
+
 export function formatearVencimiento(value) {
   if (!value) return "";
-  const digits = String(value).replace(/\D/g, "").slice(0, 4);
+  const digits = String(value).replace(/\D/g, "");
   if (!digits) return "";
   if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
 export function formatearTarjeta(value) {

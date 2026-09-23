@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import "../styles/dashboard.css";
@@ -17,7 +17,7 @@ const CATEGORIAS = [
   { id: 1, nombre: "Estrés", totalPreguntas: 31 },
   { id: 2, nombre: "Extralaboral A", totalPreguntas: 31 },
   { id: 3, nombre: "Intralaboral - Forma A", totalPreguntas: 123 },
-  { id: 4, nombre: "Socio demográfico A", totalPreguntas: 31 },
+  { id: 4, nombre: "Socio demográfico A", totalPreguntas: 19 },
 ];
 
 /* =========================================================
@@ -27,194 +27,14 @@ const CATEGORIAS = [
 const CATEGORIAS_B = [
   { id: 5, nombre: "Estrés B", totalPreguntas: 31 },
   { id: 6, nombre: "Extralaboral B", totalPreguntas: 31 },
-  { id: 7, nombre: "Intralaboral B", totalPreguntas: 123 },
-  { id: 8, nombre: "Socio demográfico B", totalPreguntas: 123 }, // FIX: id duplicado (era 7)
+  { id: 7, nombre: "Intralaboral B", totalPreguntas: 97 },
+  { id: 8, nombre: "Socio demográfico B", totalPreguntas: 19 },
 ];
 
 const TODAS_CATEGORIAS = [...CATEGORIAS, ...CATEGORIAS_B];
 
-/* =========================================================
-   DATOS DE EJEMPLO (MOCK)
-========================================================= */
 
-const DB_SIMULADA = {
-  1: {
-    poblacion: 31,
-    incremento: "+3 vs. mes ant.",
-    riesgo: { nivel: "Bajo", score: 48 },
-    distribucion: [
-      ["Bajo", "65%"],
-      ["Medio", "28%"],
-      ["Alto", "7%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [55, 58, 60, 57, 62, 59, 61, 63, 60],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 101, nombre: "Laura Gómez", fecha: "2026-09-02", puntaje: 61, nivelRiesgo: "Medio" },
-      { id: 102, nombre: "Carlos Pérez", fecha: "2026-09-03", puntaje: 45, nivelRiesgo: "Bajo" },
-      { id: 103, nombre: "Andrea Ruiz", fecha: "2026-09-05", puntaje: 78, nivelRiesgo: "Alto" },
-      { id: 104, nombre: "Julián Torres", fecha: "2026-09-06", puntaje: 52, nivelRiesgo: "Bajo" },
-    ],
-  },
-  2: {
-    poblacion: 31,
-    incremento: "+4 vs. mes ant.",
-    riesgo: { nivel: "Medio", score: 62 },
-    distribucion: [
-      ["Bajo", "58%"],
-      ["Medio", "33%"],
-      ["Alto", "9%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [50, 53, 57, 60, 58, 63, 65, 62, 64],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 201, nombre: "Mariana López", fecha: "2026-09-01", puntaje: 64, nivelRiesgo: "Medio" },
-      { id: 202, nombre: "Santiago Rojas", fecha: "2026-09-04", puntaje: 80, nivelRiesgo: "Alto" },
-      { id: 203, nombre: "Valentina Díaz", fecha: "2026-09-07", puntaje: 40, nivelRiesgo: "Bajo" },
-      { id: 204, nombre: "Esteban Cárdenas", fecha: "2026-09-08", puntaje: 58, nivelRiesgo: "Medio" },
-      { id: 205, nombre: "Paula Herrera", fecha: "2026-09-10", puntaje: 62, nivelRiesgo: "Medio" },
-    ],
-  },
-  3: {
-    poblacion: 123,
-    incremento: "+12 vs. mes ant.",
-    riesgo: { nivel: "Medio", score: 55 },
-    distribucion: [
-      ["Bajo", "50%"],
-      ["Medio", "37%"],
-      ["Alto", "13%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [48, 50, 52, 55, 53, 56, 58, 57, 59],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 301, nombre: "Diego Martínez", fecha: "2026-09-02", puntaje: 59, nivelRiesgo: "Medio" },
-      { id: 302, nombre: "Camila Suárez", fecha: "2026-09-03", puntaje: 71, nivelRiesgo: "Alto" },
-      { id: 303, nombre: "Felipe Ortiz", fecha: "2026-09-05", puntaje: 38, nivelRiesgo: "Bajo" },
-    ],
-  },
-  4: {
-    poblacion: 31,
-    incremento: "+1 vs. mes ant.",
-    riesgo: { nivel: "Bajo", score: 20 },
-    distribucion: [
-      ["Bajo", "90%"],
-      ["Medio", "8%"],
-      ["Alto", "2%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [15, 16, 18, 17, 19, 18, 20, 19, 20],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 401, nombre: "Isabella Moreno", fecha: "2026-09-01", puntaje: 19, nivelRiesgo: "Bajo" },
-      { id: 402, nombre: "Nicolás Vargas", fecha: "2026-09-06", puntaje: 22, nivelRiesgo: "Bajo" },
-    ],
-  },
-  5: {
-    poblacion: 31,
-    incremento: "+2 vs. mes ant.",
-    riesgo: { nivel: "Bajo", score: 44 },
-    distribucion: [
-      ["Bajo", "68%"],
-      ["Medio", "25%"],
-      ["Alto", "7%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [50, 52, 54, 53, 56, 55, 57, 58, 56],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 501, nombre: "Sofía Ramírez", fecha: "2026-09-02", puntaje: 57, nivelRiesgo: "Medio" },
-      { id: 502, nombre: "Miguel Castro", fecha: "2026-09-04", puntaje: 41, nivelRiesgo: "Bajo" },
-    ],
-  },
-  6: {
-    poblacion: 31,
-    incremento: "+3 vs. mes ant.",
-    riesgo: { nivel: "Medio", score: 60 },
-    distribucion: [
-      ["Bajo", "55%"],
-      ["Medio", "36%"],
-      ["Alto", "9%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [52, 55, 58, 59, 57, 61, 63, 60, 62],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 601, nombre: "Daniela Vega", fecha: "2026-09-03", puntaje: 63, nivelRiesgo: "Medio" },
-      { id: 602, nombre: "Andrés Molina", fecha: "2026-09-05", puntaje: 45, nivelRiesgo: "Bajo" },
-    ],
-  },
-  7: {
-    poblacion: 123,
-    incremento: "+9 vs. mes ant.",
-    riesgo: { nivel: "Medio", score: 53 },
-    distribucion: [
-      ["Bajo", "52%"],
-      ["Medio", "35%"],
-      ["Alto", "13%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [46, 49, 51, 54, 52, 55, 57, 56, 58],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 701, nombre: "Laura Salazar", fecha: "2026-09-02", puntaje: 58, nivelRiesgo: "Medio" },
-      { id: 702, nombre: "Jorge Peña", fecha: "2026-09-06", puntaje: 36, nivelRiesgo: "Bajo" },
-    ],
-  },
-  // FIX: se agregó la entrada 8 correspondiente al nuevo id de "Socio demográfico B"
-  8: {
-    poblacion: 123,
-    incremento: "+5 vs. mes ant.",
-    riesgo: { nivel: "Bajo", score: 30 },
-    distribucion: [
-      ["Bajo", "80%"],
-      ["Medio", "15%"],
-      ["Alto", "5%"],
-    ],
-    chart: {
-      meses: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"],
-      puntaje: [25, 26, 28, 27, 29, 28, 30, 29, 30],
-      umbral: [70, 70, 70, 70, 70, 70, 70, 70, 70],
-    },
-    respondientes: [
-      { id: 801, nombre: "Ricardo Nieto", fecha: "2026-09-02", puntaje: 30, nivelRiesgo: "Bajo" },
-      { id: 802, nombre: "Manuela Cortés", fecha: "2026-09-05", puntaje: 33, nivelRiesgo: "Bajo" },
-    ],
-  },
-};
 
-/**
- * Simula la llamada a la base de datos / API.
- * Reemplaza el cuerpo por tu fetch real cuando tengas el backend.
- */
-function obtenerDatosCategoria(categoriaId) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const datos = DB_SIMULADA[categoriaId];
-      if (datos) {
-        resolve(datos);
-      } else {
-        reject(new Error("No hay datos para esta categoría"));
-      }
-    }, 350);
-  });
-}
 
 /* =========================================================
    CUESTIONARIOS DISPONIBLES EN EL MODAL
@@ -255,54 +75,26 @@ const LABEL_NIVEL = {
 
 export default function Dashboard() {
   const { usuario, token, cerrarSesion } = useAuth();
-  const navigate = useNavigate(); // FIX: declarado una sola vez
+  const navigate = useNavigate();
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [cuestionarioSeleccionado, setCuestionarioSeleccionado] = useState(null);
   const [categoriaActivaId, setCategoriaActivaId] = useState(2);
-  const [datosCategoria, setDatosCategoria] = useState(null);
-
-  // FIX: nombres distintos para no chocar con el estado de "indicadores"
-  const [cargandoCategoria, setCargandoCategoria] = useState(true);
-  const [errorCategoria, setErrorCategoria] = useState(null);
 
   const [indicadores, setIndicadores] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
-  // 2. fetchAnalisisPredictivo
+  // fetchAnalisisPredictivo
   const [prediccion, setPrediccion] = useState(null);
   const [cargandoPrediccion, setCargandoPrediccion] = useState(false);
   const [errorPrediccion, setErrorPrediccion] = useState(null);
 
-  // 3 & 4. generarInformeAgrupado, descargarInforme
+  // generarInformeAgrupado / descargarInforme
   const [mensajeDescarga, setMensajeDescarga] = useState(null);
   const [generandoInforme, setGenerandoInforme] = useState(false);
 
   const categoriaActiva = TODAS_CATEGORIAS.find((c) => c.id === categoriaActivaId);
-
-  // FIX: useCallback ahora está importado correctamente
-  const cargarCategoria = useCallback((id) => {
-    setCargandoCategoria(true);
-    setErrorCategoria(null);
-
-    obtenerDatosCategoria(id)
-      .then((datos) => {
-        setDatosCategoria(datos);
-      })
-      .catch((err) => {
-        setErrorCategoria(err.message);
-        setDatosCategoria(null);
-      })
-      .finally(() => {
-        setCargandoCategoria(false);
-      });
-  }, []);
-
-  // FIX: ahora sí se dispara la carga cuando cambia la categoría activa
-  useEffect(() => {
-    cargarCategoria(categoriaActivaId);
-  }, [categoriaActivaId, cargarCategoria]);
 
   useEffect(() => {
     if (token) {
@@ -310,6 +102,7 @@ export default function Dashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
 
   async function cargarDatosIndicadores() {
     setCargando(true);
@@ -522,11 +315,8 @@ export default function Dashboard() {
   </p>
 )}
 
-{errorCategoria && (
-  <p className="error-text">
-    No se pudieron cargar los datos de "{categoriaActiva?.nombre}": {errorCategoria}
-  </p>
-)}
+
+
 
 
 {mensajeDescarga && (
@@ -621,28 +411,23 @@ export default function Dashboard() {
 
           {TODAS_CATEGORIAS.map((categoria) => {
             const esActiva = categoria.id === categoriaActivaId;
-            const datos = esActiva ? datosCategoria : null;
 
             return (
-              // FIX: "Indicator" no existía; el componente definido es "IndicatorCard"
               <IndicatorCard
                 key={categoria.id}
                 title={categoria.nombre}
                 subtitle={`${categoria.totalPreguntas} preguntas`}
                 active={esActiva}
-                values={
-                  esActiva && datos
-                    ? datos.distribucion
-                    : [
-                        ["Bajo", "—"],
-                        ["Medio", "—"],
-                        ["Alto", "—"],
-                      ]
-                }
+                values={[
+                  ["Bajo", "—"],
+                  ["Medio", "—"],
+                  ["Alto", "—"],
+                ]}
                 onClick={() => setCategoriaActivaId(categoria.id)}
               />
             );
           })}
+
 
           <IndicatorCard
             title="Desglose Nivel de Riesgo"

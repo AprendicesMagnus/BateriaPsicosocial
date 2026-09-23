@@ -14,6 +14,7 @@ def _normalize_database_url(url: str) -> str:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    env: str = "development"
     database_url: str = "postgresql://usuario:contrasena@localhost:5432/magnussing"
     test_database_url: str = "postgresql://postgres:12345@localhost:5432/magnussing_test"
     port: int = 4000
@@ -36,6 +37,15 @@ class Settings(BaseSettings):
     codigo_expira_minutos: int = 15
     max_intentos_login: int = 5
     bloqueo_minutos: int = 15
+
+    def model_post_init(self, __context) -> None:
+        if self.env.lower() == "production":
+            if self.jwt_secret == "cambia-este-valor-por-una-cadena-larga-y-aleatoria":
+                raise ValueError("En producción es obligatorio configurar un JWT_SECRET seguro.")
+            if not self.encryption_key:
+                raise ValueError("En producción es obligatorio configurar ENCRYPTION_KEY.")
+            if self.admin_password == "Admin1234":
+                raise ValueError("En producción es obligatorio cambiar la contraseña por defecto de ADMIN_PASSWORD.")
 
     @property
     def sqlalchemy_database_url(self) -> str:

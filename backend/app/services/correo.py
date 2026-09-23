@@ -35,8 +35,11 @@ def enviar_codigo_verificacion(destino: str, nombre: str, codigo: str, tipo: str
     mensaje["Subject"] = asunto
     mensaje.set_content(texto)
 
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
-        server.starttls()
-        if settings.smtp_user:
-            server.login(settings.smtp_user, settings.smtp_pass)
-        server.send_message(mensaje)
+    try:
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
+            server.starttls()
+            if settings.smtp_user:
+                server.login(settings.smtp_user, settings.smtp_pass)
+            server.send_message(mensaje)
+    except Exception as err:
+        logger.error("Falló el envío de correo a %s | error=%s", destino, err)

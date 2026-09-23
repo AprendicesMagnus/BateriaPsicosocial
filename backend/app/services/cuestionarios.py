@@ -41,55 +41,59 @@ def crear_cuestionario(db: Session, data) -> dict:
     if ultima:
         ultima.vigente = False
 
-    version = CuestionarioVersion(
-        codigo=data.codigo,
-        nombre=data.nombre,
-        numero_version=numero,
-        descripcion=data.descripcion,
-        vigente=True,
-    )
-    db.add(version)
-    db.flush()
-
-    dimensiones_por_codigo: dict[str, Dimension] = {}
-    for dim_data in data.dimensiones:
-        dimension = Dimension(
-            version_id=version.id,
-            codigo=dim_data.codigo,
-            nombre=dim_data.nombre,
-            dominio=dim_data.dominio,
-            orden=dim_data.orden,
+    try:
+        version = CuestionarioVersion(
+            codigo=data.codigo,
+            nombre=data.nombre,
+            numero_version=numero,
+            descripcion=data.descripcion,
+            vigente=True,
         )
-        db.add(dimension)
+        db.add(version)
         db.flush()
-        dimensiones_por_codigo[dimension.codigo] = dimension
-        for pregunta_data in dim_data.preguntas:
+
+        dimensiones_por_codigo: dict[str, Dimension] = {}
+        for dim_data in data.dimensiones:
+            dimension = Dimension(
+                version_id=version.id,
+                codigo=dim_data.codigo,
+                nombre=dim_data.nombre,
+                dominio=dim_data.dominio,
+                orden=dim_data.orden,
+            )
+            db.add(dimension)
+            db.flush()
+            dimensiones_por_codigo[dimension.codigo] = dimension
+            for pregunta_data in dim_data.preguntas:
+                db.add(
+                    Pregunta(
+                        dimension_id=dimension.id,
+                        codigo=pregunta_data.codigo,
+                        enunciado=pregunta_data.enunciado,
+                        orden=pregunta_data.orden,
+                        inversa=pregunta_data.inversa,
+                        valor_minimo=pregunta_data.valorMinimo,
+                        valor_maximo=pregunta_data.valorMaximo,
+                    )
+                )
+
+        for baremo_data in data.baremos:
+            dimension = dimensiones_por_codigo.get(baremo_data.dimensionCodigo)
+            if dimension is None:
+                raise AppError(400, f"No existe la dimensión {baremo_data.dimensionCodigo} en esta versión.")
             db.add(
-                Pregunta(
+                Baremo(
                     dimension_id=dimension.id,
-                    codigo=pregunta_data.codigo,
-                    enunciado=pregunta_data.enunciado,
-                    orden=pregunta_data.orden,
-                    inversa=pregunta_data.inversa,
-                    valor_minimo=pregunta_data.valorMinimo,
-                    valor_maximo=pregunta_data.valorMaximo,
+                    nivel=baremo_data.nivel,
+                    minimo=baremo_data.minimo,
+                    maximo=baremo_data.maximo,
+                    orden=baremo_data.orden,
                 )
             )
-
-    for baremo_data in data.baremos:
-        dimension = dimensiones_por_codigo.get(baremo_data.dimensionCodigo)
-        if dimension is None:
-            raise AppError(400, f"No existe la dimensión {baremo_data.dimensionCodigo} en esta versión.")
-        db.add(
-            Baremo(
-                dimension_id=dimension.id,
-                nivel=baremo_data.nivel,
-                minimo=baremo_data.minimo,
-                maximo=baremo_data.maximo,
-                orden=baremo_data.orden,
-            )
-        )
-    db.commit()
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return obtener_cuestionario(db, version.id)
 
 

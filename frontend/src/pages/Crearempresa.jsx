@@ -51,6 +51,7 @@ export default function CrearEmpresa() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+const [nitDuplicateError, setNitDuplicateError] = useState("");
 
   if (!nitInicial) return null;
 
@@ -137,6 +138,17 @@ export default function CrearEmpresa() {
     const nomRespTrim = usuarioNombre.trim();
     const apeRespTrim = usuarioApellido.trim();
     const correoUserNorm = normalizarEmail(usuarioEmail);
+
+    // Verify duplicate NIT before creating organization
+    try {
+      const dupRes = await request(`/organizaciones/existe?nit=${encodeURIComponent(nitTrim)}`);
+      if (dupRes.existe) {
+        setNitDuplicateError("Ya existe una empresa registrada con este NIT.");
+        return;
+      }
+    } catch (dupErr) {
+      // ignore errors from duplicate check
+    }
 
     setLoading(true);
     try {
@@ -226,12 +238,17 @@ export default function CrearEmpresa() {
                   inputMode="numeric"
                   maxLength={11}
                   value={nit}
-                  onChange={(e) => setNit(formatearNit(e.target.value))}
+                  onChange={(e) => { setNit(formatearNit(e.target.value)); setNitDuplicateError(""); }}
                   onBlur={() => marcar("nit")}
                 />
                 {mostrarError("nit") && (
                   <span className="field__error" id="nit-error">
                     {errores.nit}
+                  </span>
+                )}
+                {nitDuplicateError && (
+                  <span className="field__error" id="nit-duplicate-error">
+                    {nitDuplicateError}
                   </span>
                 )}
               </label>

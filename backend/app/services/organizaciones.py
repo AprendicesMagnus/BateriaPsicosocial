@@ -1,10 +1,13 @@
 from sqlalchemy.orm import Session
 
 from app.api.deps import asegurar_acceso_organizacion
+from app.core.crypto import email_valido, hash_password, password_valida
 from app.core.errors import AppError
+from app.core.nit_utils import validar_nit_con_dv
 from app.models.evaluation import Evaluacion, EvaluacionParticipante
 from app.models.organization import Area, Organizacion
-from app.models.user import Usuario
+from app.models.user import Rol, Usuario
+from app.services.auth import crear_y_enviar_codigo
 
 
 def listar_organizaciones(db: Session, actual: Usuario) -> list[Organizacion]:
@@ -22,12 +25,6 @@ def existe_organizacion_nit(db: Session, nit: str) -> dict:
     return {"existe": False, "organizacionId": None}
 
 
-from app.core.crypto import email_valido, hash_password, password_valida
-from app.core.nit_utils import calcular_digito_verificador_nit
-from app.models.user import Rol, Usuario
-from app.services.auth import crear_y_enviar_codigo
-
-
 def autorregistrar_organizacion(db: Session, data) -> dict:
     """Registra de forma atómica una empresa y su primer usuario (EVALUADOR_SST).
 
@@ -40,10 +37,7 @@ def autorregistrar_organizacion(db: Session, data) -> dict:
        a verificar la cuenta antes del login.
     """
     nit_limpio = data.nit.strip()
-    # Validar dígito de verificación (Módulo 11 DIAN)
-    nit_base, dv_str = nit_limpio.split("-")
-    if calcular_digito_verificador_nit(nit_base) != int(dv_str):
-        raise AppError(400, "El dígito de verificación del NIT no es válido.")
+    validar_nit_con_dv(nit_limpio)
     if db.query(Organizacion).filter(Organizacion.nit == nit_limpio).first():
         raise AppError(409, "Ya existe una organización registrada con este NIT.")
 
@@ -67,30 +61,34 @@ def autorregistrar_organizacion(db: Session, data) -> dict:
     if rol_evaluador is None:
         raise AppError(500, "El catálogo de roles (EVALUADOR_SST) no está inicializado.")
 
-    org = Organizacion(
-        nombre=data.nombre.strip(),
-        nit=nit_limpio,
-        sector=data.sector,
-        municipio=data.municipio,
-        email=str(data.email) if data.email else None,
-        telefono=data.telefono,
-        activa=True,
-    )
-    db.add(org)
-    db.flush()
+    try:
+        org = Organizacion(
+            nombre=data.nombre.strip(),
+            nit=nit_limpio,
+            sector=data.sector,
+            municipio=data.municipio,
+            email=str(data.email) if data.email else None,
+            telefono=data.telefono,
+            activa=True,
+        )
+        db.add(org)
+        db.flush()
 
-    usuario = Usuario(
-        nombre=data.usuarioNombre.strip(),
-        apellido=data.usuarioApellido.strip(),
-        email=email_usuario,
-        password_hash=hash_password(data.usuarioPassword),
-        rol_id=rol_evaluador.id,
-        organizacion_id=org.id,
-        email_verificado=False,
-        estado="ACTIVO",
-    )
-    db.add(usuario)
-    db.commit()
+        usuario = Usuario(
+            nombre=data.usuarioNombre.strip(),
+            apellido=data.usuarioApellido.strip(),
+            email=email_usuario,
+            password_hash=hash_password(data.usuarioPassword),
+            rol_id=rol_evaluador.id,
+            organizacion_id=org.id,
+            email_verificado=False,
+            estado="ACTIVO",
+        )
+        db.add(usuario)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
     db.refresh(org)
     db.refresh(usuario)
@@ -108,10 +106,7 @@ def autorregistrar_organizacion(db: Session, data) -> dict:
 
 def crear_organizacion(db: Session, data) -> Organizacion:
     nit_limpio = data.nit.strip()
-    if "-" in nit_limpio:
-        nit_base, dv_str = nit_limpio.split("-")
-        if calcular_digito_verificador_nit(nit_base) != int(dv_str):
-            raise AppError(400, "El dígito de verificación del NIT no es válido.")
+    validar_nit_con_dv(nit_limpio)
     if db.query(Organizacion).filter(Organizacion.nit == nit_limpio).first():
         raise AppError(409, "Ya existe una organización con ese NIT.")
     org = Organizacion(
@@ -134,10 +129,7 @@ def actualizar_organizacion(db: Session, org_id, data) -> Organizacion:
         raise AppError(404, "Organización no encontrada.")
     if data.nit is not None:
         nit_limpio = data.nit.strip()
-        if "-" in nit_limpio:
-            nit_base, dv_str = nit_limpio.split("-")
-            if calcular_digito_verificador_nit(nit_base) != int(dv_str):
-                raise AppError(400, "El dígito de verificación del NIT no es válido.")
+        validar_nit_con_dv(nit_limpio)
     for campo, valor in {
         "nombre": data.nombre,
         "nit": data.nit,

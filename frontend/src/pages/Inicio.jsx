@@ -247,7 +247,6 @@ export default function Inicio() {
                     className="nav__dropdown-option"
                     onClick={() => {
                       // Aquí puedes colocar la acción para comprar
-                      console.log("Comprar baterías");
                       setMenuTiendaAbierto(false);
                     }}
                     style={{

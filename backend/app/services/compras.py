@@ -126,23 +126,28 @@ def procesar_pago(db: Session, data, actual: Usuario) -> dict:
         if len(num_limpio) >= 4:
             ultimos_digitos = num_limpio[-4:]
 
-    pago = Pago(
-        compra_id=compra.id,
-        metodo=metodo,
-        referencia=referencia,
-        monto=data.monto or compra.total,
-        estado=estado_pago,
-        banco=data.banco,
-        ultimos_digitos=ultimos_digitos,
-        titular=data.nombreTarjeta,
-        mensaje_respuesta=mensaje,
-    )
-    db.add(pago)
+    try:
+        pago = Pago(
+            compra_id=compra.id,
+            metodo=metodo,
+            referencia=referencia,
+            monto=data.monto or compra.total,
+            estado=estado_pago,
+            banco=data.banco,
+            ultimos_digitos=ultimos_digitos,
+            titular=data.nombreTarjeta,
+            mensaje_respuesta=mensaje,
+        )
+        db.add(pago)
 
-    if aprobado:
-        compra.estado = "PAGADA"
+        if aprobado:
+            compra.estado = "PAGADA"
 
-    db.commit()
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
     db.refresh(pago)
 
     res = _pago_publico(pago)

@@ -247,9 +247,6 @@ export default function CuestionarioEstres() {
             <span>31</span>
           </button>
 
-{/* =================================================
-            esta fallando el link
-        ================================================= */}
           <button
             type="button"
             onClick={() => navigate("/cuestionario-extralaboralB")}
@@ -257,9 +254,6 @@ export default function CuestionarioEstres() {
             <strong>Extralaboral B</strong>
             <span>31</span>
           </button>
-{/* =================================================
-            mal hay
-        ================================================= */}
           <button
             type="button"
             onClick={() => navigate("/cuestionario-intralaboralB")}

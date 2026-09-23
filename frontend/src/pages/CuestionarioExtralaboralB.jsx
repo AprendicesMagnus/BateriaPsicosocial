@@ -54,7 +54,7 @@ const RUTAS = {
   intralaboral: "/cuestionario-intralaboralB",
 };
 
-export default function CuestionarioEstres() {
+export default function CuestionarioExtralaboralB() {
 
   const navigate = useNavigate();
   const location = useLocation();
