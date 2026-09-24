@@ -1,7 +1,10 @@
+import secrets
 from datetime import datetime, timedelta
 from random import randint
 from uuid import UUID
 
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import get_settings
@@ -12,6 +15,9 @@ from app.models.user import CodigoVerificacion, Rol, Usuario
 from app.services.correo import enviar_codigo_verificacion
 
 settings = get_settings()
+
+# Client ID público de Google Cloud (no es secreto, puede vivir en el código).
+GOOGLE_CLIENT_ID = "615740449491-340ojlb2h90f13j4ut7u0rhtm2k90589.apps.googleusercontent.com"
 
 
 def usuario_publico(usuario: Usuario) -> dict:
@@ -173,6 +179,63 @@ def login(db: Session, email: str, password: str) -> dict:
     usuario.intentos_fallidos = 0
     usuario.bloqueado_hasta = None
     db.commit()
+    token = crear_token_sesion(str(usuario.id), usuario.rol.codigo, usuario.email)
+    return {"token": token, "usuario": usuario_publico(usuario)}
+
+
+def login_con_google(db: Session, credential: str) -> dict:
+    # Verifica con los servidores de Google que el token es real y no fue
+    # falsificado, y que efectivamente fue emitido para nuestro Client ID.
+    try:
+        payload = google_id_token.verify_oauth2_token(
+            credential, google_requests.Request(), GOOGLE_CLIENT_ID
+        )
+    except ValueError:
+        raise AppError(401, "Token de Google inválido.")
+
+    email = payload.get("email")
+    if not email or not payload.get("email_verified", False):
+        raise AppError(401, "No se pudo verificar el correo de la cuenta de Google.")
+
+    nombre = (payload.get("given_name") or payload.get("name") or "Usuario").strip()
+    apellido = (payload.get("family_name") or "Google").strip()
+
+    usuario = (
+        db.query(Usuario)
+        .options(joinedload(Usuario.rol))
+        .filter(Usuario.email == email.lower())
+        .first()
+    )
+
+    if usuario is None:
+        # Primera vez que esta persona entra: se crea la cuenta automáticamente.
+        # Se le pone una contraseña aleatoria e inutilizable porque nunca la
+        # va a necesitar (siempre entrará por Google).
+        usuario = Usuario(
+            nombre=nombre,
+            apellido=apellido,
+            email=email.lower(),
+            password_hash=hash_password(secrets.token_urlsafe(32)),
+            rol_id=_obtener_rol(db, "TRABAJADOR").id,
+            email_verificado=True,
+            estado="ACTIVO",
+        )
+        db.add(usuario)
+        db.commit()
+        db.refresh(usuario)
+        usuario = (
+            db.query(Usuario)
+            .options(joinedload(Usuario.rol))
+            .filter(Usuario.id == usuario.id)
+            .one()
+        )
+    else:
+        if usuario.estado != "ACTIVO":
+            raise AppError(403, "Esta cuenta se encuentra inactiva.")
+        if not usuario.email_verificado:
+            usuario.email_verificado = True
+            db.commit()
+
     token = crear_token_sesion(str(usuario.id), usuario.rol.codigo, usuario.email)
     return {"token": token, "usuario": usuario_publico(usuario)}
 

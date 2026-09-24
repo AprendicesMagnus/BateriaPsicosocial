@@ -88,9 +88,9 @@ export function PrimaryButton({ children, loading, ...props }) {
   );
 }
 
-export function SecondaryButton({ children, ...props }) {
+export function SecondaryButton({ children, loading, ...props }) {
   return (
-    <button type="button" className="btn-secondary" {...props}>
+    <button type="button" className="btn-secondary" disabled={loading || props.disabled} {...props}>
       {children}
     </button>
   );

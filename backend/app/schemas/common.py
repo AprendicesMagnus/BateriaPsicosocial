@@ -95,6 +95,10 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=72)
 
 
+class GoogleLoginRequest(BaseModel):
+    credential: str = Field(min_length=20, description="ID token (JWT) entregado por Google Identity Services")
+
+
 class VerificarEmailRequest(BaseModel):
     email: Correo
     codigo: str = Field(pattern=r"^\d{6}$", description="Código de 6 dígitos")

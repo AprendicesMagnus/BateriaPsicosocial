@@ -10,6 +10,8 @@ export const resendCode = (data) =>
 
 export const login = (data) => request("/auth/login", { method: "POST", body: data });
 
+export const loginConGoogle = (data) => request("/auth/google", { method: "POST", body: data });
+
 export const forgotPassword = (data) =>
   request("/auth/forgot-password", { method: "POST", body: data });
 

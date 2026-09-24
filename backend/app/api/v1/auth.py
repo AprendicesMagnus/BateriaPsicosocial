@@ -66,3 +66,25 @@ def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
 @router.get("/me")
 def me(usuario: Usuario = Depends(get_current_user)):
     return auth_service.me(usuario)
+
+
+# ---> RUTA DE GOOGLE AGREGADA PARA ENLAZAR CON EL FRONTEND <---
+@router.post("/google")
+def login_google(request_data: dict, request: Request, db: Session = Depends(get_db)):
+    # Toma el token que envía el frontend (access_token o credential)
+    token_google = request_data.get("credential")
+    
+    # Llama al servicio de autenticación de Google en Python
+    resultado = auth_service.login_con_google(db, token_google)
+    
+    # Registra la acción en la tabla de auditoría del sistema
+    auditoria_service.registrar_auditoria(
+        db,
+        usuario=None,
+        accion="LOGIN_GOOGLE",
+        entidad="Usuario",
+        entidad_id=resultado["usuario"]["id"],
+        request=request,
+    )
+    return resultado
+
