@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // <-- AGREGADO AQUÍ "useNavigate"
 import { VscBriefcase } from "react-icons/vsc";
 import { BsCart4 } from "react-icons/bs";
 import { BsCreditCard } from "react-icons/bs";
@@ -7,6 +7,8 @@ import { BsFillClipboard2Fill } from "react-icons/bs";
 import {  HiOutlineUser,  HiOutlineDocumentText,  HiOutlineClipboardList,  HiOutlineClipboardCheck,  HiOutlineChartBar,} from "react-icons/hi";
 import "../styles/Inicio.css";
 import "../styles/app-shell.css";
+import { useAuth } from "../context/AuthContext"; // <-- EN LÍNEA NUEVA: IMPORTADO "useAuth"
+
 
 
 const PASOS = [
