@@ -1,9 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
+import { VscBriefcase } from "react-icons/vsc";
+import { BsCart4 } from "react-icons/bs";
+import { BsCreditCard } from "react-icons/bs";
+import { BsFillClipboard2Fill } from "react-icons/bs";
+import {  HiOutlineUser,  HiOutlineDocumentText,  HiOutlineClipboardList,  HiOutlineClipboardCheck,  HiOutlineChartBar,} from "react-icons/hi";
 import "../styles/Inicio.css";
 import "../styles/app-shell.css";
 
+
+const PASOS = [
+  { titulo: "Crear perfil", texto: "Registro del colaborador", icono: HiOutlineUser },
+  { titulo: "Registrar empresa", texto: "Registro de su empresa a cargo ", icono: HiOutlineDocumentText },
+  { titulo: "Seleccionar cuestionario", texto: "Elegir que cuestionario presentaran los usuarios ", icono: HiOutlineClipboardList },
+  { titulo: "Realiza los cuestionarios", texto: "Cuestionarios Formas A/B + extralaboral", icono: HiOutlineClipboardCheck },
+  { titulo: "Recibir informe", texto: "Resultado individual confidencial", icono: HiOutlineClipboardCheck },
+  { titulo: "Empresa consulta", texto: "Informe agregado, sin datos individuales", icono: HiOutlineChartBar },
+];
 
 const FACTORES = [
   {
@@ -33,28 +46,6 @@ const FACTORES = [
   },
 ];
 
-const PASOS = [
-  {
-    titulo: "Crear perfil",
-    texto:
-      "El administrador registra la organización y el evaluador SST.",
-  },
-  {
-    titulo: "Aplicar batería",
-    texto:
-      "Cada trabajador diligencia el cuestionario en línea.",
-  },
-  {
-    titulo: "Recibir informe",
-    texto:
-      "El sistema tabula, analiza y genera resultados automáticos.",
-  },
-  {
-    titulo: "Empresa consulta",
-    texto:
-      "El equipo SST revisa indicadores y planes de intervención.",
-  },
-];
 
 const CONFIANZA = [
   {
@@ -193,9 +184,13 @@ export default function Inicio() {
                   color: "inherit",
                   cursor: "pointer",
                   padding: 0,
-                  fontWeight: "bold"
+                  fontWeight: "bold",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
+                 <VscBriefcase size={18} />
                 Empresas
               </button>
 
@@ -248,8 +243,12 @@ export default function Inicio() {
                   color: "var(--ink-900, #12314b)",
                   cursor: "pointer",
                   padding: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
+                <BsCart4   size={18} />
                 Tienda
               </button>
 
@@ -287,15 +286,30 @@ export default function Inicio() {
                       fontWeight: 600,
                       color: "var(--ink-900, #12314b)",
                       cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
                     }}
                   >
-                    Comprar baterías
+                    
+                    <BsCreditCard />
+                      <Link to="/pago" className="boton-encuestas"> Comprar baterías</Link>
+                    
                   </button>
                 </div>
               )}
             </div>
-
-            <Link to="/dashboard" className="boton-encuestas"> Encuestas</Link>
+            <Link  to="/dashboard"  onClick={() => setMenuTiendaAbierto(false)}  style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: "8px",
+              }}
+              >
+              <BsFillClipboard2Fill size={16} />
+              <span>Encuestas</span>
+            </Link>
+            
           </nav>
 
           {/* =====================================================
@@ -394,97 +408,26 @@ export default function Inicio() {
 
             <div className="hero__cta">
 
-              {usuario ? (
-                <>
-                  <Link className="cta-primary" to="/pago">
-                    Comprar batería
-                  </Link>
-                  <Link className="cta-secondary" to="/reportes">
-                    Ver mis reportes
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    className="cta-primary"
-                    to="/crear-cuenta"
-                  >
-                    Más información — Empresas
-                  </Link>
-
-                  <a
-                    className="cta-secondary"
-                    href="#psicologos"
-                  >
-                    Más información — Clientes
-                  </a>
-                </>
-              )}
+              <Link
+                className="cta-primary"
+                to="/dashboard"
+              >
+                Más información — Encuestas
+              </Link>
+              {/* =====================================================
+          pensar en que apartado mandar esta informacion o que hacer con ese boton
+      ===================================================== */}
+              <a
+                className="cta-secondary"
+                href="#"
+              >
+                Más información — Clientes
+              </a>
             </div>
           </div>
         </div>
 
       </section>
-
-
-      {/* =====================================================
-          ESTADÍSTICAS
-      ====================================================== */}
-
-      <div className="stats-band">
-
-        <div className="container stats-band__inner">
-
-          <div className="stat">
-            <strong>+40</strong>
-            <span>
-              MiPymes objetivo del piloto en el Huila
-            </span>
-          </div>
-
-          <div className="stat">
-            <strong>+15</strong>
-            <span>
-              Psicólogos evaluadores SST vinculados
-            </span>
-          </div>
-
-          <div className="stat">
-            <strong>+500</strong>
-            <span>
-              Trabajadores evaluados en fase piloto
-            </span>
-          </div>
-
-        </div>
-
-      </div>
-
-
-      {/* =====================================================
-          ICONOS
-      ====================================================== */}
-
-      <div className="container icon-row">
-
-        <div className="icon-chip">
-          Intralaboral
-        </div>
-
-        <div className="icon-chip">
-          Extralaboral
-        </div>
-
-        <div className="icon-chip">
-          Sociodemográfico
-        </div>
-
-        <div className="icon-chip">
-          Informes
-        </div>
-
-      </div>
-
 
       {/* =====================================================
           FACTORES
@@ -515,106 +458,56 @@ export default function Inicio() {
             </p>
 
           </div>
-
-
           <div className="factor-grid">
-
             {FACTORES.map((factor) => (
-
               <div
                 className="factor-card"
                 key={factor.titulo}
               >
-
                 <h3>
                   {factor.titulo}
                 </h3>
-
                 <ul>
-
                   {factor.items.map((item) => (
-
                     <li key={item}>
                       {item}
                     </li>
-
                   ))}
-
                 </ul>
-
               </div>
-
             ))}
-
           </div>
-
         </div>
-
       </section>
 
+        {/* =====================================================
+            CÓMO FUNCIONA
+        ====================================================== */}
 
-      {/* =====================================================
-          CÓMO FUNCIONA
-      ====================================================== */}
+        <section className="section como-funciona" id="como-funciona">
+          <div className="container">
 
-      <section
-        className="section"
-        id="como-funciona"
-        style={{
-          background: "var(--white)",
-        }}
-      >
+            <h2 className="como-funciona__titulo">Cómo funciona</h2>
 
-        <div className="container">
-
-          <div className="section__header">
-
-            <span className="section__eyebrow">
-              Proceso
-            </span>
-
-            <h2>
-              Cómo funciona
-            </h2>
-
-            <p>
-              De la aplicación digital del cuestionario
-              al informe de resultados, en cuatro pasos.
-            </p>
+            <div className="pasos">
+              {PASOS.map((paso, index) => {
+                const Icono = paso.icono;
+                return (
+                  <div className="paso" key={paso.titulo}>
+                    <div className="paso__circulo">
+                      <Icono size={28} />
+                    </div>
+                    <h4 className="paso__titulo">
+                      {index + 1}. {paso.titulo}
+                    </h4>
+                    <p className="paso__texto">{paso.texto}</p>
+                  </div>
+                );
+              })}
+            </div>
 
           </div>
-
-
-          <div className="steps-grid">
-
-            {PASOS.map((paso, index) => (
-
-              <div
-                className="step-card"
-                key={paso.titulo}
-              >
-
-                <div className="step-card__num">
-                  {index + 1}
-                </div>
-
-                <h4>
-                  {paso.titulo}
-                </h4>
-
-                <p>
-                  {paso.texto}
-                </p>
-
-              </div>
-
-            ))}
-
-          </div>
-
-        </div>
-
-      </section>
+        </section>
 
 
       {/* =====================================================
@@ -751,6 +644,7 @@ export default function Inicio() {
             <div className="footer__col">
 
               <h5>
+                
                 Empresas
               </h5>
 
@@ -768,43 +662,24 @@ export default function Inicio() {
                   </a>
                 </li>
 
-                {usuario ? (
-                  <li>
-                    <Link to="/perfil">
-                      Mi perfil
-                    </Link>
-                  </li>
-                ) : (
-                  <li>
-                    <Link to="/iniciar-sesion">
-                      Iniciar sesión
-                    </Link>
-                  </li>
-                )}
-
+                <li>
+                  <Link to="/iniciar-sesion">
+                    Iniciar sesión
+                  </Link>
+                </li>
               </ul>
-
             </div>
 
 
             <div className="footer__col">
 
-              <h5>
-                Contacto
-              </h5>
-
+              <h5>    Contacto  </h5>
               <ul>
-
                 <li>
                   direccion_software@fet.edu.co
                 </li>
-
-                <li>
-                  Neiva, Huila — Colombia
-                </li>
-
+                <li>   Neiva, Huila — Colombia </li>
               </ul>
-
 
               <div className="footer__social">
 
@@ -823,14 +698,9 @@ export default function Inicio() {
 
 
           <div className="footer__bottom">
-
-            <span>
-              © {new Date().getFullYear()} Magnus|SIG.
-              Todos los derechos reservados.
+            <span className="texto-footer">
+              © {new Date().getFullYear()} Magnus|SIG. Todos los derechos reservados.
             </span>
-
-            <span></span>
-
           </div>
 
         </div>

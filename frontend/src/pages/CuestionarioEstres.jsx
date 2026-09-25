@@ -43,7 +43,6 @@ const opciones = [
   "Siempre",
   "Casi siempre",
   "A veces",
-  "Casi nunca",
   "Nunca",
 ];
 

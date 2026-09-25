@@ -1,7 +1,15 @@
+/* =====================================================
+   BASE
+===================================================== */
 
 .landing {
   background: var(--bg-100);
 }
+
+
+/* =====================================================
+   NAVBAR
+===================================================== */
 
 .nav {
   position: relative;
@@ -73,6 +81,40 @@
 
 
 /* =====================================================
+   ENLACES CON ÍCONO (solo texto, sin fondo)
+===================================================== */
+
+.boton-encuestas,
+.boton-comprar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  padding: 0;
+  color: var(--ink-900, #12314b);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav__links .boton-encuestas,
+.nav__links .boton-comprar {
+  color: var(--ink-900, #12314b);
+}
+
+.boton-encuestas:hover,
+.boton-comprar:hover {
+  color: var(--gold-600);
+}
+
+.boton-comprar {
+  width: 100%;
+  padding: 10px 12px;
+}
+
+
+/* =====================================================
    HERO
 ===================================================== */
 
@@ -88,7 +130,7 @@
 
 
 /* =====================================================
-   CARRUSEL DE FONDO
+   VIDEO DE FONDO
 ===================================================== */
 
 .hero__background {
@@ -100,62 +142,34 @@
   overflow: hidden;
 }
 
-
-/*
-   TODAS LAS IMÁGENES OCUPAN EXACTAMENTE
-   EL MISMO ESPACIO
-*/
-
-.hero__background-image {
+.hero__background-video {
   position: absolute;
   inset: 0;
-
+  display: block;
   width: 100%;
   height: 100%;
-
-  display: block;
-
   object-fit: cover;
   object-position: center;
-
-  opacity: 0;
-
-  transition: opacity 1s ease-in-out;
-
   z-index: 0;
 }
 
 
-/*
-   SOLO LA IMAGEN ACTIVA SE MUESTRA
-*/
-
-.hero__background-image.active {
-  opacity: 3;
-  z-index: 3;
-}
-
-
 /* =====================================================
-   CAPA AZUL SOBRE LAS IMÁGENES
+   CAPA AZUL SOBRE EL VIDEO
 ===================================================== */
 
 .hero__overlay {
   position: absolute;
   inset: 0;
-
   width: 100%;
   height: 100%;
-
-  z-index: 2;
-
-  background:
-    linear-gradient(
-      90deg,
-      rgba(7, 17, 48, 0.92) 0%,
-      rgba(7, 17, 48, 0.78) 45%,
-      rgba(7, 17, 48, 0.48) 100%
-    );
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
+    rgba(7, 17, 48, 0.85) 0%,
+    rgba(7, 17, 48, 0.65) 45%,
+    rgba(7, 17, 48, 0.35) 100%
+  );
 }
 
 
@@ -165,34 +179,21 @@
 
 .hero__inner {
   position: relative;
-
-  z-index: 3;
-
+  z-index: 2;
   width: 100%;
   min-height: 700px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   padding: 80px 40px;
+  background: transparent;
 }
-
-
-/* =====================================================
-   CONTENIDO IZQUIERDO
-===================================================== */
 
 .hero__content {
   width: 100%;
   max-width: 850px;
   margin-right: auto;
 }
-
-
-/* =====================================================
-   ETIQUETA
-===================================================== */
 
 .hero__tag {
   display: inline-flex;
@@ -209,11 +210,6 @@
   backdrop-filter: blur(5px);
 }
 
-
-/* =====================================================
-   TITULO
-===================================================== */
-
 .hero h1 {
   margin: 0 0 20px;
   max-width: 800px;
@@ -227,11 +223,6 @@
   color: var(--gold-500);
 }
 
-
-/* =====================================================
-   TEXTO
-===================================================== */
-
 .hero p {
   max-width: 720px;
   margin: 0 0 35px;
@@ -242,7 +233,7 @@
 
 
 /* =====================================================
-   BOTONES del enunciado 
+   BOTONES DEL HERO
 ===================================================== */
 
 .hero__cta {
@@ -250,6 +241,7 @@
   gap: 14px;
   flex-wrap: wrap;
 }
+
 .cta-primary,
 .cta-secondary {
   display: inline-flex;
@@ -262,79 +254,32 @@
   font-size: 16px;
   font-weight: 700;
   transition: all 0.3s ease;
-  
 }
 
-
-/* EMPRESAS */
-
+/* Empresas */
 .cta-primary {
   background: var(--gold-500);
-
   color: var(--navy-950);
 }
 
 .cta-primary:hover {
   background: var(--gold-600);
-
   transform: translateY(-3px);
 }
 
-
-/* PSICÓLOGOS */
-
+/* Clientes */
 .cta-secondary {
   border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
   backdrop-filter: blur(5px);
 }
 
 .cta-secondary:hover {
-  background: rgba(255, 255, 255, 0.20);
+  background: rgba(255, 255, 255, 0.2);
   transform: translateY(-3px);
 }
 
-
-/* =====================================================
-   CONTROLES DEL CARRUSEL
-===================================================== */
-
-
-
-.carousel__arrow:hover {
-  background: rgba(255, 255, 255, 0.30);
-  border-color: rgba(255, 255, 255, 0.65);
-  transform: translateY(-50%) scale(1.08);
-}
-
-/* PUNTOS */
-.carousel__dots {
-  position: absolute;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-
-  display: flex;
-  gap: 10px;
-
-  pointer-events: auto;
-}
-
-.carousel__dot {
-  width: 9px;
-  height: 9px;
-
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-
-  background: rgba(255, 255, 255, 0.45);
-
-  cursor: pointer;
-
-  transition: all 0.3s ease;
-}
 
 /* =====================================================
    BANDA DE ESTADÍSTICAS
@@ -342,21 +287,15 @@
 
 .stats-band {
   background: var(--navy-900);
-
   border-top: 1px solid rgba(206, 17, 190, 0.08);
 }
 
 .stats-band__inner {
   display: flex;
-
   justify-content: center;
-
   gap: 60px;
-
   padding: 26px 0;
-
   flex-wrap: wrap;
-
   text-align: center;
 }
 
@@ -366,66 +305,47 @@
 
 .stat strong {
   display: block;
-
   font-size: 24px;
-
   color: var(--gold-500);
 }
 
 .stat span {
   font-size: 12.5px;
-
   color: #a9b0cc;
 }
 
 
 /* =====================================================
-   ICONOS
+   FILA DE ÍCONOS
 ===================================================== */
 
 .icon-row {
   display: flex;
-
   justify-content: center;
-
   gap: 14px;
-
   flex-wrap: wrap;
-
   margin-top: -28px;
-
   position: relative;
-
   z-index: 2;
 }
 
 .icon-chip {
   background: var(--white);
-
   border: 1px solid var(--line-200);
-
   border-radius: 12px;
-
   padding: 14px 18px;
-
   display: flex;
-
   align-items: center;
-
   gap: 10px;
-
   font-size: 13px;
-
   font-weight: 700;
-
   color: var(--ink-700);
-
   box-shadow: 0 12px 30px -18px rgba(15, 26, 61, 0.35);
 }
 
 
 /* =====================================================
-   SECCIONES
+   SECCIONES GENERALES
 ===================================================== */
 
 .section {
@@ -434,37 +354,27 @@
 
 .section__header {
   text-align: center;
-
   max-width: 640px;
-
   margin: 0 auto 44px;
 }
 
 .section__eyebrow {
   color: var(--gold-600);
-
   font-weight: 800;
-
   font-size: 12.5px;
-
   letter-spacing: 0.6px;
-
   text-transform: uppercase;
 }
 
 .section__header h2 {
   font-size: 30px;
-
   margin: 10px 0 12px;
-
   color: var(--ink-900);
 }
 
 .section__header p {
   color: var(--ink-500);
-
   font-size: 15px;
-
   line-height: 1.6;
 }
 
@@ -512,44 +422,74 @@
 
 
 /* =====================================================
-   PASOS
+   CÓMO FUNCIONA
 ===================================================== */
 
-.steps-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 22px;
+.section.como-funciona {
+  background: #f5f7fa;
+  padding: 48px 0 56px;
 }
 
-.step-card {
+.como-funciona__titulo {
   text-align: center;
-  padding: 10px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1f2a4d;
+  margin: 0 0 40px;
 }
 
-.step-card__num {
-  width: 46px;
-  height: 46px;
+.pasos {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+
+/* Línea punteada que une los círculos */
+.pasos::before {
+  content: "";
+  position: absolute;
+  top: 44px;
+  left: 8%;
+  right: 8%;
+  border-top: 2px dashed #d5dce6;
+  z-index: 0;
+}
+
+.paso {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.paso__circulo {
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
-  background: var(--navy-900);
-  color: var(--gold-500);
+  background: #ffffff;
+  border: 1px solid #e3e8ef;
+  box-shadow: 0 4px 14px rgba(15, 26, 61, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  margin: 0 auto 14px;
+  color: #1f2a4d;
+  margin-bottom: 18px;
 }
 
-.step-card h4 {
-  margin: 0 0 8px;
+.paso__titulo {
   font-size: 15px;
-  color: var(--ink-900);
+  font-weight: 700;
+  color: #1f2a4d;
+  margin: 0 0 6px;
 }
 
-.step-card p {
-  margin: 0;
+.paso__texto {
   font-size: 13px;
-  color: var(--ink-500);
-  line-height: 1.5;
+  color: #8a94a6;
+  margin: 0;
 }
 
 
@@ -559,7 +499,6 @@
 
 .confidence-section {
   background: var(--navy-950);
-
   color: var(--white);
 }
 
@@ -658,28 +597,33 @@
   justify-content: center;
 }
 
+/* Texto de derechos reservados centrado */
 .footer__bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 20px;
   font-size: 12.5px;
   display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
+.texto-footer {
+  text-align: center;
+}
+
+
 /* =====================================================
-   RESPONSIVE TABLET
+   RESPONSIVE TABLET (hasta 900px)
 ===================================================== */
 
 @media (max-width: 900px) {
-
-  .hero {
+  .hero,
+  .hero__inner {
     min-height: 750px;
   }
 
   .hero__inner {
-    min-height: 750px;
     padding: 60px 25px;
   }
 
@@ -687,16 +631,8 @@
     font-size: 45px;
   }
 
-  .hero p {
-    font-size: 17px;
-  }
-
   .factor-grid,
-  .steps-grid,
-  .confidence-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
+  .confidence-grid,
   .footer__grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -705,32 +641,30 @@
     display: none;
   }
 
-  .hero__controls {
-    right: 30px;
+  .pasos {
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 36px;
+  }
 
-    bottom: 30px;
+  .pasos::before {
+    display: none;
   }
 }
 
 
 /* =====================================================
-   RESPONSIVE CELULAR
+   RESPONSIVE CELULAR (hasta 600px)
 ===================================================== */
 
 @media (max-width: 600px) {
-
-  .hero {
+  .hero,
+  .hero__inner {
     min-height: 800px;
   }
 
   .hero__inner {
-    min-height: 800px;
-
-    padding: 50px 20px;
-
     align-items: flex-start;
-
-    padding-top: 80px;
+    padding: 80px 20px 50px;
   }
 
   .hero h1 {
@@ -754,23 +688,7 @@
     width: 100%;
   }
 
-  .hero__controls {
-    right: 50%;
-
-    transform: translateX(50%);
-
-    bottom: 25px;
-  }
-
-  .carousel__arrow {
-    width: 42px;
-    height: 42px;
-
-    font-size: 22px;
-  }
-
   .factor-grid,
-  .steps-grid,
   .confidence-grid,
   .footer__grid {
     grid-template-columns: 1fr;
@@ -780,19 +698,11 @@
     gap: 30px;
   }
 
-
-.hero__background {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  z-index: 0;
+  .pasos {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.hero__background-video {
-  width: 100%;
-  height: 90%;
-  object-fit: cover;
-}
-
-
-}
+/* =====================================================
+   AGREGA ESTILOS NUEVOS DEBAJO DE ESTA LÍNEA
+===================================================== */

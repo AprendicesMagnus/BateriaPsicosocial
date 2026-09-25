@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaUserCircle } from "react-icons/fa";
 
 import "../styles/dashboard.css";
 
@@ -236,14 +237,23 @@ export default function Dashboard() {
             <p>Tu bienestar también es parte del trabajo</p>
           </div>
 
-          <div
+          <button
+            type="button"
             className="profile"
             aria-label="Perfil de usuario"
             onClick={() => navigate("/perfil")}
-            style={{ cursor: "pointer" }}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              color: "#12314b",
+            }}
           >
-            <img src="/icono.png" alt="Magnus" style={{ height: 60, marginRight: "auto" }} />
-          </div>
+            <FaUserCircle size={50} />
+          </button>
         </header>
 
         <section className="welcome-card">
@@ -498,7 +508,7 @@ export default function Dashboard() {
               onClick={() => handleEjecutarPrediccion(indicadores?.evaluacionId || "eval-actual")}
               disabled={cargandoPrediccion}
             >
-              {cargandoPrediccion ? "Analizando con IA..." : "🤖 Analizar con IA (K-Means)"}
+              {cargandoPrediccion ? "Analizando con IA..." : " Analizar con IA (K-Means)"}
             </button>
           </div>
 
@@ -567,14 +577,14 @@ export default function Dashboard() {
                 }}
               >
                 <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
-                  🤖 <strong>Nota Metodológica del Modelo:</strong>
+                   <strong>Nota Metodológica del Modelo:</strong>
                 </p>
                 <p style={{ margin: "0 0 10px 0", fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
                   {prediccion.notaMetodologica}
                 </p>
 
                 <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
-                  ⚡ <strong>Estrategia de Entrenamiento:</strong>
+                   <strong>Estrategia de Entrenamiento:</strong>
                 </p>
                 <p style={{ margin: 0, fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
                   {prediccion.estrategiaEntrenamiento}
@@ -616,20 +626,8 @@ export default function Dashboard() {
           {cargando && <p className="chart-loading">Cargando estado de cuestionarios...</p>}
 
           {!cargando && indicadores?.anonimizado && (
-            <div
-              style={{
-                padding: "16px",
-                background: "#f8fafc",
-                borderRadius: "8px",
-                border: "1px solid #e2e8f0",
-                margin: "12px 0",
-              }}
-            >
-              <p style={{ margin: 0, fontSize: "14px", color: "#475569" }}>
-                🔒 <strong>Resguardo de Privacidad:</strong> Conforme a la Resolución 2764 de 2022
-                del Ministerio del Trabajo, los resultados individuales se mantienen estrictamente
-                confidenciales y anonimizados cuando el grupo evaluado es inferior a 5 personas.
-              </p>
+            <div >
+              
             </div>
           )}
 
