@@ -103,3 +103,53 @@ async def manejar_error_validacion(_request: Request, exc: RequestValidationErro
 
 app.include_router(api_v1_router)
 
+
+# ---------------------------------------------------------------------------
+# Scheduler de recordatorios automáticos (Punto 2)
+# ---------------------------------------------------------------------------
+import logging
+from apscheduler.schedulers.background import BackgroundScheduler
+
+_scheduler = BackgroundScheduler()
+
+logger = logging.getLogger(__name__)
+
+
+def _tarea_recordatorios_diarios() -> None:
+    """Función ejecutada por el scheduler: abre su propia sesión de BD."""
+    from app.db.session import SessionLocal
+    from app.services.notificaciones import _ejecutar_envio_recordatorios
+
+    db = SessionLocal()
+    try:
+        resultado = _ejecutar_envio_recordatorios(db)
+        logger.info(
+            "Scheduler recordatorios: enviados=%s, omitidos=%s",
+            resultado["enviadosCount"],
+            resultado["omitidosCount"],
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Error en scheduler de recordatorios: %s", exc, exc_info=True)
+    finally:
+        db.close()
+
+
+@app.on_event("startup")
+def iniciar_scheduler() -> None:
+    _scheduler.add_job(
+        _tarea_recordatorios_diarios,
+        "cron",
+        hour=8,
+        minute=0,
+        id="recordatorios_diarios",
+        replace_existing=True,
+    )
+    _scheduler.start()
+    logger.info("Scheduler de recordatorios iniciado (disparo diario a las 08:00).")
+
+
+@app.on_event("shutdown")
+def detener_scheduler() -> None:
+    if _scheduler.running:
+        _scheduler.shutdown(wait=False)
+        logger.info("Scheduler de recordatorios detenido.")

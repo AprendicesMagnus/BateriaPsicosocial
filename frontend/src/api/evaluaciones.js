@@ -37,3 +37,16 @@ export async function finalizarCuestionario(token, evaluacionId) {
 export async function fetchResultadosTrabajador(token, evaluacionId) {
   return request(`/evaluaciones/${evaluacionId}/resultados`, { token });
 }
+
+export async function guardarFichaDatos(token, evaluacionId, data) {
+  return request(`/evaluaciones/${evaluacionId}/ficha`, {
+    method: "POST",
+    token,
+    body: data,
+  });
+}
+
+export async function fetchInstrumentosParticipante(token, evaluacionId) {
+  return request(`/evaluaciones/${evaluacionId}/instrumentos`, { token });
+}
+

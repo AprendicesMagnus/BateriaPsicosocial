@@ -1,5 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import {
+  guardarFichaDatos,
+  fetchInstrumentosParticipante,
+  fetchEvaluaciones,
+  registrarConsentimiento,
+} from "../api/evaluaciones";
 import "../styles/cuestionario-estres.css";
 import "../styles/Fichadatosgenerales.css";
 import {
@@ -303,9 +310,32 @@ export default function FichaDatosGenerales() {
     return !!(errores[campo] && (intentoGuardar || tocados[campo]));
   };
 
-  const guardar = (e) => {
+  const { token } = useAuth();
+  const [evaluacionId, setEvaluacionId] = useState(location.state?.evaluacionId || null);
+  const [guardando, setGuardando] = useState(false);
+  const [errorBackend, setErrorBackend] = useState(null);
+
+  useEffect(() => {
+    async function cargarEvaluacionActiva() {
+      if (!evaluacionId && token) {
+        try {
+          const evs = await fetchEvaluaciones(token);
+          const activa = evs.find((e) => e.estado !== "FINALIZADA") || evs[0];
+          if (activa) {
+            setEvaluacionId(activa.id);
+          }
+        } catch (err) {
+          console.error("Error al obtener evaluaciones asignadas:", err);
+        }
+      }
+    }
+    cargarEvaluacionActiva();
+  }, [token, evaluacionId]);
+
+  const guardar = async (e) => {
     if (e) e.preventDefault();
     setIntentoGuardar(true);
+    setErrorBackend(null);
 
     if (Object.keys(errores).length > 0) {
       setTimeout(() => {
@@ -320,11 +350,50 @@ export default function FichaDatosGenerales() {
       return;
     }
 
-    setIntentoGuardar(false);
-    alert("Los datos generales han sido guardados correctamente.");
-    // Aquí puedes reemplazar el alert por tu llamada a la API / navegación
-    // navigate("/cuestionario-estresB");
-    navigate(RUTAS.estres);
+    if (!evaluacionId) {
+      setErrorBackend("No se encontró una evaluación activa asignada para guardar la ficha.");
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      try {
+        await registrarConsentimiento(token, evaluacionId);
+      } catch (cErr) {
+        // Ignorar si el consentimiento ya estaba registrado
+      }
+
+      const payload = {
+        ...datos,
+        personasACargo: datos.personasACargo !== "" ? String(datos.personasACargo) : "0",
+        horasDiarias: datos.horasDiarias !== "" ? String(datos.horasDiarias) : "8",
+        antiguedadEmpresa: datos.antiguedadEmpresaMenosUnAnio ? "0" : String(datos.antiguedadEmpresa || "0"),
+        antiguedadCargo: datos.antiguedadCargoMenosUnAnio ? "0" : String(datos.antiguedadCargo || "0"),
+      };
+
+      const res = await guardarFichaDatos(token, evaluacionId, payload);
+
+      const instrumentos = await fetchInstrumentosParticipante(token, evaluacionId);
+      const pendientes = instrumentos.filter((i) => i.estado !== "COMPLETADA" && i.codigo !== "FICHA_DATOS");
+
+      if (pendientes.length > 0) {
+        const proximo = pendientes[0].codigo;
+        let ruta = "/cuestionario-estres";
+        if (proximo === "ESTRES") ruta = "/cuestionario-estres";
+        else if (proximo === "EXTRALABORAL") ruta = "/cuestionario-extralaboral";
+        else if (proximo === "INTRALABORAL_A") ruta = "/cuestionario-intralaboral";
+        else if (proximo === "INTRALABORAL_B") ruta = "/cuestionario-intralaboralB";
+
+        navigate(ruta, { state: { evaluacionId } });
+      } else {
+        alert(res.message || "Los datos generales han sido guardados correctamente.");
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      setErrorBackend(err.message || "Error al guardar la Ficha de Datos Generales.");
+    } finally {
+      setGuardando(false);
+    }
   };
 
   const irAnterior = () => {
@@ -919,6 +988,11 @@ return (
                 </span>
               )}
             </div>
+            {errorBackend && (
+              <div style={{ color: "#991B1B", background: "#FEF2F2", padding: "12px", borderRadius: "8px", border: "1px solid #FCA5A5", margin: "16px 0", fontSize: "14px" }}>
+                ⚠️ {errorBackend}
+              </div>
+            )}
           </div>
 
           {/* BOTONES */}
@@ -927,8 +1001,8 @@ return (
               ← Anterior
             </button>
 
-            <button className="next-button" type="submit">
-              Guardar y continuar →
+            <button className="next-button" type="submit" disabled={guardando}>
+              {guardando ? "Guardando..." : "Guardar y continuar →"}
             </button>
           </div>
         </form>

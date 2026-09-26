@@ -5,7 +5,7 @@ import { FaUserCircle } from "react-icons/fa";
 import "../styles/dashboard.css";
 
 import { useAuth } from "../context/AuthContext";
-import { fetchIndicadores } from "../api/indicadores";
+import { fetchIndicadores, fetchIndicadoresPorCategoria } from "../api/indicadores";
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
@@ -83,6 +83,7 @@ export default function Dashboard() {
   const [categoriaActivaId, setCategoriaActivaId] = useState(2);
 
   const [indicadores, setIndicadores] = useState(null);
+  const [indicadoresCategoria, setIndicadoresCategoria] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
@@ -111,6 +112,12 @@ export default function Dashboard() {
     try {
       const data = await fetchIndicadores(token);
       setIndicadores(data);
+      try {
+        const dataCat = await fetchIndicadoresPorCategoria(token);
+        setIndicadoresCategoria(dataCat?.categorias || null);
+      } catch (catErr) {
+        console.error("Error al cargar indicadores por categoría:", catErr);
+      }
     } catch (err) {
       setError(err.message || "Ocurrió un error al cargar los indicadores de la base de datos.");
       setIndicadores(null);
@@ -421,6 +428,40 @@ export default function Dashboard() {
 
           {TODAS_CATEGORIAS.map((categoria) => {
             const esActiva = categoria.id === categoriaActivaId;
+            const mapaCodigo = {
+              1: "ESTRES",
+              2: "EXTRALABORAL",
+              3: "INTRALABORAL_A",
+              4: "FICHA_DATOS",
+              5: "ESTRES",
+              6: "EXTRALABORAL",
+              7: "INTRALABORAL_B",
+              8: "FICHA_DATOS",
+            };
+            const cod = mapaCodigo[categoria.id];
+            const catData = indicadoresCategoria ? indicadoresCategoria[cod] : null;
+
+            let cardValues = [
+              ["Bajo", "—"],
+              ["Medio", "—"],
+              ["Alto", "—"],
+            ];
+
+            if (catData) {
+              if (catData.anonimizado || !catData.distribucion) {
+                cardValues = [
+                  ["Información", "Protegida"],
+                  ["Anonimato", "Mínimo 5"],
+                ];
+              } else {
+                const d = catData.distribucion;
+                cardValues = [
+                  ["Bajo", `${d.BAJO || 0}`],
+                  ["Medio", `${d.MEDIO || 0}`],
+                  ["Alto", `${d.ALTO || 0}`],
+                ];
+              }
+            }
 
             return (
               <IndicatorCard
@@ -428,11 +469,7 @@ export default function Dashboard() {
                 title={categoria.nombre}
                 subtitle={`${categoria.totalPreguntas} preguntas`}
                 active={esActiva}
-                values={[
-                  ["Bajo", "—"],
-                  ["Medio", "—"],
-                  ["Alto", "—"],
-                ]}
+                values={cardValues}
                 onClick={() => setCategoriaActivaId(categoria.id)}
               />
             );

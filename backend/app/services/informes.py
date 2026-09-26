@@ -1,4 +1,4 @@
-import os
+﻿import os
 import uuid
 from sqlalchemy.orm import Session, contains_eager, joinedload
 
@@ -45,10 +45,10 @@ def generar_informe_individual(
     )
 
     if participante is None:
-        raise AppError(404, "Participante o evaluación no encontrado.")
+        raise AppError(404, "Participante o evaluaciÃ³n no encontrado.")
 
     if participante.estado != "COMPLETADA" or not participante.resultados:
-        raise AppError(400, "El participante no ha completado la evaluación o no existen resultados calculados.")
+        raise AppError(400, "El participante no ha completado la evaluaciÃ³n o no existen resultados calculados.")
 
     dir_path = _asegurar_directorio_storage()
     filename = f"informe_individual_{participante.id}_{uuid.uuid4().hex[:6]}.pdf"
@@ -101,7 +101,7 @@ def generar_informe_individual(
 
         story.append(Paragraph("INFORME INDIVIDUAL DE RIESGO PSICOSOCIAL", title_style))
         story.append(Spacer(1, 4))
-        story.append(Paragraph("Batería de Riesgo Psicosocial — Res. 2764 de 2022", subtitle_style))
+        story.append(Paragraph("BaterÃ­a de Riesgo Psicosocial â€” Res. 2764 de 2022", subtitle_style))
         story.append(Spacer(1, 10))
         story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1E3A8A")))
         story.append(Spacer(1, 10))
@@ -110,10 +110,10 @@ def generar_informe_individual(
         org = participante.evaluacion.organizacion
         datos_tabla = [
             [Paragraph("Trabajador:", cell_bold_style), Paragraph(f"{trabajador.nombre} {trabajador.apellido}", cell_style)],
-            [Paragraph("Identificación:", cell_bold_style), Paragraph(f"{trabajador.numero_identificacion or 'N/A'}", cell_style)],
+            [Paragraph("IdentificaciÃ³n:", cell_bold_style), Paragraph(f"{trabajador.numero_identificacion or 'N/A'}", cell_style)],
             [Paragraph("Cargo:", cell_bold_style), Paragraph(f"{trabajador.cargo or 'N/A'}", cell_style)],
-            [Paragraph("Organización:", cell_bold_style), Paragraph(f"{org.nombre} (NIT: {org.nit})", cell_style)],
-            [Paragraph("Evaluación:", cell_bold_style), Paragraph(f"{participante.evaluacion.nombre}", cell_style)],
+            [Paragraph("OrganizaciÃ³n:", cell_bold_style), Paragraph(f"{org.nombre} (NIT: {org.nit})", cell_style)],
+            [Paragraph("EvaluaciÃ³n:", cell_bold_style), Paragraph(f"{participante.evaluacion.nombre}", cell_style)],
             [Paragraph("Fecha de Cierre:", cell_bold_style), Paragraph(f"{participante.fecha_fin.strftime('%Y-%m-%d %H:%M') if participante.fecha_fin else 'N/A'}", cell_style)],
         ]
         t_datos = Table(datos_tabla, colWidths=[120, 420])
@@ -126,10 +126,10 @@ def generar_informe_individual(
         story.append(t_datos)
         story.append(Spacer(1, 14))
 
-        story.append(Paragraph("Resultados Evaluados por Dimensión", section_style))
+        story.append(Paragraph("Resultados Evaluados por DimensiÃ³n", section_style))
 
         res_headers = [
-            Paragraph("Dimensión", header_cell_style),
+            Paragraph("DimensiÃ³n", header_cell_style),
             Paragraph("Dominio", header_cell_style),
             Paragraph("Puntaje Bruto", header_cell_style),
             Paragraph("Puntaje Transf.", header_cell_style),
@@ -170,9 +170,9 @@ def generar_informe_individual(
         ]))
         story.append(t_res)
 
-        # Recomendaciones de Intervención (Res. 2764 de 2022)
+        # Recomendaciones de IntervenciÃ³n (Res. 2764 de 2022)
         story.append(Spacer(1, 14))
-        story.append(Paragraph("Recomendaciones de Intervención (Res. 2764 de 2022)", section_style))
+        story.append(Paragraph("Recomendaciones de IntervenciÃ³n (Res. 2764 de 2022)", section_style))
 
         has_recs = False
         for res in sorted(participante.resultados, key=lambda r: r.dimension.orden):
@@ -184,11 +184,11 @@ def generar_informe_individual(
             )
             for rec in recs:
                 has_recs = True
-                story.append(Paragraph(f"• <b>[{res.dimension.nombre} — {res.nivel.replace('_', ' ')}]</b> <b>{rec.titulo}:</b> {rec.descripcion}", cell_style))
+                story.append(Paragraph(f"â€¢ <b>[{res.dimension.nombre} â€” {res.nivel.replace('_', ' ')}]</b> <b>{rec.titulo}:</b> {rec.descripcion}", cell_style))
                 story.append(Spacer(1, 4))
 
         if not has_recs:
-            story.append(Paragraph("No existen recomendaciones de intervención específicas para los niveles actuales.", cell_style))
+            story.append(Paragraph("No existen recomendaciones de intervenciÃ³n especÃ­ficas para los niveles actuales.", cell_style))
 
         doc.build(story)
         os.replace(file_path_tmp, file_path)
@@ -224,7 +224,7 @@ def generar_informe_agrupado(
 ) -> Informe:
     evaluacion = db.query(Evaluacion).filter(Evaluacion.id == evaluacion_id).first()
     if evaluacion is None:
-        raise AppError(404, "Evaluación no encontrada.")
+        raise AppError(404, "EvaluaciÃ³n no encontrada.")
 
     query = (
         db.query(EvaluacionParticipante)
@@ -248,7 +248,7 @@ def generar_informe_agrupado(
         raise AppError(
             400,
             f"No se puede generar el informe agrupado. El grupo tiene {num_participantes} participantes completados, "
-            f"lo cual es inferior al mínimo requerido de anonimato ({settings.min_grupo_anonimato} personas).",
+            f"lo cual es inferior al mÃ­nimo requerido de anonimato ({settings.min_grupo_anonimato} personas).",
         )
 
     dimensiones = db.query(Dimension).filter(Dimension.version_id == evaluacion.version_id).order_by(Dimension.orden).all()
@@ -281,16 +281,30 @@ def generar_informe_agrupado(
 
     try:
         if formato_upper == "EXCEL":
+            from openpyxl.chart import BarChart, Reference
+            from openpyxl.worksheet.table import Table, TableStyleInfo
+            from openpyxl.styles import Font, PatternFill, Alignment
+
             wb = Workbook()
             ws = wb.active
             ws.title = "Resumen Agrupado"
 
             ws.append(["Informe Agrupado de Riesgo Psicosocial"])
-            ws.append([f"Evaluación: {evaluacion.nombre}"])
+            ws.append([f"Evaluaci\u00f3n: {evaluacion.nombre}"])
             ws.append([f"Total Participantes: {num_participantes}"])
             ws.append([])
-            ws.append(["Dimensión", "Dominio", "Promedio Transformado (0-100)", "Sin Riesgo", "Bajo", "Medio", "Alto", "Muy Alto"])
 
+            cabeceras = ["Dimensi\u00f3n", "Dominio", "Promedio Transformado (0-100)", "Sin Riesgo", "Bajo", "Medio", "Alto", "Muy Alto"]
+            ws.append(cabeceras)
+            header_row = ws.max_row
+            header_fill = PatternFill(start_color="1E3A8A", end_color="1E3A8A", fill_type="solid")
+            header_font = Font(bold=True, color="FFFFFF")
+            for cell in ws[header_row]:
+                cell.fill = header_fill
+                cell.font = header_font
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+
+            data_start_row = header_row + 1
             for agg in agregados:
                 n = agg["niveles"]
                 ws.append([
@@ -303,6 +317,70 @@ def generar_informe_agrupado(
                     n["ALTO"],
                     n["MUY_ALTO"],
                 ])
+            data_end_row = ws.max_row
+
+            ws.column_dimensions["A"].width = 40
+            ws.column_dimensions["B"].width = 30
+            for col_letter in ["C", "D", "E", "F", "G", "H"]:
+                ws.column_dimensions[col_letter].width = 18
+
+            if data_end_row >= data_start_row:
+                tabla_ref = f"A{header_row}:H{data_end_row}"
+                tabla = Table(displayName="TablaDimensiones", ref=tabla_ref)
+                estilo_tabla = TableStyleInfo(
+                    name="TableStyleMedium2",
+                    showFirstColumn=False,
+                    showLastColumn=False,
+                    showRowStripes=True,
+                    showColumnStripes=False,
+                )
+                tabla.tableStyleInfo = estilo_tabla
+                ws.add_table(tabla)
+
+            # Hoja de grafico de barras con distribucion de niveles
+            ws_chart = wb.create_sheet(title="Resumen gr\u00e1fico")
+
+            ws_chart.append(["Dimensi\u00f3n", "Sin Riesgo", "Bajo", "Medio", "Alto", "Muy Alto"])
+            for cell in ws_chart[1]:
+                cell.font = Font(bold=True)
+
+            for agg in agregados:
+                n = agg["niveles"]
+                ws_chart.append([
+                    agg["dimension"],
+                    n["SIN_RIESGO"],
+                    n["BAJO"],
+                    n["MEDIO"],
+                    n["ALTO"],
+                    n["MUY_ALTO"],
+                ])
+
+            chart_data_end = ws_chart.max_row
+            chart = BarChart()
+            chart.type = "col"
+            chart.grouping = "clustered"
+            chart.title = "Distribuci\u00f3n de Niveles de Riesgo por Dimensi\u00f3n"
+            chart.y_axis.title = "Cantidad"
+            chart.x_axis.title = "Dimensi\u00f3n"
+            chart.style = 10
+            chart.width = 30
+            chart.height = 18
+
+            data_ref = Reference(ws_chart, min_col=2, max_col=6, min_row=1, max_row=chart_data_end)
+            cats = Reference(ws_chart, min_col=1, min_row=2, max_row=chart_data_end)
+            chart.add_data(data_ref, titles_from_data=True)
+            chart.set_categories(cats)
+
+            colores_nivel = ["059669", "1D4ED8", "B45309", "C2410C", "B91C1C"]
+            for idx_c, color in enumerate(colores_nivel):
+                if idx_c < len(chart.series):
+                    chart.series[idx_c].graphicalProperties.solidFill = color
+
+            ws_chart.add_chart(chart, "A" + str(chart_data_end + 3))
+            ws_chart.column_dimensions["A"].width = 40
+            for col_letter in ["B", "C", "D", "E", "F"]:
+                ws_chart.column_dimensions[col_letter].width = 14
+
             wb.save(file_path_tmp)
             os.replace(file_path_tmp, file_path)
         else:
@@ -320,15 +398,15 @@ def generar_informe_agrupado(
             story = [
                 Paragraph("INFORME AGRUPADO DE RIESGO PSICOSOCIAL", title_style),
                 Spacer(1, 4),
-                Paragraph(f"<b>Evaluación:</b> {evaluacion.nombre} &nbsp;|&nbsp; <b>Total Participantes:</b> {num_participantes} (Anonimizado)", subtitle_style),
+                Paragraph(f"<b>EvaluaciÃ³n:</b> {evaluacion.nombre} &nbsp;|&nbsp; <b>Total Participantes:</b> {num_participantes} (Anonimizado)", subtitle_style),
                 Spacer(1, 10),
                 HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1E3A8A")),
                 Spacer(1, 12),
-                Paragraph("Distribución de Riesgo y Promedios por Dimensión", section_style),
+                Paragraph("DistribuciÃ³n de Riesgo y Promedios por DimensiÃ³n", section_style),
             ]
 
             table_data = [[
-                Paragraph("Dimensión", header_cell_style),
+                Paragraph("DimensiÃ³n", header_cell_style),
                 Paragraph("Dominio", header_cell_style),
                 Paragraph("Prom. Transf.", header_cell_style),
                 Paragraph("Sin Riesgo", header_cell_style),
@@ -360,14 +438,14 @@ def generar_informe_agrupado(
             ]))
             story.append(t)
 
-            # Recomendaciones de Intervención Colectiva
+            # Recomendaciones de IntervenciÃ³n Colectiva
             story.append(Spacer(1, 14))
-            story.append(Paragraph("Recomendaciones de Intervención Colectiva (Res. 2764 de 2022)", section_style))
+            story.append(Paragraph("Recomendaciones de IntervenciÃ³n Colectiva (Res. 2764 de 2022)", section_style))
 
             has_recs = False
             for agg in agregados:
                 n = agg["niveles"]
-                # Determinar el nivel predominante o crítico de la dimensión
+                # Determinar el nivel predominante o crÃ­tico de la dimensiÃ³n
                 if n["ALTO"] + n["MUY_ALTO"] > 0 or agg["promedio"] >= 50.0:
                     nivel_prioridad = "MUY_ALTO" if n["MUY_ALTO"] > 0 else "ALTO"
                 elif n["MEDIO"] > 0:
@@ -383,11 +461,11 @@ def generar_informe_agrupado(
                 )
                 for rec in recs:
                     has_recs = True
-                    story.append(Paragraph(f"• <b>[{agg['dimension']} — Enfoque {nivel_prioridad.replace('_', ' ')}]</b> <b>{rec.titulo}:</b> {rec.descripcion}", cell_style))
+                    story.append(Paragraph(f"â€¢ <b>[{agg['dimension']} â€” Enfoque {nivel_prioridad.replace('_', ' ')}]</b> <b>{rec.titulo}:</b> {rec.descripcion}", cell_style))
                     story.append(Spacer(1, 4))
 
             if not has_recs:
-                story.append(Paragraph("No se requieren recomendaciones de intervención colectiva urgente.", cell_style))
+                story.append(Paragraph("No se requieren recomendaciones de intervenciÃ³n colectiva urgente.", cell_style))
 
             doc.build(story)
             os.replace(file_path_tmp, file_path)
@@ -465,4 +543,5 @@ def listar_informes(
 
     informes = query.order_by(Informe.generado_en.desc()).all()
     return [_serializar_informe(informe) for informe in informes]
+
 

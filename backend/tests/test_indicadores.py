@@ -1,4 +1,4 @@
-﻿def test_consulta_indicadores(client):
+def test_consulta_indicadores(client):
     res_login = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
     token = res_login.json()["token"]
 
@@ -8,3 +8,14 @@
     assert "totalOrganizaciones" in data
     assert "totalEvaluaciones" in data
     assert "participacion" in data
+
+
+def test_consulta_indicadores_por_categoria(client):
+    res_login = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
+    token = res_login.json()["token"]
+
+    res = client.get("/api/indicadores/por-categoria", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 200
+    data = res.json()
+    assert "categorias" in data
+

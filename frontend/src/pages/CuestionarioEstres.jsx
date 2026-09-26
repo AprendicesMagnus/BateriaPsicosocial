@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
 import "../styles/cuestionario-estres.css";
 
 const preguntas = [
@@ -39,27 +40,26 @@ const preguntas = [
 const PREGUNTAS_POR_PAGINA = 8;
 const TOTAL_PAGINAS = Math.ceil(preguntas.length / PREGUNTAS_POR_PAGINA);
 
-const opciones = [
-  "Siempre",
-  "Casi siempre",
-  "A veces",
-  "Nunca",
-];
+const MAPA_ESTRES = {
+  "Siempre": 4,
+  "Casi siempre": 3,
+  "A veces": 2,
+  "Nunca": 1,
+};
+
+const opciones = Object.keys(MAPA_ESTRES);
 
 export default function CuestionarioEstres() {
-
   const navigate = useNavigate();
 
-  const [respuestas, setRespuestas] = useState({});
-  const [pagina, setPagina] = useState(0); // 0 = primera página (preguntas 1-8)
+  const [pagina, setPagina] = useState(0);
   const [intentoFinalizar, setIntentoFinalizar] = useState(false);
 
-  const seleccionarRespuesta = (preguntaId, respuesta) => {
-    setRespuestas({
-      ...respuestas,
-      [preguntaId]: respuesta,
-    });
-  };
+  const {
+    respuestas,
+    seleccionarRespuesta,
+    finalizarYNavegar,
+  } = useCuestionarioBackend("ESTRES", MAPA_ESTRES);
 
   const inicio = pagina * PREGUNTAS_POR_PAGINA;
   const fin = Math.min(inicio + PREGUNTAS_POR_PAGINA, preguntas.length);
@@ -81,7 +81,6 @@ export default function CuestionarioEstres() {
       return;
     }
 
-    // Última página: no dejar finalizar si faltan preguntas por responder
     const preguntaSinResponder = preguntas.find(
       (p) => respuestas[p.id] === undefined
     );
@@ -103,7 +102,7 @@ export default function CuestionarioEstres() {
       return;
     }
 
-    alert("Las respuestas han sido guardadas correctamente.");
+    finalizarYNavegar();
   };
 
   return (
@@ -116,41 +115,29 @@ export default function CuestionarioEstres() {
       <aside className="questionnaire-sidebar">
 
         {/* LOGO */}
-
         <div className="questionnaire-logo">
-
-
           <div>
-            
             <img
-            src="/logob1.png"
-            alt="Magnus"
-            style={{ height: 70, marginRight: "auto" }}
-          />
-          
+              src="/logob1.png"
+              alt="Magnus"
+              style={{ height: 70, marginRight: "auto" }}
+            />
           </div>
-
         </div>
 
-
         {/* MENÚ */}
-
         <nav className="questionnaire-menu">
-
           <button
             className="questionnaire-menu-item active"
             type="button"
             onClick={() => navigate("/cuestionario-estres")}
           >
             <span>▣</span>
-
             <div>
               <strong>Estrés</strong>
               <small>31 preguntas</small>
             </div>
-
           </button>
-
 
           <button
             className="questionnaire-menu-item"
@@ -158,14 +145,11 @@ export default function CuestionarioEstres() {
             onClick={() => navigate("/cuestionario-extralaboral")}
           >
             <span>▣</span>
-
             <div>
               <strong>Factores extralaborales</strong>
               <small>31 preguntas</small>
             </div>
-
           </button>
-
 
           <button
             className="questionnaire-menu-item"
@@ -173,74 +157,41 @@ export default function CuestionarioEstres() {
             onClick={() => navigate("/cuestionario-intralaboral")}
           >
             <span>▣</span>
-
             <div>
               <strong>Factores intralaborales</strong>
               <small>Forma A · 123 preguntas</small>
             </div>
-
           </button>
-
         </nav>
 
-
-       
         {/* PIE DEL MENÚ */}
-
         <div className="questionnaire-sidebar-footer">
-
           Tu bienestar también
           <br />
           es parte del trabajo
-
         </div>
-
       </aside>
-
-
 
       {/* =====================================================
           CONTENIDO
-          (se quitó el encabezado "Hola, Diego Fernando")
       ===================================================== */}
-
       <main className="questionnaire-main">
 
-        {/* =================================================
-            TARJETA DE PRESENTACIÓN
-        ================================================= */}
-
+        {/* TARJETA DE PRESENTACIÓN */}
         <section className="questionnaire-intro">
-
-          <div className="questionnaire-heart">
-            ♥
-          </div>
-
-
+          <div className="questionnaire-heart">♥</div>
           <div>
-
-            <h2>
-              Cuestionario para la Evaluación del Estrés
-            </h2>
-
+            <h2>Cuestionario para la Evaluación del Estrés</h2>
             <p>
               Tercera versión · Señale la frecuencia con que
               se han presentado estos malestares durante los
               últimos tres meses.
             </p>
-
           </div>
-
         </section>
 
-
-
-        {/* =================================================
-            PESTAÑAS
-        ================================================= */}
-
+        {/* PESTAÑAS */}
         <div className="questionnaire-tabs">
-
           <button
             type="button"
             className="active"
@@ -265,183 +216,47 @@ export default function CuestionarioEstres() {
             <strong>Intralaboral - Forma A</strong>
             <span>123</span>
           </button>
-
-          <div className="general-progress">
-            <span>Progreso general</span>
-            <div className="general-progress-bar">
-              <div
-                style={{
-                  width: `${Math.round((Object.keys(respuestas).length / preguntas.length) * 100)}%`,
-                }}
-              ></div>
-            </div>
-            <small>
-              {Math.round((Object.keys(respuestas).length / preguntas.length) * 100)}%
-            </small>
-          </div>
-
         </div>
 
-        {/* =================================================
-            CONTENEDOR DE PREGUNTAS
-        ================================================= */}
-
-        <section className="questions-card">
-
-
-          {/* ENCABEZADO DE PREGUNTAS */}
-
-          <div className="questions-header">
-
-            <div>
-
-              <strong>
-                Pregunta {inicio + 1}–{fin} de {preguntas.length}
-              </strong>
-
-              <div className="questions-progress">
-
-                <div
-                  style={{
-                    width: `${(Object.keys(respuestas).length / preguntas.length) * 100}%`,
-                  }}
-                ></div>
-
-              </div>
-
-            </div>
-
-
-            <span>
-              Sección: Estrés
-            </span>
-
-          </div>
-
-
-
-          {/* ENCABEZADO DE OPCIONES */}
-
-          <div className="answers-header">
-
-            <span>
-              Frecuencia:
-            </span>
-
-            {opciones.map((opcion) => (
-
-              <span key={opcion}>
-                {opcion}
-              </span>
-
-            ))}
-
-          </div>
-
-
-
-          {/* PREGUNTAS */}
-
+        {/* PREGUNTAS Y NAVEGACIÓN */}
+        <section className="questionnaire-content">
           <div className="questions-list">
-
             {preguntasPagina.map((pregunta) => (
-
-              <div
-                className={`question-row ${
-                  intentoFinalizar && respuestas[pregunta.id] === undefined
-                    ? "question-row-error"
-                    : ""
-                }`}
-                key={pregunta.id}
-              >
-
-
-                {/* NÚMERO */}
-
-                <div className="question-number">
-                  {pregunta.id}
-                </div>
-
-
-                {/* TEXTO */}
-
-                <div className="question-text">
+              <div key={pregunta.id} className="question-item">
+                <p className="question-text">
                   {pregunta.id}. {pregunta.texto}
+                </p>
+                <div className="options-group">
+                  {opciones.map((opcion) => (
+                    <label key={opcion} className="option-label">
+                      <input
+                        type="radio"
+                        name={`pregunta-${pregunta.id}`}
+                        checked={respuestas[pregunta.id] === MAPA_ESTRES[opcion]}
+                        onChange={() => seleccionarRespuesta(pregunta.id, MAPA_ESTRES[opcion])}
+                      />
+                      <span>{opcion}</span>
+                    </label>
+                  ))}
                 </div>
-
-
-                {/* RESPUESTAS */}
-
-                {opciones.map((opcion) => (
-
-                  <label
-                    className="answer-option"
-                    key={opcion}
-                  >
-
-                    <input
-                      type="radio"
-                      name={`pregunta-${pregunta.id}`}
-                      value={opcion}
-                      checked={
-                        respuestas[pregunta.id] === opcion
-                      }
-                      onChange={() =>
-                        seleccionarRespuesta(
-                          pregunta.id,
-                          opcion
-                        )
-                      }
-                    />
-
-                    <span className="custom-radio"></span>
-
-                    <small>
-                      {opcion}
-                    </small>
-
-                  </label>
-
-                ))}
-
               </div>
-
             ))}
-
           </div>
-
-
-
-          {/* BOTONES */}
 
           <div className="questionnaire-navigation">
-
-            <button
-              className="previous-button"
-              type="button"
-              onClick={irAnterior}
-            >
-              ← Anterior
+            <button type="button" className="btn-nav" onClick={irAnterior}>
+              {pagina === 0 ? "Volver al Dashboard" : "Anterior"}
             </button>
-
-            <span className="page-indicator">
+            <div className="page-indicator">
               Página {pagina + 1} de {TOTAL_PAGINAS}
-            </span>
-
-            <button
-              className="next-button"
-              type="button"
-              onClick={irSiguiente}
-            >
-              {pagina < TOTAL_PAGINAS - 1 ? "Siguiente →" : "Finalizar"}
+            </div>
+            <button type="button" className="btn-nav btn-primary" onClick={irSiguiente}>
+              {pagina === TOTAL_PAGINAS - 1 ? "Finalizar" : "Siguiente"}
             </button>
-
           </div>
-
         </section>
 
       </main>
-
     </div>
   );
 }

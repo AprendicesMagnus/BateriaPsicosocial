@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
 import "../styles/cuestionario-estres.css";
 
 /* =========================================================
@@ -253,33 +254,32 @@ function FilaPregunta({ pregunta, respuesta, sinResponder, onSeleccionar }) {
   );
 }
 
-export default function CuestionarioIntralaboralB() {
+const MAPA_INTRALABORAL = {
+  "Siempre": 5,
+  "Casi siempre": 4,
+  "Algunas veces": 3,
+  "A veces": 3,
+  "Casi nunca": 2,
+  "Nunca": 1,
+  "Sí": 1,
+  "No": 0,
+};
 
+export default function CuestionarioIntralaboralB() {
   const navigate = useNavigate();
 
-  const [respuestas, setRespuestas] = useState(() =>
-    limpiarRespuestasHuerfanas(leerRespuestasGuardadas())
-  );
   const [pagina, setPagina] = useState(0);
   const [intentoFinalizar, setIntentoFinalizar] = useState(false);
   const [preguntaAEnfocar, setPreguntaAEnfocar] = useState(null);
 
-  // Persistencia local de las respuestas (ver CLAVE_RESPUESTAS).
-  useEffect(() => {
-    try {
-      sessionStorage.setItem(CLAVE_RESPUESTAS, JSON.stringify(respuestas));
-    } catch {
-      // Sin almacenamiento disponible: el cuestionario sigue funcionando.
-    }
-  }, [respuestas]);
+  const {
+    respuestas,
+    seleccionarRespuesta: seleccionarRespuestaBackend,
+    finalizarYNavegar,
+  } = useCuestionarioBackend("INTRALABORAL_B", MAPA_INTRALABORAL);
 
-  // ⚠️ Forma funcional (prev) + limpieza de huérfanas: no volver a
-  // `setRespuestas({ ...respuestas, ... })`; con clics rápidos pierde
-  // respuestas y no descarta las del bloque de clientes.
   const seleccionarRespuesta = (preguntaId, respuesta) => {
-    setRespuestas((prev) =>
-      limpiarRespuestasHuerfanas({ ...prev, [preguntaId]: respuesta })
-    );
+    seleccionarRespuestaBackend(preguntaId, respuesta);
   };
 
   const preguntasVisibles = obtenerPreguntasVisibles(respuestas);
@@ -293,7 +293,6 @@ export default function CuestionarioIntralaboralB() {
   const fin = Math.min(inicio + PREGUNTAS_POR_PAGINA, preguntasVisibles.length);
   const preguntasPagina = preguntasVisibles.slice(inicio, fin);
 
-  // Scroll hasta la pregunta pendiente una vez renderizada su página.
   useEffect(() => {
     if (preguntaAEnfocar === null) return;
 
@@ -320,7 +319,6 @@ export default function CuestionarioIntralaboralB() {
       return;
     }
 
-    // Última página: no se puede finalizar con preguntas sin responder.
     const sinResponder = preguntasVisibles.filter(
       (p) => respuestas[p.id] === undefined
     );
@@ -341,18 +339,7 @@ export default function CuestionarioIntralaboralB() {
     }
 
     setIntentoFinalizar(false);
-
-    // Respuestas listas para enviar: solo las de preguntas visibles.
-    // TODO(backend): enviar `respuestasFinales` al servidor. El endpoint
-    // existente (POST /evaluaciones/:id/respuestas) trabaja con el id de
-    // evaluación y los ids de pregunta de la BD, que esta pantalla aún no
-    // tiene; hay que definir ese mapeo antes de conectarlo.
-    // eslint-disable-next-line no-unused-vars
-    const respuestasFinales = limpiarRespuestasHuerfanas(respuestas);
-
-    alert(
-      "Cuestionario completo. Tus respuestas quedaron guardadas en este navegador; el envío al servidor todavía no está conectado."
-    );
+    finalizarYNavegar();
   };
 
   const respondidas = preguntasVisibles.filter(

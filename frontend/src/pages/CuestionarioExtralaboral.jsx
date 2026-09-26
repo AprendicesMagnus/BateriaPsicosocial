@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
 import "../styles/cuestionario-estres.css";
 
 const preguntas = [
@@ -39,28 +40,27 @@ const preguntas = [
 const PREGUNTAS_POR_PAGINA = 8;
 const TOTAL_PAGINAS = Math.ceil(preguntas.length / PREGUNTAS_POR_PAGINA);
 
-const opciones = [
-  "Siempre",
-  "Casi siempre",
-  "Algunas veces",
-  "Casi nunca",
-  "Nunca",
-];
+const MAPA_EXTRALABORAL = {
+  "Siempre": 5,
+  "Casi siempre": 4,
+  "Algunas veces": 3,
+  "Casi nunca": 2,
+  "Nunca": 1,
+};
+
+const opciones = Object.keys(MAPA_EXTRALABORAL);
 
 export default function CuestionarioExtralaboral() {
-
   const navigate = useNavigate();
 
-  const [respuestas, setRespuestas] = useState({});
-  const [pagina, setPagina] = useState(0); // 0 = primera página (preguntas 1-8)
+  const [pagina, setPagina] = useState(0);
   const [intentoFinalizar, setIntentoFinalizar] = useState(false);
 
-  const seleccionarRespuesta = (preguntaId, respuesta) => {
-    setRespuestas({
-      ...respuestas,
-      [preguntaId]: respuesta,
-    });
-  };
+  const {
+    respuestas,
+    seleccionarRespuesta,
+    finalizarYNavegar,
+  } = useCuestionarioBackend("EXTRALABORAL", MAPA_EXTRALABORAL);
 
   const inicio = pagina * PREGUNTAS_POR_PAGINA;
   const fin = Math.min(inicio + PREGUNTAS_POR_PAGINA, preguntas.length);
@@ -82,7 +82,6 @@ export default function CuestionarioExtralaboral() {
       return;
     }
 
-    // Última página: no dejar finalizar si faltan preguntas por responder
     const preguntaSinResponder = preguntas.find(
       (p) => respuestas[p.id] === undefined
     );
@@ -104,7 +103,7 @@ export default function CuestionarioExtralaboral() {
       return;
     }
 
-    alert("Las respuestas han sido guardadas correctamente.");
+    finalizarYNavegar();
   };
 
   return (

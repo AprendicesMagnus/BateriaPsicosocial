@@ -7,6 +7,8 @@ import { generarInformeAgrupado, generarInformeIndividual, descargarInforme } fr
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 import ListaEvaluacionesTrabajador from "../components/ListaEvaluacionesTrabajador";
 import CuestionarioTrabajador from "../components/CuestionarioTrabajador";
+import HistoricoComparativo from "../components/HistoricoComparativo";
+import PlanDeAccion from "../components/PlanDeAccion";
 import { uuidValido } from "../utils/validaciones";
 
 const ROL_LABEL = {
@@ -157,7 +159,7 @@ export default function Panel() {
         <p style={{ color: "var(--ink-500)", marginBottom: "32px" }}>
           {usuario?.rol === "TRABAJADOR"
             ? "Gestión de Evaluaciones de Riesgo Psicosocial Asignadas y Consulta de Resultados."
-            : "Gestión de la Batería de Riesgo Psicosocial, Indicadores (RF08), Generación de Informes y Análisis Predictivo IA."}
+            : "Gestión de la Batería de Riesgo Psicosocial, Indicadores (RF08), Histórico Comparativo, Informes y Análisis Predictivo IA."}
         </p>
 
         {/* VISTA TRABAJADOR: CUESTIONARIO ACTIVO O LISTA DE EVALUACIONES */}
@@ -215,6 +217,14 @@ export default function Panel() {
                 </div>
               </div>
             )}
+          </section>
+        )}
+
+        {/* HISTORICO COMPARATIVO ENTRE EVALUACIONES - SOLO ADMIN Y EVALUADOR */}
+        {usuario?.rol !== "TRABAJADOR" && (
+          <section style={{ marginBottom: "32px" }}>
+            <HistoricoComparativo token={token} />
+            <PlanDeAccion token={token} />
           </section>
         )}
 

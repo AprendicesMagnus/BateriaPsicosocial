@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
 import "../styles/cuestionario-estres.css";
 
 /* =========================================================
@@ -195,20 +196,28 @@ function obtenerPreguntasVisibles(respuestas) {
   return visibles;
 }
 
-export default function CuestionarioIntralaboral() {
+const MAPA_INTRALABORAL = {
+  "Siempre": 5,
+  "Casi siempre": 4,
+  "Algunas veces": 3,
+  "A veces": 3,
+  "Casi nunca": 2,
+  "Nunca": 1,
+  "Sí": 1,
+  "No": 0,
+};
 
+export default function CuestionarioIntralaboral() {
   const navigate = useNavigate();
 
-  const [respuestas, setRespuestas] = useState({});
   const [pagina, setPagina] = useState(0);
   const [intentoFinalizar, setIntentoFinalizar] = useState(false);
 
-  const seleccionarRespuesta = (preguntaId, respuesta) => {
-    setRespuestas({
-      ...respuestas,
-      [preguntaId]: respuesta,
-    });
-  };
+  const {
+    respuestas,
+    seleccionarRespuesta,
+    finalizarYNavegar,
+  } = useCuestionarioBackend("INTRALABORAL_A", MAPA_INTRALABORAL);
 
   const preguntasVisibles = obtenerPreguntasVisibles(respuestas);
   const totalPaginas = Math.max(
@@ -237,7 +246,6 @@ export default function CuestionarioIntralaboral() {
       return;
     }
 
-    // Última página: no dejar finalizar si faltan preguntas visibles por responder
     const preguntaSinResponder = preguntasVisibles.find(
       (p) => respuestas[p.id] === undefined
     );
@@ -261,7 +269,7 @@ export default function CuestionarioIntralaboral() {
       return;
     }
 
-    alert("Las respuestas han sido guardadas correctamente.");
+    finalizarYNavegar();
   };
 
   const respondidas = preguntasVisibles.filter(

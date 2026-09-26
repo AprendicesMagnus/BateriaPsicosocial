@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_gestor
 from app.db.session import get_db
 from app.models.user import Usuario
 from app.services import notificaciones as notificaciones_service
@@ -26,3 +26,11 @@ def marcar_leida(
     actual: Usuario = Depends(get_current_user),
 ):
     return notificaciones_service.marcar_leida(db, notificacion_id, actual.id)
+
+
+@router.post("/enviar-recordatorios")
+def enviar_recordatorios(
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_gestor),
+):
+    return notificaciones_service.enviar_recordatorios_pendientes(db, actual)

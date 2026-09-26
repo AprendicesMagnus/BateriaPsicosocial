@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,8 +17,8 @@ class Evaluacion(Base):
         UUID(as_uuid=True), ForeignKey("organizaciones.id"), nullable=False
     )
     evaluador_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=False)
-    version_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("cuestionario_versiones.id"), nullable=False
+    version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("cuestionario_versiones.id"), nullable=True
     )
     nombre: Mapped[str] = mapped_column(String(180), nullable=False)
     estado: Mapped[str] = mapped_column(String(20), default="BORRADOR", nullable=False)
@@ -29,11 +29,54 @@ class Evaluacion(Base):
 
     organizacion: Mapped["Organizacion"] = relationship(back_populates="evaluaciones")
     evaluador: Mapped["Usuario"] = relationship(foreign_keys=[evaluador_id])
-    version: Mapped["CuestionarioVersion"] = relationship()
+    version: Mapped["CuestionarioVersion | None"] = relationship()
     participantes: Mapped[list["EvaluacionParticipante"]] = relationship(
         back_populates="evaluacion", cascade="all, delete-orphan"
     )
+    instrumentos: Mapped[list["EvaluacionInstrumento"]] = relationship(
+        back_populates="evaluacion", cascade="all, delete-orphan"
+    )
     informes: Mapped[list["Informe"]] = relationship(back_populates="evaluacion")
+
+
+class EvaluacionInstrumento(Base):
+    __tablename__ = "evaluacion_instrumentos"
+    __table_args__ = (UniqueConstraint("evaluacion_id", "version_id", name="uq_eval_version_instrumento"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    evaluacion_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("evaluaciones.id"), nullable=False
+    )
+    version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("cuestionario_versiones.id"), nullable=False
+    )
+    orden: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    obligatorio: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    evaluacion: Mapped[Evaluacion] = relationship(back_populates="instrumentos")
+    version: Mapped["CuestionarioVersion"] = relationship()
+    participantes_instrumentos: Mapped[list["ParticipanteInstrumento"]] = relationship(
+        back_populates="instrumento", cascade="all, delete-orphan"
+    )
+
+
+class ParticipanteInstrumento(Base):
+    __tablename__ = "participante_instrumentos"
+    __table_args__ = (UniqueConstraint("participante_id", "instrumento_id", name="uq_participante_instrumento"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    participante_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("evaluacion_participantes.id"), nullable=False
+    )
+    instrumento_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("evaluacion_instrumentos.id"), nullable=False
+    )
+    estado: Mapped[str] = mapped_column(String(20), default="PENDIENTE", nullable=False)
+    fecha_inicio: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fecha_fin: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    participante: Mapped["EvaluacionParticipante"] = relationship(back_populates="instrumentos_asignados")
+    instrumento: Mapped[EvaluacionInstrumento] = relationship(back_populates="participantes_instrumentos")
 
 
 class EvaluacionParticipante(Base):
@@ -58,6 +101,9 @@ class EvaluacionParticipante(Base):
     )
     respuestas: Mapped[list["Respuesta"]] = relationship(back_populates="participante", cascade="all, delete-orphan")
     resultados: Mapped[list["ResultadoDimension"]] = relationship(back_populates="participante")
+    instrumentos_asignados: Mapped[list[ParticipanteInstrumento]] = relationship(
+        back_populates="participante", cascade="all, delete-orphan"
+    )
 
 
 class Consentimiento(Base):

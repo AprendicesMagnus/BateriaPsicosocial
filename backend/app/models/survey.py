@@ -35,6 +35,8 @@ class Dimension(Base):
     nombre: Mapped[str] = mapped_column(String(180), nullable=False)
     dominio: Mapped[str] = mapped_column(String(180), nullable=False)
     orden: Mapped[int] = mapped_column(Integer, nullable=False)
+    tipo: Mapped[str] = mapped_column(String(20), default="DIMENSION", nullable=False)
+    factor_transformacion: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     version: Mapped[CuestionarioVersion] = relationship(back_populates="dimensiones")
     preguntas: Mapped[list["Pregunta"]] = relationship(back_populates="dimension", cascade="all, delete-orphan")
@@ -53,6 +55,7 @@ class Pregunta(Base):
     inversa: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     valor_minimo: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     valor_maximo: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
+    tipo_respuesta: Mapped[str] = mapped_column(String(20), default="LIKERT", nullable=False)
 
     dimension: Mapped[Dimension] = relationship(back_populates="preguntas")
 
@@ -81,3 +84,35 @@ class Recomendacion(Base):
     prioridad: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
     dimension: Mapped[Dimension] = relationship(back_populates="recomendaciones")
+
+class SeguimientoRecomendacion(Base):
+    """Seguimiento del estado de las recomendaciones por organizacion.
+
+    Nota: Recomendacion es catalogo compartido (por nivel/dimension), por eso el
+    seguimiento se registra por separado, con clave organizacion_id + recomendacion_id.
+    """
+    __tablename__ = "seguimiento_recomendaciones"
+    __table_args__ = (
+        UniqueConstraint("organizacion_id", "recomendacion_id", name="uq_seguimiento_org_rec"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organizacion_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizaciones.id"), nullable=False
+    )
+    recomendacion_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("recomendaciones.id"), nullable=False
+    )
+    estado: Mapped[str] = mapped_column(
+        String(20), default="PENDIENTE", nullable=False
+    )
+    responsable: Mapped[str | None] = mapped_column(String(180), nullable=True)
+    fecha_estado: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    notas: Mapped[str | None] = mapped_column(Text, nullable=True)
+    creado_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    recomendacion: Mapped["Recomendacion"] = relationship()

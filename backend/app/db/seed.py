@@ -3,6 +3,7 @@ from app.core.crypto import hash_password
 from app.db.session import SessionLocal
 from app.models.survey import Baremo, CuestionarioVersion, Dimension, Pregunta, Recomendacion
 from app.models.user import Permiso, Rol, RolPermiso, Usuario
+from app.db.intralaboral_oficial import sembrar_forma_intralaboral
 
 PERMISOS = [
     ("GESTIONAR_USUARIOS", "Gestionar usuarios", "USUARIOS"),
@@ -294,6 +295,249 @@ def _sembrar_recs_dimension(db, dim: Dimension) -> None:
         )
 
 
+def sembrar_todos_los_cuestionarios(db) -> dict[str, CuestionarioVersion]:
+    """
+    Siembra las 5 versiones de cuestionarios oficiales del sistema:
+    1. FICHA_DATOS (19 ítems mixtos)
+    2. ESTRES (31 ítems, Likert 1-4)
+    3. EXTRALABORAL (31 ítems, Likert 1-5)
+    4. INTRALABORAL_A (123 ítems, Likert 0-4 oficial)
+    5. INTRALABORAL_B (97 ítems, Likert 0-4 oficial)
+    """
+    versiones = {}
+
+    # 1. FICHA_DATOS
+    v_ficha = db.query(CuestionarioVersion).filter(CuestionarioVersion.codigo == "FICHA_DATOS", CuestionarioVersion.vigente.is_(True)).first()
+    if not v_ficha:
+        v_ficha = CuestionarioVersion(
+            codigo="FICHA_DATOS",
+            nombre="Ficha de Datos Generales",
+            numero_version=1,
+            descripcion="Información sociodemográfica y ocupacional del trabajador.",
+            vigente=True,
+        )
+        db.add(v_ficha)
+        db.flush()
+        dim_ficha = Dimension(
+            version_id=v_ficha.id,
+            codigo="DATOS_SOCIO_LABORALES",
+            nombre="Datos Sociodemográficos y Ocupacionales",
+            dominio="Ficha de Datos Generales",
+            orden=1,
+        )
+        db.add(dim_ficha)
+        db.flush()
+
+        preguntas_ficha = [
+            ("F1", "Nombre completo", 1, "TEXTO"),
+            ("F2", "Sexo", 2, "SELECCION"),
+            ("F3", "Año de nacimiento", 3, "ANNO"),
+            ("F4", "Estado civil", 4, "SELECCION"),
+            ("F5", "Último nivel de estudios que alcanzó", 5, "SELECCION"),
+            ("F6", "Ocupación o profesión", 6, "TEXTO"),
+            ("F7", "Lugar de residencia actual - Ciudad / Municipio", 7, "TEXTO"),
+            ("F8", "Lugar de residencia actual - Departamento", 8, "TEXTO"),
+            ("F9", "Estrato socioeconómico de la vivienda", 9, "SELECCION"),
+            ("F10", "Tipo de vivienda", 10, "SELECCION"),
+            ("F11", "Número de personas a cargo", 11, "ENTERO"),
+            ("F12", "Lugar donde trabaja actualmente - Ciudad / Municipio", 12, "TEXTO"),
+            ("F13", "Lugar donde trabaja actualmente - Departamento", 13, "TEXTO"),
+            ("F14", "Antigüedad en la empresa", 14, "TEXTO"),
+            ("F15", "Nombre del cargo", 15, "TEXTO"),
+            ("F16", "Tipo de cargo", 16, "SELECCION"),
+            ("F17", "Antigüedad en el cargo actual", 17, "TEXTO"),
+            ("F18", "Área o departamento de trabajo", 18, "TEXTO"),
+            ("F19", "Tipo de contrato laboral", 19, "SELECCION"),
+            ("F20", "Horas de trabajo diarias", 20, "ENTERO"),
+            ("F21", "Tipo de salario", 21, "SELECCION"),
+        ]
+        for cod, enun, ord_idx, tipo in preguntas_ficha:
+            db.add(
+                Pregunta(
+                    dimension_id=dim_ficha.id,
+                    codigo=cod,
+                    enunciado=enun,
+                    orden=ord_idx,
+                    inversa=False,
+                    valor_minimo=1,
+                    valor_maximo=5,
+                    tipo_respuesta=tipo,
+                )
+            )
+        db.flush()
+    versiones["FICHA_DATOS"] = v_ficha
+
+    # 2. ESTRES (31 preguntas, escala 1-4)
+    v_estres = db.query(CuestionarioVersion).filter(CuestionarioVersion.codigo == "ESTRES", CuestionarioVersion.vigente.is_(True)).first()
+    if not v_estres:
+        v_estres = CuestionarioVersion(
+            codigo="ESTRES",
+            nombre="Cuestionario para la Evaluación del Estrés",
+            numero_version=1,
+            descripcion="Instrumento para la evaluación de los síntomas de estrés (3ª versión). Escala de 4 puntos (1-4).",
+            vigente=True,
+        )
+        db.add(v_estres)
+        db.flush()
+        dim_estres = Dimension(
+            version_id=v_estres.id,
+            codigo="SINTOMAS_ESTRES",
+            nombre="Síntomas de Estrés",
+            dominio="Evaluación del Estrés",
+            orden=1,
+        )
+        db.add(dim_estres)
+        db.flush()
+
+        preguntas_estres_textos = [
+            "Dolores en el cuello y espalda o tensión muscular.",
+            "Problemas gastrointestinales, úlcera péptica, acidez, problemas digestivos o del colon.",
+            "Problemas respiratorios.",
+            "Dolor de cabeza.",
+            "Trastornos del sueño como somnolencia durante el día o desvelo en la noche.",
+            "Palpitaciones en el pecho o problemas cardíacos.",
+            "Cambios fuertes del apetito.",
+            "Problemas relacionados con la función de los órganos genitales (impotencia, frigidez).",
+            "Dificultad en las relaciones familiares.",
+            "Dificultad para permanecer quieto o dificultad para iniciar actividades.",
+            "Dificultad en las relaciones con otras personas.",
+            "Sensación de aislamiento y desinterés.",
+            "Sentimiento de sobrecarga de trabajo.",
+            "Dificultad para concentrarse, olvidos frecuentes.",
+            "Aumento en el número de accidentes de trabajo.",
+            "Sentimiento de frustración, de no haber hecho lo que se quería en la vida.",
+            "Cansancio, tedio o desgano.",
+            "Disminución del rendimiento en el trabajo o poca creatividad.",
+            "Deseo de no asistir al trabajo.",
+            "Bajo compromiso o poco interés con lo que se hace.",
+            "Dificultad para tomar decisiones.",
+            "Deseo de cambiar de empleo.",
+            "Sentimiento de soledad y miedo.",
+            "Sentimiento de irritabilidad, actitudes y pensamientos negativos.",
+            "Sentimiento de angustia, preocupación o tristeza.",
+            "Consumo de drogas para aliviar la tensión o los nervios.",
+            'Sentimientos de que "no vale nada", o "no sirve para nada".',
+            "Consumo de bebidas alcohólicas o café o cigarrillo.",
+            "Sentimiento de que está perdiendo la razón.",
+            "Comportamientos rígidos, obstinación o terquedad.",
+            "Sensación de no poder manejar los problemas de la vida.",
+        ]
+        for idx, texto in enumerate(preguntas_estres_textos, start=1):
+            db.add(
+                Pregunta(
+                    dimension_id=dim_estres.id,
+                    codigo=f"EST_{idx}",
+                    enunciado=texto,
+                    orden=idx,
+                    inversa=False,
+                    valor_minimo=1,
+                    valor_maximo=4,
+                    tipo_respuesta="LIKERT",
+                )
+            )
+        db.flush()
+    versiones["ESTRES"] = v_estres
+
+    # 3. EXTRALABORAL (31 preguntas, Likert 1-5)
+    v_extra = db.query(CuestionarioVersion).filter(CuestionarioVersion.codigo == "EXTRALABORAL", CuestionarioVersion.vigente.is_(True)).first()
+    if not v_extra:
+        v_extra = CuestionarioVersion(
+            codigo="EXTRALABORAL",
+            nombre="Cuestionario de Factores Psicosociales Extralaborales",
+            numero_version=1,
+            descripcion="Evaluación de los factores psicosociales fuera del entorno laboral.",
+            vigente=True,
+        )
+        db.add(v_extra)
+        db.flush()
+        dim_extra = Dimension(
+            version_id=v_extra.id,
+            codigo="CONDICIONES_EXTRALABORALES",
+            nombre="Factores Extralaborales",
+            dominio="Entorno Extralaboral",
+            orden=1,
+        )
+        db.add(dim_extra)
+        db.flush()
+
+        preguntas_extra_textos = [
+            "Es fácil trasportarme entre mi casa y el trabajo.",
+            "Tengo que tomar varios medios de transporte para llegar a mi lugar de trabajo.",
+            "Paso mucho tiempo viajando de ida y regreso al trabajo.",
+            "Me trasporto cómodamente entre mi casa y el trabajo.",
+            "La zona donde vivo es segura.",
+            "En la zona donde vivo se presentan hurtos y mucha delincuencia.",
+            "Desde donde vivo me es fácil llegar al centro médico donde me atienden.",
+            "Cerca a mi vivienda las vías están en buenas condiciones.",
+            "Cerca a mi vivienda encuentro fácilmente transporte.",
+            "Las condiciones de mi vivienda son buenas.",
+            "En mi vivienda hay servicios de agua y luz.",
+            "Las condiciones de mi vivienda me permiten descansar cuando lo requiero.",
+            "Las condiciones de mi vivienda me permiten sentirme cómodo.",
+            "Me queda tiempo para actividades de recreación.",
+            "Fuera del trabajo tengo tiempo suficiente para descansar.",
+            "Tengo tiempo para atender mis asuntos personales y del hogar.",
+            "Tengo tiempo para compartir con mi familia o amigos.",
+            "Tengo buena comunicación con las personas cercanas.",
+            "Las relaciones con mis amigos son buenas.",
+            "Converso con personas cercanas sobre diferentes temas.",
+            "Mis amigos están dispuestos a escucharme cuando tengo problemas.",
+            "Cuento con el apoyo de mi familia cuando tengo problemas.",
+            "Puedo hablar con personas cercanas sobre las cosas que me pasan.",
+            "Mis problemas personales o familiares afectan mi trabajo.",
+            "La relación con mi familia cercana es cordial.",
+            "Mis problemas personales o familiares me quitan la energía que necesito para trabajar.",
+            "Los problemas con mis familiares los resolvemos de manera amistosa.",
+            "Mis problemas personales o familiares afectan mis relaciones en el trabajo.",
+            "El dinero que ganamos en el hogar alcanza para cubrir los gastos básicos.",
+            "Tengo otros compromisos económicos que afectan mucho el presupuesto familiar.",
+            "En mi hogar tenemos deudas difíciles de pagar.",
+        ]
+        for idx, texto in enumerate(preguntas_extra_textos, start=1):
+            db.add(
+                Pregunta(
+                    dimension_id=dim_extra.id,
+                    codigo=f"EXT_{idx}",
+                    enunciado=texto,
+                    orden=idx,
+                    inversa=False,
+                    valor_minimo=1,
+                    valor_maximo=5,
+                    tipo_respuesta="LIKERT",
+                )
+            )
+        db.flush()
+    versiones["EXTRALABORAL"] = v_extra
+
+    # 4 y 5. INTRALABORAL_A (123 preguntas, 19 dimensiones) e INTRALABORAL_B
+    # (97 preguntas, 16 dimensiones). Estructura oficial completa: dimensiones,
+    # dominios y total del cuestionario, con factores de transformacion y
+    # baremos reales tomados de las Tablas 21-34 del Manual del Ministerio de
+    # la Proteccion Social (2010), via docs/referencia_intralaboral_A_B.json
+    # (generado y verificado contra el PDF fuente en scripts/generar_referencia_intralaboral.py).
+    v_intra_a = sembrar_forma_intralaboral(db, "forma_A")
+    versiones["INTRALABORAL_A"] = v_intra_a
+
+    v_intra_b = sembrar_forma_intralaboral(db, "forma_B")
+    versiones["INTRALABORAL_B"] = v_intra_b
+
+    baremos_estandar = [
+        ("SIN_RIESGO", 0.0, 19.9, 1),
+        ("BAJO", 20.0, 39.9, 2),
+        ("MEDIO", 40.0, 59.9, 3),
+        ("ALTO", 60.0, 79.9, 4),
+        ("MUY_ALTO", 80.0, 100.0, 5),
+    ]
+    for v in versiones.values():
+        for dim in v.dimensiones:
+            if not dim.baremos:
+                for b_nivel, b_min, b_max, b_orden in baremos_estandar:
+                    db.add(Baremo(dimension_id=dim.id, nivel=b_nivel, minimo=b_min, maximo=b_max, orden=b_orden))
+    db.flush()
+
+    return versiones
+
+
 def ejecutar_seed() -> None:
     db = SessionLocal()
     try:
@@ -301,12 +545,12 @@ def ejecutar_seed() -> None:
         roles = sembrar_roles(db, permisos)
         sembrar_administrador(db, roles)
         sembrar_cuestionario_brp(db)
+        sembrar_todos_los_cuestionarios(db)
         db.commit()
-        print("Seed aplicado correctamente (roles, permisos, admin y cuestionario BRP).")
+        print("Seed aplicado correctamente (roles, permisos, admin, BRP y los 5 instrumentos reales).")
     finally:
         db.close()
 
 
 if __name__ == "__main__":
     ejecutar_seed()
-

@@ -28,6 +28,7 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState("cargando"); // cargando | consentimiento | cuestionario | resultados | error
   const [evaluacionInfo, setEvaluacionInfo] = useState(null);
+  const [nombreInstrumento, setNombreInstrumento] = useState(null);
   const [preguntas, setPreguntas] = useState([]);
   const [respuestas, setRespuestas] = useState({});
   const [preguntaActualIdx, setPreguntaActualIdx] = useState(0);
@@ -51,7 +52,9 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
       // Try loading questionnaire
       try {
         const questData = await fetchCuestionario(token, evaluacionId);
+        setNombreInstrumento(questData.nombre || questData.codigo || null);
         setPreguntas(questData.preguntas || []);
+        setPreguntaActualIdx(0);
 
         // Populate saved answers
         const respMap = {};
@@ -92,7 +95,9 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
       await registrarConsentimiento(token, evaluacionId);
       setConsentimientoGuardado(true);
       const questData = await fetchCuestionario(token, evaluacionId);
+      setNombreInstrumento(questData.nombre || questData.codigo || null);
       setPreguntas(questData.preguntas || []);
+      setPreguntaActualIdx(0);
       setStep("cuestionario");
     } catch (err) {
       setErrorMsg(err.message || "No se pudo registrar el consentimiento.");
@@ -124,8 +129,12 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
     setErrorMsg(null);
     try {
       const res = await finalizarCuestionario(token, evaluacionId);
-      setResultados(res.resultados || []);
-      setStep("resultados");
+      if (res.resultados && res.resultados.length > 0) {
+        setResultados(res.resultados);
+        setStep("resultados");
+      } else {
+        await inicializar();
+      }
     } catch (err) {
       setErrorMsg(err.message || "Error al finalizar la evaluación.");
     } finally {
@@ -259,7 +268,7 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
       {/* HEADER */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <h2 style={{ fontSize: 20, color: "#1E293B", margin: 0 }}>Cuestionario BRP</h2>
+          <h2 style={{ fontSize: 20, color: "#1E293B", margin: 0 }}>{nombreInstrumento || "Cuestionario BRP"}</h2>
           <p style={{ fontSize: 13, color: "#64748B", margin: "2px 0 0 0" }}>{evaluacionInfo?.nombre}</p>
         </div>
         <button className="btn-secondary" onClick={onVolver}>Guardar y Salir</button>
@@ -320,7 +329,11 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
           </h3>
 
           <div style={{ display: "grid", gap: 10 }}>
-            {OPCIONES_LIKERT.map((op) => {
+            {OPCIONES_LIKERT.filter(
+              (op) =>
+                op.valor >= (pregActual.valorMinimo ?? 1) &&
+                op.valor <= (pregActual.valorMaximo ?? 5)
+            ).map((op) => {
               const seleccionada = respuestas[pregActual.id] === op.valor;
               return (
                 <button

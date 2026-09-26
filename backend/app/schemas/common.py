@@ -202,6 +202,7 @@ class PreguntaCreate(BaseModel):
     inversa: bool = False
     valorMinimo: int = Field(default=1, ge=1, le=5)
     valorMaximo: int = Field(default=5, ge=1, le=5)
+    tipoRespuesta: str = Field(default="LIKERT", max_length=20)
 
 
 class DimensionCreate(BaseModel):
@@ -245,7 +246,56 @@ class ConsentimientoRequest(BaseModel):
 
 class RespuestaRequest(BaseModel):
     preguntaId: UUID
-    valor: int = Field(ge=1, le=5, description="Valor Likert entre 1 y 5")
+    valor: int | str = Field(description="Valor Likert entre 1 y 5 o texto")
+
+    @field_validator("valor")
+    @classmethod
+    def validar_valor(cls, v):
+        if isinstance(v, int):
+            if v < 1 or v > 5:
+                raise ValueError("El valor numérico debe estar entre 1 y 5.")
+        elif isinstance(v, str):
+            if not v.strip():
+                raise ValueError("El valor de texto no puede estar vacío.")
+        else:
+            raise ValueError("Tipo de respuesta no válido.")
+        return v
+
+
+class FichaDatosRequest(BaseModel):
+    nombreCompleto: str = Field(min_length=2, max_length=150)
+    sexo: str = Field(min_length=1, max_length=20)
+    anioNacimiento: str = Field(min_length=4, max_length=4)
+    estadoCivil: str = Field(min_length=1, max_length=50)
+    nivelEstudios: str = Field(min_length=1, max_length=80)
+    ocupacion: str = Field(min_length=1, max_length=150)
+    residenciaCiudad: str = Field(min_length=1, max_length=100)
+    residenciaDepartamento: str = Field(min_length=1, max_length=100)
+    estrato: str = Field(min_length=1, max_length=20)
+    tipoVivienda: str = Field(min_length=1, max_length=50)
+    personasACargo: str | int = Field(default="0")
+    trabajoCiudad: str = Field(min_length=1, max_length=100)
+    trabajoDepartamento: str = Field(min_length=1, max_length=100)
+    antiguedadEmpresaMenosUnAnio: bool = False
+    antiguedadEmpresa: str = Field(default="")
+    nombreCargo: str = Field(min_length=1, max_length=150)
+    tipoCargo: str = Field(min_length=1, max_length=150)
+    antiguedadCargoMenosUnAnio: bool = False
+    antiguedadCargo: str = Field(default="")
+    areaODepartamento: str = Field(min_length=1, max_length=150)
+    tipoContrato: str = Field(min_length=1, max_length=80)
+    horasDiarias: str | int = Field(default="8")
+    tipoSalario: str = Field(min_length=1, max_length=100)
+
+
+class InstrumentoOut(BaseModel):
+    instrumentoId: UUID
+    versionId: UUID
+    codigo: str
+    nombre: str
+    orden: int
+    obligatorio: bool
+    estado: str
 
 
 class InformeRequest(BaseModel):

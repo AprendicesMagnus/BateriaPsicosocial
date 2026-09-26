@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, require_gestor
 from app.db.session import get_db
 from app.models.user import Usuario
-from app.schemas.common import EvaluacionCierre, EvaluacionCreate, RespuestaRequest
+from app.schemas.common import EvaluacionCierre, EvaluacionCreate, FichaDatosRequest, RespuestaRequest
 from app.services import auditoria as auditoria_service
 from app.services import evaluaciones as evaluaciones_service
 from app.services import tabulacion as tabulacion_service
@@ -136,6 +136,25 @@ def finalizar_cuestionario(
     actual: Usuario = Depends(get_current_user),
 ):
     return evaluaciones_service.finalizar_cuestionario(db, evaluacion_id, actual)
+
+
+@router.get("/{evaluacion_id}/instrumentos")
+def obtener_instrumentos_participante(
+    evaluacion_id: UUID,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    return evaluaciones_service.obtener_instrumentos_participante(db, evaluacion_id, actual)
+
+
+@router.post("/{evaluacion_id}/ficha")
+def guardar_ficha_datos(
+    evaluacion_id: UUID,
+    data: FichaDatosRequest,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    return evaluaciones_service.guardar_ficha_datos(db, evaluacion_id, data, actual)
 
 
 @router.get("/{evaluacion_id}/resultados")
