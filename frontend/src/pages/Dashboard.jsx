@@ -201,7 +201,13 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       <aside className="sidebar">
-        <div className="sidebar__logo">
+        <div
+          className="sidebar__logo"
+          onClick={() => navigate("/Inicio")}
+          style={{ cursor: "pointer" }}
+          role="button"
+          aria-label="Ir al inicio"
+        >
           <img src="/logob1.png" alt="Magnus" style={{ height: 70, marginRight: "auto" }} />
         </div>
 
@@ -219,6 +225,11 @@ export default function Dashboard() {
           <button className="menu-item" type="button" onClick={() => navigate("/panel")}>
             <span>⚙</span>
             Panel Admin
+          </button>
+
+          <button className="menu-item" type="button" onClick={() => navigate("/reportes")}>
+            <span>▤</span>
+            Reportes
           </button>
 
           <button className="menu-item" type="button" onClick={handleLogout}>

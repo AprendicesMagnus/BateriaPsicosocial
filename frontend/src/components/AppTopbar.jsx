@@ -45,7 +45,7 @@ export default function AppTopbar() {
 
   return (
     <header className="app-topbar">
-      <Link to="/" aria-label="Ir a la página principal" style={{ display: "inline-flex" }}>
+      <Link to="/Inicio" aria-label="Ir al inicio" style={{ display: "inline-flex" }}>
         <img src="/logo oscu.png" alt="Magnus SIG" className="app-topbar-logo" style={{ cursor: "pointer" }} />
       </Link>
 
@@ -57,8 +57,6 @@ export default function AppTopbar() {
           aria-haspopup="true"
           aria-expanded={abierto}
         >
-          {/* ANTES: <div className="app-avatar">{iniciales}</div>
-              Ahora: si usuario.fotoUrl existe, se muestra la foto; si no, las iniciales de siempre. */}
           {usuario?.fotoUrl ? (
             <img src={usuario.fotoUrl} alt={nombreUsuario} className="app-avatar app-avatar--foto" />
           ) : (
