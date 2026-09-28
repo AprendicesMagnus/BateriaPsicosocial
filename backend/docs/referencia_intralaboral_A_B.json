@@ -1,0 +1,3426 @@
+{
+  "fuente": "Ministerio de la Protección Social (2010). Batería de instrumentos para la evaluación de factores de riesgo psicosocial. II – Cuestionarios de factores de riesgo psicosocial intralaboral – Forma A y Forma B – Manual del Usuario. Tablas 21 a 34.",
+  "escala_oficial": {
+    "valor_minimo": 0,
+    "valor_maximo": 4,
+    "grupo_NORMAL": {
+      "Siempre": 4,
+      "Casi siempre": 3,
+      "Algunas veces": 2,
+      "Casi nunca": 1,
+      "Nunca": 0
+    },
+    "grupo_INVERTIDO": {
+      "Siempre": 0,
+      "Casi siempre": 1,
+      "Algunas veces": 2,
+      "Casi nunca": 3,
+      "Nunca": 4
+    },
+    "nota_item_66_forma_B": "El ítem 66 de Forma B ('En mi grupo de trabajo algunas personas me maltratan.') pertenece al grupo NORMAL (Siempre=4). No es invertido."
+  },
+  "formula_transformacion": "puntaje_transformado = (puntaje_bruto / factor_transformacion) * 100, redondeo a 1 decimal",
+  "equivalencia_minmax": "Con escala 0-4 y todos los ítems respondidos, factor = n_items * 4 = maximo, minimo = 0, por lo que 100*(bruto-minimo)/(maximo-minimo) = 100*bruto/factor.",
+  "forma_A": {
+    "codigo": "INTRALABORAL_A",
+    "items": [
+      {
+        "n": 1,
+        "texto": "El ruido en el lugar donde trabajo es molesto.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 2,
+        "texto": "En el lugar donde trabajo hace mucho frío.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 3,
+        "texto": "En el lugar donde trabajo hace mucho calor.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 4,
+        "texto": "El aire en el lugar donde trabajo es fresco y agradable.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 5,
+        "texto": "La luz del sitio donde trabajo es agradable.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 6,
+        "texto": "El espacio donde trabajo es cómodo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 7,
+        "texto": "En mi trabajo me preocupa estar expuesto a sustancias químicas que afecten mi salud.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 8,
+        "texto": "Mi trabajo me exige hacer mucho esfuerzo físico.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 9,
+        "texto": "Los equipos o herramientas con los que trabajo son cómodos.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 10,
+        "texto": "En mi trabajo me preocupa estar expuesto a microbios, animales o plantas que afecten mi salud.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 11,
+        "texto": "Me preocupa accidentarme en mi trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 12,
+        "texto": "El lugar donde trabajo es limpio y ordenado.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 13,
+        "texto": "Por la cantidad de trabajo que tengo debo quedarme tiempo adicional.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 14,
+        "texto": "Me alcanza el tiempo de trabajo para tener al día mis deberes.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 15,
+        "texto": "Por la cantidad de trabajo que tengo debo trabajar sin parar.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 16,
+        "texto": "Mi trabajo me exige hacer mucho esfuerzo mental.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 17,
+        "texto": "Mi trabajo me exige estar muy concentrado.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 18,
+        "texto": "Mi trabajo me exige memorizar mucha información.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 19,
+        "texto": "En mi trabajo tengo que tomar decisiones difíciles muy rápido.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 20,
+        "texto": "Mi trabajo me exige atender a muchos asuntos al mismo tiempo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 21,
+        "texto": "Mi trabajo requiere que me fije en pequeños detalles.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 22,
+        "texto": "En mi trabajo respondo por cosas de mucho valor.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 23,
+        "texto": "En mi trabajo respondo por dinero de la empresa.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 24,
+        "texto": "Como parte de mis funciones debo responder por la seguridad de otros.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 25,
+        "texto": "Respondo ante mi jefe por los resultados de toda mi área de trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 26,
+        "texto": "Mi trabajo me exige cuidar la salud de otras personas.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 27,
+        "texto": "En el trabajo me dan órdenes contradictorias.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 28,
+        "texto": "En mi trabajo me piden hacer cosas innecesarias.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 29,
+        "texto": "En mi trabajo se presentan situaciones en las que debo pasar por alto normas o procedimientos.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 30,
+        "texto": "En mi trabajo tengo que hacer cosas que se podrían hacer de una forma más práctica.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 31,
+        "texto": "Trabajo en horario de noche.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 32,
+        "texto": "En mi trabajo es posible tomar pausas para descansar.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 33,
+        "texto": "Mi trabajo me exige laborar en días de descanso, festivos o fines de semana.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 34,
+        "texto": "En mi trabajo puedo tomar fines de semana o días de descanso al mes.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 35,
+        "texto": "Cuando estoy en casa sigo pensando en el trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 36,
+        "texto": "Discuto con mi familia o amigos por causa de mi trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 37,
+        "texto": "Debo atender asuntos de trabajo cuando estoy en casa.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 38,
+        "texto": "Por mi trabajo el tiempo que paso con mi familia y amigos es muy poco.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 39,
+        "texto": "Mi trabajo me permite desarrollar mis habilidades.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 40,
+        "texto": "Mi trabajo me permite aplicar mis conocimientos.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 41,
+        "texto": "Mi trabajo me permite aprender nuevas cosas.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 42,
+        "texto": "Me asignan el trabajo teniendo en cuenta mis capacidades.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 43,
+        "texto": "Puedo tomar pausas cuando las necesito.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 44,
+        "texto": "Puedo decidir cuánto trabajo hago en el día.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 45,
+        "texto": "Puedo decidir la velocidad a la que trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 46,
+        "texto": "Puedo cambiar el orden de las actividades en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 47,
+        "texto": "Puedo parar un momento mi trabajo para atender algún asunto personal.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 48,
+        "texto": "Los cambios en mi trabajo han sido beneficiosos.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 49,
+        "texto": "Me explican claramente los cambios que ocurren en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 50,
+        "texto": "Puedo dar sugerencias sobre los cambios que ocurren en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 51,
+        "texto": "Cuando se presentan cambios en mi trabajo se tienen en cuenta mis ideas y sugerencias.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 52,
+        "texto": "Los cambios que se presentan en mi trabajo dificultan mi labor.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 53,
+        "texto": "Me informan con claridad cuáles son mis funciones.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 54,
+        "texto": "Me informan cuáles son las decisiones que puedo tomar en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 55,
+        "texto": "Me explican claramente los resultados que debo lograr en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 56,
+        "texto": "Me explican claramente el efecto de mi trabajo en la empresa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 57,
+        "texto": "Me explican claramente los objetivos de mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 58,
+        "texto": "Me informan claramente quien me puede orientar para hacer mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 59,
+        "texto": "Me informan claramente con quien puedo resolver los asuntos de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 60,
+        "texto": "La empresa me permite asistir a capacitaciones relacionadas con mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 61,
+        "texto": "Recibo capacitación útil para hacer mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 62,
+        "texto": "Recibo capacitación que me ayuda a hacer mejor mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 63,
+        "texto": "Mi jefe me da instrucciones claras.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 64,
+        "texto": "Mi jefe ayuda a organizar mejor el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 65,
+        "texto": "Mi jefe tiene en cuenta mis puntos de vista y opiniones.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 66,
+        "texto": "Mi jefe me anima para hacer mejor mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 67,
+        "texto": "Mi jefe distribuye las tareas de forma que me facilita el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 68,
+        "texto": "Mi jefe me comunica a tiempo la información relacionada con el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 69,
+        "texto": "La orientación que me da mi jefe me ayuda a hacer mejor el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 70,
+        "texto": "Mi jefe me ayuda a progresar en el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 71,
+        "texto": "Mi jefe me ayuda a sentirme bien en el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 72,
+        "texto": "Mi jefe ayuda a solucionar los problemas que se presentan en el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 73,
+        "texto": "Siento que puedo confiar en mi jefe.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 74,
+        "texto": "Mi jefe me escucha cuando tengo problemas de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 75,
+        "texto": "Mi jefe me brinda su apoyo cuando lo necesito.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 76,
+        "texto": "Me agrada el ambiente de mi grupo de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 77,
+        "texto": "En mi grupo de trabajo me tratan de forma respetuosa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 78,
+        "texto": "Siento que puedo confiar en mis compañeros de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 79,
+        "texto": "Me siento a gusto con mis compañeros de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 80,
+        "texto": "En mi grupo de trabajo algunas personas me maltratan.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 81,
+        "texto": "Entre compañeros solucionamos los problemas de forma respetuosa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 82,
+        "texto": "Hay integración en mi grupo de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 83,
+        "texto": "Mi grupo de trabajo es muy unido.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 84,
+        "texto": "Las personas en mi trabajo me hacen sentir parte del grupo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 85,
+        "texto": "Cuando tenemos que realizar trabajo de grupo los compañeros colaboran.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 86,
+        "texto": "Es fácil poner de acuerdo al grupo para hacer el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 87,
+        "texto": "Mis compañeros de trabajo me ayudan cuando tengo dificultades.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 88,
+        "texto": "En mi trabajo las personas nos apoyamos unos a otros.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 89,
+        "texto": "Algunos compañeros de trabajo me escuchan cuando tengo problemas.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 90,
+        "texto": "Me informan sobre lo que hago bien en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 91,
+        "texto": "Me informan sobre lo que debo mejorar en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 92,
+        "texto": "La información que recibo sobre mi rendimiento en el trabajo es clara.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 93,
+        "texto": "La forma como evalúan mi trabajo en la empresa me ayuda a mejorar.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 94,
+        "texto": "Me informan a tiempo sobre lo que debo mejorar en el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 95,
+        "texto": "En la empresa confían en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 96,
+        "texto": "En la empresa me pagan a tiempo mi salario.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 97,
+        "texto": "El pago que recibo es el que me ofreció la empresa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 98,
+        "texto": "El pago que recibo es el que merezco por el trabajo que realizo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 99,
+        "texto": "En mi trabajo tengo posibilidades de progresar.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 100,
+        "texto": "Las personas que hacen bien el trabajo pueden progresar en la empresa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 101,
+        "texto": "La empresa se preocupa por el bienestar de los trabajadores.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 102,
+        "texto": "Mi trabajo en la empresa es estable.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 103,
+        "texto": "El trabajo que hago me hace sentir bien.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 104,
+        "texto": "Siento orgullo de trabajar en esta empresa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 105,
+        "texto": "Hablo bien de la empresa con otras personas.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 106,
+        "texto": "Atiendo clientes o usuarios muy enojados.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 107,
+        "texto": "Atiendo clientes o usuarios muy preocupados.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 108,
+        "texto": "Atiendo clientes o usuarios muy tristes.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 109,
+        "texto": "Mi trabajo me exige atender personas muy enfermas.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 110,
+        "texto": "Mi trabajo me exige atender personas muy necesitadas de ayuda.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 111,
+        "texto": "Atiendo clientes o usuarios que me maltratan.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 112,
+        "texto": "Para hacer mi trabajo debo demostrar sentimientos distintos a los míos.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 113,
+        "texto": "Mi trabajo me exige atender situaciones de violencia.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 114,
+        "texto": "Mi trabajo me exige atender situaciones muy tristes o dolorosas.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 115,
+        "texto": "Tengo colaboradores que comunican tarde los asuntos de trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 116,
+        "texto": "Tengo colaboradores que tienen comportamientos irrespetuosos.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 117,
+        "texto": "Tengo colaboradores que dificultan la organización del trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 118,
+        "texto": "Tengo colaboradores que guardan silencio cuando les piden opiniones.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 119,
+        "texto": "Tengo colaboradores que dificultan el logro de los resultados del trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 120,
+        "texto": "Tengo colaboradores que expresan de forma irrespetuosa sus desacuerdos.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 121,
+        "texto": "Tengo colaboradores que cooperan poco cuando se necesita.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 122,
+        "texto": "Tengo colaboradores que me preocupan por su desempeño.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 123,
+        "texto": "Tengo colaboradores que ignoran las sugerencias para mejorar su trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      }
+    ],
+    "dimensiones": [
+      {
+        "codigo": "LIDERAZGO",
+        "nombre": "Características del liderazgo",
+        "dominio": "Liderazgo y relaciones sociales en el trabajo",
+        "items": [
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75
+        ],
+        "factor": 52,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 3.8,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 3.9,
+            "maximo": 15.4,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 15.5,
+            "maximo": 30.8,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 30.9,
+            "maximo": 46.2,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 46.3,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RELACIONES_SOCIALES",
+        "nombre": "Relaciones sociales en el trabajo",
+        "dominio": "Liderazgo y relaciones sociales en el trabajo",
+        "items": [
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89
+        ],
+        "factor": 56,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 5.4,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 5.5,
+            "maximo": 16.1,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 16.2,
+            "maximo": 25.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 25.1,
+            "maximo": 37.5,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 37.6,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RETROALIMENTACION",
+        "nombre": "Retroalimentación del desempeño",
+        "dominio": "Liderazgo y relaciones sociales en el trabajo",
+        "items": [
+          90,
+          91,
+          92,
+          93,
+          94
+        ],
+        "factor": 20,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 10.0,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 10.1,
+            "maximo": 25.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 25.1,
+            "maximo": 40.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 40.1,
+            "maximo": 55.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 55.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RELACION_COLABORADORES",
+        "nombre": "Relación con los colaboradores (subordinados)",
+        "dominio": "Liderazgo y relaciones sociales en el trabajo",
+        "items": [
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123
+        ],
+        "factor": 36,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 13.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 14.0,
+            "maximo": 25.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 25.1,
+            "maximo": 33.3,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 33.4,
+            "maximo": 47.2,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 47.3,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "CLARIDAD_ROL",
+        "nombre": "Claridad de rol",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59
+        ],
+        "factor": 28,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 0.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 1.0,
+            "maximo": 10.7,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 10.8,
+            "maximo": 21.4,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 21.5,
+            "maximo": 39.3,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 39.4,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "CAPACITACION",
+        "nombre": "Capacitación",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          60,
+          61,
+          62
+        ],
+        "factor": 12,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 0.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 1.0,
+            "maximo": 16.7,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 16.8,
+            "maximo": 33.3,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 33.4,
+            "maximo": 50.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 50.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "PARTICIPACION_CAMBIO",
+        "nombre": "Participación y manejo del cambio",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          48,
+          49,
+          50,
+          51
+        ],
+        "factor": 16,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 12.5,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 12.6,
+            "maximo": 25.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 25.1,
+            "maximo": 37.5,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 37.6,
+            "maximo": 50.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 50.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "OPORTUNIDADES_HABILIDADES",
+        "nombre": "Oportunidades para el uso y desarrollo de habilidades y conocimientos",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          39,
+          40,
+          41,
+          42
+        ],
+        "factor": 16,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 0.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 1.0,
+            "maximo": 6.3,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 6.4,
+            "maximo": 18.8,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 18.9,
+            "maximo": 31.3,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 31.4,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "CONTROL_AUTONOMIA",
+        "nombre": "Control y autonomía sobre el trabajo",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          44,
+          45,
+          46
+        ],
+        "factor": 12,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 8.3,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 8.4,
+            "maximo": 25.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 25.1,
+            "maximo": 41.7,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 41.8,
+            "maximo": 58.3,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 58.4,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DEMANDAS_AMBIENTALES",
+        "nombre": "Demandas ambientales y de esfuerzo físico",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "factor": 48,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 14.6,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 14.7,
+            "maximo": 22.9,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 23.0,
+            "maximo": 31.3,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 31.4,
+            "maximo": 39.6,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 39.7,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DEMANDAS_EMOCIONALES",
+        "nombre": "Demandas emocionales",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114
+        ],
+        "factor": 36,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 16.7,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 16.8,
+            "maximo": 25.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 25.1,
+            "maximo": 33.3,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 33.4,
+            "maximo": 47.2,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 47.3,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DEMANDAS_CUANTITATIVAS",
+        "nombre": "Demandas cuantitativas",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          13,
+          14,
+          15,
+          32,
+          43,
+          47
+        ],
+        "factor": 24,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 25.0,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 25.1,
+            "maximo": 33.3,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 33.4,
+            "maximo": 45.8,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 45.9,
+            "maximo": 54.2,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 54.3,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "INFLUENCIA_EXTRALABORAL",
+        "nombre": "Influencia del trabajo sobre el entorno extralaboral",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          35,
+          36,
+          37,
+          38
+        ],
+        "factor": 16,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 18.8,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 18.9,
+            "maximo": 31.3,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 31.4,
+            "maximo": 43.8,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 43.9,
+            "maximo": 50.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 50.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RESPONSABILIDAD_CARGO",
+        "nombre": "Exigencias de responsabilidad del cargo",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          19,
+          22,
+          23,
+          24,
+          25,
+          26
+        ],
+        "factor": 24,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 37.5,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 37.6,
+            "maximo": 54.2,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 54.3,
+            "maximo": 66.7,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 66.8,
+            "maximo": 79.2,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 79.3,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "CARGA_MENTAL",
+        "nombre": "Demandas de carga mental",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          16,
+          17,
+          18,
+          20,
+          21
+        ],
+        "factor": 20,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 60.0,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 60.1,
+            "maximo": 70.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 70.1,
+            "maximo": 80.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 80.1,
+            "maximo": 90.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 90.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "CONSISTENCIA_ROL",
+        "nombre": "Consistencia del rol",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          27,
+          28,
+          29,
+          30,
+          52
+        ],
+        "factor": 20,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 15.0,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 15.1,
+            "maximo": 25.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 25.1,
+            "maximo": 35.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 35.1,
+            "maximo": 45.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 45.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "JORNADA",
+        "nombre": "Demandas de la jornada de trabajo",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          31,
+          33,
+          34
+        ],
+        "factor": 12,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 8.3,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 8.4,
+            "maximo": 25.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 25.1,
+            "maximo": 33.3,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 33.4,
+            "maximo": 50.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 50.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RECOMPENSAS_PERTENENCIA",
+        "nombre": "Recompensas derivadas de la pertenencia a la organización y del trabajo que se realiza",
+        "dominio": "Recompensas",
+        "items": [
+          95,
+          102,
+          103,
+          104,
+          105
+        ],
+        "factor": 20,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 0.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 1.0,
+            "maximo": 5.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 5.1,
+            "maximo": 10.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 10.1,
+            "maximo": 20.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 20.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RECONOCIMIENTO_COMPENSACION",
+        "nombre": "Reconocimiento y compensación",
+        "dominio": "Recompensas",
+        "items": [
+          96,
+          97,
+          98,
+          99,
+          100,
+          101
+        ],
+        "factor": 24,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 4.2,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 4.3,
+            "maximo": 16.7,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 16.8,
+            "maximo": 25.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 25.1,
+            "maximo": 37.5,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 37.6,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      }
+    ],
+    "dominios": [
+      {
+        "codigo": "DOM_LIDERAZGO",
+        "nombre": "Liderazgo y relaciones sociales en el trabajo",
+        "factor": 164,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 9.1,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 9.2,
+            "maximo": 17.7,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 17.8,
+            "maximo": 25.6,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 25.7,
+            "maximo": 34.8,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 34.9,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DOM_CONTROL",
+        "nombre": "Control sobre el trabajo",
+        "factor": 84,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 10.7,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 10.8,
+            "maximo": 19.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 19.1,
+            "maximo": 29.8,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 29.9,
+            "maximo": 40.5,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 40.6,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DOM_DEMANDAS",
+        "nombre": "Demandas del trabajo",
+        "factor": 200,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 28.5,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 28.6,
+            "maximo": 35.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 35.1,
+            "maximo": 41.5,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 41.6,
+            "maximo": 47.5,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 47.6,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DOM_RECOMPENSAS",
+        "nombre": "Recompensas",
+        "factor": 44,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 4.5,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 4.6,
+            "maximo": 11.4,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 11.5,
+            "maximo": 20.5,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 20.6,
+            "maximo": 29.5,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 29.6,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      }
+    ],
+    "total_cuestionario": {
+      "factor": 492,
+      "baremos": [
+        {
+          "nivel": "SIN_RIESGO",
+          "minimo": 0.0,
+          "maximo": 19.7,
+          "orden": 1
+        },
+        {
+          "nivel": "BAJO",
+          "minimo": 19.8,
+          "maximo": 25.8,
+          "orden": 2
+        },
+        {
+          "nivel": "MEDIO",
+          "minimo": 25.9,
+          "maximo": 31.5,
+          "orden": 3
+        },
+        {
+          "nivel": "ALTO",
+          "minimo": 31.6,
+          "maximo": 38.0,
+          "orden": 4
+        },
+        {
+          "nivel": "MUY_ALTO",
+          "minimo": 38.1,
+          "maximo": 100.0,
+          "orden": 5
+        }
+      ]
+    },
+    "total_general_intra_extra": {
+      "factor": 616,
+      "baremos": [
+        {
+          "nivel": "SIN_RIESGO",
+          "minimo": 0.0,
+          "maximo": 18.8,
+          "orden": 1
+        },
+        {
+          "nivel": "BAJO",
+          "minimo": 18.9,
+          "maximo": 24.4,
+          "orden": 2
+        },
+        {
+          "nivel": "MEDIO",
+          "minimo": 24.5,
+          "maximo": 29.5,
+          "orden": 3
+        },
+        {
+          "nivel": "ALTO",
+          "minimo": 29.6,
+          "maximo": 35.4,
+          "orden": 4
+        },
+        {
+          "nivel": "MUY_ALTO",
+          "minimo": 35.5,
+          "maximo": 100.0,
+          "orden": 5
+        }
+      ]
+    }
+  },
+  "forma_B": {
+    "codigo": "INTRALABORAL_B",
+    "items": [
+      {
+        "n": 1,
+        "texto": "El ruido en el lugar donde trabajo es molesto.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 2,
+        "texto": "En el lugar donde trabajo hace mucho frío.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 3,
+        "texto": "En el lugar donde trabajo hace mucho calor.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 4,
+        "texto": "El aire en el lugar donde trabajo es fresco y agradable.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 5,
+        "texto": "La luz del sitio donde trabajo es agradable.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 6,
+        "texto": "El espacio donde trabajo es cómodo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 7,
+        "texto": "En mi trabajo me preocupa estar expuesto a sustancias químicas que afecten mi salud.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 8,
+        "texto": "Mi trabajo me exige hacer mucho esfuerzo físico.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 9,
+        "texto": "Los equipos o herramientas con los que trabajo son cómodos.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 10,
+        "texto": "En mi trabajo me preocupa estar expuesto a microbios, animales o plantas que afecten mi salud.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 11,
+        "texto": "Me preocupa accidentarme en mi trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 12,
+        "texto": "El lugar donde trabajo es limpio y ordenado.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 13,
+        "texto": "Por la cantidad de trabajo que tengo debo quedarme tiempo adicional.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 14,
+        "texto": "Me alcanza el tiempo de trabajo para tener al día mis deberes.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 15,
+        "texto": "Por la cantidad de trabajo que tengo debo trabajar sin parar.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 16,
+        "texto": "Mi trabajo me exige hacer mucho esfuerzo mental.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 17,
+        "texto": "Mi trabajo me exige estar muy concentrado.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 18,
+        "texto": "Mi trabajo me exige memorizar mucha información.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 19,
+        "texto": "En mi trabajo tengo que hacer cálculos matemáticos.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 20,
+        "texto": "Mi trabajo requiere que me fije en pequeños detalles.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 21,
+        "texto": "Trabajo en horario de noche.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 22,
+        "texto": "En mi trabajo es posible tomar pausas para descansar.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 23,
+        "texto": "Mi trabajo me exige laborar en días de descanso, festivos o fines de semana.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 24,
+        "texto": "En mi trabajo puedo tomar fines de semana o días de descanso al mes.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 25,
+        "texto": "Cuando estoy en casa sigo pensando en el trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 26,
+        "texto": "Discuto con mi familia o amigos por causa de mi trabajo.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 27,
+        "texto": "Debo atender asuntos de trabajo cuando estoy en casa.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 28,
+        "texto": "Por mi trabajo el tiempo que paso con mi familia y amigos es muy poco.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 29,
+        "texto": "En mi trabajo puedo hacer cosas nuevas.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 30,
+        "texto": "Mi trabajo me permite desarrollar mis habilidades.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 31,
+        "texto": "Mi trabajo me permite aplicar mis conocimientos.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 32,
+        "texto": "Mi trabajo me permite aprender nuevas cosas.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 33,
+        "texto": "Puedo tomar pausas cuando las necesito.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 34,
+        "texto": "Puedo decidir cuánto trabajo hago en el día.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 35,
+        "texto": "Puedo decidir la velocidad a la que trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 36,
+        "texto": "Puedo cambiar el orden de las actividades en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 37,
+        "texto": "Puedo parar un momento mi trabajo para atender algún asunto personal.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 38,
+        "texto": "Me explican claramente los cambios que ocurren en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 39,
+        "texto": "Puedo dar sugerencias sobre los cambios que ocurren en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 40,
+        "texto": "Cuando se presentan cambios en mi trabajo se tienen en cuenta mis ideas y sugerencias.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 41,
+        "texto": "Me informan con claridad cuáles son mis funciones.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 42,
+        "texto": "Me informan cuáles son las decisiones que puedo tomar en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 43,
+        "texto": "Me explican claramente los resultados que debo lograr en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 44,
+        "texto": "Me explican claramente los objetivos de mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 45,
+        "texto": "Me informan claramente con quien puedo resolver los asuntos de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 46,
+        "texto": "La empresa me permite asistir a capacitaciones relacionadas con mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 47,
+        "texto": "Recibo capacitación útil para hacer mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 48,
+        "texto": "Recibo capacitación que me ayuda a hacer mejor mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 49,
+        "texto": "Mi jefe ayuda a organizar mejor el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 50,
+        "texto": "Mi jefe tiene en cuenta mis puntos de vista y opiniones.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 51,
+        "texto": "Mi jefe me anima para hacer mejor mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 52,
+        "texto": "Mi jefe distribuye las tareas de forma que me facilita el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 53,
+        "texto": "Mi jefe me comunica a tiempo la información relacionada con el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 54,
+        "texto": "La orientación que me da mi jefe me ayuda a hacer mejor el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 55,
+        "texto": "Mi jefe me ayuda a progresar en el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 56,
+        "texto": "Mi jefe me ayuda a sentirme bien en el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 57,
+        "texto": "Mi jefe ayuda a solucionar los problemas que se presentan en el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 58,
+        "texto": "Mi jefe me trata con respeto.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 59,
+        "texto": "Siento que puedo confiar en mi jefe.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 60,
+        "texto": "Mi jefe me escucha cuando tengo problemas de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 61,
+        "texto": "Mi jefe me brinda su apoyo cuando lo necesito.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 62,
+        "texto": "Me agrada el ambiente de mi grupo de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 63,
+        "texto": "En mi grupo de trabajo me tratan de forma respetuosa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 64,
+        "texto": "Siento que puedo confiar en mis compañeros de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 65,
+        "texto": "Me siento a gusto con mis compañeros de trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 66,
+        "texto": "En mi grupo de trabajo algunas personas me maltratan.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 67,
+        "texto": "Entre compañeros solucionamos los problemas de forma respetuosa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 68,
+        "texto": "Mi grupo de trabajo es muy unido.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 69,
+        "texto": "Cuando tenemos que realizar trabajo de grupo los compañeros colaboran.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 70,
+        "texto": "Es fácil poner de acuerdo al grupo para hacer el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 71,
+        "texto": "Mis compañeros de trabajo me ayudan cuando tengo dificultades.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 72,
+        "texto": "En mi trabajo las personas nos apoyamos unos a otros.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 73,
+        "texto": "Algunos compañeros de trabajo me escuchan cuando tengo problemas.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 74,
+        "texto": "Me informan sobre lo que hago bien en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 75,
+        "texto": "Me informan sobre lo que debo mejorar en mi trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 76,
+        "texto": "La información que recibo sobre mi rendimiento en el trabajo es clara.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 77,
+        "texto": "La forma como evalúan mi trabajo en la empresa me ayuda a mejorar.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 78,
+        "texto": "Me informan a tiempo sobre lo que debo mejorar en el trabajo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 79,
+        "texto": "En la empresa me pagan a tiempo mi salario.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 80,
+        "texto": "El pago que recibo es el que me ofreció la empresa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 81,
+        "texto": "El pago que recibo es el que merezco por el trabajo que realizo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 82,
+        "texto": "En mi trabajo tengo posibilidades de progresar.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 83,
+        "texto": "Las personas que hacen bien el trabajo pueden progresar en la empresa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 84,
+        "texto": "La empresa se preocupa por el bienestar de los trabajadores.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 85,
+        "texto": "Mi trabajo en la empresa es estable.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 86,
+        "texto": "El trabajo que hago me hace sentir bien.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 87,
+        "texto": "Siento orgullo de trabajar en esta empresa.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 88,
+        "texto": "Hablo bien de la empresa con otras personas.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      },
+      {
+        "n": 89,
+        "texto": "Atiendo clientes o usuarios muy enojados.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 90,
+        "texto": "Atiendo clientes o usuarios muy preocupados.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 91,
+        "texto": "Atiendo clientes o usuarios muy tristes.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 92,
+        "texto": "Mi trabajo me exige atender personas muy enfermas.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 93,
+        "texto": "Mi trabajo me exige atender personas muy necesitadas de ayuda.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 94,
+        "texto": "Atiendo clientes o usuarios que me maltratan.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 95,
+        "texto": "Mi trabajo me exige atender situaciones de violencia.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 96,
+        "texto": "Mi trabajo me exige atender situaciones muy tristes o dolorosas.",
+        "invertido": false,
+        "grupo_calificacion": "NORMAL"
+      },
+      {
+        "n": 97,
+        "texto": "Puedo expresar tristeza o enojo frente a las personas que atiendo.",
+        "invertido": true,
+        "grupo_calificacion": "INVERTIDO"
+      }
+    ],
+    "dimensiones": [
+      {
+        "codigo": "LIDERAZGO",
+        "nombre": "Características del liderazgo",
+        "dominio": "Liderazgo y relaciones sociales en el trabajo",
+        "items": [
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61
+        ],
+        "factor": 52,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 3.8,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 3.9,
+            "maximo": 13.5,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 13.6,
+            "maximo": 25.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 25.1,
+            "maximo": 38.5,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 38.6,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RELACIONES_SOCIALES",
+        "nombre": "Relaciones sociales en el trabajo",
+        "dominio": "Liderazgo y relaciones sociales en el trabajo",
+        "items": [
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73
+        ],
+        "factor": 48,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 6.3,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 6.4,
+            "maximo": 14.6,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 14.7,
+            "maximo": 27.1,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 27.2,
+            "maximo": 37.5,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 37.6,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RETROALIMENTACION",
+        "nombre": "Retroalimentación del desempeño",
+        "dominio": "Liderazgo y relaciones sociales en el trabajo",
+        "items": [
+          74,
+          75,
+          76,
+          77,
+          78
+        ],
+        "factor": 20,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 5.0,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 5.1,
+            "maximo": 20.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 20.1,
+            "maximo": 30.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 30.1,
+            "maximo": 50.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 50.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "CLARIDAD_ROL",
+        "nombre": "Claridad de rol",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          41,
+          42,
+          43,
+          44,
+          45
+        ],
+        "factor": 20,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 0.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 1.0,
+            "maximo": 5.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 5.1,
+            "maximo": 15.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 15.1,
+            "maximo": 30.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 30.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "CAPACITACION",
+        "nombre": "Capacitación",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          46,
+          47,
+          48
+        ],
+        "factor": 12,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 0.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 1.0,
+            "maximo": 16.7,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 16.8,
+            "maximo": 25.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 25.1,
+            "maximo": 50.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 50.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "PARTICIPACION_CAMBIO",
+        "nombre": "Participación y manejo del cambio",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          38,
+          39,
+          40
+        ],
+        "factor": 12,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 16.7,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 16.8,
+            "maximo": 33.3,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 33.4,
+            "maximo": 41.7,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 41.8,
+            "maximo": 58.3,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 58.4,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "OPORTUNIDADES_HABILIDADES",
+        "nombre": "Oportunidades para el uso y desarrollo de habilidades y conocimientos",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          29,
+          30,
+          31,
+          32
+        ],
+        "factor": 16,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 12.5,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 12.6,
+            "maximo": 25.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 25.1,
+            "maximo": 37.5,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 37.6,
+            "maximo": 56.3,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 56.4,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "CONTROL_AUTONOMIA",
+        "nombre": "Control y autonomía sobre el trabajo",
+        "dominio": "Control sobre el trabajo",
+        "items": [
+          34,
+          35,
+          36
+        ],
+        "factor": 12,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 33.3,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 33.4,
+            "maximo": 50.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 50.1,
+            "maximo": 66.7,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 66.8,
+            "maximo": 75.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 75.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DEMANDAS_AMBIENTALES",
+        "nombre": "Demandas ambientales y de esfuerzo físico",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "factor": 48,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 22.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 23.0,
+            "maximo": 31.3,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 31.4,
+            "maximo": 39.6,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 39.7,
+            "maximo": 47.9,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 48.0,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DEMANDAS_EMOCIONALES",
+        "nombre": "Demandas emocionales",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97
+        ],
+        "factor": 36,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 19.4,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 19.5,
+            "maximo": 27.8,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 27.9,
+            "maximo": 38.9,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 39.0,
+            "maximo": 47.2,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 47.3,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DEMANDAS_CUANTITATIVAS",
+        "nombre": "Demandas cuantitativas",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          13,
+          14,
+          15
+        ],
+        "factor": 12,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 16.7,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 16.8,
+            "maximo": 33.3,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 33.4,
+            "maximo": 41.7,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 41.8,
+            "maximo": 50.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 50.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "INFLUENCIA_EXTRALABORAL",
+        "nombre": "Influencia del trabajo sobre el entorno extralaboral",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          25,
+          26,
+          27,
+          28
+        ],
+        "factor": 16,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 12.5,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 12.6,
+            "maximo": 25.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 25.1,
+            "maximo": 31.3,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 31.4,
+            "maximo": 50.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 50.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "CARGA_MENTAL",
+        "nombre": "Demandas de carga mental",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "factor": 20,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 50.0,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 50.1,
+            "maximo": 65.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 65.1,
+            "maximo": 75.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 75.1,
+            "maximo": 85.0,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 85.1,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "JORNADA",
+        "nombre": "Demandas de la jornada de trabajo",
+        "dominio": "Demandas del trabajo",
+        "items": [
+          21,
+          22,
+          23,
+          24,
+          33,
+          37
+        ],
+        "factor": 24,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 25.0,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 25.1,
+            "maximo": 37.5,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 37.6,
+            "maximo": 45.8,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 45.9,
+            "maximo": 58.3,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 58.4,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RECOMPENSAS_PERTENENCIA",
+        "nombre": "Recompensas derivadas de la pertenencia a la organización y del trabajo que se realiza",
+        "dominio": "Recompensas",
+        "items": [
+          85,
+          86,
+          87,
+          88
+        ],
+        "factor": 16,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 0.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 1.0,
+            "maximo": 6.3,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 6.4,
+            "maximo": 12.5,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 12.6,
+            "maximo": 18.8,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 18.9,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "RECONOCIMIENTO_COMPENSACION",
+        "nombre": "Reconocimiento y compensación",
+        "dominio": "Recompensas",
+        "items": [
+          79,
+          80,
+          81,
+          82,
+          83,
+          84
+        ],
+        "factor": 24,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 0.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 1.0,
+            "maximo": 12.5,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 12.6,
+            "maximo": 25.0,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 25.1,
+            "maximo": 37.5,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 37.6,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      }
+    ],
+    "dominios": [
+      {
+        "codigo": "DOM_LIDERAZGO",
+        "nombre": "Liderazgo y relaciones sociales en el trabajo",
+        "factor": 120,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 8.3,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 8.4,
+            "maximo": 17.5,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 17.6,
+            "maximo": 26.7,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 26.8,
+            "maximo": 38.3,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 38.4,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DOM_CONTROL",
+        "nombre": "Control sobre el trabajo",
+        "factor": 72,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 19.4,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 19.5,
+            "maximo": 26.4,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 26.5,
+            "maximo": 34.7,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 34.8,
+            "maximo": 43.1,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 43.2,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DOM_DEMANDAS",
+        "nombre": "Demandas del trabajo",
+        "factor": 156,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 26.9,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 27.0,
+            "maximo": 33.3,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 33.4,
+            "maximo": 37.8,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 37.9,
+            "maximo": 44.2,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 44.3,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      },
+      {
+        "codigo": "DOM_RECOMPENSAS",
+        "nombre": "Recompensas",
+        "factor": 40,
+        "baremos": [
+          {
+            "nivel": "SIN_RIESGO",
+            "minimo": 0.0,
+            "maximo": 2.5,
+            "orden": 1
+          },
+          {
+            "nivel": "BAJO",
+            "minimo": 2.6,
+            "maximo": 10.0,
+            "orden": 2
+          },
+          {
+            "nivel": "MEDIO",
+            "minimo": 10.1,
+            "maximo": 17.5,
+            "orden": 3
+          },
+          {
+            "nivel": "ALTO",
+            "minimo": 17.6,
+            "maximo": 27.5,
+            "orden": 4
+          },
+          {
+            "nivel": "MUY_ALTO",
+            "minimo": 27.6,
+            "maximo": 100.0,
+            "orden": 5
+          }
+        ]
+      }
+    ],
+    "total_cuestionario": {
+      "factor": 388,
+      "baremos": [
+        {
+          "nivel": "SIN_RIESGO",
+          "minimo": 0.0,
+          "maximo": 20.6,
+          "orden": 1
+        },
+        {
+          "nivel": "BAJO",
+          "minimo": 20.7,
+          "maximo": 26.0,
+          "orden": 2
+        },
+        {
+          "nivel": "MEDIO",
+          "minimo": 26.1,
+          "maximo": 31.2,
+          "orden": 3
+        },
+        {
+          "nivel": "ALTO",
+          "minimo": 31.3,
+          "maximo": 38.7,
+          "orden": 4
+        },
+        {
+          "nivel": "MUY_ALTO",
+          "minimo": 38.8,
+          "maximo": 100.0,
+          "orden": 5
+        }
+      ]
+    },
+    "total_general_intra_extra": {
+      "factor": 512,
+      "baremos": [
+        {
+          "nivel": "SIN_RIESGO",
+          "minimo": 0.0,
+          "maximo": 19.9,
+          "orden": 1
+        },
+        {
+          "nivel": "BAJO",
+          "minimo": 20.0,
+          "maximo": 24.8,
+          "orden": 2
+        },
+        {
+          "nivel": "MEDIO",
+          "minimo": 24.9,
+          "maximo": 29.5,
+          "orden": 3
+        },
+        {
+          "nivel": "ALTO",
+          "minimo": 29.6,
+          "maximo": 35.4,
+          "orden": 4
+        },
+        {
+          "nivel": "MUY_ALTO",
+          "minimo": 35.5,
+          "maximo": 100.0,
+          "orden": 5
+        }
+      ]
+    }
+  },
+  "conteos": {
+    "items_A": 123,
+    "invertidos_A": 73,
+    "dimensiones_A": 19,
+    "items_B": 97,
+    "invertidos_B": 68,
+    "dimensiones_B": 16
+  }
+}
