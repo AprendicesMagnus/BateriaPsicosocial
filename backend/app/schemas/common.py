@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import AfterValidator, AliasChoices, BaseModel, BeforeValidator, EmailStr, Field, field_validator
@@ -83,11 +83,18 @@ class UsuarioPublico(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# Roles que una persona puede elegir por sí misma al registrarse.
+# Nunca incluir SUPER_ADMINISTRADOR aquí.
+# Nota: "EVALUADOR_SST" es el código interno de "Psicologo".
+RolRegistro = Literal["JEFE", "ADMINISTRADOR", "EVALUADOR_SST"]
+
+
 class RegistroRequest(BaseModel):
     nombre: NombrePersona
     apellido: NombrePersona
     email: Correo
     password: PasswordNueva
+    rol: RolRegistro
 
 
 class LoginRequest(BaseModel):
@@ -97,6 +104,8 @@ class LoginRequest(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     credential: str = Field(min_length=20, description="ID token (JWT) entregado por Google Identity Services")
+    # Solo es obligatorio la primera vez (cuando la cuenta aún no existe).
+    rol: RolRegistro | None = None
 
 
 class VerificarEmailRequest(BaseModel):

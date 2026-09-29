@@ -76,6 +76,27 @@
   overflow-y: auto;
 }
 
+/* Botón "Volver" (a la landing) en Login y Crear cuenta */
+.auth-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-900);
+  text-decoration: none;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.auth-back:hover,
+.auth-back:focus-visible {
+  background: rgba(15, 23, 42, 0.08);
+}
+
 .auth-form-panel h1 {
   margin: 0 0 14px;
   font-size: 26px;

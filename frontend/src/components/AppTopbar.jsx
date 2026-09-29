@@ -1,3 +1,4 @@
+import { etiquetaRol } from "../utils/roles";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -23,7 +24,7 @@ export default function AppTopbar() {
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
     : "Usuario";
-  const rolUsuario = usuario?.rol ?? "";
+  const rolUsuario = etiquetaRol(usuario?.rol);
   const iniciales =
     nombreUsuario
       .split(" ")

@@ -8,7 +8,7 @@ from app.models.user import Usuario
 
 
 def validar_permiso_seguimiento(actual: Usuario):
-    if actual.rol.codigo not in {"ADMINISTRADOR", "EVALUADOR_SST"}:
+    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", "EVALUADOR_SST"}:
         raise AppError(403, "No tiene permisos para gestionar el plan de acción / seguimiento de recomendaciones.")
 
 

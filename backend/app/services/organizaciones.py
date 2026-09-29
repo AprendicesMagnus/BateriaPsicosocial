@@ -12,7 +12,7 @@ from app.services.auth import crear_y_enviar_codigo
 
 def listar_organizaciones(db: Session, actual: Usuario) -> list[Organizacion]:
     query = db.query(Organizacion)
-    if actual.rol.codigo != "ADMINISTRADOR":
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         query = query.filter(Organizacion.id == actual.organizacion_id)
     return query.order_by(Organizacion.nombre.asc()).all()
 

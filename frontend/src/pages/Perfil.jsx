@@ -1,3 +1,4 @@
+import { etiquetaRol } from "../utils/roles";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import AppTopbar from "../components/AppTopbar";
@@ -45,7 +46,7 @@ export default function Perfil() {
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
     : "Usuario";
-  const rolUsuario = usuario?.rol ?? "Sin rol asignado";
+  const rolUsuario = etiquetaRol(usuario?.rol) || "Sin rol asignado";
   const correoUsuario = usuario?.email ?? usuario?.correo ?? "—";
   const empresaUsuario = usuario?.empresa ?? "—";
   const iniciales =

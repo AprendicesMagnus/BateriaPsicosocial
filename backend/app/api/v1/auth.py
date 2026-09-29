@@ -6,6 +6,7 @@ from app.db.session import get_db
 from app.models.user import Usuario
 from app.schemas.common import (
     ForgotPasswordRequest,
+    GoogleLoginRequest,
     LoginRequest,
     ReenviarCodigoRequest,
     RegistroRequest,
@@ -68,16 +69,15 @@ def me(usuario: Usuario = Depends(get_current_user)):
     return auth_service.me(usuario)
 
 
-# ---> RUTA DE GOOGLE AGREGADA PARA ENLAZAR CON EL FRONTEND <---
 @router.post("/google")
-def login_google(request_data: dict, request: Request, db: Session = Depends(get_db)):
-    # Toma el token que envía el frontend (access_token o credential)
-    token_google = request_data.get("credential")
-    
-    # Llama al servicio de autenticación de Google en Python
-    resultado = auth_service.login_con_google(db, token_google)
-    
-    # Registra la acción en la tabla de auditoría del sistema
+def login_google(data: GoogleLoginRequest, request: Request, db: Session = Depends(get_db)):
+    # Si la cuenta no existe y no llegó el rol, el servicio responde requiereRol=True
+    # (no crea nada). El frontend muestra la pantalla de selección de rol y vuelve a
+    # llamar a este mismo endpoint con {credential, rol}.
+    resultado = auth_service.login_con_google(db, data.credential, data.rol)
+    if resultado.get("requiereRol"):
+        return resultado
+
     auditoria_service.registrar_auditoria(
         db,
         usuario=None,
@@ -87,4 +87,3 @@ def login_google(request_data: dict, request: Request, db: Session = Depends(get
         request=request,
     )
     return resultado
-

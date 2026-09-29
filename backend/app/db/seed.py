@@ -16,13 +16,27 @@ PERMISOS = [
 ]
 
 ROLES = {
-    "ADMINISTRADOR": {
-        "nombre": "Administrador",
-        "descripcion": "Administra el sistema en su totalidad.",
+    "SUPER_ADMINISTRADOR": {
+        "nombre": "Super Administrador",
+        "descripcion": "Privilegios globales: administra el sistema en su totalidad.",
         "permisos": [codigo for codigo, _, _ in PERMISOS],
     },
+    # TODO: definir permisos de ADMINISTRADOR y JEFE. Por ahora quedan sin permisos
+    # de gestión (mínimo privilegio) porque los pueden elegir al registrarse.
+    "ADMINISTRADOR": {
+        "nombre": "Administrador",
+        "descripcion": "Administrador de la organización (sin privilegios globales).",
+        "permisos": [],
+    },
+    "JEFE": {
+        "nombre": "Jefe",
+        "descripcion": "Jefe de área u organización.",
+        "permisos": [],
+    },
+    # El código interno se mantiene EVALUADOR_SST para no romper el resto del sistema;
+    # a nivel de interfaz se muestra como "Psicologo".
     "EVALUADOR_SST": {
-        "nombre": "Evaluador SST",
+        "nombre": "Psicologo",
         "descripcion": "Aplica y gestiona evaluaciones de riesgo psicosocial.",
         "permisos": [
             "GESTIONAR_CUESTIONARIOS",
@@ -30,11 +44,6 @@ ROLES = {
             "VER_RESULTADOS",
             "GENERAR_INFORMES",
         ],
-    },
-    "TRABAJADOR": {
-        "nombre": "Trabajador",
-        "descripcion": "Responde las evaluaciones asignadas.",
-        "permisos": [],
     },
 }
 
@@ -61,7 +70,32 @@ def sembrar_permisos(db) -> dict[str, Permiso]:
     return existentes
 
 
+def _migrar_roles_legado(db) -> None:
+    """Adapta una base de datos existente al nuevo esquema de roles (idempotente)."""
+    # 1) El antiguo ADMINISTRADOR (privilegios globales) pasa a ser SUPER_ADMINISTRADOR.
+    #    Se renombra la misma fila para que los usuarios asignados no pierdan el rol.
+    super_admin = db.query(Rol).filter(Rol.codigo == "SUPER_ADMINISTRADOR").first()
+    legado = db.query(Rol).filter(Rol.codigo == "ADMINISTRADOR").first()
+    if super_admin is None and legado is not None:
+        legado.codigo = "SUPER_ADMINISTRADOR"
+        legado.nombre = ROLES["SUPER_ADMINISTRADOR"]["nombre"]
+        legado.descripcion = ROLES["SUPER_ADMINISTRADOR"]["descripcion"]
+        db.flush()
+
+    # 2) Se elimina el rol TRABAJADOR. Si aún tiene usuarios asignados se desactiva
+    #    (no se puede borrar sin romper evaluaciones ya existentes).
+    trabajador = db.query(Rol).filter(Rol.codigo == "TRABAJADOR").first()
+    if trabajador is not None:
+        if db.query(Usuario).filter(Usuario.rol_id == trabajador.id).first():
+            trabajador.activo = False
+        else:
+            db.query(RolPermiso).filter(RolPermiso.rol_id == trabajador.id).delete()
+            db.delete(trabajador)
+        db.flush()
+
+
 def sembrar_roles(db, permisos: dict[str, Permiso]) -> dict[str, Rol]:
+    _migrar_roles_legado(db)
     existentes = {r.codigo: r for r in db.query(Rol).all()}
     for codigo, datos in ROLES.items():
         rol = existentes.get(codigo)
@@ -76,6 +110,9 @@ def sembrar_roles(db, permisos: dict[str, Permiso]) -> dict[str, Rol]:
             db.add(rol)
             db.flush()
             existentes[codigo] = rol
+        else:
+            rol.nombre = datos["nombre"]
+            rol.descripcion = datos["descripcion"]
         asignados = {rp.permiso_id for rp in rol.permisos}
         for codigo_permiso in datos["permisos"]:
             permiso = permisos[codigo_permiso]
@@ -95,7 +132,7 @@ def sembrar_administrador(db, roles: dict[str, Rol]) -> None:
         apellido=settings.admin_apellido,
         email=settings.admin_email.lower(),
         password_hash=hash_password(settings.admin_password),
-        rol_id=roles["ADMINISTRADOR"].id,
+        rol_id=roles["SUPER_ADMINISTRADOR"].id,
         estado="ACTIVO",
         email_verificado=True,
     )

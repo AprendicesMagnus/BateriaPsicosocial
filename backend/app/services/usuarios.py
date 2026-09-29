@@ -9,7 +9,7 @@ from app.services.auth import usuario_publico
 
 def listar_usuarios(db: Session, actual: Usuario) -> list[dict]:
     query = db.query(Usuario).options(joinedload(Usuario.rol))
-    if actual.rol.codigo != "ADMINISTRADOR":
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         if actual.organizacion_id is None:
             return []
         query = query.filter(Usuario.organizacion_id == actual.organizacion_id)
@@ -27,7 +27,7 @@ def crear_usuario(db: Session, data, actual: Usuario) -> dict:
     rol = db.query(Rol).filter(Rol.codigo == data.rolCodigo, Rol.activo.is_(True)).first()
     if rol is None:
         raise AppError(400, "El rol indicado no existe o no está activo.")
-    if actual.rol.codigo != "ADMINISTRADOR" and data.organizacionId != actual.organizacion_id:
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR" and data.organizacionId != actual.organizacion_id:
         raise AppError(403, "No puede crear usuarios de otra organización.")
 
     if data.numeroIdentificacion and data.organizacionId:
@@ -71,7 +71,7 @@ def actualizar_usuario(db: Session, usuario_id, data, actual: Usuario) -> dict:
     usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario_id).first()
     if usuario is None:
         raise AppError(404, "Usuario no encontrado.")
-    if actual.rol.codigo != "ADMINISTRADOR" and usuario.organizacion_id != actual.organizacion_id:
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR" and usuario.organizacion_id != actual.organizacion_id:
         raise AppError(403, "No tiene acceso a este usuario.")
 
     if data.rolCodigo:
@@ -115,7 +115,7 @@ def desactivar_usuario(db: Session, usuario_id, actual: Usuario) -> dict:
 
 
 def listar_trabajadores(db: Session, organizacion_id, actual: Usuario) -> list[dict]:
-    if actual.rol.codigo != "ADMINISTRADOR" and actual.organizacion_id != organizacion_id:
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR" and actual.organizacion_id != organizacion_id:
         raise AppError(403, "No tiene acceso a esta organización.")
     trabajadores = (
         db.query(Usuario)
@@ -144,12 +144,12 @@ def cambiar_rol_usuario(db: Session, usuario_id, rol_codigo: str, actual: Usuari
         raise AppError(400, f"El rol '{rol_codigo}' no existe o no está activo.")
 
     # Protección: no permitir que el único administrador activo se quite ese rol
-    if usuario.rol.codigo == "ADMINISTRADOR" and rol_codigo != "ADMINISTRADOR":
+    if usuario.rol.codigo == "SUPER_ADMINISTRADOR" and rol_codigo != "SUPER_ADMINISTRADOR":
         conteo_admins_activos = (
             db.query(Usuario)
             .join(Rol)
             .filter(
-                Rol.codigo == "ADMINISTRADOR",
+                Rol.codigo == "SUPER_ADMINISTRADOR",
                 Usuario.estado == "ACTIVO",
                 Usuario.id != usuario_id,
             )

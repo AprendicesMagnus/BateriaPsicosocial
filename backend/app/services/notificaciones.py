@@ -160,7 +160,7 @@ def _ejecutar_envio_recordatorios(db: Session, horas_idempotencia: int = 24) -> 
 def enviar_recordatorios_pendientes(
     db: Session, actual: Usuario, horas_idempotencia: int = 24
 ) -> dict:
-    if actual.rol.codigo not in {"ADMINISTRADOR", "EVALUADOR_SST"}:
+    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", "EVALUADOR_SST"}:
         raise AppError(403, "No tiene permisos para enviar recordatorios de evaluación.")
 
     # Si es EVALUADOR_SST, la query interna no filtra por evaluador — el endpoint original tampoco

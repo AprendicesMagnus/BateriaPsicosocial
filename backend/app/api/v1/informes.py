@@ -118,7 +118,7 @@ def descargar_informe(
         raise AppError(404, "Informe no encontrado.")
 
     # Validar permisos de acceso según el tipo de informe
-    es_admin = actual.rol.codigo == "ADMINISTRADOR"
+    es_admin = actual.rol.codigo == "SUPER_ADMINISTRADOR"
     es_evaluador = actual.rol.codigo == "EVALUADOR_SST"
     misma_org = es_admin or (actual.organizacion_id == informe.evaluacion.organizacion_id)
 

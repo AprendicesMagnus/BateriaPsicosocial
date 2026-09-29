@@ -13,7 +13,7 @@ settings = get_settings()
 
 def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
     rol = actual.rol.codigo
-    if rol == "ADMINISTRADOR":
+    if rol == "SUPER_ADMINISTRADOR":
         query_areas = db.query(Area).options(joinedload(Area.organizacion))
     elif rol == "EVALUADOR_SST":
         if not actual.organizacion_id:

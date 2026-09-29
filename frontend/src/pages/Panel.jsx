@@ -12,9 +12,10 @@ import PlanDeAccion from "../components/PlanDeAccion";
 import { uuidValido } from "../utils/validaciones";
 
 const ROL_LABEL = {
+  SUPER_ADMINISTRADOR: "Super Administrador",
   ADMINISTRADOR: "Administrador",
-  EVALUADOR_SST: "Evaluador SST",
-  TRABAJADOR: "Trabajador",
+  JEFE: "Jefe",
+  EVALUADOR_SST: "Psicologo",
 };
 
 export default function Panel() {

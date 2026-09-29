@@ -22,7 +22,7 @@ TEXTO_CONSENTIMIENTO = "CONSENTIMIENTO_BRP_V1"
 
 
 def _evaluador_asignado(usuario: Usuario, evaluacion: Evaluacion) -> None:
-    if usuario.rol.codigo == "ADMINISTRADOR":
+    if usuario.rol.codigo == "SUPER_ADMINISTRADOR":
         return
     if evaluacion.evaluador_id != usuario.id:
         raise AppError(403, "Solo el evaluador SST asignado puede gestionar esta evaluación.")
@@ -45,7 +45,7 @@ def obtener_evaluacion(db: Session, evaluacion_id, actual: Usuario) -> dict:
 
 
 def crear_evaluacion(db: Session, data, actual: Usuario) -> dict:
-    if actual.rol.codigo not in {"ADMINISTRADOR", "EVALUADOR_SST"}:
+    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", "EVALUADOR_SST"}:
         raise AppError(403, "No tiene permisos para crear evaluaciones.")
     if actual.rol.codigo == "EVALUADOR_SST" and actual.organizacion_id != data.organizacionId:
         raise AppError(403, "Solo puede crear evaluaciones de su organización.")
@@ -508,7 +508,7 @@ def _alertar_riesgo(db: Session, participante: EvaluacionParticipante, resultado
     administradores = (
         db.query(Usuario)
         .join(Usuario.rol)
-        .filter(Usuario.rol.has(codigo="ADMINISTRADOR"), Usuario.estado == "ACTIVO")
+        .filter(Usuario.rol.has(codigo="SUPER_ADMINISTRADOR"), Usuario.estado == "ACTIVO")
         .all()
     )
     for admin in administradores:
@@ -561,7 +561,7 @@ def _participante_trabajador(db: Session, evaluacion_id, actual: Usuario) -> Eva
 
 
 def _autorizar_consulta(actual: Usuario, evaluacion: Evaluacion) -> None:
-    if actual.rol.codigo == "ADMINISTRADOR":
+    if actual.rol.codigo == "SUPER_ADMINISTRADOR":
         return
     if actual.rol.codigo == "EVALUADOR_SST" and evaluacion.evaluador_id == actual.id:
         return

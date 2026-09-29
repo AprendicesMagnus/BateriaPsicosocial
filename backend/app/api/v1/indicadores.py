@@ -16,7 +16,7 @@ def obtener_indicadores(
     actual: Usuario = Depends(get_current_user),
 ):
     # Si es trabajador/evaluador restringir a su organizacion si no especifica
-    if actual.rol.codigo != "ADMINISTRADOR":
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         organizacion_id = actual.organizacion_id
 
     return indicadores_service.obtener_resumen_indicadores(db, organizacion_id)
@@ -33,7 +33,7 @@ def obtener_historico_indicadores(
 ):
     org_target = organizacion_id or organizacionId
     dim_target = dimension_id or dimensionId
-    if actual.rol.codigo != "ADMINISTRADOR":
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         org_target = actual.organizacion_id
 
     return indicadores_service.obtener_historico_indicadores(db, org_target, dim_target)
@@ -45,7 +45,7 @@ def obtener_indicadores_por_categoria(
     db: Session = Depends(get_db),
     actual: Usuario = Depends(get_current_user),
 ):
-    if actual.rol.codigo != "ADMINISTRADOR":
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         organizacion_id = actual.organizacion_id
 
     return indicadores_service.obtener_distribucion_por_categoria(db, organizacion_id)

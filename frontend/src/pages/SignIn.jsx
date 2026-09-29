@@ -10,6 +10,7 @@ import {
   FormMessage
 } from "../components/FormControls";
 
+import SeleccionRolGoogle from "../components/SeleccionRolGoogle";
 import { login, loginConGoogle } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import { emailValido, normalizarEmail } from "../utils/validaciones";
@@ -63,6 +64,10 @@ export default function SignIn() {
 
   // Referencia donde Google va a dibujar su botón.
   const googleButtonRef = useRef(null);
+
+  // Datos de Google pendientes de que la persona elija su rol (cuenta nueva).
+  const [googlePendiente, setGooglePendiente] = useState(null);
+  const [errorRolGoogle, setErrorRolGoogle] = useState("");
 
   const { iniciarSesion } = useAuth();
   const navigate = useNavigate();
@@ -178,6 +183,15 @@ export default function SignIn() {
         credential: response.credential
       });
 
+      // Cuenta nueva: primero se pide el rol, todavía no se crea nada.
+      if (data.requiereRol) {
+        setGooglePendiente({
+          credential: response.credential,
+          email: data.email
+        });
+        return;
+      }
+
       iniciarSesion(
         data.token,
         data.usuario
@@ -194,6 +208,27 @@ export default function SignIn() {
         err.message ||
           "No se pudo iniciar sesión con Google."
       );
+    } finally {
+      setLoadingGoogle(false);
+    }
+  }
+
+  async function confirmarRolGoogle(rol) {
+    if (!googlePendiente) return;
+    setErrorRolGoogle("");
+    setLoadingGoogle(true);
+
+    try {
+      const data = await loginConGoogle({
+        credential: googlePendiente.credential,
+        rol
+      });
+
+      iniciarSesion(data.token, data.usuario);
+      setGooglePendiente(null);
+      navigate("/Inicio");
+    } catch (err) {
+      setErrorRolGoogle(err.message || "No se pudo crear la cuenta con Google.");
     } finally {
       setLoadingGoogle(false);
     }
@@ -297,7 +332,7 @@ export default function SignIn() {
    */
 
   return (
-    <AuthLayout>
+    <AuthLayout volverA="/">
       <div className="login-container">
 
         <img
@@ -427,6 +462,19 @@ export default function SignIn() {
 
         </form>
       </div>
+
+      {googlePendiente && (
+        <SeleccionRolGoogle
+          email={googlePendiente.email}
+          loading={loadingGoogle}
+          error={errorRolGoogle}
+          onConfirmar={confirmarRolGoogle}
+          onCancelar={() => {
+            setGooglePendiente(null);
+            setErrorRolGoogle("");
+          }}
+        />
+      )}
     </AuthLayout>
   );
 }

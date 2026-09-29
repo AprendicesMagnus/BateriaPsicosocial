@@ -57,19 +57,19 @@ def tiene_permisos(usuario: Usuario, codigos: set[str]) -> bool:
 
 
 def require_admin(usuario: Usuario = Depends(get_current_user)) -> Usuario:
-    if usuario.rol.codigo != "ADMINISTRADOR":
+    if usuario.rol.codigo != "SUPER_ADMINISTRADOR":
         raise AppError(403, "Esta acción está restringida al administrador del sistema.")
     return usuario
 
 
 def require_gestor(usuario: Usuario = Depends(get_current_user)) -> Usuario:
-    if usuario.rol.codigo not in {"ADMINISTRADOR", "EVALUADOR_SST"}:
+    if usuario.rol.codigo not in {"SUPER_ADMINISTRADOR", "EVALUADOR_SST"}:
         raise AppError(403, "Esta acción requiere permisos de administrador o evaluador SST.")
     return usuario
 
 
 def es_administrador(usuario: Usuario) -> bool:
-    return usuario.rol.codigo == "ADMINISTRADOR"
+    return usuario.rol.codigo == "SUPER_ADMINISTRADOR"
 
 
 def es_evaluador(usuario: Usuario) -> bool:

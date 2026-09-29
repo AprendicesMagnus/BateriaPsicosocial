@@ -7,6 +7,9 @@ import {
   PrimaryButton,
   FormMessage
 } from "../components/FormControls";
+import SeleccionRolGoogle from "../components/SeleccionRolGoogle";
+import { ROLES_REGISTRO } from "../utils/roles";
+import { useAuth } from "../context/AuthContext";
 import { register, loginConGoogle } from "../api/auth";
 import {
   TEXTO_AYUDA_PASSWORD,
@@ -55,7 +58,8 @@ export default function CreateAccount() {
     apellido: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    rol: ""
   });
 
   const [tocados, setTocados] = useState({});
@@ -66,6 +70,11 @@ export default function CreateAccount() {
 
   const googleButtonRef = useRef(null);
 
+  // Datos de Google pendientes de que la persona elija su rol (cuenta nueva).
+  const [googlePendiente, setGooglePendiente] = useState(null);
+  const [errorRolGoogle, setErrorRolGoogle] = useState("");
+
+  const { iniciarSesion } = useAuth();
   const navigate = useNavigate();
 
   const marcar = (campo) => {
@@ -96,6 +105,8 @@ export default function CreateAccount() {
       : !passwordValida(form.password)
       ? TEXTO_AYUDA_PASSWORD
       : "",
+
+    rol: !form.rol ? "Selecciona un rol." : "",
 
     confirmPassword: !form.confirmPassword
       ? "Este campo es obligatorio."
@@ -136,7 +147,8 @@ export default function CreateAccount() {
         nombre: nomTrim,
         apellido: apeTrim,
         email: correoNorm,
-        password: form.password
+        password: form.password,
+        rol: form.rol
       });
 
       navigate("/Inicio", { state: { email: correoNorm } });
@@ -162,6 +174,16 @@ export default function CreateAccount() {
         credential: response.credential
       });
 
+      // Cuenta nueva: primero se pide el rol, todavía no se crea nada.
+      if (data.requiereRol) {
+        setGooglePendiente({
+          credential: response.credential,
+          email: data.email
+        });
+        return;
+      }
+
+      iniciarSesion(data.token, data.usuario);
       navigate("/Inicio");
     } catch (err) {
       console.error(
@@ -173,6 +195,27 @@ export default function CreateAccount() {
         err.message ||
           "No se pudo crear la cuenta con Google."
       );
+    } finally {
+      setLoadingGoogle(false);
+    }
+  }
+
+  async function confirmarRolGoogle(rol) {
+    if (!googlePendiente) return;
+    setErrorRolGoogle("");
+    setLoadingGoogle(true);
+
+    try {
+      const data = await loginConGoogle({
+        credential: googlePendiente.credential,
+        rol
+      });
+
+      iniciarSesion(data.token, data.usuario);
+      setGooglePendiente(null);
+      navigate("/Inicio");
+    } catch (err) {
+      setErrorRolGoogle(err.message || "No se pudo crear la cuenta con Google.");
     } finally {
       setLoadingGoogle(false);
     }
@@ -236,7 +279,7 @@ export default function CreateAccount() {
   }, []);
 
   return (
-    <AuthLayout illustration="network">
+    <AuthLayout illustration="network" volverA="/">
       <img
         src="/logo oscu.png"
         alt="Magnus SIG"
@@ -321,6 +364,28 @@ export default function CreateAccount() {
           }
           placeholder="nombre@empresa.com"
         />
+
+        <label className="field" htmlFor="rol-registro">
+          <span className="field__label">Rol</span>
+          <select
+            id="rol-registro"
+            className={`field__input ${mostrarError("rol") ? "field__input--invalid" : ""}`.trim()}
+            value={form.rol}
+            onChange={(e) => setForm((f) => ({ ...f, rol: e.target.value }))}
+            onBlur={() => marcar("rol")}
+            aria-invalid={mostrarError("rol") ? "true" : "false"}
+          >
+            <option value="">Selecciona un rol</option>
+            {ROLES_REGISTRO.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+          {mostrarError("rol") && (
+            <span className="field__error">{errores.rol}</span>
+          )}
+        </label>
 
         <PasswordField
           label="Contraseña"
@@ -407,6 +472,19 @@ export default function CreateAccount() {
           </div>
         )}
       </form>
+
+      {googlePendiente && (
+        <SeleccionRolGoogle
+          email={googlePendiente.email}
+          loading={loadingGoogle}
+          error={errorRolGoogle}
+          onConfirmar={confirmarRolGoogle}
+          onCancelar={() => {
+            setGooglePendiente(null);
+            setErrorRolGoogle("");
+          }}
+        />
+      )}
     </AuthLayout>
   );
 }

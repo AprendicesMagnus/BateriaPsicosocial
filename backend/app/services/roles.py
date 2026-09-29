@@ -47,7 +47,7 @@ def actualizar_rol(db: Session, rol_id, data) -> dict:
     if data.descripcion is not None:
         rol.descripcion = data.descripcion
     if data.activo is not None:
-        if rol.codigo == "ADMINISTRADOR" and data.activo is False:
+        if rol.codigo == "SUPER_ADMINISTRADOR" and data.activo is False:
             raise AppError(400, "No se puede desactivar el rol de administrador del sistema.")
         rol.activo = data.activo
     if data.permisos is not None:
@@ -61,7 +61,7 @@ def eliminar_rol(db: Session, rol_id) -> dict:
     rol = db.query(Rol).filter(Rol.id == rol_id).first()
     if rol is None:
         raise AppError(404, "Rol no encontrado.")
-    if rol.es_sistema or rol.codigo == "ADMINISTRADOR":
+    if rol.es_sistema or rol.codigo == "SUPER_ADMINISTRADOR":
         raise AppError(400, "No se puede eliminar el rol de administrador del sistema.")
     if db.query(Usuario).filter(Usuario.rol_id == rol.id).first():
         raise AppError(400, "No se puede eliminar un rol asignado a usuarios.")

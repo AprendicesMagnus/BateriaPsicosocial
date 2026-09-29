@@ -66,7 +66,7 @@ def crear_compra(db: Session, data, actual: Usuario) -> dict:
 
 
 def listar_compras_usuario(db: Session, usuario_id: uuid.UUID, actual: Usuario) -> list[dict]:
-    if actual.rol.codigo != "ADMINISTRADOR" and actual.id != usuario_id:
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR" and actual.id != usuario_id:
         raise AppError(403, "No tiene acceso a las compras de este usuario.")
     compras = (
         db.query(Compra)
@@ -81,7 +81,7 @@ def obtener_compra(db: Session, compra_id: uuid.UUID, actual: Usuario) -> dict:
     compra = db.query(Compra).options(joinedload(Compra.pagos)).filter(Compra.id == compra_id).first()
     if compra is None:
         raise AppError(404, "Compra no encontrada.")
-    if actual.rol.codigo != "ADMINISTRADOR" and actual.id != compra.usuario_id:
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR" and actual.id != compra.usuario_id:
         raise AppError(403, "No tiene acceso a esta compra.")
     res = _compra_publica(compra)
     res["pagos"] = [_pago_publico(p) for p in compra.pagos]
@@ -99,7 +99,7 @@ def procesar_pago(db: Session, data, actual: Usuario) -> dict:
     if compra is None:
         raise AppError(404, "Compra no encontrada.")
 
-    if actual.rol.codigo != "ADMINISTRADOR" and actual.id != compra.usuario_id:
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR" and actual.id != compra.usuario_id:
         raise AppError(403, "No tiene acceso a esta compra.")
 
     if compra.estado == "PAGADA":

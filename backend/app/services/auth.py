@@ -20,6 +20,11 @@ settings = get_settings()
 GOOGLE_CLIENT_ID = "615740449491-340ojlb2h90f13j4ut7u0rhtm2k90589.apps.googleusercontent.com"
 
 
+# Roles que una persona puede elegir al registrarse (tradicional o con Google).
+# SUPER_ADMINISTRADOR nunca se puede asignar desde el registro.
+ROLES_AUTOREGISTRO = {"JEFE", "ADMINISTRADOR", "EVALUADOR_SST"}
+
+
 def usuario_publico(usuario: Usuario) -> dict:
     return {
         "id": str(usuario.id),
@@ -70,6 +75,8 @@ def registrar(db: Session, data) -> dict:
             400,
             "La contraseña debe tener mínimo 8 caracteres, e incluir mayúsculas, minúsculas y números.",
         )
+    if data.rol not in ROLES_AUTOREGISTRO:
+        raise AppError(400, "El rol seleccionado no es válido.")
     if db.query(Usuario).filter(Usuario.email == str(data.email).lower()).first():
         raise AppError(409, "Ya existe una cuenta registrada con este correo.")
 
@@ -78,7 +85,7 @@ def registrar(db: Session, data) -> dict:
         apellido=data.apellido.strip(),
         email=str(data.email).lower(),
         password_hash=hash_password(data.password),
-        rol_id=_obtener_rol(db, "TRABAJADOR").id,
+        rol_id=_obtener_rol(db, data.rol).id,
         email_verificado=False,
         estado="ACTIVO",
     )
@@ -183,7 +190,7 @@ def login(db: Session, email: str, password: str) -> dict:
     return {"token": token, "usuario": usuario_publico(usuario)}
 
 
-def login_con_google(db: Session, credential: str) -> dict:
+def login_con_google(db: Session, credential: str, rol: str | None = None) -> dict:
     # Verifica con los servidores de Google que el token es real y no fue
     # falsificado, y que efectivamente fue emitido para nuestro Client ID.
     try:
@@ -208,7 +215,19 @@ def login_con_google(db: Session, credential: str) -> dict:
     )
 
     if usuario is None:
-        # Primera vez que esta persona entra: se crea la cuenta automáticamente.
+        # Primera vez que esta persona entra. Antes de crear la cuenta se le pide
+        # que elija su rol (pantalla rápida en el frontend). Mientras no lo envíe,
+        # NO se crea nada y se responde requiereRol=True.
+        if rol is None:
+            return {
+                "requiereRol": True,
+                "email": email.lower(),
+                "nombre": nombre,
+                "apellido": apellido,
+            }
+        if rol not in ROLES_AUTOREGISTRO:
+            raise AppError(400, "El rol seleccionado no es válido.")
+
         # Se le pone una contraseña aleatoria e inutilizable porque nunca la
         # va a necesitar (siempre entrará por Google).
         usuario = Usuario(
@@ -216,7 +235,7 @@ def login_con_google(db: Session, credential: str) -> dict:
             apellido=apellido,
             email=email.lower(),
             password_hash=hash_password(secrets.token_urlsafe(32)),
-            rol_id=_obtener_rol(db, "TRABAJADOR").id,
+            rol_id=_obtener_rol(db, rol).id,
             email_verificado=True,
             estado="ACTIVO",
         )

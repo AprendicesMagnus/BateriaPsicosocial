@@ -527,7 +527,7 @@ def listar_informes(
     )
 
     rol = actual.rol.codigo
-    if rol == "ADMINISTRADOR":
+    if rol == "SUPER_ADMINISTRADOR":
         pass
     elif rol == "EVALUADOR_SST":
         query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
