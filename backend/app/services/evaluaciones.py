@@ -392,6 +392,9 @@ def obtener_cuestionario_asignado(db: Session, evaluacion_id, actual: Usuario) -
                     "valorMinimo": pregunta.valor_minimo,
                     "valorMaximo": pregunta.valor_maximo,
                     "respuesta": respuestas.get(str(pregunta.id)),
+                    # Filtro del que depende la pregunta ("CLIENTES" / "JEFE" / None); el frontend
+                    # lo usa para reconstruir la respuesta "Sí" del filtro al recargar la página
+                    "filtro": pregunta.filtro,
                 }
             )
     return {
@@ -412,8 +415,14 @@ def guardar_respuesta(db: Session, evaluacion_id, data, actual: Usuario) -> dict
     pregunta = db.query(Pregunta).filter(Pregunta.id == data.preguntaId).first()
     if pregunta is None:
         raise AppError(400, "La pregunta no existe.")
-    if data.valor < pregunta.valor_minimo or data.valor > pregunta.valor_maximo:
-        raise AppError(400, "La respuesta no cumple con las condiciones del cuestionario.")
+    # El valor puede ser número (Likert) o texto (ficha de datos). Solo se compara el rango
+    # cuando es número; antes se comparaba siempre y un texto producía un error 500.
+    if isinstance(data.valor, int):
+        if data.valor < pregunta.valor_minimo or data.valor > pregunta.valor_maximo:
+            raise AppError(400, "La respuesta no cumple con las condiciones del cuestionario.")
+    elif pregunta.tipo_respuesta == "LIKERT":
+        # Una pregunta Likert no acepta texto
+        raise AppError(400, "Esta pregunta requiere un valor numérico.")
     existente = (
         db.query(Respuesta)
         .filter(Respuesta.participante_id == participante.id, Respuesta.pregunta_id == pregunta.id)
@@ -437,7 +446,10 @@ def guardar_respuesta(db: Session, evaluacion_id, data, actual: Usuario) -> dict
     return {"message": "Respuesta almacenada."}
 
 
-def finalizar_cuestionario(db: Session, evaluacion_id, actual: Usuario) -> dict:
+def finalizar_cuestionario(db: Session, evaluacion_id, actual: Usuario, filtros: dict[str, bool] | None = None) -> dict:
+    # filtros: respuestas del trabajador a las preguntas filtro, p. ej. {"CLIENTES": False, "JEFE": True}.
+    # Sin filtros se exigen todas las preguntas del instrumento (comportamiento anterior).
+    filtros = filtros or {}
     participante = _participante_trabajador(db, evaluacion_id, actual)
     if participante.estado == "COMPLETADA":
         raise AppError(400, "La evaluación ya fue finalizada.")
@@ -467,8 +479,19 @@ def finalizar_cuestionario(db: Session, evaluacion_id, actual: Usuario) -> dict:
     if not version:
         raise AppError(404, "No se encontró cuestionario para finalizar.")
 
-    esperadas = [p.id for d in version.dimensiones for p in d.preguntas]
-    respondidas = {r.pregunta_id for r in participante.respuestas}
+    todas = [p for d in version.dimensiones for p in d.preguntas]
+    # Preguntas condicionales cuyo filtro se respondió "No": no se exigen
+    omitidas = {p.id for p in todas if p.filtro and filtros.get(p.filtro) is False}
+    if omitidas:
+        # Si el trabajador respondió algunas y luego cambió el filtro a "No", se borran
+        # para que no entren en la calificación
+        db.query(Respuesta).filter(
+            Respuesta.participante_id == participante.id,
+            Respuesta.pregunta_id.in_(omitidas),
+        ).delete(synchronize_session=False)
+    # Solo se validan como obligatorias las preguntas que no fueron omitidas por un filtro
+    esperadas = [p.id for p in todas if p.id not in omitidas]
+    respondidas = {r.pregunta_id for r in participante.respuestas if r.pregunta_id not in omitidas}
     faltantes = [str(pid) for pid in esperadas if pid not in respondidas]
     if faltantes:
         raise AppError(400, "Existen preguntas pendientes por responder.", pendientes=faltantes)

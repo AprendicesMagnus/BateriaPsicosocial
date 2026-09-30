@@ -15,3 +15,13 @@ def listar_reportes(
     actual: Usuario = Depends(require_gestor),
 ):
     return reportes_service.listar_reportes_por_area(db, actual)
+
+
+# Encuestas realizadas por los trabajadores (avance por instrumento y niveles de riesgo).
+# Solo para ADMINISTRADOR y EVALUADOR_SST; lo consume la sección "Encuestas realizadas" de Reportes.jsx
+@router.get("/encuestas")
+def listar_encuestas_realizadas(
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_gestor),
+):
+    return reportes_service.listar_encuestas_realizadas(db, actual)

@@ -117,9 +117,128 @@
   line-height: 1.6;
 }
 
+/* ============================================
+   Sección "Encuestas realizadas"
+   ============================================ */
+
+/* Título de la sección + botón Actualizar (sobre el fondo oscuro) */
+.reportes-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 40px 0 6px;
+}
+.reportes-section-title {
+  color: var(--white);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+.reportes-refresh-btn {
+  background: transparent;
+  color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--radius-md);
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.reportes-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Estado "En progreso" (los de Listo y Restringido ya existen arriba) */
+.reportes-status--progreso {
+  background: #fff7e0;
+  color: #9a6b00;
+}
+
+/* Cada encuesta: fila resumen + detalle desplegable */
+.reportes-encuesta {
+  border-bottom: 1px solid var(--line-200);
+}
+.reportes-encuesta:last-child {
+  border-bottom: none;
+}
+.reportes-encuesta .reportes-item {
+  border-bottom: none;
+}
+
+.reportes-detalle {
+  padding: 0 24px 20px 76px;
+}
+.reportes-detalle-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-500);
+  margin: 12px 0 8px;
+}
+.reportes-detalle-vacio {
+  font-size: 13px;
+  color: var(--ink-500);
+  margin: 0;
+}
+
+/* Etiquetas de avance por instrumento */
+.reportes-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reportes-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef1fb;
+  color: var(--ink-500);
+}
+.reportes-chip--ok {
+  background: #e9f8ee;
+  color: var(--success-600);
+}
+
+/* Tabla de resultados por dimensión */
+.reportes-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.reportes-tabla th {
+  text-align: left;
+  font-weight: 700;
+  color: var(--ink-500);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line-200);
+}
+.reportes-tabla td {
+  padding: 8px 10px;
+  color: var(--ink-900);
+  border-bottom: 1px solid var(--line-200);
+}
+.reportes-tabla tr:last-child td {
+  border-bottom: none;
+}
+.reportes-nivel {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
 @media (max-width: 680px) {
   .reportes-item {
     flex-wrap: wrap;
+  }
+  /* En móvil el detalle usa todo el ancho y la tabla se desplaza si no cabe */
+  .reportes-detalle {
+    padding: 0 16px 16px;
+    overflow-x: auto;
   }
   .reportes-item-info {
     flex-basis: 100%;

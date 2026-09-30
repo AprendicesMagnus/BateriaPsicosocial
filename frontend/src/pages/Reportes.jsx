@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import AppTopbar from "../components/AppTopbar";
 import { useAuth } from "../context/AuthContext";
-import { fetchReportes } from "../api/reportes";
+import { fetchReportes, fetchEncuestasRealizadas } from "../api/reportes";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import "../styles/app-shell.css";
 import "../styles/Reportes.css";
@@ -44,6 +44,37 @@ function IconoDescargar() {
   );
 }
 
+// Colores y textos de cada nivel de riesgo (mismos que usa CuestionarioTrabajador)
+const NIVELES = {
+  SIN_RIESGO: { bg: "#DEF7EC", text: "#03543F", label: "Sin riesgo" },
+  BAJO: { bg: "#E1EFFE", text: "#1E40AF", label: "Riesgo bajo" },
+  MEDIO: { bg: "#FEF08A", text: "#713F12", label: "Riesgo medio" },
+  ALTO: { bg: "#FDBA74", text: "#9A3412", label: "Riesgo alto" },
+  MUY_ALTO: { bg: "#FCA5A5", text: "#991B1B", label: "Riesgo muy alto" },
+};
+
+// Texto y estilo del estado de la encuesta del trabajador (EvaluacionParticipante.estado)
+const ESTADOS_ENCUESTA = {
+  COMPLETADA: { label: "Completada", clase: "reportes-status--listo" },
+  EN_PROGRESO: { label: "En progreso", clase: "reportes-status--progreso" },
+  PENDIENTE: { label: "Pendiente", clase: "reportes-status--restringido" },
+};
+
+// Nombre corto de cada instrumento para las etiquetas de avance
+const NOMBRES_INSTRUMENTO = {
+  FICHA_DATOS: "Ficha de datos",
+  ESTRES: "Estrés",
+  EXTRALABORAL: "Extralaboral",
+  INTRALABORAL_A: "Intralaboral A",
+  INTRALABORAL_B: "Intralaboral B",
+};
+
+// "2026-09-29T16:05:18-05:00" -> "29/09/2026, 4:05 p. m."
+function formatearFecha(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
+}
+
 export default function Reportes() {
   const { token, usuario } = useAuth();
   const location = useLocation();
@@ -52,6 +83,14 @@ export default function Reportes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [descargandoId, setDescargandoId] = useState(null);
+
+  // Estado de la sección "Encuestas realizadas" (independiente de los reportes por área,
+  // para que un error en una sección no oculte la otra)
+  const [encuestas, setEncuestas] = useState([]);
+  const [cargandoEncuestas, setCargandoEncuestas] = useState(true);
+  const [errorEncuestas, setErrorEncuestas] = useState(null);
+  // participanteId de la encuesta con el detalle abierto (solo una a la vez)
+  const [encuestaAbierta, setEncuestaAbierta] = useState(null);
 
   const {
     empresaNombre = usuario?.organizacionNombre || "Organización",
@@ -63,8 +102,28 @@ export default function Reportes() {
   useEffect(() => {
     if (token) {
       cargarReportes();
+      cargarEncuestas();
     }
   }, [token]);
+
+  // Trae de la BD las encuestas de los trabajadores (GET /api/reportes/encuestas)
+  async function cargarEncuestas() {
+    setCargandoEncuestas(true);
+    setErrorEncuestas(null);
+    try {
+      const data = await fetchEncuestasRealizadas(token);
+      setEncuestas(data || []);
+    } catch (err) {
+      setErrorEncuestas(err.message || "Error al cargar las encuestas realizadas.");
+    } finally {
+      setCargandoEncuestas(false);
+    }
+  }
+
+  // Abre o cierra el detalle (instrumentos y resultados) de una encuesta
+  function alternarDetalle(participanteId) {
+    setEncuestaAbierta((actual) => (actual === participanteId ? null : participanteId));
+  }
 
   async function cargarReportes() {
     setLoading(true);
@@ -184,6 +243,143 @@ export default function Reportes() {
                   </button>
                 </div>
               ))
+            )}
+          </div>
+
+          {/* =================================================
+              ENCUESTAS REALIZADAS (datos de la BD)
+              Una fila por trabajador y evaluación, con su avance y,
+              al abrirla, el estado de cada instrumento y sus niveles de riesgo.
+              ================================================= */}
+          <div className="reportes-section-header">
+            <h2 className="reportes-section-title">Encuestas realizadas</h2>
+            <button type="button" className="reportes-refresh-btn" onClick={cargarEncuestas} disabled={cargandoEncuestas}>
+              {cargandoEncuestas ? "Actualizando..." : "Actualizar"}
+            </button>
+          </div>
+          <p className="reportes-legal-note">
+            Resultados individuales: información confidencial, visible solo para administradores y evaluadores SST.
+          </p>
+
+          {errorEncuestas && (
+            <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
+              ⚠️ {errorEncuestas}
+            </div>
+          )}
+
+          <div className="app-card reportes-card">
+            {cargandoEncuestas && encuestas.length === 0 ? (
+              <div style={{ padding: "32px", textAlign: "center", color: "#64748B" }}>
+                Cargando encuestas realizadas...
+              </div>
+            ) : encuestas.length === 0 ? (
+              <div className="reportes-empty">
+                <IconoDocumento color="#9AA1BD" />
+                <p>
+                  Todavía no hay encuestas registradas.
+                  <br />
+                  Aparecerán aquí cuando un trabajador asignado a una evaluación empiece a responder.
+                </p>
+              </div>
+            ) : (
+              encuestas.map((encuesta) => {
+                const estado = ESTADOS_ENCUESTA[encuesta.estado] || ESTADOS_ENCUESTA.PENDIENTE;
+                const abierta = encuestaAbierta === encuesta.participanteId;
+                return (
+                  <div key={encuesta.participanteId} className="reportes-encuesta">
+                    {/* Fila resumen de la encuesta */}
+                    <div className="reportes-item">
+                      <div className="reportes-item-icon" style={{ background: "#1E3A8A22" }}>
+                        <IconoDocumento color="#1E3A8A" />
+                      </div>
+
+                      <div className="reportes-item-info">
+                        <span className="reportes-item-title">
+                          {encuesta.trabajadorNombre} · {encuesta.trabajadorEmail}
+                        </span>
+                        <span className="reportes-item-desc">
+                          {encuesta.evaluacionNombre}
+                          {encuesta.organizacionNombre ? ` · ${encuesta.organizacionNombre}` : ""}
+                          {" · "}
+                          {encuesta.instrumentosCompletados}/{encuesta.instrumentos.length} instrumentos
+                          {" · "}
+                          {encuesta.fechaFin ? `Finalizó ${formatearFecha(encuesta.fechaFin)}` : `Inició ${formatearFecha(encuesta.fechaInicio)}`}
+                        </span>
+                      </div>
+
+                      <span className={`reportes-status ${estado.clase}`}>{estado.label}</span>
+
+                      <button
+                        type="button"
+                        className="reportes-download-btn"
+                        onClick={() => alternarDetalle(encuesta.participanteId)}
+                        aria-expanded={abierta}
+                      >
+                        {abierta ? "Ocultar" : "Ver detalle"}
+                      </button>
+                    </div>
+
+                    {/* Detalle: avance por instrumento y resultados calculados */}
+                    {abierta && (
+                      <div className="reportes-detalle">
+                        <h3 className="reportes-detalle-title">Instrumentos</h3>
+                        <div className="reportes-chips">
+                          {encuesta.instrumentos.map((inst) => (
+                            <span
+                              key={inst.codigo}
+                              className={`reportes-chip ${inst.estado === "COMPLETADA" ? "reportes-chip--ok" : ""}`}
+                              title={inst.nombre}
+                            >
+                              {inst.estado === "COMPLETADA" ? "✓ " : ""}
+                              {NOMBRES_INSTRUMENTO[inst.codigo] || inst.codigo}
+                            </span>
+                          ))}
+                        </div>
+
+                        <h3 className="reportes-detalle-title">Resultados</h3>
+                        {encuesta.resultados.length === 0 ? (
+                          // Los resultados se calculan solo cuando el trabajador termina toda la batería
+                          <p className="reportes-detalle-vacio">
+                            Los resultados se calculan cuando el trabajador termina todos los instrumentos.
+                          </p>
+                        ) : (
+                          <table className="reportes-tabla">
+                            <thead>
+                              <tr>
+                                <th>Instrumento</th>
+                                <th>Dimensión</th>
+                                <th>Puntaje</th>
+                                <th>Nivel</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {encuesta.resultados.map((r) => {
+                                const nivel = NIVELES[r.nivel];
+                                return (
+                                  <tr key={`${r.instrumento}-${r.dimension}`}>
+                                    <td>{NOMBRES_INSTRUMENTO[r.instrumento] || r.instrumento}</td>
+                                    <td>{r.dimension}</td>
+                                    {/* Puntaje transformado 0-100 */}
+                                    <td>{r.puntajeTransformado.toFixed(1)}</td>
+                                    <td>
+                                      <span
+                                        className="reportes-nivel"
+                                        style={nivel ? { background: nivel.bg, color: nivel.text } : undefined}
+                                      >
+                                        {nivel ? nivel.label : r.nivel}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

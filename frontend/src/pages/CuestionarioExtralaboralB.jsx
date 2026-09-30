@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
+// Muestra "Cargando…" o el error cuando las respuestas no se pueden guardar
+import AvisoCuestionario from "../components/AvisoCuestionario";
 import "../styles/cuestionario-estres.css";
 
 // ⚠️ NO MODIFICAR el texto, el orden ni los ids: son parte del instrumento
@@ -43,10 +45,12 @@ const preguntas = [
 const PREGUNTAS_POR_PAGINA = 8;
 const TOTAL_PAGINAS = Math.ceil(preguntas.length / PREGUNTAS_POR_PAGINA);
 
+// Texto de la opción -> valor que se guarda en la BD (escala 1-5 del extralaboral).
+// Se quitó "A veces": la pantalla muestra "Algunas veces" y, como ambas valían 3, al recargar
+// la respuesta guardada se pintaba como "A veces" y no aparecía marcada.
 const MAPA_EXTRALABORAL = {
   "Siempre": 5,
   "Casi siempre": 4,
-  "A veces": 3,
   "Algunas veces": 3,
   "Casi nunca": 2,
   "Nunca": 1,
@@ -77,6 +81,8 @@ export default function CuestionarioExtralaboralB() {
     respuestas,
     seleccionarRespuesta,
     finalizarYNavegar,
+    cargando, // true mientras se carga el cuestionario desde el backend
+    error, // mensaje cuando no hay evaluación o falla el guardado
   } = useCuestionarioBackend("EXTRALABORAL", MAPA_EXTRALABORAL);
 
   const inicio = pagina * PREGUNTAS_POR_PAGINA;
@@ -227,6 +233,8 @@ export default function CuestionarioExtralaboralB() {
       ===================================================== */}
 
       <main className="questionnaire-main">
+        {/* Aviso de carga / error del guardado en la BD */}
+        <AvisoCuestionario cargando={cargando} error={error} />
 
         {/* =================================================
             TARJETA DE PRESENTACIÓN

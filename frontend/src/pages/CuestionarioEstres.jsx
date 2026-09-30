@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
+// Muestra "Cargando…" o el error cuando las respuestas no se pueden guardar
+import AvisoCuestionario from "../components/AvisoCuestionario";
 import "../styles/cuestionario-estres.css";
 
 const preguntas = [
@@ -59,6 +61,8 @@ export default function CuestionarioEstres() {
     respuestas,
     seleccionarRespuesta,
     finalizarYNavegar,
+    cargando, // true mientras se carga el cuestionario desde el backend
+    error, // mensaje cuando no hay evaluación o falla el guardado
   } = useCuestionarioBackend("ESTRES", MAPA_ESTRES);
 
   const inicio = pagina * PREGUNTAS_POR_PAGINA;
@@ -176,6 +180,8 @@ export default function CuestionarioEstres() {
           CONTENIDO
       ===================================================== */}
       <main className="questionnaire-main">
+        {/* Aviso de carga / error del guardado en la BD */}
+        <AvisoCuestionario cargando={cargando} error={error} />
 
         {/* TARJETA DE PRESENTACIÓN */}
         <section className="questionnaire-intro">
@@ -232,8 +238,12 @@ export default function CuestionarioEstres() {
                       <input
                         type="radio"
                         name={`pregunta-${pregunta.id}`}
-                        checked={respuestas[pregunta.id] === MAPA_ESTRES[opcion]}
-                        onChange={() => seleccionarRespuesta(pregunta.id, MAPA_ESTRES[opcion])}
+                        // Se compara y se envía el TEXTO de la opción ("Siempre", "A veces"...):
+                        // useCuestionarioBackend lo convierte a número con MAPA_ESTRES al guardar.
+                        // Antes se enviaba el número y el hook buscaba MAPA_ESTRES[4] -> undefined,
+                        // por eso el backend respondía "El campo 'valor' es obligatorio".
+                        checked={respuestas[pregunta.id] === opcion}
+                        onChange={() => seleccionarRespuesta(pregunta.id, opcion)}
                       />
                       <span>{opcion}</span>
                     </label>

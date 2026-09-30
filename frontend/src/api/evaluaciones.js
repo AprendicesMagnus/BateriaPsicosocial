@@ -27,10 +27,14 @@ export async function guardarRespuesta(token, evaluacionId, preguntaId, valor) {
   });
 }
 
-export async function finalizarCuestionario(token, evaluacionId) {
+// Finaliza el instrumento pendiente del trabajador.
+// filtros: respuestas a las preguntas filtro del intralaboral, p. ej. { CLIENTES: false, JEFE: true }.
+// El backend no exige las preguntas condicionales cuyo filtro es false ("No").
+export async function finalizarCuestionario(token, evaluacionId, filtros = {}) {
   return request(`/evaluaciones/${evaluacionId}/finalizar-cuestionario`, {
     method: "POST",
     token,
+    body: { filtros },
   });
 }
 

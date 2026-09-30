@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, require_gestor
 from app.db.session import get_db
 from app.models.user import Usuario
-from app.schemas.common import EvaluacionCierre, EvaluacionCreate, FichaDatosRequest, RespuestaRequest
+from app.schemas.common import (
+    EvaluacionCierre,
+    EvaluacionCreate,
+    FichaDatosRequest,
+    FinalizarCuestionarioRequest,  # Cuerpo opcional con las respuestas a las preguntas filtro (clientes / jefe)
+    RespuestaRequest,
+)
 from app.services import auditoria as auditoria_service
 from app.services import evaluaciones as evaluaciones_service
 from app.services import tabulacion as tabulacion_service
@@ -132,10 +138,15 @@ def guardar_respuesta(
 @router.post("/{evaluacion_id}/finalizar-cuestionario")
 def finalizar_cuestionario(
     evaluacion_id: UUID,
+    # Cuerpo opcional: {"filtros": {"CLIENTES": false, "JEFE": true}}.
+    # Si no se envía (p. ej. desde CuestionarioTrabajador), se exigen todas las preguntas.
+    data: FinalizarCuestionarioRequest | None = None,
     db: Session = Depends(get_db),
     actual: Usuario = Depends(get_current_user),
 ):
-    return evaluaciones_service.finalizar_cuestionario(db, evaluacion_id, actual)
+    # Se pasan los filtros al servicio para no exigir las preguntas condicionales respondidas con "No"
+    filtros = data.filtros if data else {}
+    return evaluaciones_service.finalizar_cuestionario(db, evaluacion_id, actual, filtros)
 
 
 @router.get("/{evaluacion_id}/instrumentos")

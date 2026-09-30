@@ -56,6 +56,9 @@ class Pregunta(Base):
     valor_minimo: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     valor_maximo: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
     tipo_respuesta: Mapped[str] = mapped_column(String(20), default="LIKERT", nullable=False)
+    # Pregunta filtro de la que depende esta pregunta: "CLIENTES", "JEFE" o None si siempre se responde.
+    # Si el trabajador responde "No" al filtro, estas preguntas no se exigen al finalizar el cuestionario.
+    filtro: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
     dimension: Mapped[Dimension] = relationship(back_populates="preguntas")
 

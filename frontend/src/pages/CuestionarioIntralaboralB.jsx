@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
+// Muestra "Cargando…" o el error cuando las respuestas no se pueden guardar
+import AvisoCuestionario from "../components/AvisoCuestionario";
 import "../styles/cuestionario-estres.css";
 
 /* =========================================================
@@ -254,15 +256,15 @@ function FilaPregunta({ pregunta, respuesta, sinResponder, onSeleccionar }) {
   );
 }
 
+// Texto de la opción -> valor que se guarda en la BD.
+// Escala oficial del intralaboral 0-4 (las preguntas están sembradas con valor_minimo=0 y valor_maximo=4).
+// "Sí"/"No" no van aquí: la pregunta filtro de clientes la maneja useCuestionarioBackend aparte.
 const MAPA_INTRALABORAL = {
-  "Siempre": 5,
-  "Casi siempre": 4,
-  "Algunas veces": 3,
-  "A veces": 3,
-  "Casi nunca": 2,
-  "Nunca": 1,
-  "Sí": 1,
-  "No": 0,
+  "Siempre": 4,
+  "Casi siempre": 3,
+  "Algunas veces": 2,
+  "Casi nunca": 1,
+  "Nunca": 0,
 };
 
 export default function CuestionarioIntralaboralB() {
@@ -276,6 +278,8 @@ export default function CuestionarioIntralaboralB() {
     respuestas,
     seleccionarRespuesta: seleccionarRespuestaBackend,
     finalizarYNavegar,
+    cargando, // true mientras se carga el cuestionario desde el backend
+    error, // mensaje cuando no hay evaluación o falla el guardado
   } = useCuestionarioBackend("INTRALABORAL_B", MAPA_INTRALABORAL);
 
   const seleccionarRespuesta = (preguntaId, respuesta) => {
@@ -424,6 +428,8 @@ export default function CuestionarioIntralaboralB() {
       ===================================================== */}
 
       <main className="questionnaire-main">
+        {/* Aviso de carga / error del guardado en la BD */}
+        <AvisoCuestionario cargando={cargando} error={error} />
 
         {/* =================================================
             TARJETA DE PRESENTACIÓN

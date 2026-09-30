@@ -20,10 +20,15 @@ async function request(path, { method = "GET", body, token } = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    if (response.status === 401) {
+    // 401 con token = la sesión venció o el token no es válido: se cierra la sesión y se
+    // envía al login. Solo aplica si la petición llevaba token; un 401 sin token (p. ej.
+    // "Credenciales incorrectas" al iniciar sesión) sigue abajo y se lanza como error normal.
+    // Antes se devolvía undefined en todos los 401 y SignIn fallaba al leer data.token.
+    if (response.status === 401 && token) {
       localStorage.removeItem("magnussing_token");
-      window.location.href = "/login";
-      return;
+      // Ruta real de la página de login (antes apuntaba a "/login", que no existe)
+      window.location.href = "/iniciar-sesion";
+      throw new Error("Tu sesión expiró. Inicia sesión de nuevo.");
     }
     const error = new Error(data.error || "Ocurrió un error inesperado.");
     error.status = response.status;

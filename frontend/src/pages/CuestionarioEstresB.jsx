@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
+// Muestra "Cargando…" o el error cuando las respuestas no se pueden guardar
+import AvisoCuestionario from "../components/AvisoCuestionario";
 import "../styles/cuestionario-estres.css";
 
 const preguntas = [
@@ -59,6 +61,8 @@ export default function CuestionarioEstresB() {
     respuestas,
     seleccionarRespuesta,
     finalizarYNavegar,
+    cargando, // true mientras se carga el cuestionario desde el backend
+    error, // mensaje cuando no hay evaluación o falla el guardado
   } = useCuestionarioBackend("ESTRES", MAPA_ESTRES);
 
   const inicio = pagina * PREGUNTAS_POR_PAGINA;
@@ -202,6 +206,8 @@ export default function CuestionarioEstresB() {
       ===================================================== */}
 
       <main className="questionnaire-main">
+        {/* Aviso de carga / error del guardado en la BD */}
+        <AvisoCuestionario cargando={cargando} error={error} />
 
         {/* =================================================
             TARJETA DE PRESENTACIÓN

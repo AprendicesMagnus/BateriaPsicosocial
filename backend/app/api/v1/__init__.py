@@ -14,7 +14,9 @@ from app.api.v1 import (
     prediccion,
     reportes,
     roles,
-    seguimiento_recomendaciones,
+    # TODO: seguimiento_recomendaciones se quitó porque el archivo
+    # app/api/v1/seguimiento_recomendaciones.py no se subió en el commit 8e877ea.
+    # Cuando esté en el repo, volver a agregarlo aquí y en el include_router de abajo.
     usuarios,
 )
 
@@ -34,4 +36,5 @@ router.include_router(notificaciones.router, prefix="/notificaciones", tags=["No
 router.include_router(auditoria.router, prefix="/auditoria", tags=["Auditoria"])
 router.include_router(compras.router, prefix="/compras", tags=["Compras"])
 router.include_router(pagos.router, prefix="/pagos", tags=["Pagos"])
-router.include_router(seguimiento_recomendaciones.router, prefix="/seguimiento-recomendaciones", tags=["SeguimientoRecomendaciones"])
+# TODO: restaurar cuando exista el módulo:
+# router.include_router(seguimiento_recomendaciones.router, prefix="/seguimiento-recomendaciones", tags=["SeguimientoRecomendaciones"])

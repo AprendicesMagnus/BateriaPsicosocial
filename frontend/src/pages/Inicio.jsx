@@ -195,6 +195,8 @@ export default function Inicio() {
                  <VscBriefcase size={18} />
                 Empresas
               </button>
+              
+              
 
               {menuEmpresasAbierto && (
                 <div
@@ -225,6 +227,22 @@ export default function Inicio() {
                     }}
                   >
                     Crear empresa
+                  </Link>
+
+                  <Link
+                    to="/crear-empresa"
+                    onClick={() => setMenuEmpresasAbierto(false)}
+                    className="boton-encuestas"
+                    style={{
+                      display: "block",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "var(--ink-900, #12314b)",
+                    }}
+                  >
+                    mis empresa
                   </Link>
                 </div>
               )}

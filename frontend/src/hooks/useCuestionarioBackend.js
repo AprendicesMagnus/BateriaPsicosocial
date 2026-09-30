@@ -1,184 +1,201 @@
-import { useState, useEffect } from "react";
+/**
+ * Hook que conecta las páginas de cuestionarios (Estrés, Extralaboral, Intralaboral A/B)
+ * con el backend.
+ *
+ * - Carga el instrumento pendiente del trabajador y sus respuestas ya guardadas.
+ * - Guarda cada respuesta en la BD en cuanto el trabajador hace clic.
+ * - Al finalizar, cierra el instrumento y navega al siguiente pendiente.
+ *
+ * Uso en una página:
+ *   const { respuestas, seleccionarRespuesta, finalizarYNavegar, cargando, error } =
+ *     useCuestionarioBackend("ESTRES", MAPA_ESTRES);
+ *
+ * @param {string} codigoEsperado Código del instrumento en BD (ESTRES, EXTRALABORAL, INTRALABORAL_A, INTRALABORAL_B).
+ * @param {Record<string, number>} mapa Texto de la opción -> valor numérico que se guarda.
+ */
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   fetchEvaluaciones,
   fetchCuestionario,
-  fetchInstrumentosParticipante,
   guardarRespuesta,
   finalizarCuestionario,
+  fetchInstrumentosParticipante,
 } from "../api/evaluaciones";
 
-export function useCuestionarioBackend(codigoInstrumento, opcionValoresMap) {
-  const navigate = useNavigate();
-  const location = useLocation();
+// Prefijo del código de cada pregunta en la BD. El id numérico de la página + el prefijo
+// forman el código: la pregunta 12 de Estrés es "EST_12" (ver seed.py e intralaboral.py).
+const PREFIJOS = {
+  ESTRES: "EST_",
+  EXTRALABORAL: "EXT_",
+  INTRALABORAL_A: "INTA_",
+  INTRALABORAL_B: "INTB_",
+};
+
+// Ruta del frontend de cada instrumento, para redirigir al que esté pendiente
+const RUTAS = {
+  FICHA_DATOS: "/ficha-datos-generales",
+  ESTRES: "/cuestionario-estres",
+  EXTRALABORAL: "/cuestionario-extralaboral",
+  INTRALABORAL_A: "/cuestionario-intralaboral",
+  INTRALABORAL_B: "/cuestionario-intralaboralB",
+};
+
+// id de la pregunta filtro en la página -> valor de Pregunta.filtro en la BD.
+// Las preguntas filtro ("¿Atiende clientes?", "¿Es jefe?") no se guardan como respuesta:
+// solo deciden qué preguntas condicionales se muestran y se exigen.
+const FILTROS = { clientes: "CLIENTES", jefe: "JEFE" };
+
+export function useCuestionarioBackend(codigoEsperado, mapa) {
   const { token } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
+  // La Ficha de datos y el paso entre cuestionarios envían el id en location.state
   const [evaluacionId, setEvaluacionId] = useState(location.state?.evaluacionId || null);
-  const [preguntasBackend, setPreguntasBackend] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [errorBackend, setErrorBackend] = useState(null);
+  // Código de pregunta ("EST_12") -> UUID de la pregunta en la BD
+  const [uuidPorCodigo, setUuidPorCodigo] = useState({});
+  // id de la pregunta en la página -> texto de la opción elegida (lo que pintan las páginas)
   const [respuestas, setRespuestas] = useState({});
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
 
+  const prefijo = PREFIJOS[codigoEsperado];
+
+  // Mapa inverso (valor numérico -> texto) para pintar las respuestas guardadas al recargar.
+  // Si dos textos tienen el mismo valor, se usa el primero del mapa.
+  const textoPorValor = useMemo(() => {
+    const inverso = {};
+    Object.entries(mapa).forEach(([texto, valor]) => {
+      if (!(valor in inverso)) inverso[valor] = texto;
+    });
+    return inverso;
+  }, [mapa]);
+
+  // 1. Si se entró directo a la página (sin location.state), se toma la evaluación activa del trabajador
   useEffect(() => {
-    let cancelado = false;
-    async function init() {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        let currentEvalId = evaluacionId;
-        if (!currentEvalId) {
-          const evs = await fetchEvaluaciones(token);
-          const activa = evs.find((e) => e.estado !== "FINALIZADA") || evs[0];
-          if (activa) {
-            currentEvalId = activa.id;
-            setEvaluacionId(activa.id);
-          }
+    if (evaluacionId || !token) return;
+    fetchEvaluaciones(token)
+      .then((evs) => {
+        const activa = evs.find((e) => e.estado !== "FINALIZADA") || evs[0];
+        if (activa) setEvaluacionId(activa.id);
+        else {
+          // Sin evaluación el backend no tiene dónde guardar las respuestas
+          setError(
+            "No tienes una evaluación asignada. Pide al evaluador que te agregue a una evaluación " +
+              "e inicia sesión con tu usuario de trabajador."
+          );
+          setCargando(false);
         }
+      })
+      .catch((e) => {
+        setError(e.message);
+        setCargando(false);
+      });
+  }, [token, evaluacionId]);
 
-        if (!currentEvalId) {
-          setErrorBackend("No tienes evaluaciones asignadas activas.");
-          setLoading(false);
+  // 2. Se carga el instrumento pendiente y las respuestas que ya estaban guardadas
+  useEffect(() => {
+    if (!evaluacionId || !token) return;
+    setCargando(true);
+    fetchCuestionario(token, evaluacionId)
+      .then((data) => {
+        // El backend siempre devuelve el primer instrumento pendiente. Si no es el de esta
+        // página (p. ej. entró a Extralaboral sin terminar Estrés), se redirige al correcto.
+        if (data.codigo !== codigoEsperado) {
+          navigate(data.codigo ? RUTAS[data.codigo] : "/dashboard", {
+            replace: true,
+            state: { evaluacionId },
+          });
           return;
         }
-
-        // Verificar instrumentos asignados al participante
-        const instrumentos = await fetchInstrumentosParticipante(token, currentEvalId);
-        
-        // Redirección si la forma asignada de Intralaboral difiere de la ruta actual
-        const instIntra = instrumentos.find(
-          (i) => i.codigo === "INTRALABORAL_A" || i.codigo === "INTRALABORAL_B"
-        );
-        if (codigoInstrumento.startsWith("INTRALABORAL") && instIntra) {
-          if (instIntra.codigo !== codigoInstrumento) {
-            const rutaTarget =
-              instIntra.codigo === "INTRALABORAL_A"
-                ? "/cuestionario-intralaboral"
-                : "/cuestionario-intralaboralB";
-            navigate(rutaTarget, { state: { evaluacionId: currentEvalId }, replace: true });
-            return;
+        const mapaUuid = {};
+        const previas = {};
+        data.preguntas.forEach((p) => {
+          mapaUuid[p.codigo] = p.id;
+          if (p.respuesta === null || p.respuesta === undefined) return;
+          // "EST_12" -> 12, que es el id de la pregunta en la página
+          previas[Number(p.codigo.replace(prefijo, ""))] = textoPorValor[p.respuesta];
+          // Si hay respuestas de una pregunta condicional, el filtro se había respondido "Sí"
+          if (p.filtro) {
+            const idFiltro = Object.keys(FILTROS).find((k) => FILTROS[k] === p.filtro);
+            previas[idFiltro] = "Sí";
           }
-        }
+        });
+        setUuidPorCodigo(mapaUuid);
+        setRespuestas(previas);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setCargando(false));
+  }, [evaluacionId, token, codigoEsperado]);
 
-        // Cargar cuestionario del backend
-        try {
-          const questData = await fetchCuestionario(token, currentEvalId);
-          if (!cancelado && questData) {
-            // Validación de código devuelto contra la página actual
-            if (questData.codigo && questData.codigo !== codigoInstrumento) {
-              let ruta = "/dashboard";
-              if (questData.codigo === "FICHA_DATOS") ruta = "/ficha-datos-generales";
-              else if (questData.codigo === "ESTRES") ruta = "/cuestionario-estres";
-              else if (questData.codigo === "EXTRALABORAL") ruta = "/cuestionario-extralaboral";
-              else if (questData.codigo === "INTRALABORAL_A") ruta = "/cuestionario-intralaboral";
-              else if (questData.codigo === "INTRALABORAL_B") ruta = "/cuestionario-intralaboralB";
-
-              navigate(ruta, { state: { evaluacionId: currentEvalId }, replace: true });
-              return;
-            }
-
-            if (questData.preguntas) {
-              setPreguntasBackend(questData.preguntas);
-
-              // Cargar respuestas previamente guardadas si existen
-              const mapInicial = {};
-              questData.preguntas.forEach((p, idx) => {
-                if (p.respuesta !== null && p.respuesta !== undefined) {
-                  const opTexto = Object.keys(opcionValoresMap).find(
-                    (k) => opcionValoresMap[k] === p.respuesta
-                  );
-                  if (opTexto) {
-                    mapInicial[idx + 1] = opTexto;
-                  }
-                }
-              });
-              setRespuestas(mapInicial);
-            }
-          }
-        } catch (qErr) {
-          // Ignorar si aún no hay cuestionario abierto o consentimiento pendiente
-        }
-      } catch (err) {
-        if (!cancelado) {
-          setErrorBackend(err.message || "Error al cargar la información del cuestionario.");
-        }
-      } finally {
-        if (!cancelado) setLoading(false);
+  // 3. Guarda la respuesta en pantalla y en la BD en cuanto el trabajador hace clic
+  const seleccionarRespuesta = useCallback(
+    async (preguntaId, texto) => {
+      setRespuestas((prev) => ({ ...prev, [preguntaId]: texto }));
+      // La pregunta filtro solo vive en pantalla; se envía al backend al finalizar
+      if (FILTROS[preguntaId]) return;
+      // Sin evaluación no se puede guardar; se deja el mensaje de carga (no se sobrescribe)
+      if (!evaluacionId) {
+        setError((prev) => prev || "No hay una evaluación activa; esta respuesta no se guardó.");
+        return;
       }
-    }
-
-    init();
-    return () => {
-      cancelado = true;
-    };
-  }, [token, evaluacionId, codigoInstrumento]);
-
-  const seleccionarRespuesta = async (preguntaId1Based, opcionTexto) => {
-    setRespuestas((prev) => ({ ...prev, [preguntaId1Based]: opcionTexto }));
-
-    if (!token || !evaluacionId || !preguntasBackend.length) return;
-
-    const idx = preguntaId1Based - 1;
-    const pBackend = preguntasBackend[idx];
-    if (!pBackend) return;
-
-    const valorNumerico = opcionValoresMap[opcionTexto];
-    if (valorNumerico !== undefined) {
+      const uuid = uuidPorCodigo[`${prefijo}${preguntaId}`];
+      if (!uuid) {
+        setError(`La pregunta ${preguntaId} no existe en la base de datos.`);
+        return;
+      }
+      // La página debe enviar el TEXTO de la opción; si no está en el mapa no hay valor numérico
+      // y el backend lo rechazaría con "El campo 'valor' es obligatorio"
+      const valor = mapa[texto];
+      if (valor === undefined) {
+        setError(`La opción "${texto}" no tiene un valor configurado; la respuesta no se guardó.`);
+        return;
+      }
       try {
-        await guardarRespuesta(token, evaluacionId, pBackend.id, valorNumerico);
-      } catch (err) {
-        console.error("Error guardando respuesta:", err);
+        await guardarRespuesta(token, evaluacionId, uuid, valor);
+        // Si antes falló un guardado y este funcionó, se quita el aviso de error
+        setError(null);
+      } catch (e) {
+        setError(e.message);
       }
+    },
+    [uuidPorCodigo, prefijo, token, evaluacionId, mapa]
+  );
+
+  // 4. Cierra el instrumento en el backend y navega al siguiente pendiente (o al dashboard)
+  const finalizarYNavegar = useCallback(async () => {
+    // Sin evaluación no hay nada que finalizar en el backend
+    if (!evaluacionId) {
+      setError((prev) => prev || "No hay una evaluación activa; no se puede finalizar el cuestionario.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
     }
-  };
-
-  const finalizarYNavegar = async () => {
-    if (!token || !evaluacionId) return;
-
+    // Respuestas a las preguntas filtro: { CLIENTES: false, JEFE: true }
+    const filtros = {};
+    Object.entries(FILTROS).forEach(([idPagina, codigo]) => {
+      if (respuestas[idPagina] !== undefined) filtros[codigo] = respuestas[idPagina] === "Sí";
+    });
     try {
-      const instrumentos = await fetchInstrumentosParticipante(token, evaluacionId);
-      const pendientesLocal = instrumentos.filter(
-        (i) => i.estado !== "COMPLETADA" && i.codigo !== codigoInstrumento
-      );
-
-      if (pendientesLocal.length === 0) {
-        try {
-          await finalizarCuestionario(token, evaluacionId);
-          alert("¡Has completado todos los instrumentos de la evaluación!");
-          navigate("/dashboard");
-        } catch (fErr) {
-          if (fErr.detail && fErr.detail.pendientes) {
-            alert(`Faltan preguntas por responder: ${fErr.detail.pendientes.join(", ")}`);
-          } else {
-            alert(`Error al finalizar la evaluación: ${fErr.message}`);
-          }
-        }
-      } else {
-        const proximo = pendientesLocal[0].codigo;
-        let ruta = "/dashboard";
-        if (proximo === "ESTRES") ruta = "/cuestionario-estres";
-        else if (proximo === "EXTRALABORAL") ruta = "/cuestionario-extralaboral";
-        else if (proximo === "INTRALABORAL_A") ruta = "/cuestionario-intralaboral";
-        else if (proximo === "INTRALABORAL_B") ruta = "/cuestionario-intralaboralB";
-
-        alert("Se han guardado tus respuestas. Pasando al siguiente instrumento.");
-        navigate(ruta, { state: { evaluacionId } });
+      const res = await finalizarCuestionario(token, evaluacionId, filtros);
+      // completadoTotal = true cuando era el último instrumento de la batería
+      if (res.completadoTotal) {
+        alert("¡Completaste toda la batería!");
+        navigate("/dashboard");
+        return;
       }
-    } catch (err) {
-      alert(`Error al finalizar el cuestionario: ${err.message}`);
+      const instrumentos = await fetchInstrumentosParticipante(token, evaluacionId);
+      const siguiente = instrumentos.find((i) => i.estado !== "COMPLETADA");
+      navigate(siguiente ? RUTAS[siguiente.codigo] : "/dashboard", { state: { evaluacionId } });
+    } catch (e) {
+      // El backend devuelve { error, pendientes: [...] } cuando faltan preguntas
+      const pendientes = e.payload?.pendientes;
+      setError(pendientes ? `Faltan ${pendientes.length} pregunta(s) por responder.` : e.message);
+      // Sube al inicio para que el trabajador vea el aviso
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  };
+  }, [respuestas, token, evaluacionId, navigate]);
 
-  return {
-    token,
-    evaluacionId,
-    respuestas,
-    loading,
-    errorBackend,
-    seleccionarRespuesta,
-    finalizarYNavegar,
-  };
+  return { respuestas, seleccionarRespuesta, finalizarYNavegar, cargando, error };
 }

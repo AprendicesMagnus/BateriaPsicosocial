@@ -7,8 +7,12 @@ import { generarInformeAgrupado, generarInformeIndividual, descargarInforme } fr
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 import ListaEvaluacionesTrabajador from "../components/ListaEvaluacionesTrabajador";
 import CuestionarioTrabajador from "../components/CuestionarioTrabajador";
-import HistoricoComparativo from "../components/HistoricoComparativo";
-import PlanDeAccion from "../components/PlanDeAccion";
+// TODO: HistoricoComparativo y PlanDeAccion se desactivaron porque sus archivos no se subieron
+// en el commit 8e877ea. Cuando estén en src/components/, quitar los comentarios de estos imports
+// y de su uso en la sección "HISTORICO COMPARATIVO" más abajo.
+// import HistoricoComparativo from "../components/HistoricoComparativo";
+// import PlanDeAccion from "../components/PlanDeAccion";
+
 import { uuidValido } from "../utils/validaciones";
 
 const ROL_LABEL = {
@@ -224,8 +228,9 @@ export default function Panel() {
         {/* HISTORICO COMPARATIVO ENTRE EVALUACIONES - SOLO ADMIN Y EVALUADOR */}
         {usuario?.rol !== "TRABAJADOR" && (
           <section style={{ marginBottom: "32px" }}>
-            <HistoricoComparativo token={token} />
-            <PlanDeAccion token={token} />
+            {/* Desactivados hasta que los componentes existan (ver TODO en los imports) */}
+            {/* <HistoricoComparativo token={token} /> */}
+            {/* <PlanDeAccion token={token} /> */}
           </section>
         )}
 
