@@ -1,4 +1,5 @@
 import { etiquetaRol } from "../utils/roles";
+import { urlArchivo } from "../api/client";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -59,7 +60,7 @@ export default function AppTopbar() {
           aria-expanded={abierto}
         >
           {usuario?.fotoUrl ? (
-            <img src={usuario.fotoUrl} alt={nombreUsuario} className="app-avatar app-avatar--foto" />
+            <img src={urlArchivo(usuario.fotoUrl)} alt={nombreUsuario} className="app-avatar app-avatar--foto" />
           ) : (
             <div className="app-avatar">{iniciales}</div>
           )}

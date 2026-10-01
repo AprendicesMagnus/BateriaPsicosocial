@@ -25,11 +25,12 @@ def existe_organizacion_nit(db: Session, nit: str) -> dict:
     return {"existe": False, "organizacionId": None}
 
 
-def autorregistrar_organizacion(db: Session, data) -> dict:
-    """Registra de forma atómica una empresa y su primer usuario (EVALUADOR_SST).
+def autorregistrar_organizacion(db: Session, data, creador: Usuario | None = None) -> dict:
+    """Registra de forma atómica una empresa y, si corresponde, su usuario responsable.
 
     Garantías de Seguridad y Diseño:
-    1. Se asigna el rol EVALUADOR_SST (no ADMINISTRADOR global) para evitar exposición
+    1. Nunca se asigna un rol global (SUPER_ADMINISTRADOR) al usuario responsable: solo
+       RESPONSABLE_SST (limitado) o EVALUADOR_SST (petición anónima), para evitar exposición
        de datos entre empresas.
     2. Si falla cualquier validación (NIT o Email duplicado, clave débil), se revierte
        toda la transacción sin dejar huérfanos.
@@ -41,25 +42,36 @@ def autorregistrar_organizacion(db: Session, data) -> dict:
     if db.query(Organizacion).filter(Organizacion.nit == nit_limpio).first():
         raise AppError(409, "Ya existe una organización registrada con este NIT.")
 
-    email_usuario = str(data.usuarioEmail).lower().strip()
-    if not data.usuarioNombre or not data.usuarioApellido or not email_usuario or not data.usuarioPassword:
-        raise AppError(400, "Todos los datos del usuario responsable de la empresa son obligatorios.")
+    # Quién crea la empresa define si hace falta un usuario responsable:
+    # - Psicologo (EVALUADOR_SST): él mismo es el responsable, no se crea otro usuario.
+    # - Jefe / Administrador / Super Administrador: se crea un usuario limitado (RESPONSABLE_SST)
+    #   que solo accede al módulo de Reportes.
+    # - Petición anónima (sin sesión): se conserva el comportamiento anterior (EVALUADOR_SST).
+    crea_psicologo = creador is not None and creador.rol.codigo == "EVALUADOR_SST"
+    codigo_rol_responsable = "RESPONSABLE_SST" if creador is not None else "EVALUADOR_SST"
 
-    if not email_valido(email_usuario):
-        raise AppError(400, "El correo electrónico del usuario no es válido.")
+    usuario = None
+    rol_responsable = None
+    if not crea_psicologo:
+        email_usuario = str(data.usuarioEmail).lower().strip() if data.usuarioEmail else ""
+        if not data.usuarioNombre or not data.usuarioApellido or not email_usuario or not data.usuarioPassword:
+            raise AppError(400, "Todos los datos del usuario responsable de la empresa son obligatorios.")
 
-    if not password_valida(data.usuarioPassword):
-        raise AppError(
-            400,
-            "La contraseña debe tener mínimo 8 caracteres, e incluir mayúsculas, minúsculas y números.",
-        )
+        if not email_valido(email_usuario):
+            raise AppError(400, "El correo electrónico del usuario no es válido.")
 
-    if db.query(Usuario).filter(Usuario.email == email_usuario).first():
-        raise AppError(409, "Ya existe una cuenta registrada con este correo electrónico.")
+        if not password_valida(data.usuarioPassword):
+            raise AppError(
+                400,
+                "La contraseña debe tener mínimo 8 caracteres, e incluir mayúsculas, minúsculas y números.",
+            )
 
-    rol_evaluador = db.query(Rol).filter(Rol.codigo == "EVALUADOR_SST").first()
-    if rol_evaluador is None:
-        raise AppError(500, "El catálogo de roles (EVALUADOR_SST) no está inicializado.")
+        if db.query(Usuario).filter(Usuario.email == email_usuario).first():
+            raise AppError(409, "Ya existe una cuenta registrada con este correo electrónico.")
+
+        rol_responsable = db.query(Rol).filter(Rol.codigo == codigo_rol_responsable).first()
+        if rol_responsable is None:
+            raise AppError(500, f"El catálogo de roles ({codigo_rol_responsable}) no está inicializado.")
 
     try:
         org = Organizacion(
@@ -70,38 +82,63 @@ def autorregistrar_organizacion(db: Session, data) -> dict:
             email=str(data.email) if data.email else None,
             telefono=data.telefono,
             activa=True,
+            creada_por_id=creador.id if creador is not None else None,
         )
         db.add(org)
         db.flush()
 
-        usuario = Usuario(
-            nombre=data.usuarioNombre.strip(),
-            apellido=data.usuarioApellido.strip(),
-            email=email_usuario,
-            password_hash=hash_password(data.usuarioPassword),
-            rol_id=rol_evaluador.id,
-            organizacion_id=org.id,
-            email_verificado=False,
-            estado="ACTIVO",
-        )
-        db.add(usuario)
+        if crea_psicologo:
+            # Limitación actual del modelo: un usuario pertenece a UNA sola organización
+            # (usuarios.organizacion_id). Se vincula a su primera empresa; las siguientes
+            # quedan registradas como "suyas" (Mis Empresas) pero sin cambiar esa vinculación.
+            if creador.organizacion_id is None:
+                creador.organizacion_id = org.id
+        else:
+            usuario = Usuario(
+                nombre=data.usuarioNombre.strip(),
+                apellido=data.usuarioApellido.strip(),
+                email=email_usuario,
+                password_hash=hash_password(data.usuarioPassword),
+                rol_id=rol_responsable.id,
+                organizacion_id=org.id,
+                email_verificado=False,
+                estado="ACTIVO",
+            )
+            db.add(usuario)
         db.commit()
     except Exception:
         db.rollback()
         raise
 
     db.refresh(org)
-    db.refresh(usuario)
-
-    crear_y_enviar_codigo(db, usuario, "VERIFICACION_EMAIL")
+    if usuario is not None:
+        db.refresh(usuario)
+        crear_y_enviar_codigo(db, usuario, "VERIFICACION_EMAIL")
 
     return {
-        "message": "Empresa y cuenta creadas con éxito. Revisa tu correo para verificar tu cuenta.",
+        "message": (
+            "Empresa y cuenta creadas con éxito. Revisa tu correo para verificar tu cuenta."
+            if usuario is not None and creador is None
+            else "Empresa creada con éxito."
+            if usuario is None
+            else "Empresa creada. Se envió un código de verificación al correo del usuario responsable."
+        ),
         "organizacionId": str(org.id),
-        "usuarioId": str(usuario.id),
-        "email": usuario.email,
-        "rol": rol_evaluador.codigo,
+        "usuarioId": str(usuario.id) if usuario is not None else None,
+        "email": usuario.email if usuario is not None else None,
+        "rol": rol_responsable.codigo if rol_responsable is not None else creador.rol.codigo,
+        "usuarioCreado": usuario is not None,
     }
+
+
+def listar_mis_organizaciones(db: Session, actual: Usuario) -> list[Organizacion]:
+    """Empresas registradas por el usuario actual (sin importar a cuál esté vinculado)."""
+    return (
+        db.query(Organizacion)
+        .filter(Organizacion.creada_por_id == actual.id)
+        .order_by(Organizacion.creado_en.desc())
+        .all()
+    )
 
 
 def crear_organizacion(db: Session, data) -> Organizacion:

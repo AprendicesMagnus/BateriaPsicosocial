@@ -1,0 +1,63 @@
+.mis-empresas-card {
+  margin-top: 16px;
+  padding: 24px;
+}
+
+.mis-empresas-tabla-wrap {
+  overflow-x: auto;
+}
+
+.mis-empresas-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--ink-900, #12314b);
+}
+
+.mis-empresas-tabla th,
+.mis-empresas-tabla td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.mis-empresas-tabla th {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.mis-empresas-vacio {
+  text-align: center;
+  padding: 24px 8px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.mis-empresas-btn {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 10px 20px;
+  text-decoration: none;
+  text-align: center;
+}
+
+.mis-empresas-ok,
+.mis-empresas-error {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.mis-empresas-ok {
+  background: #e7f6ec;
+  color: #1f7a3f;
+}
+
+.mis-empresas-error {
+  background: #fdecec;
+  color: #b42318;
+}

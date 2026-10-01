@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
 import "../styles/Empresas.css";
 import { request } from "../api/client";
 import { formatearNit } from "../utils/validaciones";
+import Toast from "../components/Toast";
+
+const MENSAJE_NIT_EXISTENTE = "La empresa con este NIT ya se encuentra registrada";
+const ESPERA_REDIRECCION_MS = 3000;
 
 export default function VerificarNit() {
   const navigate = useNavigate();
@@ -13,7 +17,11 @@ export default function VerificarNit() {
 
   const [error, setError] = useState("");
   const [verificando, setVerificando] = useState(false);
-  const [empresaEncontrada, setEmpresaEncontrada] = useState(null);
+  const [nitYaRegistrado, setNitYaRegistrado] = useState(false);
+  const temporizador = useRef(null);
+
+  // Evita que el temporizador dispare una navegación si la persona sale de la página antes.
+  useEffect(() => () => clearTimeout(temporizador.current), []);
 
   const marcar = (campo) => {
     setTocados((prev) => ({ ...prev, [campo]: true }));
@@ -31,6 +39,7 @@ export default function VerificarNit() {
 
   async function handleSubmit(e) {
     if (e) e.preventDefault();
+    if (nitYaRegistrado) return;
     setError("");
     setIntento(true);
 
@@ -48,7 +57,11 @@ export default function VerificarNit() {
       const res = await request(`/organizaciones/existe?nit=${encodeURIComponent(nitLimpio)}`);
 
       if (res.existe) {
-        setEmpresaEncontrada(res.empresa ?? { nit: nitLimpio });
+        // NIT ya registrado: aviso (toast) y, a los 3 segundos, vuelta automática a inicio.
+        setNitYaRegistrado(true);
+        temporizador.current = setTimeout(() => {
+          navigate("/Inicio", { replace: true });
+        }, ESPERA_REDIRECCION_MS);
         return;
       }
 
@@ -60,16 +73,12 @@ export default function VerificarNit() {
     }
   }
 
-  function handleVerificarOtro() {
-    setEmpresaEncontrada(null);
-    setNit("");
-    setError("");
-    setTocados({});
-    setIntento(false);
-  }
-
   return (
     <div className="app-shell-page">
+      {nitYaRegistrado && (
+        <Toast mensaje={MENSAJE_NIT_EXISTENTE} tipo="info" duracion={ESPERA_REDIRECCION_MS} />
+      )}
+
       <header className="app-topbar">
         <Link to="/" aria-label="Ir a la página principal">
           <img src="/logo oscu.png" alt="Magnus SIG" className="app-topbar-logo" />
@@ -83,88 +92,45 @@ export default function VerificarNit() {
 
         <div className="empresas-center">
           <div className="app-card empresas-card">
-            {empresaEncontrada ? (
-              <>
-                <h1 className="empresas-titulo">Empresa encontrada</h1>
-                <p className="empresas-subtitulo">
-                  Ya existe una empresa registrada con este NIT.
-                </p>
+            <h1 className="empresas-titulo">Verificar NIT</h1>
+            <p className="empresas-subtitulo">
+              Antes de crear tu empresa, verifiquemos que no esté registrada todavía.
+            </p>
 
-                <div className="empresas-info-box">
-                  <div className="empresas-info-row">
-                    <span className="empresas-info-label">Empresa</span>
-                    <span className="empresas-info-value">
-                      {empresaEncontrada.nombre ?? "—"}
-                    </span>
-                  </div>
-                  <div className="empresas-info-row">
-                    <span className="empresas-info-label">NIT</span>
-                    <span className="empresas-info-value">
-                      {empresaEncontrada.nit ?? nit}
-                    </span>
-                  </div>
-                  {empresaEncontrada.sector && (
-                    <div className="empresas-info-row">
-                      <span className="empresas-info-label">Sector</span>
-                      <span className="empresas-info-value">{empresaEncontrada.sector}</span>
-                    </div>
-                  )}
-                </div>
+            <form className="empresas-form" onSubmit={handleSubmit} noValidate>
+              <label className="field">
+                <span className="field__label">NIT de la empresa (con dígito verificador)</span>
+                <input
+                  className={`field__input ${mostrarError("nit") ? "field__input--invalid" : ""}`}
+                  aria-invalid={mostrarError("nit") ? "true" : "false"}
+                  aria-describedby={mostrarError("nit") ? "nit-error" : undefined}
+                  placeholder="900123456-7"
+                  maxLength={11}
+                  value={nit}
+                  disabled={nitYaRegistrado}
+                  onChange={(e) => setNit(formatearNit(e.target.value))}
+                  onBlur={() => marcar("nit")}
+                />
+                {mostrarError("nit") && (
+                  <span className="field__error" id="nit-error">
+                    {errores.nit}
+                  </span>
+                )}
+              </label>
 
-                <Link to="/iniciar-sesion" className="btn-primary empresas-btn-link">
-                  Iniciar sesión
-                </Link>
+              {error && <div className="form-message form-message--error">{error}</div>}
 
-                <button
-                  type="button"
-                  className="link-accent empresas-otro-nit"
-                  onClick={handleVerificarOtro}
-                >
-                  Verificar otro NIT
-                </button>
-              </>
-            ) : (
-              <>
-                <h1 className="empresas-titulo">Verificar NIT</h1>
-                <p className="empresas-subtitulo">
-                  Antes de crear tu empresa, verifiquemos que no esté registrada todavía.
-                </p>
+              <button type="submit" className="btn-primary" disabled={verificando || nitYaRegistrado}>
+                {verificando ? "Verificando..." : "Continuar"}
+              </button>
+            </form>
 
-                <form className="empresas-form" onSubmit={handleSubmit} noValidate>
-                  <label className="field">
-                    <span className="field__label">NIT de la empresa (con dígito verificador)</span>
-                    <input
-                      className={`field__input ${mostrarError("nit") ? "field__input--invalid" : ""}`}
-                      aria-invalid={mostrarError("nit") ? "true" : "false"}
-                      aria-describedby={mostrarError("nit") ? "nit-error" : undefined}
-                      placeholder="900123456-7"
-                      maxLength={11}
-                      value={nit}
-                      onChange={(e) => setNit(formatearNit(e.target.value))}
-                      onBlur={() => marcar("nit")}
-                    />
-                    {mostrarError("nit") && (
-                      <span className="field__error" id="nit-error">
-                        {errores.nit}
-                      </span>
-                    )}
-                  </label>
-
-                  {error && <div className="form-message form-message--error">{error}</div>}
-
-                  <button type="submit" className="btn-primary" disabled={verificando}>
-                    {verificando ? "Verificando..." : "Continuar"}
-                  </button>
-                </form>
-
-                <p className="empresas-nota">
-                  ¿Tu empresa ya está registrada?{" "}
-                  <Link className="link-accent" to="/iniciar-sesion">
-                    Inicia sesión
-                  </Link>
-                </p>
-              </>
-            )}
+            <p className="empresas-nota">
+              ¿Tu empresa ya está registrada?{" "}
+              <Link className="link-accent" to="/iniciar-sesion">
+                Inicia sesión
+              </Link>
+            </p>
           </div>
         </div>
       </main>

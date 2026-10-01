@@ -67,11 +67,20 @@ class Usuario(Base):
     area_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("areas.id"))
     numero_identificacion: Mapped[str | None] = mapped_column(String(30))
     cargo: Mapped[str | None] = mapped_column(String(120))
+<<<<<<< HEAD
     # Paciente que responde por un enlace público: no tiene contraseña conocida ni puede iniciar sesión
     es_invitado: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
+=======
+    # Ruta pública de la foto de perfil (p. ej. /api/uploads/avatars/xxx.jpg).
+    foto_url: Mapped[str | None] = mapped_column(String(255))
+    # Fecha de la última edición de perfil (base de la regla de 1 edición cada 15 días).
+    perfil_actualizado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+>>>>>>> 9260592bc5635ab4b13ec9854f093387f138f8ec
 
     rol: Mapped[Rol] = relationship(back_populates="usuarios")
-    organizacion: Mapped["Organizacion | None"] = relationship(back_populates="usuarios")
+    organizacion: Mapped["Organizacion | None"] = relationship(
+        back_populates="usuarios", foreign_keys=[organizacion_id]
+    )
     area: Mapped["Area | None"] = relationship(back_populates="trabajadores")
     codigos: Mapped[list["CodigoVerificacion"]] = relationship(back_populates="usuario", cascade="all, delete-orphan")
     compras: Mapped[list["Compra"]] = relationship(back_populates="usuario", cascade="all, delete-orphan")

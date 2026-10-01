@@ -3,7 +3,7 @@ from app.core.crypto import hash_password
 from app.db.session import SessionLocal
 from app.models.survey import Baremo, CuestionarioVersion, Dimension, Pregunta, Recomendacion
 from app.models.user import Permiso, Rol, RolPermiso, Usuario
-from app.db.intralaboral import sembrar_forma_intralaboral
+from app.db.intralaboral_oficial import sembrar_forma_intralaboral
 
 PERMISOS = [
     ("GESTIONAR_USUARIOS", "Gestionar usuarios", "USUARIOS"),
@@ -31,6 +31,13 @@ ROLES = {
     "JEFE": {
         "nombre": "Jefe",
         "descripcion": "Jefe de área u organización.",
+        "permisos": [],
+    },
+    # Usuario limitado que crea un Jefe/Administrador desde "Crear empresa":
+    # solo entra al módulo de Reportes de su empresa.
+    "RESPONSABLE_SST": {
+        "nombre": "Responsable SST",
+        "descripcion": "Usuario limitado: solo consulta los reportes de su empresa.",
         "permisos": [],
     },
     # El código interno se mantiene EVALUADOR_SST para no romper el resto del sistema;
@@ -553,10 +560,12 @@ def sembrar_todos_los_cuestionarios(db) -> dict[str, CuestionarioVersion]:
         db.flush()
     versiones["EXTRALABORAL"] = v_extra
 
-    # 4 y 5. INTRALABORAL_A (123 preguntas) e INTRALABORAL_B (97 preguntas).
-    # Datos en app/db/data/intralaboral_forma_{A,B}.json (ver app/db/intralaboral.py).
-    # Por ahora con una dimensión provisional; falta cargar dimensiones y baremos oficiales.
-
+    # 4 y 5. INTRALABORAL_A (123 preguntas, 19 dimensiones) e INTRALABORAL_B
+    # (97 preguntas, 16 dimensiones). Estructura oficial completa: dimensiones,
+    # dominios y total del cuestionario, con factores de transformacion y
+    # baremos reales tomados de las Tablas 21-34 del Manual del Ministerio de
+    # la Proteccion Social (2010), via docs/referencia_intralaboral_A_B.json
+    # (generado y verificado contra el PDF fuente en scripts/generar_referencia_intralaboral.py).
     v_intra_a = sembrar_forma_intralaboral(db, "forma_A")
     versiones["INTRALABORAL_A"] = v_intra_a
 

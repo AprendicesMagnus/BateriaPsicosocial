@@ -21,9 +21,17 @@ class Organizacion(Base):
     email: Mapped[str | None] = mapped_column(String(180))
     activa: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    # Usuario que registró la empresa (base de "Mis Empresas"). use_alter evita el ciclo
+    # de dependencias con usuarios.organizacion_id al crear/borrar tablas.
+    creada_por_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("usuarios.id", use_alter=True, name="fk_organizaciones_creada_por"),
+    )
 
     areas: Mapped[list["Area"]] = relationship(back_populates="organizacion")
-    usuarios: Mapped[list["Usuario"]] = relationship(back_populates="organizacion")
+    usuarios: Mapped[list["Usuario"]] = relationship(
+        back_populates="organizacion", foreign_keys="Usuario.organizacion_id"
+    )
     evaluaciones: Mapped[list["Evaluacion"]] = relationship(back_populates="organizacion")
 
 

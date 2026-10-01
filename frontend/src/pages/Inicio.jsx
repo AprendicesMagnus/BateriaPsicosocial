@@ -8,6 +8,7 @@ import {  HiOutlineUser,  HiOutlineDocumentText,  HiOutlineClipboardList,  HiOut
 import "../styles/Inicio.css";
 import "../styles/app-shell.css";
 import { useAuth } from "../context/AuthContext"; // <-- EN LÍNEA NUEVA: IMPORTADO "useAuth"
+import { urlArchivo } from "../api/client";
 
 
 
@@ -195,8 +196,6 @@ export default function Inicio() {
                  <VscBriefcase size={18} />
                 Empresas
               </button>
-              
-              
 
               {menuEmpresasAbierto && (
                 <div
@@ -214,7 +213,7 @@ export default function Inicio() {
                   }}
                 >
                   <Link
-                    to="/crear-empresa"
+                    to="/verificar-nit"
                     onClick={() => setMenuEmpresasAbierto(false)}
                     className="boton-encuestas"
                     style={{
@@ -228,9 +227,8 @@ export default function Inicio() {
                   >
                     Crear empresa
                   </Link>
-
                   <Link
-                    to="/crear-empresa"
+                    to="/mis-empresas"
                     onClick={() => setMenuEmpresasAbierto(false)}
                     className="boton-encuestas"
                     style={{
@@ -242,7 +240,7 @@ export default function Inicio() {
                       color: "var(--ink-900, #12314b)",
                     }}
                   >
-                    mis empresa
+                    Mis Empresas
                   </Link>
                 </div>
               )}
@@ -345,7 +343,7 @@ export default function Inicio() {
             >
               {usuario?.fotoUrl ? (
                 <img
-                  src={usuario.fotoUrl}
+                  src={urlArchivo(usuario.fotoUrl)}
                   alt={nombreUsuario}
                   className="app-avatar app-avatar--foto"
                 />

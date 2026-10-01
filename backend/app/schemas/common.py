@@ -97,6 +97,11 @@ class RegistroRequest(BaseModel):
     rol: RolRegistro
 
 
+class CambioPasswordPerfilRequest(BaseModel):
+    passwordActual: str = Field(min_length=1, max_length=72)
+    passwordNueva: PasswordNueva
+
+
 class LoginRequest(BaseModel):
     email: Correo
     password: str = Field(min_length=1, max_length=72)
@@ -261,26 +266,14 @@ class RespuestaRequest(BaseModel):
     @classmethod
     def validar_valor(cls, v):
         if isinstance(v, int):
-            # Se permite 0 porque el intralaboral usa la escala oficial 0-4 (Nunca=0 ... Siempre=4).
-            # El rango exacto de cada pregunta se valida en el servicio con valor_minimo/valor_maximo.
-            if v < 0 or v > 5:
-                raise ValueError("El valor numérico debe estar entre 0 y 5.")
+            if v < 1 or v > 5:
+                raise ValueError("El valor numérico debe estar entre 1 y 5.")
         elif isinstance(v, str):
             if not v.strip():
                 raise ValueError("El valor de texto no puede estar vacío.")
         else:
             raise ValueError("Tipo de respuesta no válido.")
         return v
-
-
-class FinalizarCuestionarioRequest(BaseModel):
-    """Cuerpo de POST /evaluaciones/{id}/finalizar-cuestionario.
-
-    filtros: respuesta a cada pregunta filtro del intralaboral (True = "Sí", False = "No"),
-    p. ej. {"CLIENTES": False, "JEFE": True}. Las preguntas cuyo filtro es False no se exigen.
-    """
-
-    filtros: dict[str, bool] = {}
 
 
 class FichaDatosRequest(BaseModel):
@@ -345,10 +338,12 @@ class OrganizacionAutorregistroCreate(BaseModel):
     municipio: Lugar | None = None
     email: Correo | None = None
     telefono: str | None = Field(default=None, pattern=r"^\d{7,10}$", description="Teléfono debe contener 7-10 dígitos")
-    usuarioNombre: NombrePersona
-    usuarioApellido: NombrePersona
-    usuarioEmail: Correo
-    usuarioPassword: PasswordNueva
+    # Datos del usuario responsable. Son obligatorios salvo cuando quien crea la empresa es un
+    # Psicologo (él mismo es el responsable); la regla se valida en el servicio.
+    usuarioNombre: NombrePersona | None = None
+    usuarioApellido: NombrePersona | None = None
+    usuarioEmail: Correo | None = None
+    usuarioPassword: PasswordNueva | None = None
 
 
 class CompraCreate(BaseModel):
@@ -371,3 +366,14 @@ class PagoCreate(BaseModel):
     @classmethod
     def normalizar_numero_tarjeta(cls, valor):
         return valor.replace(" ", "") if isinstance(valor, str) else valor
+
+
+class FinalizarCuestionarioRequest(BaseModel):
+    """Cuerpo OPCIONAL de POST /evaluaciones/{evaluacion_id}/finalizar-cuestionario.
+
+    Ejemplo: {"filtros": {"CLIENTES": false, "JEFE": true}}
+    Cada clave es una pregunta filtro (atiende clientes, es jefe...) y su valor es la
+    respuesta (True = Sí, False = No). El id de la evaluación ya viaja en la URL.
+    """
+
+    filtros: dict[str, bool] = Field(default_factory=dict)

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import AuthLayout from "../components/AuthLayout";
+import { rutaInicial } from "../utils/roles";
 import {
   TextField,
   PasswordField,
@@ -135,7 +136,7 @@ export default function SignIn() {
 
       iniciarSesion(data.token, data.usuario);
 
-      navigate("/Inicio");
+      navigate(rutaInicial(data.usuario?.rol));
     } catch (err) {
       if (err.payload?.requiresVerification) {
         navigate("/verificar-cuenta", {
@@ -197,7 +198,7 @@ export default function SignIn() {
         data.usuario
       );
 
-      navigate("/Inicio");
+      navigate(rutaInicial(data.usuario?.rol));
     } catch (err) {
       console.error(
         "Error iniciando sesión con Google:",
@@ -226,7 +227,7 @@ export default function SignIn() {
 
       iniciarSesion(data.token, data.usuario);
       setGooglePendiente(null);
-      navigate("/Inicio");
+      navigate(rutaInicial(data.usuario?.rol));
     } catch (err) {
       setErrorRolGoogle(err.message || "No se pudo crear la cuenta con Google.");
     } finally {

@@ -178,3 +178,120 @@
     flex-basis: 100%;
   }
 }
+/* ---------- Edición de perfil / contraseña ---------- */
+.perfil-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.perfil-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.perfil-form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.perfil-btn {
+  width: auto;
+  padding-left: 22px;
+  padding-right: 22px;
+}
+
+.perfil-aviso {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.perfil-form .perfil-aviso {
+  margin: 0;
+}
+
+.perfil-ok,
+.perfil-error {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.perfil-ok {
+  background: #e7f6ec;
+  color: #1f7a3f;
+}
+
+.perfil-error {
+  background: #fdecec;
+  color: #b42318;
+}
+
+@media (max-width: 600px) {
+  .perfil-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Usuarios registrados (Super Administrador) ---------- */
+.directorio-card {
+  margin-top: 24px;
+  padding: 24px;
+}
+
+.directorio-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.directorio-busqueda {
+  max-width: 280px;
+}
+
+.directorio-tabla-wrap {
+  overflow-x: auto;
+}
+
+.directorio-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--ink-900, #12314b);
+}
+
+.directorio-tabla th,
+.directorio-tabla td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.directorio-tabla th {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.directorio-vacio {
+  text-align: center;
+  color: #64748b;
+}
+
+.directorio-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #64748b;
+}
