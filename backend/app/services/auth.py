@@ -41,16 +41,13 @@ def usuario_publico(usuario: Usuario) -> dict:
         "areaId": str(usuario.area_id) if usuario.area_id else None,
         "numeroIdentificacion": usuario.numero_identificacion,
         "cargo": usuario.cargo,
-<<<<<<< HEAD
         # El frontend lo usa para no dejar entrar a los pacientes del enlace a las páginas internas
         "esInvitado": usuario.es_invitado,
-=======
         "fotoUrl": usuario.foto_url,
         "perfilActualizadoEn": usuario.perfil_actualizado_en.isoformat() if usuario.perfil_actualizado_en else None,
         "proximaEdicionPerfil": (
             proxima_edicion(usuario).isoformat() if proxima_edicion(usuario) else None
         ),
->>>>>>> 9260592bc5635ab4b13ec9854f093387f138f8ec
     }
 
 

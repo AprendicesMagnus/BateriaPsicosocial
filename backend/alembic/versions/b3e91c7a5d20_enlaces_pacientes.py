@@ -3,7 +3,7 @@
 Agrega el token del enlace público de una evaluación (lo crea el psicólogo / evaluador SST)
 y la marca de usuario invitado (paciente que responde por el enlace, sin cuenta propia).
 
-Revision ID: f1a2b3c4d5e6
+Revision ID: b3e91c7a5d20
 Revises: 5cd71dd1f202
 Create Date: 2026-09-30 10:00:00.000000
 
@@ -15,7 +15,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'f1a2b3c4d5e6'
+revision: str = 'b3e91c7a5d20'
 down_revision: Union[str, Sequence[str], None] = '5cd71dd1f202'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

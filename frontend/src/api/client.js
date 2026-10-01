@@ -28,18 +28,10 @@ async function request(path, { method = "GET", body, token } = {}) {
     // Sin token (login, Google, registro) es un rechazo normal: se muestra el mensaje del backend.
     if (response.status === 401 && token) {
       localStorage.removeItem("magnussing_token");
-<<<<<<< HEAD
-      // El paciente del enlace no tiene login: vuelve a su enlace. El resto, a la página de login
-      // (antes apuntaba a "/login", que no existe)
-      const enlace = localStorage.getItem("magnussing_enlace");
-      window.location.href = enlace ? `/responder/${enlace}` : "/iniciar-sesion";
-      throw new Error("Tu sesión expiró. Inicia sesión de nuevo.");
-=======
       window.dispatchEvent(new Event("auth:expirada"));
       const expirada = new Error("Tu sesión expiró. Inicia sesión de nuevo.");
       expirada.status = 401;
       throw expirada;
->>>>>>> 9260592bc5635ab4b13ec9854f093387f138f8ec
     }
     const error = new Error(data.error || "Ocurrió un error inesperado.");
     error.status = response.status;

@@ -5,7 +5,14 @@ from sqlalchemy import func
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.models.organization import Area, Organizacion
-from app.models.evaluation import Evaluacion, EvaluacionParticipante
+from app.models.evaluation import (
+    Evaluacion,
+    EvaluacionInstrumento,
+    EvaluacionParticipante,
+    ParticipanteInstrumento,
+    ResultadoDimension,
+)
+from app.models.survey import Dimension
 from app.models.user import Usuario
 
 settings = get_settings()
@@ -71,7 +78,6 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
         })
 
     return reportes
-<<<<<<< HEAD
 
 
 # Instrumentos que no se califican (solo datos sociodemográficos): no se muestran sus "resultados"
@@ -170,5 +176,3 @@ def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
             }
         )
     return encuestas
-=======
->>>>>>> 9260592bc5635ab4b13ec9854f093387f138f8ec
