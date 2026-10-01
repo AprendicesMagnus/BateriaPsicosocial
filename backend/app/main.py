@@ -3,6 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1 import router as api_v1_router
 from app.core.config import get_settings
@@ -100,6 +101,12 @@ async def manejar_error_validacion(_request: Request, exc: RequestValidationErro
         content={"error": mensaje, "detail": jsonable_encoder(errores)},
     )
 
+
+# Fotos de perfil (se guardan en backend/uploads). Solo se sirven archivos estáticos.
+from app.services.perfil import UPLOADS_DIR  # noqa: E402
+
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 app.include_router(api_v1_router)
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
+import { rutaInicial } from "../utils/roles";
 import {
   TextField,
   PasswordField,
@@ -184,7 +185,7 @@ export default function CreateAccount() {
       }
 
       iniciarSesion(data.token, data.usuario);
-      navigate("/Inicio");
+      navigate(rutaInicial(data.usuario?.rol));
     } catch (err) {
       console.error(
         "Error creando cuenta con Google:",
@@ -213,7 +214,7 @@ export default function CreateAccount() {
 
       iniciarSesion(data.token, data.usuario);
       setGooglePendiente(null);
-      navigate("/Inicio");
+      navigate(rutaInicial(data.usuario?.rol));
     } catch (err) {
       setErrorRolGoogle(err.message || "No se pudo crear la cuenta con Google.");
     } finally {

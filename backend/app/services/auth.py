@@ -1,9 +1,8 @@
+import logging
 import secrets
 from datetime import datetime, timedelta
 from random import randint
 from uuid import UUID
-
-
 
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
@@ -15,8 +14,10 @@ from app.core.errors import AppError
 from app.core.security import crear_token_reset, crear_token_sesion, decodificar_token
 from app.models.user import CodigoVerificacion, Rol, Usuario
 from app.services.correo import enviar_codigo_verificacion
+from app.services.perfil import proxima_edicion
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 # Client ID público de Google Cloud (no es secreto, puede vivir en el código).
 GOOGLE_CLIENT_ID = "615740449491-340ojlb2h90f13j4ut7u0rhtm2k90589.apps.googleusercontent.com"
@@ -40,6 +41,11 @@ def usuario_publico(usuario: Usuario) -> dict:
         "areaId": str(usuario.area_id) if usuario.area_id else None,
         "numeroIdentificacion": usuario.numero_identificacion,
         "cargo": usuario.cargo,
+        "fotoUrl": usuario.foto_url,
+        "perfilActualizadoEn": usuario.perfil_actualizado_en.isoformat() if usuario.perfil_actualizado_en else None,
+        "proximaEdicionPerfil": (
+            proxima_edicion(usuario).isoformat() if proxima_edicion(usuario) else None
+        ),
     }
 
 
@@ -196,11 +202,16 @@ def login_con_google(db: Session, credential: str, rol: str | None = None) -> di
     # Verifica con los servidores de Google que el token es real y no fue
     # falsificado, y que efectivamente fue emitido para nuestro Client ID.
     try:
+        # clock_skew_in_seconds tolera pequeños desfases del reloj del equipo, causa común
+        # de "Token used too early" cuando la hora de Windows no está sincronizada.
         payload = google_id_token.verify_oauth2_token(
-            credential, google_requests.Request(), GOOGLE_CLIENT_ID
+            credential, google_requests.Request(), GOOGLE_CLIENT_ID, clock_skew_in_seconds=30
         )
-    except ValueError:
-        raise AppError(401, "Token de Google inválido.")
+    except ValueError as exc:
+        # El motivo real (audiencia incorrecta, token vencido, reloj, firma...) queda en el
+        # log del servidor para diagnosticar; al cliente solo se le da un mensaje genérico.
+        logger.warning("Google rechazó el token: %s", exc)
+        raise AppError(401, "No se pudo validar tu cuenta de Google. Intenta de nuevo.")
 
     email = payload.get("email")
     if not email or not payload.get("email_verified", False):

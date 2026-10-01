@@ -42,6 +42,17 @@ def get_current_user(
     return usuario
 
 
+def get_current_user_opcional(
+    request: Request,
+    credenciales: HTTPAuthorizationCredentials | None = Depends(bearer),
+    db: Session = Depends(get_db),
+) -> Usuario | None:
+    """Devuelve el usuario si llega un token; None si la petición es anónima."""
+    if credenciales is None:
+        return None
+    return get_current_user(request, credenciales, db)
+
+
 def require_permisos(*codigos: str) -> Callable:
     def dependencia(usuario: Usuario = Depends(get_current_user)) -> Usuario:
         if not tiene_permisos(usuario, set(codigos)):
@@ -65,6 +76,16 @@ def require_admin(usuario: Usuario = Depends(get_current_user)) -> Usuario:
 def require_gestor(usuario: Usuario = Depends(get_current_user)) -> Usuario:
     if usuario.rol.codigo not in {"SUPER_ADMINISTRADOR", "EVALUADOR_SST"}:
         raise AppError(403, "Esta acción requiere permisos de administrador o evaluador SST.")
+    return usuario
+
+
+ROLES_LECTORES_REPORTES = {"SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"}
+
+
+def require_lector_reportes(usuario: Usuario = Depends(get_current_user)) -> Usuario:
+    """Acceso de lectura a Reportes (incluye al usuario limitado RESPONSABLE_SST)."""
+    if usuario.rol.codigo not in ROLES_LECTORES_REPORTES:
+        raise AppError(403, "Esta acción requiere permisos de administrador, evaluador SST o responsable SST.")
     return usuario
 
 

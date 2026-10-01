@@ -531,6 +531,11 @@ def listar_informes(
         pass
     elif rol == "EVALUADOR_SST":
         query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
+    elif rol == "RESPONSABLE_SST":
+        # Usuario limitado: solo informes agrupados de su propia organización.
+        query = query.filter(
+            Evaluacion.organizacion_id == actual.organizacion_id, Informe.tipo == "AGRUPADO"
+        )
     elif rol == "TRABAJADOR":
         query = query.filter(Informe.tipo == "INDIVIDUAL", Informe.trabajador_id == actual.id)
     else:

@@ -23,9 +23,23 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, [token]);
 
+  // Si cualquier petición recibe 401 (token vencido), se cierra la sesión en memoria.
+  useEffect(() => {
+    const alExpirar = () => {
+      setToken(null);
+      setUsuario(null);
+    };
+    window.addEventListener("auth:expirada", alExpirar);
+    return () => window.removeEventListener("auth:expirada", alExpirar);
+  }, []);
+
   function iniciarSesion(nuevoToken, nuevoUsuario) {
     localStorage.setItem(STORAGE_KEY, nuevoToken);
     setToken(nuevoToken);
+    setUsuario(nuevoUsuario);
+  }
+
+  function actualizarUsuario(nuevoUsuario) {
     setUsuario(nuevoUsuario);
   }
 
@@ -37,7 +51,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ token, usuario, loading, iniciarSesion, cerrarSesion }}
+      value={{ token, usuario, loading, iniciarSesion, cerrarSesion, actualizarUsuario }}
     >
       {children}
     </AuthContext.Provider>

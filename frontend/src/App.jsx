@@ -12,6 +12,8 @@ import Checkout from "./pages/Checkout";
 import Reportes from "./pages/Reportes";
 import Perfil from "./pages/Perfil";
 import VerificarNit from "./pages/VerificarNit";
+import MisEmpresas from "./pages/MisEmpresas";
+import RestriccionRolLimitado from "./components/RestriccionRolLimitado";
 import CrearEmpresa from "./pages/Crearempresa";
 import Panel from "./pages/Panel";
 import Dashboard from "./pages/Dashboard";
@@ -31,6 +33,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <RestriccionRolLimitado>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/iniciar-sesion" element={<SignIn />} />
@@ -77,7 +80,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/perfil" element={<Perfil />} />
+          <Route path="/perfil" element={<ProtectedRoute> <Perfil /> </ProtectedRoute>} />
+          <Route path="/mis-empresas" element={<ProtectedRoute> <MisEmpresas /> </ProtectedRoute>} />
           <Route path="/verificar-nit" element={<VerificarNit />} />
           <Route path="/crear-empresa" element={<CrearEmpresa />} />
           <Route
@@ -89,6 +93,7 @@ export default function App() {
             }
           />
         </Routes>
+        </RestriccionRolLimitado>
       </BrowserRouter>
     </AuthProvider>
   );

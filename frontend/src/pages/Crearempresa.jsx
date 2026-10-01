@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
 import "../styles/Empresas.css";
 import { request } from "../api/client";
+import { fetchMe } from "../api/auth";
+import { useAuth } from "../context/AuthContext";
 import {
   TEXTO_AYUDA_PASSWORD,
   emailValido,
@@ -24,6 +26,10 @@ const SECTORES = ["Agropecuario", "Energético", "Turístico", "Comercial", "Otr
 export default function CrearEmpresa() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { usuario, token, actualizarUsuario } = useAuth();
+  // Si quien crea la empresa es Psicologo, él mismo es el responsable: no se piden
+  // los datos del usuario responsable.
+  const esPsicologo = usuario?.rol === "EVALUADOR_SST";
 
   const nitInicial = location.state?.nit;
 
@@ -123,7 +129,9 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
     setError("");
     setIntento(true);
 
-    const hayErrores = Object.keys(errores).some((campo) => Boolean(errores[campo]));
+    const hayErrores = Object.keys(errores).some((campo) =>
+      esPsicologo && campo.startsWith("usuario") ? false : Boolean(errores[campo])
+    );
     if (hayErrores) {
       setTimeout(() => {
         document.querySelector(".field__input--invalid")?.focus();
@@ -152,8 +160,9 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
 
     setLoading(true);
     try {
-      await request("/organizaciones/autorregistro", {
+      const res = await request("/organizaciones/autorregistro", {
         method: "POST",
+        token,
         body: {
           nit: nitTrim,
           nombre: rSocialTrim,
@@ -162,12 +171,26 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
           numeroTrabajadores: parseInt(numeroTrabajadores, 10) || null,
           municipio: ciudadTrim,
           email: correoEmpresaNorm,
-          usuarioNombre: nomRespTrim,
-          usuarioApellido: apeRespTrim,
-          usuarioEmail: correoUserNorm,
-          usuarioPassword,
+          ...(esPsicologo
+            ? {}
+            : {
+                usuarioNombre: nomRespTrim,
+                usuarioApellido: apeRespTrim,
+                usuarioEmail: correoUserNorm,
+                usuarioPassword,
+              }),
         },
       });
+
+      if (token) {
+        // Con sesión iniciada: la empresa queda en "Mis Empresas". Se refresca el usuario
+        // porque, si es su primera empresa, el backend lo vincula a ella.
+        fetchMe(token)
+          .then((data) => actualizarUsuario(data.usuario))
+          .catch(() => {});
+        navigate("/mis-empresas", { state: { mensaje: res.message } });
+        return;
+      }
 
       navigate("/verificar-cuenta", {
         state: { email: correoUserNorm },
@@ -199,7 +222,9 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
               <span className="empresas-badge">Empresa no registrada</span>
             </div>
             <p className="empresas-subtitulo">
-              NIT verificado: <strong>{nitInicial}</strong>. Registra los datos de tu empresa y el primer usuario Evaluador SST responsable.
+              NIT verificado: <strong>{nitInicial}</strong>. {esPsicologo
+                ? "Registra los datos de tu empresa."
+                : "Registra los datos de tu empresa y del usuario responsable."}
             </p>
 
             <form className="empresas-form" onSubmit={handleSubmit} noValidate>
@@ -365,6 +390,8 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
 
               
 
+              {!esPsicologo && (
+                <>
               <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "16px 0" }} />
 
               <h3 style={{ fontSize: "16px", color: "var(--ink-900, #12314b)", margin: "4px 0 4px" }}>
@@ -452,6 +479,9 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                   )}
                 </label>
               </div>
+
+                </>
+              )}
 
               {error && <div className="form-message form-message--error">{error}</div>}
 

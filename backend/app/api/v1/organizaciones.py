@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, require_admin, require_gestor
+from app.api.deps import get_current_user, get_current_user_opcional, require_admin, require_gestor
 from app.db.session import get_db
 from app.models.organization import Area, Organizacion
 from app.models.user import Usuario
@@ -55,8 +55,19 @@ def verificar_existe_nit(
 def autorregistrar_organizacion(
     data: OrganizacionAutorregistroCreate,
     db: Session = Depends(get_db),
+    # Con sesión: la empresa queda asociada a quien la crea ("Mis Empresas").
+    creador: Usuario | None = Depends(get_current_user_opcional),
 ):
-    return organizaciones_service.autorregistrar_organizacion(db, data)
+    return organizaciones_service.autorregistrar_organizacion(db, data, creador)
+
+
+@router.get("/mias")
+def listar_mis_organizaciones(
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    """Empresas creadas por el usuario autenticado."""
+    return [_organizacion_publica(o) for o in organizaciones_service.listar_mis_organizaciones(db, actual)]
 
 
 @router.get("")
