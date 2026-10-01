@@ -164,7 +164,9 @@ def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
                 "evaluacionEstado": evaluacion.estado,
                 "organizacionNombre": evaluacion.organizacion.nombre if evaluacion.organizacion else None,
                 "trabajadorNombre": f"{trabajador.nombre} {trabajador.apellido}".strip(),
-                "trabajadorEmail": trabajador.email,
+                # Los pacientes del enlace tienen un correo interno generado: no se muestra
+                "trabajadorEmail": None if trabajador.es_invitado else trabajador.email,
+                "viaEnlace": trabajador.es_invitado,
                 "estado": part.estado,  # PENDIENTE / EN_PROGRESO / COMPLETADA
                 "fechaInicio": part.fecha_inicio.isoformat() if part.fecha_inicio else None,
                 "fechaFin": part.fecha_fin.isoformat() if part.fecha_fin else None,

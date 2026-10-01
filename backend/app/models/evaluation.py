@@ -26,6 +26,10 @@ class Evaluacion(Base):
     fecha_inicio: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     fecha_fin: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    # Token del enlace público (/responder/<token>) con el que los pacientes responden sin cuenta
+    enlace_token: Mapped[str | None] = mapped_column(String(64), unique=True)
+    # Cuándo se quitó el enlace de la lista (Eliminar o limpieza cada 4 horas); la evaluación se conserva
+    enlace_oculto_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     organizacion: Mapped["Organizacion"] = relationship(back_populates="evaluaciones")
     evaluador: Mapped["Usuario"] = relationship(foreign_keys=[evaluador_id])

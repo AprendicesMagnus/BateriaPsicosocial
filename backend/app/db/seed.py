@@ -45,6 +45,13 @@ ROLES = {
             "GENERAR_INFORMES",
         ],
     },
+    # Paciente que responde la batería por el enlace del psicólogo, sin cuenta propia
+    # (usuario invitado creado en app/services/enlaces.py). No tiene permisos de gestión.
+    "PACIENTE": {
+        "nombre": "Paciente",
+        "descripcion": "Responde la batería por un enlace público del psicólogo.",
+        "permisos": [],
+    },
 }
 
 

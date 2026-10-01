@@ -32,7 +32,8 @@ def listar_evaluaciones(db: Session, actual: Usuario) -> list[dict]:
     query = db.query(Evaluacion).options(joinedload(Evaluacion.participantes))
     if actual.rol.codigo == "EVALUADOR_SST":
         query = query.filter(Evaluacion.evaluador_id == actual.id)
-    elif actual.rol.codigo == "TRABAJADOR":
+    # PACIENTE: invitado del enlace público; igual que el trabajador, solo ve sus evaluaciones
+    elif actual.rol.codigo in {"TRABAJADOR", "PACIENTE"}:
         query = query.join(EvaluacionParticipante).filter(EvaluacionParticipante.trabajador_id == actual.id)
     evaluaciones = query.order_by(Evaluacion.creado_en.desc()).all()
     return [_serializar_evaluacion(e) for e in evaluaciones]
@@ -330,6 +331,12 @@ def guardar_ficha_datos(db: Session, evaluacion_id, data, actual: Usuario) -> di
         participante.estado = "EN_PROGRESO"
         participante.fecha_inicio = utcnow()
 
+    # El paciente del enlace no tiene cuenta: su nombre sale de la Ficha para que el
+    # psicólogo sepa quién respondió en "Encuestas realizadas"
+    if actual.es_invitado:
+        actual.nombre = data.nombreCompleto.strip()[:120]
+        actual.apellido = ""
+
     db.commit()
     return {
         "message": "Ficha de datos generales guardada correctamente.",
@@ -514,6 +521,12 @@ def finalizar_cuestionario(db: Session, evaluacion_id, actual: Usuario, filtros:
     db.flush()
     resultados = tabular_participante(db, participante)
     _alertar_riesgo(db, participante, resultados)
+    # El enlace del paciente es de un solo uso: al terminar la batería se cierra
+    evaluacion = participante.evaluacion
+    if evaluacion.enlace_token and actual.es_invitado:
+        evaluacion.estado = "FINALIZADA"
+        evaluacion.fecha_fin = ahora
+        evaluacion.justificacion_cierre = "Enlace cerrado automáticamente: el paciente terminó la batería."
     db.commit()
     return {"message": "Evaluación finalizada.", "completadoTotal": True, "resultados": resultados}
 

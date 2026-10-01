@@ -5,6 +5,7 @@ from app.api.v1 import (
     auditoria,
     compras,
     cuestionarios,
+    enlaces,
     evaluaciones,
     indicadores,
     informes,
@@ -28,6 +29,7 @@ router.include_router(roles.router, prefix="/roles", tags=["Roles"])
 router.include_router(organizaciones.router, prefix="/organizaciones", tags=["Organizaciones"])
 router.include_router(cuestionarios.router, prefix="/cuestionarios", tags=["Cuestionarios"])
 router.include_router(evaluaciones.router, prefix="/evaluaciones", tags=["Evaluaciones"])
+router.include_router(enlaces.router, prefix="/enlaces", tags=["Enlaces"])
 router.include_router(informes.router, prefix="/informes", tags=["Informes"])
 router.include_router(reportes.router, prefix="/reportes", tags=["Reportes"])
 router.include_router(indicadores.router, prefix="/indicadores", tags=["Indicadores"])

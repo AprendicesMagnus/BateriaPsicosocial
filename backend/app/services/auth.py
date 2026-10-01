@@ -40,6 +40,8 @@ def usuario_publico(usuario: Usuario) -> dict:
         "areaId": str(usuario.area_id) if usuario.area_id else None,
         "numeroIdentificacion": usuario.numero_identificacion,
         "cargo": usuario.cargo,
+        # El frontend lo usa para no dejar entrar a los pacientes del enlace a las páginas internas
+        "esInvitado": usuario.es_invitado,
     }
 
 
@@ -151,7 +153,8 @@ def login(db: Session, email: str, password: str) -> dict:
         .filter(Usuario.email == email.lower())
         .first()
     )
-    if usuario is None:
+    # Los pacientes del enlace no inician sesión con correo y contraseña
+    if usuario is None or usuario.es_invitado:
         raise AppError(401, "Credenciales incorrectas.")
 
     ahora = utcnow()

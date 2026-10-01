@@ -26,8 +26,10 @@ async function request(path, { method = "GET", body, token } = {}) {
     // Antes se devolvía undefined en todos los 401 y SignIn fallaba al leer data.token.
     if (response.status === 401 && token) {
       localStorage.removeItem("magnussing_token");
-      // Ruta real de la página de login (antes apuntaba a "/login", que no existe)
-      window.location.href = "/iniciar-sesion";
+      // El paciente del enlace no tiene login: vuelve a su enlace. El resto, a la página de login
+      // (antes apuntaba a "/login", que no existe)
+      const enlace = localStorage.getItem("magnussing_enlace");
+      window.location.href = enlace ? `/responder/${enlace}` : "/iniciar-sesion";
       throw new Error("Tu sesión expiró. Inicia sesión de nuevo.");
     }
     const error = new Error(data.error || "Ocurrió un error inesperado.");

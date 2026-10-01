@@ -25,6 +25,8 @@ export function AuthProvider({ children }) {
 
   function iniciarSesion(nuevoToken, nuevoUsuario) {
     localStorage.setItem(STORAGE_KEY, nuevoToken);
+    // Un inicio de sesión normal ya no es el de un paciente del enlace
+    if (!nuevoUsuario?.esInvitado) localStorage.removeItem("magnussing_enlace");
     setToken(nuevoToken);
     setUsuario(nuevoUsuario);
   }

@@ -34,7 +34,8 @@ const PREFIJOS = {
 };
 
 // Ruta del frontend de cada instrumento, para redirigir al que esté pendiente
-const RUTAS = {
+// (también la usa la página del enlace del paciente para "Continuar")
+export const RUTAS = {
   FICHA_DATOS: "/ficha-datos-generales",
   ESTRES: "/cuestionario-estres",
   EXTRALABORAL: "/cuestionario-extralaboral",

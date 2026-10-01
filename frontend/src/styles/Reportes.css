@@ -245,3 +245,37 @@
     order: 2;
   }
 }
+/* ============================================
+   Sección "Enlaces para pacientes"
+   ============================================ */
+
+.reportes-enlace-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--ink-900);
+}
+
+/* La URL es larga: se parte en cualquier punto en vez de desbordar la tarjeta */
+.reportes-enlace-url {
+  word-break: break-all;
+  color: var(--navy-900);
+}
+
+@media (max-width: 640px) {
+  .reportes-enlace-form,
+  .reportes-enlace {
+    flex-wrap: wrap;
+  }
+}
+
+/* Botón "Eliminar" de cada enlace (rojo para distinguirlo de "Copiar enlace") */
+.reportes-download-btn.reportes-eliminar-btn {
+  background: #b42318;
+}
+.reportes-download-btn.reportes-eliminar-btn:hover:not(:disabled) {
+  background: #912018;
+}

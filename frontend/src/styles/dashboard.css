@@ -274,6 +274,61 @@ body {
   color: white;
 }
 
+/* Botón "Crear enlace" (mismo tamaño que las pestañas, con borde punteado para distinguirlo) */
+.category-tabs button.category-tabs__enlace {
+  border: 1px dashed #2e7869;
+  color: #2e7869;
+  font-weight: 700;
+}
+
+.category-tabs button.category-tabs__enlace:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+/* Recuadro con el enlace recién creado */
+.enlace-creado {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: -6px 0 16px;
+  padding: 10px 14px;
+  background: #eef7f4;
+  border: 1px solid #cfe5de;
+  border-radius: 12px;
+  font-size: 11px;
+}
+
+.enlace-creado__texto {
+  color: #2e7869;
+  font-weight: 600;
+}
+
+/* La URL es larga: se parte en cualquier punto en vez de desbordar */
+.enlace-creado__url {
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+  color: #243b53;
+}
+
+.enlace-creado__error {
+  flex: 1;
+  color: #991b1b;
+}
+
+.enlace-creado button {
+  border: none;
+  background: #2e7869;
+  color: white;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 
 /* =========================
    GRID PRINCIPAL

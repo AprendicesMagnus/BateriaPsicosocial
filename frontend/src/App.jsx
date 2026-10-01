@@ -24,6 +24,7 @@ import CuestionarioExtralaboralB from "./pages/CuestionarioExtralaboralB";
 import CuestionarioIntralaboralB from "./pages/CuestionarioIntralaboralB";
 import FichaDatosGenerales from "./pages/Fichadatosgenerales";
 import Inicio from "./pages/Inicio";
+import ResponderEnlace from "./pages/ResponderEnlace";
 
 
 
@@ -53,6 +54,9 @@ export default function App() {
 
           <Route path="/ficha-datos-generales" element={<FichaDatosGenerales />} />
           <Route path="/ficha-datos-generalesB" element={<FichaDatosGenerales />} />
+
+          {/* Enlace público que el psicólogo comparte con sus pacientes (responden sin cuenta) */}
+          <Route path="/responder/:token" element={<ResponderEnlace />} />
 
            {/* apartado inicial tras iniciar sesion (protegido) */}
           <Route

@@ -134,6 +134,20 @@ def _tarea_recordatorios_diarios() -> None:
         db.close()
 
 
+def _tarea_limpiar_enlaces() -> None:
+    """Vacía la lista "Enlaces para pacientes" (Reportes). Las encuestas realizadas se conservan."""
+    from app.db.session import SessionLocal
+    from app.services.enlaces import limpiar_enlaces
+
+    db = SessionLocal()
+    try:
+        logger.info("Scheduler enlaces: %s enlace(s) quitados de la lista.", limpiar_enlaces(db))
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Error en scheduler de limpieza de enlaces: %s", exc, exc_info=True)
+    finally:
+        db.close()
+
+
 @app.on_event("startup")
 def iniciar_scheduler() -> None:
     _scheduler.add_job(
@@ -144,8 +158,15 @@ def iniciar_scheduler() -> None:
         id="recordatorios_diarios",
         replace_existing=True,
     )
+    _scheduler.add_job(
+        _tarea_limpiar_enlaces,
+        "interval",
+        hours=4,
+        id="limpiar_enlaces",
+        replace_existing=True,
+    )
     _scheduler.start()
-    logger.info("Scheduler de recordatorios iniciado (disparo diario a las 08:00).")
+    logger.info("Scheduler iniciado (recordatorios diarios a las 08:00, limpieza de enlaces cada 4 horas).")
 
 
 @app.on_event("shutdown")

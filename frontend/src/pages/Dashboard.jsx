@@ -9,16 +9,20 @@ import { fetchIndicadores, fetchIndicadoresPorCategoria } from "../api/indicador
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
+import { crearEnlace } from "../api/enlaces";
+
+// Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
+const ROLES_ENLACES = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
 
 /* =========================================================
    CATEGORÍAS (fila principal)
 ========================================================= */
 
 const CATEGORIAS = [
-  { id: 1, nombre: "Estrés", totalPreguntas: 31 },
-  { id: 2, nombre: "Extralaboral A", totalPreguntas: 31 },
-  { id: 3, nombre: "Intralaboral - Forma A", totalPreguntas: 123 },
-  { id: 4, nombre: "Socio demográfico A", totalPreguntas: 19 },
+  { id: 1, nombre: "Estrés", totalPreguntas: 31, ruta: "/cuestionario-estres" },
+  { id: 2, nombre: "Extralaboral A", totalPreguntas: 31, ruta: "/cuestionario-extralaboral" },
+  { id: 3, nombre: "Intralaboral - Forma A", totalPreguntas: 123, ruta: "/cuestionario-intralaboral" },
+  { id: 4, nombre: "Socio demográfico A", totalPreguntas: 19, ruta: "/ficha-datos-generales" },
 ];
 
 /* =========================================================
@@ -26,10 +30,10 @@ const CATEGORIAS = [
 ========================================================= */
 
 const CATEGORIAS_B = [
-  { id: 5, nombre: "Estrés B", totalPreguntas: 31 },
-  { id: 6, nombre: "Extralaboral B", totalPreguntas: 31 },
-  { id: 7, nombre: "Intralaboral B", totalPreguntas: 97 },
-  { id: 8, nombre: "Socio demográfico B", totalPreguntas: 19 },
+  { id: 5, nombre: "Estrés B", totalPreguntas: 31, ruta: "/cuestionario-estresB" },
+  { id: 6, nombre: "Extralaboral B", totalPreguntas: 31, ruta: "/cuestionario-extralaboralB" },
+  { id: 7, nombre: "Intralaboral B", totalPreguntas: 97, ruta: "/cuestionario-intralaboralB" },
+  { id: 8, nombre: "Socio demográfico B", totalPreguntas: 19, ruta: "/ficha-datos-generalesB" },
 ];
 
 const TODAS_CATEGORIAS = [...CATEGORIAS, ...CATEGORIAS_B];
@@ -96,6 +100,13 @@ export default function Dashboard() {
   const [mensajeDescarga, setMensajeDescarga] = useState(null);
   const [generandoInforme, setGenerandoInforme] = useState(false);
 
+  // Botón "Crear enlace": enlace de un solo uso para que un paciente responda sin cuenta
+  const puedeCrearEnlaces = ROLES_ENLACES.includes(usuario?.rol);
+  const [enlaceCreado, setEnlaceCreado] = useState(null); // URL del último enlace creado
+  const [creandoEnlace, setCreandoEnlace] = useState(false);
+  const [errorEnlace, setErrorEnlace] = useState(null);
+  const [enlaceCopiado, setEnlaceCopiado] = useState(false);
+
   const categoriaActiva = TODAS_CATEGORIAS.find((c) => c.id === categoriaActivaId);
 
   useEffect(() => {
@@ -142,6 +153,32 @@ export default function Dashboard() {
       );
     } finally {
       setGenerandoInforme(false);
+    }
+  }
+
+  async function handleCrearEnlace() {
+    setCreandoEnlace(true);
+    setErrorEnlace(null);
+    setEnlaceCopiado(false);
+    try {
+      // Nombre con la fecha para distinguirlo en Reportes ("Enlace 30/09/26, 10:15 a. m.")
+      const fecha = new Date().toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
+      const enlace = await crearEnlace(token, `Enlace ${fecha}`);
+      setEnlaceCreado(`${window.location.origin}/responder/${enlace.token}`);
+    } catch (err) {
+      setErrorEnlace(err.message || "No se pudo crear el enlace.");
+    } finally {
+      setCreandoEnlace(false);
+    }
+  }
+
+  async function copiarEnlace() {
+    try {
+      await navigator.clipboard.writeText(enlaceCreado);
+      setEnlaceCopiado(true);
+    } catch {
+      // Sin permiso de portapapeles: el enlace sigue visible para copiarlo a mano
+      setErrorEnlace("No se pudo copiar automáticamente; selecciona el enlace y cópialo.");
     }
   }
 
@@ -312,7 +349,40 @@ export default function Dashboard() {
       <small>{categoria.totalPreguntas} preguntas</small>
     </button>
   ))}
+
+  {/* Crea un enlace para que un paciente responda la batería sin cuenta */}
+  {puedeCrearEnlaces && (
+    <button
+      type="button"
+      className="category-tabs__enlace"
+      onClick={handleCrearEnlace}
+      disabled={creandoEnlace}
+    >
+      {creandoEnlace ? "Creando..." : "+ Crear enlace"}
+      <small>para paciente</small>
+    </button>
+  )}
 </div>
+
+{(enlaceCreado || errorEnlace) && (
+  <div className="enlace-creado" role="status">
+    {errorEnlace ? (
+      <span className="enlace-creado__error">{errorEnlace}</span>
+    ) : (
+      <>
+        <span className="enlace-creado__texto">
+          Enlace listo. Compártelo con el paciente; se cierra cuando termine la encuesta.
+        </span>
+        <span className="enlace-creado__url">{enlaceCreado}</span>
+      </>
+    )}
+    {enlaceCreado && (
+      <button type="button" onClick={copiarEnlace}>
+        {enlaceCopiado ? "¡Copiado!" : "Copiar"}
+      </button>
+    )}
+  </div>
+)}
 
 {/* Segunda fila: versiones "B" de Estrés, Extralaboral e Intralaboral */}
 {/* Pestañas de categorías del formulario B */}

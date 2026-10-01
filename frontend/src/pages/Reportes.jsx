@@ -4,6 +4,7 @@ import AppTopbar from "../components/AppTopbar";
 import { useAuth } from "../context/AuthContext";
 import { fetchReportes, fetchEncuestasRealizadas } from "../api/reportes";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
+import { fetchEnlaces, crearEnlace, eliminarEnlace } from "../api/enlaces";
 import "../styles/app-shell.css";
 import "../styles/Reportes.css";
 
@@ -69,6 +70,14 @@ const NOMBRES_INSTRUMENTO = {
   INTRALABORAL_B: "Intralaboral B",
 };
 
+// Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
+const ROLES_ENLACES = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
+
+// URL completa que el psicólogo comparte con el paciente
+function urlEnlace(token) {
+  return `${window.location.origin}/responder/${token}`;
+}
+
 // "2026-09-29T16:05:18-05:00" -> "29/09/2026, 4:05 p. m."
 function formatearFecha(iso) {
   if (!iso) return "—";
@@ -91,6 +100,17 @@ export default function Reportes() {
   const [errorEncuestas, setErrorEncuestas] = useState(null);
   // participanteId de la encuesta con el detalle abierto (solo una a la vez)
   const [encuestaAbierta, setEncuestaAbierta] = useState(null);
+
+  // Sección "Enlaces para pacientes" (solo psicólogo / super administrador)
+  const puedeCrearEnlaces = ROLES_ENLACES.includes(usuario?.rol);
+  const [enlaces, setEnlaces] = useState([]);
+  const [nombreEnlace, setNombreEnlace] = useState("");
+  const [creandoEnlace, setCreandoEnlace] = useState(false);
+  const [errorEnlaces, setErrorEnlaces] = useState(null);
+  // token del enlace recién copiado, para mostrar "¡Copiado!" en su botón
+  const [enlaceCopiado, setEnlaceCopiado] = useState(null);
+  // evaluacionId del enlace que se está eliminando
+  const [eliminandoEnlace, setEliminandoEnlace] = useState(null);
 
   const {
     empresaNombre = usuario?.organizacionNombre || "Organización",
@@ -117,6 +137,65 @@ export default function Reportes() {
       setErrorEncuestas(err.message || "Error al cargar las encuestas realizadas.");
     } finally {
       setCargandoEncuestas(false);
+    }
+  }
+
+  useEffect(() => {
+    if (token && puedeCrearEnlaces) cargarEnlaces();
+  }, [token, puedeCrearEnlaces]);
+
+  async function cargarEnlaces() {
+    setErrorEnlaces(null);
+    try {
+      setEnlaces((await fetchEnlaces(token)) || []);
+    } catch (err) {
+      setErrorEnlaces(err.message || "Error al cargar los enlaces.");
+    }
+  }
+
+  async function handleCrearEnlace(e) {
+    e.preventDefault();
+    if (nombreEnlace.trim().length < 2) {
+      setErrorEnlaces("Escribe un nombre para el enlace (mínimo 2 caracteres).");
+      return;
+    }
+    setCreandoEnlace(true);
+    setErrorEnlaces(null);
+    try {
+      const nuevo = await crearEnlace(token, nombreEnlace.trim());
+      setEnlaces((prev) => [nuevo, ...prev]);
+      setNombreEnlace("");
+    } catch (err) {
+      setErrorEnlaces(err.message || "Error al crear el enlace.");
+    } finally {
+      setCreandoEnlace(false);
+    }
+  }
+
+  async function handleEliminarEnlace(enlace) {
+    if (!window.confirm(`¿Eliminar el enlace "${enlace.nombre}"? Si un paciente ya respondió, su encuesta se conserva.`)) {
+      return;
+    }
+    setEliminandoEnlace(enlace.evaluacionId);
+    setErrorEnlaces(null);
+    try {
+      await eliminarEnlace(token, enlace.evaluacionId);
+      setEnlaces((prev) => prev.filter((e) => e.evaluacionId !== enlace.evaluacionId));
+    } catch (err) {
+      setErrorEnlaces(err.message || "Error al eliminar el enlace.");
+    } finally {
+      setEliminandoEnlace(null);
+    }
+  }
+
+  async function copiarEnlace(tokenEnlace) {
+    try {
+      await navigator.clipboard.writeText(urlEnlace(tokenEnlace));
+      setEnlaceCopiado(tokenEnlace);
+      setTimeout(() => setEnlaceCopiado((actual) => (actual === tokenEnlace ? null : actual)), 2000);
+    } catch {
+      // Sin permiso de portapapeles: el enlace sigue visible para copiarlo a mano
+      setErrorEnlaces("No se pudo copiar automáticamente; selecciona el enlace y cópialo.");
     }
   }
 
@@ -189,6 +268,82 @@ export default function Reportes() {
           <p className="reportes-legal-note">
             Desglosados por área de la organización, según la Resolución 2764 de 2022 (Anonimizado mín. 5 participantes)
           </p>
+
+          {/* =================================================
+              ENLACES PARA PACIENTES
+              El psicólogo crea un enlace y lo comparte; el paciente responde sin cuenta
+              (Ficha de datos + cuestionarios) y aparece abajo en "Encuestas realizadas".
+              ================================================= */}
+          {puedeCrearEnlaces && (
+            <>
+              <div className="reportes-section-header" style={{ marginTop: 0 }}>
+                <h2 className="reportes-section-title">Enlaces para pacientes</h2>
+              </div>
+              <p className="reportes-legal-note">
+                Comparte el enlace: el paciente responde sin crear cuenta, empezando por la Ficha de datos generales.
+                Esta lista se limpia automáticamente cada 4 horas; las encuestas realizadas no se borran.
+              </p>
+
+              {errorEnlaces && (
+                <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
+                  ⚠️ {errorEnlaces}
+                </div>
+              )}
+
+              <div className="app-card reportes-card" style={{ marginBottom: 40 }}>
+                <form className="reportes-item reportes-enlace-form" onSubmit={handleCrearEnlace}>
+                  <input
+                    type="text"
+                    className="reportes-enlace-input"
+                    placeholder="Nombre del enlace (p. ej. Pacientes octubre)"
+                    maxLength={150}
+                    value={nombreEnlace}
+                    onChange={(e) => setNombreEnlace(e.target.value)}
+                    aria-label="Nombre del enlace"
+                  />
+                  <button type="submit" className="reportes-download-btn" disabled={creandoEnlace}>
+                    {creandoEnlace ? "Creando..." : "Crear enlace"}
+                  </button>
+                </form>
+
+                {enlaces.map((enlace) => (
+                  <div className="reportes-item reportes-enlace" key={enlace.token}>
+                    <div className="reportes-item-info">
+                      <span className="reportes-item-title">{enlace.nombre}</span>
+                      <span className="reportes-item-desc reportes-enlace-url">{urlEnlace(enlace.token)}</span>
+                      <span className="reportes-item-desc">
+                        {/* Paciente que usó el enlace: su nombre sale de la Ficha de datos */}
+                        {!enlace.paciente
+                          ? "Esperando que el paciente abra el enlace"
+                          : `Paciente: ${enlace.paciente.nombre || "aún no llena la Ficha de datos"} · ${
+                              (ESTADOS_ENCUESTA[enlace.paciente.estado] || ESTADOS_ENCUESTA.PENDIENTE).label
+                            }`}
+                        {" · "}Creado {formatearFecha(enlace.creadoEn)}
+                      </span>
+                    </div>
+                    <span
+                      className={`reportes-status ${
+                        enlace.estado === "FINALIZADA" ? "reportes-status--restringido" : "reportes-status--listo"
+                      }`}
+                    >
+                      {enlace.estado === "FINALIZADA" ? "Cerrado" : "Activo"}
+                    </span>
+                    <button type="button" className="reportes-download-btn" onClick={() => copiarEnlace(enlace.token)}>
+                      {enlaceCopiado === enlace.token ? "¡Copiado!" : "Copiar enlace"}
+                    </button>
+                    <button
+                      type="button"
+                      className="reportes-download-btn reportes-eliminar-btn"
+                      onClick={() => handleEliminarEnlace(enlace)}
+                      disabled={eliminandoEnlace === enlace.evaluacionId}
+                    >
+                      {eliminandoEnlace === enlace.evaluacionId ? "Eliminando..." : "Eliminar"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           {error && (
             <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
@@ -295,7 +450,9 @@ export default function Reportes() {
 
                       <div className="reportes-item-info">
                         <span className="reportes-item-title">
-                          {encuesta.trabajadorNombre} · {encuesta.trabajadorEmail}
+                          {encuesta.trabajadorNombre}
+                          {/* Los pacientes del enlace no tienen correo; su nombre viene de la Ficha */}
+                          {encuesta.viaEnlace ? " · Paciente (enlace)" : ` · ${encuesta.trabajadorEmail}`}
                         </span>
                         <span className="reportes-item-desc">
                           {encuesta.evaluacionNombre}
