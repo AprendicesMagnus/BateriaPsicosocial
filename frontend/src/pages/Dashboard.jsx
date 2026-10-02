@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
+import ProfileMenu from "../components/ProfileMenu";
 
 import "../styles/dashboard.css";
 
@@ -292,23 +292,7 @@ export default function Dashboard() {
             <p>Tu bienestar también es parte del trabajo</p>
           </div>
 
-          <button
-            type="button"
-            className="profile"
-            aria-label="Perfil de usuario"
-            onClick={() => navigate("/perfil")}
-            style={{
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              color: "#12314b",
-            }}
-          >
-            <FaUserCircle size={50} />
-          </button>
+          <ProfileMenu />
         </header>
 
         <section className="welcome-card">

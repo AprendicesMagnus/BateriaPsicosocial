@@ -1,365 +1,385 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Logo from "../components/Logo";
+import {
+  HiOutlineLink,
+  HiOutlineUserCircle,
+  HiOutlineLockClosed,
+  HiOutlineCheckCircle,
+  HiOutlineUser,
+} from "react-icons/hi";
 import { useAuth } from "../context/AuthContext";
-import { fetchIndicadores } from "../api/indicadores";
-import { generarInformeAgrupado, generarInformeIndividual, descargarInforme } from "../api/informes";
-import { fetchAnalisisPredictivo } from "../api/prediccion";
-import ListaEvaluacionesTrabajador from "../components/ListaEvaluacionesTrabajador";
-import CuestionarioTrabajador from "../components/CuestionarioTrabajador";
-// TODO: HistoricoComparativo y PlanDeAccion se desactivaron porque sus archivos no se subieron
-// en el commit 8e877ea. Cuando estén en src/components/, quitar los comentarios de estos imports
-// y de su uso en la sección "HISTORICO COMPARATIVO" más abajo.
-// import HistoricoComparativo from "../components/HistoricoComparativo";
-// import PlanDeAccion from "../components/PlanDeAccion";
+import "../styles/dashboard.css";
+import "../styles/Panel.css";
 
-import { uuidValido } from "../utils/validaciones";
+/* =========================================================
+   DATOS DE EJEMPLO
+   Reemplázalos por las respuestas de tu backend
+   (usuarios, empresas, enlaces, compras y auditoría).
+========================================================= */
 
-const ROL_LABEL = {
-  SUPER_ADMINISTRADOR: "Super Administrador",
-  ADMINISTRADOR: "Administrador",
-  JEFE: "Jefe",
-  EVALUADOR_SST: "Psicologo",
+const USUARIOS = [
+  { id: 1, nombre: "Laura Méndez", correo: "laura.mendez@correo.co", rol: "Psicólogo", empresa: "—", registro: "Google", estado: "Verificado", acceso: "Hoy, 2:14 p. m.", accion: "Editar" },
+  { id: 2, nombre: "Andrés Polanía", correo: "apolania@correo.co", rol: "Administrador", empresa: "Distribuidora Huila", registro: "Correo", estado: "Verificado", acceso: "Ayer", accion: "Editar" },
+  { id: 3, nombre: "Carolina Ramos", correo: "sst@ferreteriaopita.co", rol: "Responsable SST", empresa: "Ferretería Opita", registro: "Automático", estado: "Pendiente código", acceso: "Nunca", accion: "Reenviar credenciales" },
+  { id: 4, nombre: "Julián Cuéllar", correo: "jcuellar@correo.co", rol: "Jefe", empresa: "Café del Sur", registro: "Correo", estado: "Verificado", acceso: "Hace 3 días", accion: "Editar" },
+  { id: 5, nombre: "Marta Perdomo", correo: "mperdomo@correo.co", rol: "Trabajador", empresa: "Café del Sur", registro: "Correo", estado: "Desactivado", acceso: "Hace 2 meses", accion: "Reactivar" },
+  { id: 6, nombre: "Diego Ibáñez", correo: "admin@magnus.co", rol: "Super Admin", empresa: "Plataforma", registro: "Correo", estado: "Verificado", acceso: "Ahora", accion: "Ver" },
+];
+
+const EMPRESAS = [
+  { nit: "900.123.456-7", nombre: "Distribuidora Huila S.A.S.", responsable: "Paola Trujillo", encuestas: 46, usadas: 46, compradas: 60 },
+  { nit: "901.555.210-3", nombre: "Ferretería Opita", responsable: "Carolina Ramos", encuestas: 0, usadas: 0, compradas: 20 },
+  { nit: "800.987.332-1", nombre: "Café del Sur", responsable: "Hernán Vargas", encuestas: 28, usadas: 28, compradas: 30 },
+  { nit: "900.741.852-0", nombre: "Transportes Neiva", responsable: "Sandra Rojas", encuestas: 73, usadas: 73, compradas: 120 },
+  { nit: "901.320.774-9", nombre: "Clínica Andes", responsable: "Luis Muñoz", encuestas: 112, usadas: 112, compradas: 150 },
+];
+
+const ENLACES = [
+  { id: 1, psicologo: "Laura Méndez", empresa: "Clínica Andes", completados: 34, abiertos: 41, vence: "15 oct 2026", estado: "Activo", accion: "Copiar enlace" },
+  { id: 2, psicologo: "Laura Méndez", empresa: "Café del Sur", completados: 12, abiertos: 12, vence: "28 sep 2026", estado: "Vencido", accion: "Extender" },
+  { id: 3, psicologo: "Felipe Charry", empresa: "Transportes Neiva", completados: 9, abiertos: 22, vence: "Mañana", estado: "Activo", accion: "Copiar enlace" },
+  { id: 4, psicologo: "Felipe Charry", empresa: "Distribuidora Huila", completados: 3, abiertos: 5, vence: "—", estado: "Revocado", accion: "Ver motivo" },
+  { id: 5, psicologo: "Ana Losada", empresa: "Ferretería Opita", completados: 0, abiertos: 0, vence: "30 oct 2026", estado: "Activo", accion: "Copiar enlace" },
+];
+
+const SALDO = { compradas: 500, usadas: 312 };
+
+const COMPRAS = [
+  { id: 1, fecha: "01 oct 2026", empresa: "Clínica Andes", cantidad: 50, medio: "PSE", valor: "[VALOR]", estado: "Aprobado" },
+  { id: 2, fecha: "27 sep 2026", empresa: "Transportes Neiva", cantidad: 60, medio: "Visa •••• 4821", valor: "[VALOR]", estado: "Aprobado" },
+  { id: 3, fecha: "20 sep 2026", empresa: "Ferretería Opita", cantidad: 20, medio: "PSE", valor: "[VALOR]", estado: "Pendiente" },
+  { id: 4, fecha: "12 sep 2026", empresa: "Café del Sur", cantidad: 30, medio: "Mastercard •••• 1290", valor: "[VALOR]", estado: "Rechazado" },
+  { id: 5, fecha: "03 sep 2026", empresa: "Distribuidora Huila", cantidad: 60, medio: "Visa •••• 7713", valor: "[VALOR]", estado: "Aprobado" },
+];
+
+const AUDITORIA = [
+  { id: 1, usuario: "Laura Méndez", accion: "consultó un resultado individual", detalle: "Clínica Andes · Intralaboral Forma A · participante #A-0192", tipo: "Resultados", fecha: "Hoy, 2:14 p. m." },
+  { id: 2, usuario: "Participante anónimo", accion: "aceptó el consentimiento informado", detalle: "Enlace de Laura Méndez · Clínica Andes", tipo: "Consentimientos", fecha: "Hoy, 1:50 p. m." },
+  { id: 3, usuario: "Diego Ibáñez", accion: "desactivó a Marta Perdomo", detalle: "Rol Trabajador · Café del Sur", tipo: "Usuarios", fecha: "Ayer, 5:02 p. m." },
+  { id: 4, usuario: "Felipe Charry", accion: "revocó un enlace de pacientes", detalle: "Distribuidora Huila · compartido por error", tipo: "Enlaces", fecha: "Ayer, 11:20 a. m." },
+  { id: 5, usuario: "Andrés Polanía", accion: "descargó un informe agregado", detalle: "Distribuidora Huila · 46 participantes", tipo: "Resultados", fecha: "30 sep, 9:15 a. m." },
+  { id: 6, usuario: "Sistema", accion: "creó el usuario Responsable SST", detalle: "Ferretería Opita · NIT 901.555.210-3 verificado", tipo: "Usuarios", fecha: "20 sep, 4:41 p. m." },
+];
+
+/* =========================================================
+   CONFIGURACIÓN DE LA VISTA
+========================================================= */
+
+// Rol -> sufijo de clase CSS (adm-chip--rol-...)
+const CLASE_ROL = {
+  "Super Admin": "superadmin",
+  Administrador: "admin",
+  Psicólogo: "psicologo",
+  Jefe: "jefe",
+  "Responsable SST": "sst",
+  Trabajador: "trabajador",
 };
 
+// Estado -> sufijo de clase CSS (adm-chip--...)
+const CLASE_ESTADO = {
+  Verificado: "info",
+  Activo: "info",
+  Aprobado: "info",
+  "Pendiente código": "aviso",
+  Pendiente: "aviso",
+  Desactivado: "neutro",
+  Vencido: "neutro",
+  Revocado: "peligro",
+  Rechazado: "peligro",
+};
+
+// Tipo de evento de auditoría -> ícono y color
+const TIPO_AUDITORIA = {
+  Resultados: { icono: HiOutlineLockClosed, clase: "psicologo" },
+  Consentimientos: { icono: HiOutlineCheckCircle, clase: "info" },
+  Usuarios: { icono: HiOutlineUser, clase: "neutro" },
+  Enlaces: { icono: HiOutlineLink, clase: "peligro" },
+};
+
+const FILTROS = ["Todo", "Resultados", "Consentimientos", "Usuarios", "Enlaces"];
+
 export default function Panel() {
-  const { usuario, token, cerrarSesion } = useAuth();
   const navigate = useNavigate();
-
-  const [indicadores, setIndicadores] = useState(null);
-  const [loadingIndicadores, setLoadingIndicadores] = useState(false);
-  const [errorIndicadores, setErrorIndicadores] = useState(null);
-
-  const [informeId, setInformeId] = useState("");
-  const [evaluacionIdInput, setEvaluacionIdInput] = useState("");
-  const [participanteIdInput, setParticipanteIdInput] = useState("");
-  const [mensajeInforme, setMensajeInforme] = useState(null);
-  const [errorInforme, setErrorInforme] = useState(null);
-  const [generando, setGenerando] = useState(false);
-
-  const [prediccionData, setPrediccionData] = useState(null);
-  const [loadingPrediccion, setLoadingPrediccion] = useState(false);
-
-  const [evaluacionSeleccionadaId, setEvaluacionSeleccionadaId] = useState(null);
-
-  useEffect(() => {
-    if (token && usuario && usuario.rol !== "TRABAJADOR") {
-      cargarIndicadores();
-    }
-  }, [token, usuario]);
-
-  async function cargarIndicadores() {
-    setLoadingIndicadores(true);
-    setErrorIndicadores(null);
-    try {
-      const data = await fetchIndicadores(token);
-      setIndicadores(data);
-    } catch (err) {
-      setErrorIndicadores(err.message);
-    } finally {
-      setLoadingIndicadores(false);
-    }
-  }
-
-  async function handleGenerarAgrupado(formato = "PDF") {
-    if (!uuidValido(evaluacionIdInput.trim())) {
-      setErrorInforme("Ingresa un identificador válido (formato UUID).");
-      return;
-    }
-    setGenerando(true);
-    setErrorInforme(null);
-    setMensajeInforme(null);
-    try {
-      const res = await generarInformeAgrupado(token, evaluacionIdInput.trim(), null, formato);
-      setInformeId(res.id);
-      setMensajeInforme(`Informe agrupado (${formato}) generado con éxito. ID: ${res.id}`);
-    } catch (err) {
-      setErrorInforme(err.message);
-    } finally {
-      setGenerando(false);
-    }
-  }
-
-  async function handleGenerarIndividual() {
-    if (!uuidValido(evaluacionIdInput.trim()) || !uuidValido(participanteIdInput.trim())) {
-      setErrorInforme("Ingresa un identificador válido (formato UUID).");
-      return;
-    }
-    setGenerando(true);
-    setErrorInforme(null);
-    setMensajeInforme(null);
-    try {
-      const res = await generarInformeIndividual(token, evaluacionIdInput.trim(), participanteIdInput.trim());
-      setInformeId(res.id);
-      setMensajeInforme(`Informe individual PDF generado con éxito. ID: ${res.id}`);
-    } catch (err) {
-      setErrorInforme(err.message);
-    } finally {
-      setGenerando(false);
-    }
-  }
-
-  async function handleDescargar() {
-    if (!uuidValido(informeId.trim())) {
-      setErrorInforme("Ingresa un identificador válido (formato UUID).");
-      return;
-    }
-    setErrorInforme(null);
-    try {
-      await descargarInforme(token, informeId.trim());
-      setMensajeInforme("Descarga iniciada exitosamente.");
-    } catch (err) {
-      setErrorInforme(err.message);
-    }
-  }
-
-  async function handleCargarPrediccion() {
-    if (!uuidValido(evaluacionIdInput.trim())) {
-      setErrorInforme("Ingresa un identificador válido (formato UUID).");
-      return;
-    }
-    setLoadingPrediccion(true);
-    try {
-      const data = await fetchAnalisisPredictivo(token, evaluacionIdInput.trim());
-      setPrediccionData(data);
-    } catch (err) {
-      setErrorInforme(`Error predictivo: ${err.message}`);
-    } finally {
-      setLoadingPrediccion(false);
-    }
-  }
+  const { cerrarSesion } = useAuth();
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroAuditoria, setFiltroAuditoria] = useState("Todo");
 
   function handleLogout() {
     cerrarSesion();
     navigate("/");
   }
 
+  // Búsqueda simple por nombre, correo, empresa o NIT
+  const texto = busqueda.trim().toLowerCase();
+  const coincide = (...campos) =>
+    !texto || campos.some((c) => String(c).toLowerCase().includes(texto));
+
+  const usuariosFiltrados = USUARIOS.filter((u) => coincide(u.nombre, u.correo, u.empresa));
+  const empresasFiltradas = EMPRESAS.filter((e) => coincide(e.nombre, e.nit, e.responsable));
+
+  const auditoriaFiltrada =
+    filtroAuditoria === "Todo"
+      ? AUDITORIA
+      : AUDITORIA.filter((a) => a.tipo === filtroAuditoria);
+
+  const disponibles = SALDO.compradas - SALDO.usadas;
+  const porcentajeUsado = Math.round((SALDO.usadas / SALDO.compradas) * 100);
+
+
+
+
+
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg-100)" }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "18px 32px",
-          background: "var(--white)",
-          borderBottom: "1px solid var(--line-200)",
-        }}
-      >
-        <Logo />
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <span style={{ fontSize: "14px", color: "var(--ink-500)" }}>
-            {usuario?.nombre} ({ROL_LABEL[usuario?.rol] || usuario?.rol})
-          </span>
-          <button className="btn-secondary" onClick={handleLogout}>
+    <div className="dashboard">
+      <aside className="sidebar">
+        <div
+          className="sidebar__logo"
+          onClick={() => navigate("/Inicio")}
+          style={{ cursor: "pointer" }}
+          role="button"
+          aria-label="Ir al inicio"
+        >
+          <img src="/logob1.png" alt="Magnus" style={{ height: 70, marginRight: "auto" }} />
+        </div>
+
+        <nav className="sidebar__menu">
+      
+
+          <button className="menu-item" type="button" onClick={handleLogout}>
+            <span>✕</span>
             Cerrar sesión
           </button>
-        </div>
-      </header>
+        </nav>
+      </aside>
 
-      <main style={{ maxWidth: 1000, margin: "40px auto", padding: "0 24px" }}>
-        <h1 style={{ color: "var(--ink-900)", marginBottom: "8px" }}>
-          Panel de Control BRP 👋
-        </h1>
-        <p style={{ color: "var(--ink-500)", marginBottom: "32px" }}>
-          {usuario?.rol === "TRABAJADOR"
-            ? "Gestión de Evaluaciones de Riesgo Psicosocial Asignadas y Consulta de Resultados."
-            : "Gestión de la Batería de Riesgo Psicosocial, Indicadores (RF08), Histórico Comparativo, Informes y Análisis Predictivo IA."}
-        </p>
+      {/* =====================================================
+          CONTENIDO
+      ====================================================== */}
+      <main className="adm adm-main">
+        <header className="adm-header">
+          <div>
+            <h1>Panel de administración</h1>
+            <p>Usuarios, empresas, enlaces de pacientes, compras y auditoría en un solo lugar.</p>
+          </div>
 
-        {/* VISTA TRABAJADOR: CUESTIONARIO ACTIVO O LISTA DE EVALUACIONES */}
-        {usuario?.rol === "TRABAJADOR" ? (
-          evaluacionSeleccionadaId ? (
-            <CuestionarioTrabajador
-              evaluacionId={evaluacionSeleccionadaId}
-              token={token}
-              onVolver={() => setEvaluacionSeleccionadaId(null)}
+          <div className="adm-header__acciones">
+            <label htmlFor="adm-buscar" className="adm-sr-only">Buscar</label>
+            <input
+              id="adm-buscar"
+              type="search"
+              className="adm-input"
+              placeholder="Buscar usuario, empresa o NIT"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
             />
-          ) : (
-            <section style={{ marginBottom: "32px" }}>
-              <h2 style={{ fontSize: "20px", color: "#1E293B", marginBottom: "16px" }}>
-                📋 Mis Evaluaciones Asignadas
-              </h2>
-              <ListaEvaluacionesTrabajador
-                token={token}
-                onSeleccionarEvaluacion={(id) => setEvaluacionSeleccionadaId(id)}
-              />
-            </section>
-          )
-        ) : null}
+            <button
+              type="button"
+              className="adm-avatar"
+              aria-label="Perfil del administrador"
+              onClick={() => navigate("/perfil")}
+            >
+              <HiOutlineUserCircle size={26} />
+            </button>
+          </div>
+        </header>
 
-        {/* METRICAS E INDICADORES (RF08) - SOLO ADMIN Y EVALUADOR */}
-        {usuario?.rol !== "TRABAJADOR" && (
-          <section style={{ background: "white", padding: "24px", borderRadius: "12px", border: "1px solid #E2E8F0", marginBottom: "32px" }}>
-            <h2 style={{ fontSize: "20px", color: "#1E293B", marginBottom: "16px" }}>
-              📊 Indicadores y Métricas Generales (RF08)
-            </h2>
-
-            {loadingIndicadores && <p>Cargando indicadores...</p>}
-            {errorIndicadores && <p style={{ color: "red" }}>{errorIndicadores}</p>}
-
-            {indicadores && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
-                <div style={{ background: "#F8FAFC", padding: "16px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
-                  <div style={{ fontSize: "12px", color: "#64748B" }}>Organizaciones</div>
-                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#1E3A8A" }}>{indicadores.totalOrganizaciones}</div>
-                </div>
-
-                <div style={{ background: "#F8FAFC", padding: "16px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
-                  <div style={{ fontSize: "12px", color: "#64748B" }}>Evaluaciones Totales</div>
-                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#1E3A8A" }}>{indicadores.totalEvaluaciones}</div>
-                  <div style={{ fontSize: "11px", color: "#475569" }}>
-                    En Curso: {indicadores.evaluacionesPorEstado.EN_CURSO} | Finalizadas: {indicadores.evaluacionesPorEstado.FINALIZADA}
-                  </div>
-                </div>
-
-                <div style={{ background: "#F8FAFC", padding: "16px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
-                  <div style={{ fontSize: "12px", color: "#64748B" }}>Tasa de Participación</div>
-                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#059669" }}>{indicadores.participacion.tasaPorcentaje}%</div>
-                  <div style={{ fontSize: "11px", color: "#475569" }}>
-                    Completados: {indicadores.participacion.totalCompletados} / {indicadores.participacion.totalAsignados}
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* HISTORICO COMPARATIVO ENTRE EVALUACIONES - SOLO ADMIN Y EVALUADOR */}
-        {usuario?.rol !== "TRABAJADOR" && (
-          <section style={{ marginBottom: "32px" }}>
-            {/* Desactivados hasta que los componentes existan (ver TODO en los imports) */}
-            {/* <HistoricoComparativo token={token} /> */}
-            {/* <PlanDeAccion token={token} /> */}
-          </section>
-        )}
-
-        {/* MODULO DE INFORMES */}
-        {(!evaluacionSeleccionadaId || usuario?.rol !== "TRABAJADOR") && (
-          <section style={{ background: "white", padding: "24px", borderRadius: "12px", border: "1px solid #E2E8F0", marginBottom: "32px" }}>
-            <h2 style={{ fontSize: "20px", color: "#1E293B", marginBottom: "16px" }}>
-              📑 Generación y Descarga de Informes (PDF / Excel)
-            </h2>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "4px" }}>ID Evaluación</label>
-                <input
-                  type="text"
-                  maxLength={36}
-                  placeholder="UUID de la Evaluación"
-                  value={evaluacionIdInput}
-                  onChange={(e) => setEvaluacionIdInput(e.target.value)}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #CBD5E1" }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "4px" }}>ID Participante (para informe individual)</label>
-                <input
-                  type="text"
-                  maxLength={36}
-                  placeholder="UUID del Participante"
-                  value={participanteIdInput}
-                  onChange={(e) => setParticipanteIdInput(e.target.value)}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #CBD5E1" }}
-                />
-              </div>
+        {/* ---------- USUARIOS Y ROLES ---------- */}
+        <section id="usuarios" className="adm-card">
+          <div className="adm-card__head">
+            <div>
+              <h2>Usuarios y roles</h2>
+              <span>Registrados con correo o Google. El Responsable SST se crea al registrar una empresa.</span>
             </div>
+            <button type="button" className="adm-btn adm-btn--oscuro">+ Invitar usuario</button>
+          </div>
 
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
-              {usuario?.rol !== "TRABAJADOR" && (
-                <>
-                  <button className="btn-secondary" onClick={() => handleGenerarAgrupado("PDF")} disabled={generando}>
-                    Generar Agrupado (PDF)
-                  </button>
-                  <button className="btn-secondary" onClick={() => handleGenerarAgrupado("EXCEL")} disabled={generando}>
-                    Generar Agrupado (Excel)
-                  </button>
-                </>
-              )}
-              <button className="btn-secondary" onClick={handleGenerarIndividual} disabled={generando}>
-                Generar Individual (PDF)
-              </button>
-              {usuario?.rol !== "TRABAJADOR" && (
-                <button className="btn-secondary" onClick={handleCargarPrediccion} disabled={loadingPrediccion}>
-                  Analizar con IA (K-Means)
-                </button>
-              )}
-            </div>
-
-            <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid #E2E8F0" }}>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "4px" }}>Descargar Informe por ID</label>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <input
-                  type="text"
-                  maxLength={36}
-                  placeholder="ID del Informe a descargar"
-                  value={informeId}
-                  onChange={(e) => setInformeId(e.target.value)}
-                  style={{ flex: 1, padding: "8px 12px", borderRadius: "6px", border: "1px solid #CBD5E1" }}
-                />
-                <button className="btn-primary" onClick={handleDescargar}>
-                  Descargar Archivo
-                </button>
-              </div>
-            </div>
-
-            {mensajeInforme && (
-              <div style={{ marginTop: "16px", padding: "12px", background: "#ECFDF5", color: "#065F46", borderRadius: "6px", fontSize: "14px" }}>
-                {mensajeInforme}
-              </div>
-            )}
-
-            {errorInforme && (
-              <div style={{ marginTop: "16px", padding: "12px", background: "#FEF2F2", color: "#991B1B", borderRadius: "6px", fontSize: "14px" }}>
-                ⚠️ <strong>Error:</strong> {errorInforme}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* MODULO PREDICTIVO (IA) */}
-        {prediccionData && usuario?.rol !== "TRABAJADOR" && (
-          <section style={{ background: "white", padding: "24px", borderRadius: "12px", border: "1px solid #E2E8F0", marginBottom: "32px" }}>
-            <h2 style={{ fontSize: "20px", color: "#1E293B", marginBottom: "8px" }}>
-              🤖 Análisis Predictivo K-Means (IA)
-            </h2>
-            <p style={{ fontSize: "13px", color: "#64748B", marginBottom: "16px" }}>
-              {prediccionData.notaMetodologica}
-            </p>
-
-            <h3 style={{ fontSize: "16px", color: "#334155", marginBottom: "12px" }}>Perfiles Identificados (Clustering K-Means)</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", marginBottom: "20px" }}>
-              {prediccionData.perfilesClusterKMeans.map((c) => (
-                <div key={c.clusterId} style={{ background: "#F8FAFC", padding: "16px", borderRadius: "8px", border: "1px solid #CBD5E1" }}>
-                  <div style={{ fontWeight: "bold", color: "#1E3A8A", fontSize: "15px" }}>{c.etiqueta}</div>
-                  <div style={{ fontSize: "12px", color: "#475569", margin: "4px 0 12px 0" }}>
-                    Trabajadores en Clúster: <strong>{c.numTrabajadores} ({c.porcentajeGrupo}%)</strong>
-                  </div>
-                  <div style={{ fontSize: "12px", color: "#334155" }}>
-                    {Object.entries(c.promedioPorDimension).map(([dim, val]) => (
-                      <div key={dim} style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                        <span>{dim}:</span>
-                        <strong>{val} pts</strong>
+          <div className="adm-tabla-wrap">
+            <table className="adm-tabla adm-tabla--ancha">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Rol</th>
+                  <th>Empresa</th>
+                  <th>Registro</th>
+                  <th>Estado</th>
+                  <th>Último acceso</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usuariosFiltrados.map((u) => (
+                  <tr key={u.id}>
+                    <td>
+                      <div className="adm-celda-doble">
+                        <strong>{u.nombre}</strong>
+                        <span>{u.correo}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </td>
+                    <td><span className={`adm-chip adm-chip--rol-${CLASE_ROL[u.rol]}`}>{u.rol}</span></td>
+                    <td>{u.empresa}</td>
+                    <td>{u.registro}</td>
+                    <td><span className={`adm-chip adm-chip--${CLASE_ESTADO[u.estado]}`}>{u.estado}</span></td>
+                    <td className="adm-muted">{u.acceso}</td>
+                    <td><button type="button" className="adm-link">{u.accion}</button></td>
+                  </tr>
+                ))}
+                {usuariosFiltrados.length === 0 && (
+                  <tr><td colSpan={7} className="adm-vacio">No hay usuarios que coincidan con la búsqueda.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* ---------- EMPRESAS + ENLACES ---------- */}
+        <div className="adm-dos-columnas">
+          <section id="empresas" className="adm-card">
+            <div className="adm-card__head">
+              <div>
+                <h2>Empresas</h2>
+                <span>Con su Responsable SST y evaluaciones usadas.</span>
+              </div>
+              <button type="button" className="adm-btn adm-btn--borde" onClick={() => navigate("/verificar-nit")}>
+                + Crear empresa
+              </button>
+            </div>
+
+            <div className="adm-tabla-wrap">
+              <table className="adm-tabla">
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>Responsable SST</th>
+                    <th>Encuestas</th>
+                    <th>Evaluaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {empresasFiltradas.map((e) => (
+                    <tr key={e.nit}>
+                      <td>
+                        <div className="adm-celda-doble">
+                          <strong>{e.nombre}</strong>
+                          <span>NIT {e.nit}</span>
+                        </div>
+                      </td>
+                      <td>{e.responsable}</td>
+                      <td>{e.encuestas}</td>
+                      <td className="adm-celda-barra">
+                        <span className="adm-muted adm-pequeno">{e.usadas} de {e.compradas} usadas</span>
+                        <div className="adm-barra">
+                          <div
+                            className="adm-barra__relleno"
+                            style={{ width: `${Math.round((e.usadas / e.compradas) * 100)}%` }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {empresasFiltradas.length === 0 && (
+                    <tr><td colSpan={4} className="adm-vacio">No hay empresas que coincidan.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        {/* ---------- COMPRAS ---------- */}
+        <section id="compras" className="adm-card">
+          <div className="adm-card__head">
+            <div>
+              <h2>Compras realizadas por las empresas</h2>
+              <span>Evaluaciones compradas con Visa, Mastercard o PSE.</span>
+            </div>
+          </div>
+
+          <div className="adm-compras">
+            <div className="adm-saldo">
+              <span className="adm-saldo__titulo">Saldo de evaluaciones</span>
+              <div className="adm-saldo__numero">
+                <strong>{disponibles}</strong>
+                <span>disponibles</span>
+              </div>
+              <div className="adm-saldo__barra">
+                <div className="adm-saldo__relleno" style={{ width: `${porcentajeUsado}%` }} />
+              </div>
+              <div className="adm-saldo__pie">
+                <span>{SALDO.usadas} usadas</span>
+                <span>{SALDO.compradas} compradas</span>
+              </div>
+            </div>
+
+            <div className="adm-tabla-wrap">
+              <table className="adm-tabla">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Empresa</th>
+                    <th>Cantidad</th>
+                    <th>Medio de pago</th>
+                    <th>Valor</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPRAS.map((c) => (
+                    <tr key={c.id}>
+                      <td className="adm-muted">{c.fecha}</td>
+                      <td><strong className="adm-fuerte">{c.empresa}</strong></td>
+                      <td>{c.cantidad} evaluaciones</td>
+                      <td>{c.medio}</td>
+                      <td>{c.valor}</td>
+                      <td><span className={`adm-chip adm-chip--${CLASE_ESTADO[c.estado]}`}>{c.estado}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- AUDITORÍA ---------- */}
+        <section id="auditoria" className="adm-card">
+          <div className="adm-card__head">
+            <div>
+              <h2>Auditoría y privacidad</h2>
+              <span>Registro de accesos, consentimientos y cambios. Ley 1581 de 2012.</span>
+            </div>
+            <div className="adm-filtros">
+              {FILTROS.map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  className={`adm-filtro ${filtroAuditoria === f ? "is-active" : ""}`}
+                  aria-pressed={filtroAuditoria === f}
+                  onClick={() => setFiltroAuditoria(f)}
+                >
+                  {f}
+                </button>
               ))}
             </div>
+          </div>
 
-            {prediccionData.alertasTempranas.length > 0 && (
-              <div>
-                <h3 style={{ fontSize: "16px", color: "#991B1B", marginBottom: "8px" }}>🚨 Alertas Tempranas Proyectadas</h3>
-                {prediccionData.alertasTempranas.map((a, i) => (
-                  <div key={i} style={{ background: "#FEF2F2", borderLeft: "4px solid #EF4444", padding: "10px 14px", marginBottom: "8px", borderRadius: "4px", fontSize: "13px", color: "#7F1D1D" }}>
-                    <strong>[{a.nivelAlerta}] {a.dimension}:</strong> {a.mensaje}
+          <ul className="adm-timeline">
+            {auditoriaFiltrada.map((a) => {
+              const { icono: Icono, clase } = TIPO_AUDITORIA[a.tipo];
+              return (
+                <li className="adm-timeline__item" key={a.id}>
+                  <div className={`adm-timeline__icono adm-chip--${clase}`}>
+                    <Icono size={18} />
                   </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
+                  <div className="adm-timeline__texto">
+                    <span><strong>{a.usuario}</strong> {a.accion}</span>
+                    <span className="adm-muted adm-pequeno">{a.detalle}</span>
+                  </div>
+                  <span className={`adm-chip adm-chip--${clase}`}>{a.tipo}</span>
+                  <span className="adm-timeline__fecha">{a.fecha}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       </main>
     </div>
   );

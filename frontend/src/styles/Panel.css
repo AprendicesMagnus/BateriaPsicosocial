@@ -1,0 +1,672 @@
+/* =====================================================
+   PANEL DE ADMINISTRACIÓN
+   Todas las clases empiezan con "adm-" para no chocar
+   con los estilos del dashboard o del inicio.
+===================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
+.adm {
+  --adm-navy: #0b1538;
+  --adm-navy-2: #12314b;
+  --adm-gold: #f5a623;
+  --adm-bg: #eef1f6;
+  --adm-card: #ffffff;
+  --adm-line: #e3e8ef;
+  --adm-line-2: #d5dce6;
+  --adm-ink: #1f2a4d;
+  --adm-muted: #5b6478;
+
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+  background: var(--adm-bg);
+  color: var(--adm-ink);
+  font-family: "Manrope", system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.adm *,
+.adm *::before,
+.adm *::after {
+  box-sizing: border-box;
+}
+
+.adm-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+
+/* =====================================================
+   MENÚ LATERAL
+===================================================== */
+
+.adm-sidebar {
+  flex: 1 1 240px;
+  max-width: 100%;
+  background: var(--adm-navy);
+  color: #ffffff;
+  padding: 28px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.adm-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px;
+}
+
+.adm-brand__logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--adm-gold);
+  color: var(--adm-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.adm-brand__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.adm-brand__text strong {
+  font-size: 16px;
+}
+
+.adm-brand__text span {
+  font-size: 12px;
+  color: #b7bdd6;
+}
+
+.adm-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adm-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: #c9cee3;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.adm-menu__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.adm-menu__item.is-active {
+  background: rgba(245, 166, 35, 0.16);
+  color: var(--adm-gold);
+}
+
+.adm-sidebar__nota {
+  margin-top: auto;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #c9cee3;
+}
+
+.adm-sidebar__nota-titulo {
+  color: var(--adm-gold);
+  font-weight: 700;
+}
+
+
+/* =====================================================
+   CONTENIDO
+===================================================== */
+
+.adm-main {
+  flex: 999 1 560px;
+  min-width: 0;
+  padding: 28px clamp(16px, 3vw, 40px) 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.adm-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.adm-header h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--adm-navy);
+}
+
+.adm-header p {
+  margin: 0;
+  color: var(--adm-muted);
+}
+
+.adm-header__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.adm-input {
+  height: 44px;
+  width: 280px;
+  max-width: 100%;
+  border: 1px solid var(--adm-line-2);
+  border-radius: 10px;
+  padding: 0 14px;
+  font: inherit;
+  background: #ffffff;
+  color: var(--adm-ink);
+}
+
+.adm-input:focus {
+  outline: 2px solid var(--adm-gold);
+  outline-offset: 1px;
+}
+
+.adm-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--adm-line-2);
+  background: #ffffff;
+  color: var(--adm-navy-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+
+/* =====================================================
+   KPIs
+===================================================== */
+
+.adm-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 16px;
+  scroll-margin-top: 20px;
+}
+
+.adm-kpi {
+  background: var(--adm-card);
+  border: 1px solid var(--adm-line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adm-kpi__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--adm-muted);
+}
+
+.adm-kpi__valor {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--adm-navy);
+}
+
+.adm-kpi__nota {
+  font-size: 12px;
+  color: var(--adm-muted);
+}
+
+
+/* =====================================================
+   TARJETAS DE SECCIÓN
+===================================================== */
+
+.adm-card {
+  background: var(--adm-card);
+  border: 1px solid var(--adm-line);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  scroll-margin-top: 20px;
+}
+
+.adm-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.adm-card__head h2 {
+  margin: 0 0 2px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--adm-navy);
+}
+
+.adm-card__head span {
+  font-size: 13px;
+  color: var(--adm-muted);
+}
+
+.adm-dos-columnas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: 24px;
+}
+
+
+/* =====================================================
+   BOTONES
+===================================================== */
+
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.adm-btn--oscuro {
+  background: var(--adm-navy);
+  color: #ffffff;
+  border: none;
+}
+
+.adm-btn--oscuro:hover {
+  background: var(--adm-navy-2);
+}
+
+.adm-btn--borde {
+  background: #ffffff;
+  color: var(--adm-navy-2);
+  border: 1px solid var(--adm-line-2);
+}
+
+.adm-btn--borde:hover {
+  background: #f6f8fb;
+}
+
+.adm-btn--dorado {
+  background: var(--adm-gold);
+  color: var(--adm-navy);
+  border: none;
+  font-weight: 800;
+}
+
+.adm-btn--dorado:hover {
+  background: #e0951a;
+}
+
+.adm-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--adm-navy-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.adm-link:hover {
+  color: var(--adm-navy);
+  text-decoration: underline;
+}
+
+
+/* =====================================================
+   CHIPS (roles y estados)
+   Los estados usan colores distintos a los niveles de riesgo.
+===================================================== */
+
+.adm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Roles */
+.adm-chip--rol-superadmin { background: #0b1538; color: #ffffff; }
+.adm-chip--rol-admin      { background: #e6eefc; color: #1e40af; }
+.adm-chip--rol-psicologo  { background: #f1e8fd; color: #6b21a8; }
+.adm-chip--rol-jefe       { background: #e3f4f1; color: #0f5f57; }
+.adm-chip--rol-sst        { background: #fff1d6; color: #8a4b00; }
+.adm-chip--rol-trabajador { background: #eef0f4; color: #3f4a5c; }
+
+/* Estados y tipos */
+.adm-chip--info      { background: #e0f2fe; color: #075985; }
+.adm-chip--aviso     { background: #fff1d6; color: #8a4b00; }
+.adm-chip--neutro    { background: #eef0f4; color: #3f4a5c; }
+.adm-chip--peligro   { background: #fde8e8; color: #9b1c1c; }
+.adm-chip--psicologo { background: #f1e8fd; color: #6b21a8; }
+
+.adm-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.adm-roles__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--adm-line);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.adm-roles__item strong {
+  font-size: 16px;
+  color: var(--adm-navy);
+}
+
+
+/* =====================================================
+   TABLAS
+===================================================== */
+
+.adm-tabla-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--adm-line);
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.adm-tabla {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.adm-tabla--ancha {
+  min-width: 860px;
+}
+
+.adm-tabla th {
+  background: #f6f8fb;
+  color: var(--adm-muted);
+  font-weight: 700;
+  text-align: left;
+  padding: 12px 14px;
+}
+
+.adm-tabla td {
+  padding: 12px 14px;
+  border-top: 1px solid var(--adm-bg);
+  vertical-align: middle;
+}
+
+.adm-tabla tbody tr:hover {
+  background: #fafbfd;
+}
+
+.adm-celda-doble {
+  display: flex;
+  flex-direction: column;
+}
+
+.adm-celda-doble strong,
+.adm-fuerte {
+  color: var(--adm-navy);
+}
+
+.adm-celda-doble span {
+  font-size: 12px;
+  color: var(--adm-muted);
+}
+
+.adm-celda-barra {
+  min-width: 140px;
+}
+
+.adm-barra {
+  margin-top: 6px;
+  height: 8px;
+  border-radius: 99px;
+  background: #e8ecf3;
+  overflow: hidden;
+}
+
+.adm-barra__relleno {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--adm-navy-2);
+}
+
+.adm-muted {
+  color: var(--adm-muted);
+}
+
+.adm-pequeno {
+  font-size: 12px;
+}
+
+.adm-vacio {
+  text-align: center;
+  color: var(--adm-muted);
+  padding: 24px 14px;
+}
+
+
+/* =====================================================
+   COMPRAS
+===================================================== */
+
+.adm-compras {
+  display: grid;
+  grid-template-columns: minmax(min(100%, 280px), 320px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.adm-saldo {
+  background: var(--adm-navy);
+  color: #ffffff;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.adm-saldo__titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c9cee3;
+}
+
+.adm-saldo__numero {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: #c9cee3;
+}
+
+.adm-saldo__numero strong {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--adm-gold);
+}
+
+.adm-saldo__barra {
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+
+.adm-saldo__relleno {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--adm-gold);
+}
+
+.adm-saldo__pie {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #c9cee3;
+}
+
+
+/* =====================================================
+   AUDITORÍA
+===================================================== */
+
+.adm-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.adm-filtro {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid var(--adm-line-2);
+  background: #ffffff;
+  color: var(--adm-navy-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.adm-filtro.is-active {
+  background: var(--adm-navy);
+  border-color: var(--adm-navy);
+  color: #ffffff;
+}
+
+.adm-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.adm-timeline__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 4px;
+  border-top: 1px solid var(--adm-bg);
+}
+
+.adm-timeline__icono {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.adm-timeline__texto {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adm-timeline__texto strong {
+  color: var(--adm-navy);
+}
+
+.adm-timeline__fecha {
+  min-width: 130px;
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--adm-muted);
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+  .adm-compras {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .adm-header h1 {
+    font-size: 24px;
+  }
+
+  .adm-input {
+    width: 100%;
+  }
+
+  .adm-header__acciones {
+    width: 100%;
+  }
+
+  .adm-timeline__fecha {
+    text-align: left;
+    min-width: 0;
+  }
+}
+
+/* =====================================================
+   AGREGA ESTILOS NUEVOS DEBAJO DE ESTA LÍNEA
+===================================================== */
