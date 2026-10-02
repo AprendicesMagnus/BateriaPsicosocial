@@ -29,3 +29,17 @@ export function fetchDirectorio(token, { q = "", limite = 10, desplazamiento = 0
 export function fetchMisEmpresas(token) {
   return request("/organizaciones/mias", { token });
 }
+
+// Edición y eliminación de una empresa propia ("Mis Empresas").
+// La razón social y el NIT están bloqueados: no se envían ni se pueden cambiar.
+export function editarMiEmpresa(token, id, { sector, municipio, email }) {
+  return request(`/organizaciones/mias/${id}`, {
+    method: "PATCH",
+    body: { sector, municipio, email },
+    token,
+  });
+}
+
+export function eliminarMiEmpresa(token, id) {
+  return request(`/organizaciones/mias/${id}`, { method: "DELETE", token });
+}

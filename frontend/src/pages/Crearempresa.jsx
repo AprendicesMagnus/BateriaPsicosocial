@@ -21,7 +21,7 @@ import {
   textoLibreValido,
 } from "../utils/validaciones";
 
-const SECTORES = ["Agropecuario", "Energético", "Turístico", "Comercial", "Otro"];
+const SECTORES = ["Comercial", "Servicios", "Otros"];
 
 export default function CrearEmpresa() {
   const location = useLocation();

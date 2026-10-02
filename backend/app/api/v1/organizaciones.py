@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_current_user_opcional, require_admin, require_gestor
@@ -12,8 +12,10 @@ from app.schemas.common import (
     AreaUpdate,
     OrganizacionAutorregistroCreate,
     OrganizacionCreate,
+    OrganizacionMiaUpdate,
     OrganizacionUpdate,
 )
+from app.services import auditoria as auditoria_service
 from app.services import organizaciones as organizaciones_service
 
 router = APIRouter()
@@ -68,6 +70,35 @@ def listar_mis_organizaciones(
 ):
     """Empresas creadas por el usuario autenticado."""
     return [_organizacion_publica(o) for o in organizaciones_service.listar_mis_organizaciones(db, actual)]
+
+
+@router.patch("/mias/{organizacion_id}")
+def editar_mi_organizacion(
+    organizacion_id: UUID,
+    data: OrganizacionMiaUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    org = organizaciones_service.actualizar_mi_organizacion(db, organizacion_id, data, actual)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="EDITAR_EMPRESA", entidad="Organizacion", entidad_id=str(org.id), request=request
+    )
+    return _organizacion_publica(org)
+
+
+@router.delete("/mias/{organizacion_id}")
+def eliminar_mi_organizacion(
+    organizacion_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    resultado = organizaciones_service.eliminar_mi_organizacion(db, organizacion_id, actual)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="ELIMINAR_EMPRESA", entidad="Organizacion", entidad_id=str(organizacion_id), request=request
+    )
+    return resultado
 
 
 @router.get("")

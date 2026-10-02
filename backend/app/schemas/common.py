@@ -178,6 +178,10 @@ class CambioRolRequest(BaseModel):
     rolCodigo: str = Field(min_length=2, max_length=50, pattern=r"^[A-Z0-9_]+$", validation_alias=AliasChoices("rolCodigo", "rol_codigo"))
 
 
+# Sectores permitidos al registrar o editar una empresa desde "Crear empresa" / "Mis Empresas".
+SectorEmpresa = Literal["Comercial", "Servicios", "Otros"]
+
+
 class OrganizacionCreate(BaseModel):
     nombre: RazonSocial
     nit: str = Field(pattern=r"^\d{9}(-\d)?$", description="NIT en formato 9 dígitos base o NNNNNNNNN-D")
@@ -197,6 +201,14 @@ class OrganizacionUpdate(BaseModel):
     email: Correo | None = None
     numeroTrabajadores: int | None = Field(default=None, ge=1, le=1000000)
     activa: bool | None = None
+
+
+class OrganizacionMiaUpdate(BaseModel):
+    """Campos que el creador de una empresa puede editar (razón social y NIT están bloqueados)."""
+
+    sector: SectorEmpresa | None = None
+    municipio: Lugar | None = None
+    email: Correo | None = None
 
 
 class AreaCreate(BaseModel):
@@ -266,10 +278,8 @@ class RespuestaRequest(BaseModel):
     @classmethod
     def validar_valor(cls, v):
         if isinstance(v, int):
-            # Se permite 0 porque el intralaboral usa la escala oficial 0-4 (Nunca=0 ... Siempre=4).
-            # El rango exacto de cada pregunta se valida en el servicio con valor_minimo/valor_maximo.
-            if v < 0 or v > 5:
-                raise ValueError("El valor numérico debe estar entre 0 y 5.")
+            if v < 1 or v > 5:
+                raise ValueError("El valor numérico debe estar entre 1 y 5.")
         elif isinstance(v, str):
             if not v.strip():
                 raise ValueError("El valor de texto no puede estar vacío.")
@@ -335,7 +345,7 @@ class AuditoriaOut(BaseModel):
 class OrganizacionAutorregistroCreate(BaseModel):
     nit: str = Field(pattern=r"^\d{9}-\d$", description="NIT en formato NNNNNNNNN-D (9 dígitos base, guion, dígito verificador)")
     nombre: RazonSocial
-    sector: str | None = Field(default=None, min_length=2, max_length=80)
+    sector: SectorEmpresa | None = None
     numeroTrabajadores: int | None = Field(default=None, ge=1, le=1000000)
     municipio: Lugar | None = None
     email: Correo | None = None
