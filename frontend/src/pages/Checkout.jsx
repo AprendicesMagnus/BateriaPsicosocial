@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
 import "../styles/app-shell.css";
 import "../styles/Checkout.css";
 import { request } from "../api/client";
@@ -279,9 +280,7 @@ export default function Checkout() {
         <div className="app-decor app-decor--3" />
 
         <div className="app-content">
-          <nav className="app-breadcrumb">
-            Evaluaciones <span>›</span> Pago de la batería
-          </nav>
+          <BotonRegresar />
           <h1 className="app-title">Completa tu pago</h1>
           <p className="app-subtitle">
             {bateriaNombre} · aplicación única para {empresaNombre}

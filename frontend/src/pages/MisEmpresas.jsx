@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
 import { fetchMe } from "../api/auth";
 import { fetchMisEmpresas, editarMiEmpresa, eliminarMiEmpresa } from "../api/perfil";
@@ -141,9 +142,7 @@ export default function MisEmpresas() {
         <div className="app-decor app-decor--3" />
 
         <div className="app-content">
-          <nav className="app-breadcrumb">
-            Empresas <span>›</span> Mis empresas
-          </nav>
+          <BotonRegresar />
           <h1 className="app-title">Mis Empresas</h1>
           <p className="app-subtitle">Empresas que has registrado con tu cuenta.</p>
 

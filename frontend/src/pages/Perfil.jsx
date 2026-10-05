@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { etiquetaRol } from "../utils/roles";
 import { useAuth } from "../context/AuthContext";
 import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
 import "../styles/app-shell.css";
 import "../styles/Perfil.css";
 import { request, urlArchivo } from "../api/client";
@@ -249,9 +250,7 @@ export default function Perfil() {
         <div className="app-decor app-decor--3" />
 
         <div className="app-content">
-          <nav className="app-breadcrumb">
-            Mi cuenta <span>›</span> Perfil
-          </nav>
+          <BotonRegresar />
           <h1 className="app-title">Mi Perfil</h1>
           <p className="app-subtitle">Consulta y administra la información de tu cuenta.</p>
 

@@ -5,6 +5,7 @@ import "../styles/Empresas.css";
 import { request } from "../api/client";
 import { fetchMe } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
+import BotonRegresar from "../components/BotonRegresar";
 import {
   TEXTO_AYUDA_PASSWORD,
   emailValido,
@@ -188,7 +189,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
         fetchMe(token)
           .then((data) => actualizarUsuario(data.usuario))
           .catch(() => {});
-        navigate("/mis-empresas", { state: { mensaje: res.message } });
+        navigate("/mis-empresas", { state: { mensaje: res.message }, replace: true });
         return;
       }
 
@@ -218,6 +219,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
         <div className="empresas-center">
           <div className="app-card empresas-card empresas-card--ancho">
             <div className="empresas-title-row">
+              <BotonRegresar tono="oscuro" />
               <h1 className="empresas-titulo">Crear empresa y usuario responsable</h1>
               <span className="empresas-badge">Empresa no registrada</span>
             </div>

@@ -1,0 +1,43 @@
+.boton-regresar {
+  /* Ancho al contenido aunque el contenedor sea flex o grid (Panel, Dashboard) */
+  align-self: flex-start;
+  justify-self: start;
+  width: fit-content;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+/* Sobre fondos oscuros (pantallas con AppTopbar) */
+.boton-regresar--claro {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.boton-regresar--claro:hover,
+.boton-regresar--claro:focus-visible {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Sobre fondos claros (tarjetas blancas, paneles) */
+.boton-regresar--oscuro {
+  color: #12314b;
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+.boton-regresar--oscuro:hover,
+.boton-regresar--oscuro:focus-visible {
+  background: rgba(15, 23, 42, 0.12);
+}

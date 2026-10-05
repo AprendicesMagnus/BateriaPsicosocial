@@ -10,6 +10,8 @@ import { fetchAnalisisPredictivo } from "../api/prediccion";
 
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import { crearEnlace } from "../api/enlaces";
+import BotonRegresar from "../components/BotonRegresar";
+import { esSuperAdmin } from "../utils/roles";
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
 const ROLES_ENLACES = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
@@ -259,10 +261,12 @@ export default function Dashboard() {
             Cuestionario
           </button>
 
-          <button className="menu-item" type="button" onClick={() => navigate("/panel")}>
-            <span>⚙</span>
-            Panel Admin
-          </button>
+          {esSuperAdmin(usuario?.rol) && (
+            <button className="menu-item" type="button" onClick={() => navigate("/panel")}>
+              <span>⚙</span>
+              Panel Admin
+            </button>
+          )}
 
           <button className="menu-item" type="button" onClick={() => navigate("/reportes")}>
             <span>▤</span>
@@ -286,6 +290,7 @@ export default function Dashboard() {
       </aside>
 
       <main className="dashboard__main">
+        <BotonRegresar tono="oscuro" />
         <header className="dashboard__header">
           <div>
             <h1>Bienvenido, {usuario?.nombre || "Usuario"}</h1>

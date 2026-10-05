@@ -6,6 +6,7 @@ import { request } from "../api/client";
 import { formatearNit } from "../utils/validaciones";
 import Toast from "../components/Toast";
 import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
 
 const MENSAJE_NIT_EXISTENTE = "La empresa con este NIT ya se encuentra registrada";
@@ -101,6 +102,7 @@ export default function VerificarNit() {
 
         <div className="empresas-center">
           <div className="app-card empresas-card">
+            <BotonRegresar tono="oscuro" />
             <h1 className="empresas-titulo">Verificar NIT</h1>
             <p className="empresas-subtitulo">
               Antes de crear tu empresa, verifiquemos que no esté registrada todavía.

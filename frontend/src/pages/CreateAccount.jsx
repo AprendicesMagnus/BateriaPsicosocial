@@ -185,7 +185,7 @@ export default function CreateAccount() {
       }
 
       iniciarSesion(data.token, data.usuario);
-      navigate(rutaInicial(data.usuario?.rol));
+      navigate(rutaInicial(data.usuario?.rol), { replace: true });
     } catch (err) {
       console.error(
         "Error creando cuenta con Google:",
@@ -214,7 +214,7 @@ export default function CreateAccount() {
 
       iniciarSesion(data.token, data.usuario);
       setGooglePendiente(null);
-      navigate(rutaInicial(data.usuario?.rol));
+      navigate(rutaInicial(data.usuario?.rol), { replace: true });
     } catch (err) {
       setErrorRolGoogle(err.message || "No se pudo crear la cuenta con Google.");
     } finally {

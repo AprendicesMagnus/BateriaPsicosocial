@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
 import { fetchReportes, fetchEncuestasRealizadas } from "../api/reportes";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
@@ -252,9 +253,7 @@ export default function Reportes() {
         <div className="app-decor app-decor--3" />
 
         <div className="app-content">
-          <nav className="app-breadcrumb">
-            Reportes <span>›</span> {empresaNombre}
-          </nav>
+          <BotonRegresar />
 
           <div className="app-title-row">
             <h1 className="app-title">{empresaNombre}</h1>

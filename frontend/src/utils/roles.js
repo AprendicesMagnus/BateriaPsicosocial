@@ -31,3 +31,5 @@ export function rutaPermitidaParaRol(rol, pathname) {
 
 // Página a la que se envía a cada rol justo después de iniciar sesión.
 export const rutaInicial = (rol) => (rol === ROL_SOLO_REPORTES ? "/reportes" : "/Inicio");
+
+export const esSuperAdmin = (rol) => rol === "SUPER_ADMINISTRADOR";

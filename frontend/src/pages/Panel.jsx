@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import "../styles/dashboard.css";
 import "../styles/Panel.css";
+import BotonRegresar from "../components/BotonRegresar";
 
 /* =========================================================
    DATOS DE EJEMPLO
@@ -156,6 +157,7 @@ export default function Panel() {
           CONTENIDO
       ====================================================== */}
       <main className="adm adm-main">
+        <BotonRegresar tono="oscuro" />
         <header className="adm-header">
           <div>
             <h1>Panel de administración</h1>

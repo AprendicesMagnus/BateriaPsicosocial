@@ -9,6 +9,7 @@ import "../styles/Inicio.css";
 import "../styles/app-shell.css";
 import { useAuth } from "../context/AuthContext"; // <-- EN LÍNEA NUEVA: IMPORTADO "useAuth"
 import { urlArchivo } from "../api/client";
+import { esSuperAdmin } from "../utils/roles";
 
 
 
@@ -362,14 +363,11 @@ export default function Inicio() {
                   Ver perfil
                 </button>
 
-                <button ><Link
-                className="admin"
-                to="/panel"
-              >
-                Panel De Administrador
-              </Link>
-                   
-                </button>
+                {esSuperAdmin(usuario?.rol) && (
+                  <button type="button" onClick={() => { setMenuPerfilAbierto(false); navigate("/panel"); }}>
+                    Panel De Administrador
+                  </button>
+                )}
 
                 <button
                   type="button"
