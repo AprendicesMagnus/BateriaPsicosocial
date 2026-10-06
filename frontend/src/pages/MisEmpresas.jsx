@@ -8,7 +8,9 @@ import { fetchMisEmpresas, editarMiEmpresa, eliminarMiEmpresa } from "../api/per
 import {
   MAX_EMAIL_LENGTH,
   MAX_LUGAR_LENGTH,
+  celularValido,
   emailValido,
+  soloDigitos,
   filtrarLugar,
   lugarValido,
   normalizarEmail,
@@ -42,7 +44,7 @@ export default function MisEmpresas() {
 
   // ---- edición ----
   const [editando, setEditando] = useState(null); // empresa en edición
-  const [form, setForm] = useState({ sector: "", municipio: "", email: "" });
+  const [form, setForm] = useState({ sector: "", municipio: "", email: "", telefono: "" });
   const [intento, setIntento] = useState(false);
   const [errorForm, setErrorForm] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -68,6 +70,7 @@ export default function MisEmpresas() {
       sector: sectorParaFormulario(empresa.sector),
       municipio: empresa.municipio ?? "",
       email: empresa.email ?? "",
+      telefono: empresa.telefono ?? "",
     });
     setEditando(empresa);
   }
@@ -84,6 +87,11 @@ export default function MisEmpresas() {
       : !emailValido(normalizarEmail(form.email))
       ? "Ingresa un correo válido."
       : "",
+    telefono: !form.telefono.trim()
+      ? "Este campo es obligatorio."
+      : !celularValido(form.telefono)
+      ? "Ingresa un celular válido de 10 dígitos que empiece por 3."
+      : "",
   };
 
   async function guardarEdicion(e) {
@@ -98,6 +106,7 @@ export default function MisEmpresas() {
         sector: form.sector,
         municipio: form.municipio.trim(),
         email: normalizarEmail(form.email),
+        telefono: form.telefono.trim(),
       });
       setEmpresas((lista) => lista.map((emp) => (emp.id === actualizada.id ? actualizada : emp)));
       setEditando(null);
@@ -168,6 +177,8 @@ export default function MisEmpresas() {
                       <th>NIT</th>
                       <th>Sector</th>
                       <th>Ciudad</th>
+                      <th>Correo</th>
+                      <th>Celular</th>
                       <th>Creada</th>
                       <th>Acciones</th>
                     </tr>
@@ -179,6 +190,8 @@ export default function MisEmpresas() {
                         <td>{empresa.nit}</td>
                         <td>{empresa.sector ?? "—"}</td>
                         <td>{empresa.municipio ?? "—"}</td>
+                        <td>{empresa.email ?? "—"}</td>
+                        <td>{empresa.telefono ?? "—"}</td>
                         <td>{formatearFecha(empresa.creadoEn)}</td>
                         <td>
                           <div className="mis-empresas-acciones">
@@ -271,6 +284,20 @@ export default function MisEmpresas() {
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               />
               {intento && erroresForm.email && <span className="field__error">{erroresForm.email}</span>}
+            </label>
+
+            <label className="field">
+              <span className="field__label">Celular de contacto</span>
+              <input
+                className={campoClase("telefono")}
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="Ej. 3001234567"
+                value={form.telefono}
+                onChange={(e) => setForm((f) => ({ ...f, telefono: soloDigitos(e.target.value, 10) }))}
+              />
+              {intento && erroresForm.telefono && <span className="field__error">{erroresForm.telefono}</span>}
             </label>
 
             {errorForm && <div className="mis-empresas-error">{errorForm}</div>}

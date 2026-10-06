@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import BotonRegresar from "../components/BotonRegresar";
 import {
   TEXTO_AYUDA_PASSWORD,
+  celularValido,
   emailValido,
   enteroEnRango,
   filtrarLugar,
@@ -47,6 +48,7 @@ export default function CrearEmpresa() {
   const [numeroTrabajadores, setNumeroTrabajadores] = useState("");
   const [ciudad, setCiudad] = useState("");
   const [correoContacto, setCorreoContacto] = useState("");
+  const [celular, setCelular] = useState("");
 
   const [usuarioNombre, setUsuarioNombre] = useState("");
   const [usuarioApellido, setUsuarioApellido] = useState("");
@@ -100,6 +102,11 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
       ? "Este campo es obligatorio."
       : !emailValido(normalizarEmail(correoContacto))
       ? "Ingresa un correo válido."
+      : "",
+    celular: !celular
+      ? "Este campo es obligatorio."
+      : !celularValido(celular)
+      ? "Ingresa un celular válido de 10 dígitos que empiece por 3."
       : "",
     usuarioNombre: !usuarioNombre
       ? "Este campo es obligatorio."
@@ -172,6 +179,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
           numeroTrabajadores: parseInt(numeroTrabajadores, 10) || null,
           municipio: ciudadTrim,
           email: correoEmpresaNorm,
+          telefono: celular.trim(),
           ...(esPsicologo
             ? {}
             : {
@@ -390,7 +398,28 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                 </label>
               </div>
 
-              
+              <div className="empresas-form-row">
+                <label className="field">
+                  <span className="field__label">Celular de contacto</span>
+                  <input
+                    className={`field__input ${mostrarError("celular") ? "field__input--invalid" : ""}`}
+                    aria-invalid={mostrarError("celular") ? "true" : "false"}
+                    aria-describedby={mostrarError("celular") ? "celular-error" : undefined}
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="Ej. 3001234567"
+                    value={celular}
+                    onChange={(e) => setCelular(soloDigitos(e.target.value, 10))}
+                    onBlur={() => marcar("celular")}
+                  />
+                  {mostrarError("celular") && (
+                    <span className="field__error" id="celular-error">
+                      {errores.celular}
+                    </span>
+                  )}
+                </label>
+              </div>
 
               {!esPsicologo && (
                 <>

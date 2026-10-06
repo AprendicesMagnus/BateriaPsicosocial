@@ -6,7 +6,7 @@ import BotonRegresar from "../components/BotonRegresar";
 import "../styles/app-shell.css";
 import "../styles/Perfil.css";
 import { request, urlArchivo } from "../api/client";
-import { editarPerfil, cambiarPassword, fetchDirectorio } from "../api/perfil";
+import { editarPerfil, cambiarPassword } from "../api/perfil";
 import {
   TEXTO_AYUDA_PASSWORD,
   filtrarNombrePersona,
@@ -16,7 +16,6 @@ import {
 
 const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FOTO_BYTES = 2 * 1024 * 1024; // 2 MB (el backend valida lo mismo)
-const POR_PAGINA_DIRECTORIO = 10;
 
 function formatearFecha(fechaIso) {
   if (!fechaIso) return "—";
@@ -60,13 +59,7 @@ export default function Perfil() {
   const [passwordNueva, setPasswordNueva] = useState("");
   const [passwordConfirmar, setPasswordConfirmar] = useState("");
 
-  // ---- directorio (solo Super Administrador) ----
   const esSuperAdmin = usuario?.rol === "SUPER_ADMINISTRADOR";
-  const [busqueda, setBusqueda] = useState("");
-  const [pagina, setPagina] = useState(0);
-  const [directorio, setDirectorio] = useState({ total: 0, items: [] });
-  const [loadingDirectorio, setLoadingDirectorio] = useState(false);
-  const [errorDirectorio, setErrorDirectorio] = useState("");
 
   useEffect(() => {
     if (usuario?.id && token) {
@@ -77,23 +70,6 @@ export default function Perfil() {
         .finally(() => setLoadingCompras(false));
     }
   }, [usuario?.id, token]);
-
-  useEffect(() => {
-    if (!esSuperAdmin || !token) return undefined;
-    const espera = setTimeout(() => {
-      setLoadingDirectorio(true);
-      setErrorDirectorio("");
-      fetchDirectorio(token, {
-        q: busqueda.trim(),
-        limite: POR_PAGINA_DIRECTORIO,
-        desplazamiento: pagina * POR_PAGINA_DIRECTORIO,
-      })
-        .then(setDirectorio)
-        .catch((err) => setErrorDirectorio(err.message || "No se pudo cargar el listado."))
-        .finally(() => setLoadingDirectorio(false));
-    }, 300);
-    return () => clearTimeout(espera);
-  }, [esSuperAdmin, token, busqueda, pagina]);
 
   // Libera la URL temporal de la vista previa de la foto.
   useEffect(() => {
@@ -237,7 +213,6 @@ export default function Perfil() {
     }
   }
 
-  const totalPaginas = Math.max(1, Math.ceil(directorio.total / POR_PAGINA_DIRECTORIO));
   const fotoMostrada = fotoPreview || urlArchivo(usuario?.fotoUrl);
 
   return (
@@ -464,81 +439,6 @@ export default function Perfil() {
               )}
             </div>
           </div>
-
-          {/* ============ USUARIOS REGISTRADOS (solo Super Administrador) ============ */}
-          {esSuperAdmin && (
-            <div className="app-card directorio-card">
-              <div className="directorio-encabezado">
-                <div>
-                  <h2 className="compras-titulo">Usuarios registrados</h2>
-                  <p className="compras-subtitulo">{directorio.total} en total</p>
-                </div>
-                <input
-                  className="field__input directorio-busqueda"
-                  type="search"
-                  placeholder="Buscar por nombre o correo"
-                  maxLength={100}
-                  value={busqueda}
-                  onChange={(e) => {
-                    setBusqueda(e.target.value);
-                    setPagina(0);
-                  }}
-                />
-              </div>
-
-              {errorDirectorio && <p className="perfil-error">{errorDirectorio}</p>}
-
-              <div className="directorio-tabla-wrap">
-                <table className="directorio-tabla">
-                  <thead>
-                    <tr>
-                      <th>Nombre completo</th>
-                      <th>Correo electrónico</th>
-                      <th>Rol</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {directorio.items.map((u) => (
-                      <tr key={u.email}>
-                        <td>{u.nombreCompleto}</td>
-                        <td>{u.email}</td>
-                        <td>{etiquetaRol(u.rol)}</td>
-                      </tr>
-                    ))}
-                    {!loadingDirectorio && directorio.items.length === 0 && (
-                      <tr>
-                        <td colSpan={3} className="directorio-vacio">
-                          No se encontraron usuarios.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="directorio-paginacion">
-                <button
-                  type="button"
-                  className="app-btn-secondary"
-                  onClick={() => setPagina((p) => Math.max(0, p - 1))}
-                  disabled={pagina === 0 || loadingDirectorio}
-                >
-                  Anterior
-                </button>
-                <span>
-                  Página {pagina + 1} de {totalPaginas}
-                </span>
-                <button
-                  type="button"
-                  className="app-btn-secondary"
-                  onClick={() => setPagina((p) => p + 1)}
-                  disabled={pagina + 1 >= totalPaginas || loadingDirectorio}
-                >
-                  Siguiente
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </main>
     </div>

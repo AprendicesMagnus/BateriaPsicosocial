@@ -100,6 +100,17 @@ export default function CierreInactividad() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activo]);
 
+  // Sin sesión no debe quedar ninguna marca de actividad (evita falsos cierres al volver a entrar).
+  useEffect(() => {
+    if (!loading && !token) {
+      try {
+        localStorage.removeItem(CLAVE_ACTIVIDAD);
+      } catch {
+        /* se ignora */
+      }
+    }
+  }, [loading, token]);
+
   // El aviso se quita solo.
   useEffect(() => {
     if (!aviso) return undefined;
