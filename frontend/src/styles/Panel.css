@@ -201,19 +201,6 @@
   outline-offset: 1px;
 }
 
-.adm-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--adm-line-2);
-  background: #ffffff;
-  color: var(--adm-navy-2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
 
 /* =====================================================
    KPIs
