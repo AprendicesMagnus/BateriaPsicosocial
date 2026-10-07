@@ -73,6 +73,10 @@ const NOMBRES_INSTRUMENTO = {
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
 const ROLES_ENLACES = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
+// Resultados individuales (confidenciales): solo Psicologo y Super Administrador.
+const ROLES_ENCUESTAS = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
+// Jefe y Administrador ven las empresas que crearon; el Jefe solo consulta (no descarga informes).
+const ROLES_POR_CREADOR = ["JEFE", "ADMINISTRADOR"];
 
 // URL completa que el psicólogo comparte con el paciente
 function urlEnlace(token) {
@@ -104,6 +108,8 @@ export default function Reportes() {
 
   // Sección "Enlaces para pacientes" (solo psicólogo / super administrador)
   const puedeCrearEnlaces = ROLES_ENLACES.includes(usuario?.rol);
+  const puedeVerEncuestas = ROLES_ENCUESTAS.includes(usuario?.rol);
+  const puedeDescargar = usuario?.rol !== "JEFE";
   const [enlaces, setEnlaces] = useState([]);
   const [nombreEnlace, setNombreEnlace] = useState("");
   const [creandoEnlace, setCreandoEnlace] = useState(false);
@@ -114,7 +120,8 @@ export default function Reportes() {
   const [eliminandoEnlace, setEliminandoEnlace] = useState(null);
 
   const {
-    empresaNombre = usuario?.organizacionNombre || "Organización",
+    empresaNombre = usuario?.organizacionNombre ||
+      (ROLES_POR_CREADOR.includes(usuario?.rol) ? "Mis empresas" : "Organización"),
     sector = usuario?.sector || "General",
     bateriaNombre = "Batería de riesgo psicosocial",
     rangoFechas = "vigente 2026",
@@ -123,7 +130,8 @@ export default function Reportes() {
   useEffect(() => {
     if (token) {
       cargarReportes();
-      cargarEncuestas();
+      if (puedeVerEncuestas) cargarEncuestas();
+      else setCargandoEncuestas(false);
     }
   }, [token]);
 
@@ -385,21 +393,25 @@ export default function Reportes() {
                     {reporte.estado === "listo" ? "Listo" : "Acceso restringido"}
                   </span>
 
-                  <button
-                    type="button"
-                    className={`reportes-download-btn ${
-                      reporte.estado === "restringido" || descargandoId === reporte.id ? "reportes-download-btn--disabled" : ""
-                    }`}
-                    onClick={() => handleDescargar(reporte)}
-                    disabled={reporte.estado === "restringido" || descargandoId === reporte.id}
-                  >
-                    <IconoDescargar /> {descargandoId === reporte.id ? "Generando..." : "Descargar"}
-                  </button>
+                  {puedeDescargar && (
+                    <button
+                      type="button"
+                      className={`reportes-download-btn ${
+                        reporte.estado === "restringido" || descargandoId === reporte.id ? "reportes-download-btn--disabled" : ""
+                      }`}
+                      onClick={() => handleDescargar(reporte)}
+                      disabled={reporte.estado === "restringido" || descargandoId === reporte.id}
+                    >
+                      <IconoDescargar /> {descargandoId === reporte.id ? "Generando..." : "Descargar"}
+                    </button>
+                  )}
                 </div>
               ))
             )}
           </div>
 
+          {puedeVerEncuestas && (
+          <>
           {/* =================================================
               ENCUESTAS REALIZADAS (datos de la BD)
               Una fila por trabajador y evaluación, con su avance y,
@@ -538,6 +550,8 @@ export default function Reportes() {
               })
             )}
           </div>
+          </>
+          )}
         </div>
       </main>
     </div>

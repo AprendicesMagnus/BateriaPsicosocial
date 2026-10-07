@@ -657,3 +657,29 @@
 /* =====================================================
    AGREGA ESTILOS NUEVOS DEBAJO DE ESTA LÍNEA
 ===================================================== */
+
+/* Paginación de la auditoría */
+.adm-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.adm-paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 6px;
+}
+
+.adm-paginacion .adm-btn {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.adm-paginacion__info {
+  font-size: 13px;
+  color: var(--adm-muted);
+}

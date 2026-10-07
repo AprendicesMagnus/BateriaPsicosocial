@@ -30,6 +30,14 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
             .options(joinedload(Area.organizacion))
             .filter(Area.organizacion_id == actual.organizacion_id)
         )
+    elif rol in {"JEFE", "ADMINISTRADOR"}:
+        # Solo las áreas de las empresas que el usuario creó.
+        query_areas = (
+            db.query(Area)
+            .join(Organizacion, Organizacion.id == Area.organizacion_id)
+            .options(joinedload(Area.organizacion))
+            .filter(Organizacion.creada_por_id == actual.id)
+        )
     else:
         raise AppError(403, "No tiene permisos para consultar reportes.")
 
@@ -87,7 +95,7 @@ _INSTRUMENTOS_SIN_CALIFICACION = {"FICHA_DATOS"}
 def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
     """Lista las encuestas (participaciones en una evaluación) con su avance y resultados.
 
-    - ADMINISTRADOR: ve las de todas las organizaciones.
+    - SUPER_ADMINISTRADOR: ve las de todas las organizaciones.
     - EVALUADOR_SST: solo las de su organización.
     Se usa en la sección "Encuestas realizadas" de la página Reportes.
 
@@ -111,7 +119,7 @@ def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
         if not actual.organizacion_id:
             return []
         query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
-    elif rol != "ADMINISTRADOR":
+    elif rol != "SUPER_ADMINISTRADOR":
         raise AppError(403, "No tiene permisos para consultar encuestas.")
 
     # Las más recientes primero: primero las terminadas (fecha_fin), luego las que están en curso

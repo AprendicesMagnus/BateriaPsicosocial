@@ -12,6 +12,8 @@ import { fetchPanel } from "../api/panel";
 import "../styles/dashboard.css";
 import "../styles/Panel.css";
 import BotonRegresar from "../components/BotonRegresar";
+import Paginador from "../components/Paginador";
+import { usePaginacion } from "../hooks/usePaginacion";
 
 /* =========================================================
    CONFIGURACIÓN DE LA VISTA
@@ -65,6 +67,7 @@ const TEXTO_ACCION = {
 };
 
 const FILTROS = ["Todo", "Resultados", "Usuarios", "Enlaces"];
+const POR_PAGINA = 10; // registros que se muestran a la vez en cada tabla
 
 const rol = (codigo) => ROLES[codigo] ?? { label: codigo, clase: "trabajador" };
 const estado = (codigo) => ESTADOS[codigo] ?? { label: codigo, clase: "neutro" };
@@ -138,6 +141,11 @@ export default function Panel() {
     filtroAuditoria === "Todo"
       ? auditoria
       : auditoria.filter((a) => a.tipo === filtroAuditoria);
+
+  // Paginación (10 por página). Vuelve a la página 1 al buscar o cambiar de filtro.
+  const pagUsuarios = usePaginacion(usuariosFiltrados, POR_PAGINA, [texto]);
+  const pagEmpresas = usePaginacion(empresasFiltradas, POR_PAGINA, [texto]);
+  const pagAuditoria = usePaginacion(auditoriaFiltrada, POR_PAGINA, [filtroAuditoria]);
 
   const disponibles = saldo.compradas - saldo.usadas;
   const porcentajeUsado = porcentaje(saldo.usadas, saldo.compradas);
@@ -217,7 +225,7 @@ export default function Panel() {
                     </tr>
                   </thead>
                   <tbody>
-                    {usuariosFiltrados.map((u) => {
+                    {pagUsuarios.items.map((u) => {
                       const r = rol(u.rol);
                       const est = estado(estadoUsuario(u));
                       return (
@@ -243,6 +251,8 @@ export default function Panel() {
                   </tbody>
                 </table>
               </div>
+
+              <Paginador paginacion={pagUsuarios} />
             </section>
 
             {/* ---------- EMPRESAS ---------- */}
@@ -269,7 +279,7 @@ export default function Panel() {
                       </tr>
                     </thead>
                     <tbody>
-                      {empresasFiltradas.map((e) => (
+                      {pagEmpresas.items.map((e) => (
                         <tr key={e.id}>
                           <td>
                             <div className="adm-celda-doble">
@@ -296,6 +306,8 @@ export default function Panel() {
                     </tbody>
                   </table>
                 </div>
+
+                <Paginador paginacion={pagEmpresas} />
               </section>
             </div>
 
@@ -382,7 +394,7 @@ export default function Panel() {
               </div>
 
               <ul className="adm-timeline">
-                {auditoriaFiltrada.map((a) => {
+                {pagAuditoria.items.map((a) => {
                   const { icono: Icono, clase } = TIPO_AUDITORIA[a.tipo] ?? TIPO_AUDITORIA.Usuarios;
                   return (
                     <li className="adm-timeline__item" key={a.id}>
@@ -402,6 +414,8 @@ export default function Panel() {
                   <li className="adm-vacio">No hay eventos para este filtro.</li>
                 )}
               </ul>
+
+              <Paginador paginacion={pagAuditoria} />
             </section>
           </>
         )}
