@@ -269,6 +269,8 @@ def actualizar_mi_organizacion(db: Session, org_id, data, actual: Usuario) -> Or
             setattr(org, campo, cambios[campo].strip())
     if "email" in cambios:
         org.email = str(cambios["email"]).lower().strip()
+    if "telefono" in cambios:
+        org.telefono = cambios["telefono"].strip()
     db.commit()
     db.refresh(org)
     return org

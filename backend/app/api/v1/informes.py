@@ -5,7 +5,13 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
 
-from app.api.deps import asegurar_acceso_organizacion, get_current_user, require_gestor, require_lector_reportes
+from app.api.deps import (
+    asegurar_acceso_organizacion_db,
+    get_current_user,
+    puede_acceder_organizacion,
+    require_generador_informes,
+    require_gestor,
+)
 from app.core.errors import AppError
 from app.db.session import get_db
 from app.models.evaluation import Evaluacion, Informe
@@ -31,7 +37,7 @@ def _asegurar_evaluacion_accesible(db: Session, evaluacion_id: UUID, actual: Usu
     evaluacion = db.query(Evaluacion).filter(Evaluacion.id == evaluacion_id).first()
     if evaluacion is None:
         raise AppError(404, "Evaluación no encontrada.")
-    asegurar_acceso_organizacion(actual, evaluacion.organizacion_id)
+    asegurar_acceso_organizacion_db(db, actual, evaluacion.organizacion_id)
 
 
 @router.get("")
@@ -78,7 +84,7 @@ def generar_informe_agrupado(
     data: InformeAgrupadoCreateRequest,
     request: Request,
     db: Session = Depends(get_db),
-    actual: Usuario = Depends(require_lector_reportes),
+    actual: Usuario = Depends(require_generador_informes),
 ):
     _asegurar_evaluacion_accesible(db, data.evaluacionId, actual)
     informe = informes_service.generar_informe_agrupado(
@@ -120,7 +126,7 @@ def descargar_informe(
     # Validar permisos de acceso según el tipo de informe
     es_admin = actual.rol.codigo == "SUPER_ADMINISTRADOR"
     es_evaluador = actual.rol.codigo == "EVALUADOR_SST"
-    misma_org = es_admin or (actual.organizacion_id == informe.evaluacion.organizacion_id)
+    misma_org = puede_acceder_organizacion(db, actual, informe.evaluacion.organizacion_id)
 
     if informe.tipo == "INDIVIDUAL":
         es_dueno = actual.id == informe.trabajador_id
@@ -129,7 +135,8 @@ def descargar_informe(
             raise AppError(403, "No tiene permisos para descargar este informe individual.")
     elif informe.tipo == "AGRUPADO":
         es_responsable = actual.rol.codigo == "RESPONSABLE_SST"
-        es_gestor_autorizado = (es_admin or es_evaluador or es_responsable) and misma_org
+        es_admin_empresa = actual.rol.codigo == "ADMINISTRADOR"  # solo de las empresas que creó
+        es_gestor_autorizado = (es_admin or es_evaluador or es_responsable or es_admin_empresa) and misma_org
         if not es_gestor_autorizado:
             raise AppError(403, "No tiene permisos para descargar este informe agrupado.")
     else:

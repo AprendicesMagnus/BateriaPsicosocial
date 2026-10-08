@@ -536,6 +536,14 @@ def listar_informes(
         query = query.filter(
             Evaluacion.organizacion_id == actual.organizacion_id, Informe.tipo == "AGRUPADO"
         )
+    elif rol == "ADMINISTRADOR":
+        # Informes agrupados de las empresas que creó.
+        query = query.filter(
+            Evaluacion.organizacion_id.in_(
+                db.query(Organizacion.id).filter(Organizacion.creada_por_id == actual.id)
+            ),
+            Informe.tipo == "AGRUPADO",
+        )
     elif rol == "TRABAJADOR":
         query = query.filter(Informe.tipo == "INDIVIDUAL", Informe.trabajador_id == actual.id)
     else:

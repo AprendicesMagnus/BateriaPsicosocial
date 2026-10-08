@@ -1,4 +1,4 @@
-import { etiquetaRol } from "../utils/roles";
+import { esSuperAdmin, etiquetaRol } from "../utils/roles";
 import { urlArchivo } from "../api/client";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -41,6 +41,11 @@ export default function ProfileMenu() {
     navigate("/perfil");
   }
 
+  function handleIrAlPanel() {
+    setAbierto(false);
+    navigate("/panel");
+  }
+
   function handleCerrarSesion() {
     setAbierto(false);
     cerrarSesion?.();
@@ -73,6 +78,11 @@ export default function ProfileMenu() {
           <button type="button" onClick={handleVerPerfil}>
             Ver perfil
           </button>
+          {esSuperAdmin(usuario?.rol) && (
+            <button type="button" onClick={handleIrAlPanel}>
+              Panel De Administrador
+            </button>
+          )}
           <button
             type="button"
             className="app-profile-dropdown-danger"

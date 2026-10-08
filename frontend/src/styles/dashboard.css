@@ -47,7 +47,7 @@ body {
 
 .sidebar__logo strong {
   display: block;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .sidebar__menu {
@@ -66,7 +66,7 @@ body {
   color: #c7d6e494;
   text-decoration: none;
 
-  font-size: 12px;
+  font-size: 14px;
   border-radius: 7px;
 
   border: solid;
@@ -98,7 +98,7 @@ body {
   gap: 7px;
   padding: 10px 15px;
   color: #91a7ba;
-  font-size: 9px;
+  font-size: 13px;
 }
 
 .footer-icon {
@@ -125,12 +125,12 @@ body {
 
 .dashboard__header h1 {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .dashboard__header p {
   margin: 4px 0 0;
-  font-size: 10px;
+  font-size: 14px;
   color: #89928f;
 }
 
@@ -179,7 +179,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 18px;
+  font-size: 19px;
 }
 
 .welcome-text {
@@ -188,13 +188,13 @@ body {
 
 .welcome-text h2 {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .welcome-text p {
   margin: 4px 0 0;
   color: #89928f;
-  font-size: 9px;
+  font-size: 13px;
   max-width: 520px;
 }
 
@@ -243,7 +243,7 @@ body {
   border-radius: 20px;
   padding: 7px 15px;
 
-  font-size: 9px;
+  font-size: 13px;
   color: #77817e;
 
   cursor: pointer;
@@ -297,7 +297,7 @@ body {
   background: #eef7f4;
   border: 1px solid #cfe5de;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .enlace-creado__texto {
@@ -324,7 +324,7 @@ body {
   color: white;
   border-radius: 20px;
   padding: 6px 14px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -358,19 +358,19 @@ body {
 
 .card-title h3 {
   margin: 0;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .card-title p {
   margin: 4px 0;
-  font-size: 8px;
+  font-size: 12px;
   color: #9a9d98;
 }
 
 .legend {
   display: flex;
   gap: 12px;
-  font-size: 8px;
+  font-size: 12px;
   color: #777;
 }
 
@@ -415,7 +415,7 @@ body {
   padding: 24px 0;
   text-align: center;
   color: #9a9d98;
-  font-size: 9px;
+  font-size: 13px;
 }
 
 
@@ -435,7 +435,7 @@ body {
 }
 
 .population-card p {
-  font-size: 8px;
+  font-size: 12px;
   color: #a9b8bc;
   margin: 0 0 5px;
 }
@@ -450,7 +450,7 @@ body {
   background: #287d6d;
   border-radius: 10px;
   padding: 3px 7px;
-  font-size: 7px;
+  font-size: 11px;
 }
 
 .risk-card {
@@ -459,7 +459,7 @@ body {
 }
 
 .risk-card h3 {
-  font-size: 9px;
+  font-size: 13px;
   margin: 0;
 }
 
@@ -481,11 +481,11 @@ body {
 
 .risk-circle strong {
   display: block;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .risk-circle small {
-  font-size: 6px;
+  font-size: 10px;
   color: #aaa;
 }
 
@@ -527,13 +527,13 @@ body {
 
 .indicator-header h3 {
   margin: 0;
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .indicator-header p {
   margin: 4px 0 13px;
   color: #999;
-  font-size: 7px;
+  font-size: 11px;
 }
 
 .active-badge {
@@ -542,7 +542,7 @@ body {
   padding: 3px 9px;
   border-radius: 10px;
   height: fit-content;
-  font-size: 7px;
+  font-size: 11px;
 }
 
 .indicator-row {
@@ -552,7 +552,7 @@ body {
   align-items: center;
   margin: 7px 0;
 
-  font-size: 7px;
+  font-size: 11px;
 }
 
 .indicator-row small {
@@ -599,13 +599,13 @@ body {
 
 .responders-card h3 {
   margin: 0;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .responders-card > p {
   margin: 4px 0 14px;
   color: #89928f;
-  font-size: 8px;
+  font-size: 12px;
 }
 
 .table-wrap {
@@ -617,7 +617,7 @@ body {
 .responders-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 8px;
+  font-size: 12px;
 }
 
 .responders-table th {
@@ -627,7 +627,7 @@ body {
   border-bottom: 1px solid #e7e2d9;
   color: #2e7869;
   font-weight: 700;
-  font-size: 7px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: .03em;
   white-space: nowrap;
@@ -661,7 +661,7 @@ body {
   display: inline-block;
   padding: 3px 9px;
   border-radius: 10px;
-  font-size: 7px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -682,7 +682,7 @@ body {
 
 .error-text {
   color: #c0392b;
-  font-size: 9px;
+  font-size: 13px;
   margin: 8px 0;
 }
 
@@ -835,7 +835,7 @@ body {
   max-width: 380px;
   text-align: center;
   color: #89928f;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.6;
 }
 
@@ -868,14 +868,14 @@ body {
 .questionnaire-options strong {
   display: block;
   color: #17324d;
-  font-size: 12px;
+  font-size: 14px;
   margin-bottom: 5px;
 }
 
 .questionnaire-options span {
   display: block;
   color: #89928f;
-  font-size: 10px;
+  font-size: 14px;
 }
 
 
@@ -889,7 +889,7 @@ body {
   border-radius: 10px;
   background: #2e7869;
   color: white;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
   cursor: pointer;
   transition: .2s ease;

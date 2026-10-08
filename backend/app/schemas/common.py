@@ -209,6 +209,7 @@ class OrganizacionMiaUpdate(BaseModel):
     sector: SectorEmpresa | None = None
     municipio: Lugar | None = None
     email: Correo | None = None
+    telefono: str | None = Field(default=None, pattern=r"^3\d{9}$", description="Celular de 10 dígitos que empieza por 3")
 
 
 class AreaCreate(BaseModel):
@@ -351,7 +352,8 @@ class OrganizacionAutorregistroCreate(BaseModel):
     numeroTrabajadores: int | None = Field(default=None, ge=1, le=1000000)
     municipio: Lugar | None = None
     email: Correo | None = None
-    telefono: str | None = Field(default=None, pattern=r"^\d{7,10}$", description="Teléfono debe contener 7-10 dígitos")
+    # Celular de contacto de la empresa: 10 dígitos y empieza por 3 (formato Colombia).
+    telefono: str | None = Field(default=None, pattern=r"^3\d{9}$", description="Celular de 10 dígitos que empieza por 3")
     # Datos del usuario responsable. Son obligatorios salvo cuando quien crea la empresa es un
     # Psicologo (él mismo es el responsable); la regla se valida en el servicio.
     usuarioNombre: NombrePersona | None = None
