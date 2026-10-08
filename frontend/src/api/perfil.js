@@ -43,3 +43,12 @@ export function editarMiEmpresa(token, id, { sector, municipio, email, telefono 
 export function eliminarMiEmpresa(token, id) {
   return request(`/organizaciones/mias/${id}`, { method: "DELETE", token });
 }
+
+// Psicologo: elegir con cuál de las empresas que creó trabaja (empresa activa).
+export function cambiarEmpresaActiva(token, organizacionId) {
+  return request("/usuarios/me/empresa-activa", {
+    method: "POST",
+    body: { organizacionId },
+    token,
+  });
+}

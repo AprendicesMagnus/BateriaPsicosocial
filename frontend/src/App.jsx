@@ -91,7 +91,7 @@ export default function App() {
           <Route
             path="/respuestas"
             element={
-              <ProtectedRoute roles={["SUPER_ADMINISTRADOR", "EVALUADOR_SST"]}>
+              <ProtectedRoute roles={["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"]}>
                 <Respuestas />
               </ProtectedRoute>
             }

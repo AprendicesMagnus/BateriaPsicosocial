@@ -38,6 +38,8 @@ def usuario_publico(usuario: Usuario) -> dict:
         "emailVerificado": usuario.email_verificado,
         "estado": usuario.estado,
         "organizacionId": str(usuario.organizacion_id) if usuario.organizacion_id else None,
+        # Nombre de la empresa activa: lo muestra el título de Reportes
+        "organizacionNombre": usuario.organizacion.nombre if usuario.organizacion else None,
         "areaId": str(usuario.area_id) if usuario.area_id else None,
         "numeroIdentificacion": usuario.numero_identificacion,
         "cargo": usuario.cargo,

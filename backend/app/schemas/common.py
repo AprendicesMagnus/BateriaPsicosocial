@@ -102,6 +102,10 @@ class CambioPasswordPerfilRequest(BaseModel):
     passwordNueva: PasswordNueva
 
 
+class EmpresaActivaRequest(BaseModel):
+    organizacionId: UUID
+
+
 class LoginRequest(BaseModel):
     email: Correo
     password: str = Field(min_length=1, max_length=72)

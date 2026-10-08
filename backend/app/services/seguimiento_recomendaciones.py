@@ -1,6 +1,7 @@
 import uuid
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.roles import ROLES_EVALUADOR
 from app.core.crypto import utcnow
 from app.core.errors import AppError
 from app.models.survey import SeguimientoRecomendacion, Recomendacion, Dimension
@@ -8,14 +9,14 @@ from app.models.user import Usuario
 
 
 def validar_permiso_seguimiento(actual: Usuario):
-    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", "EVALUADOR_SST"}:
+    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR}:
         raise AppError(403, "No tiene permisos para gestionar el plan de acción / seguimiento de recomendaciones.")
 
 
 def listar_seguimientos(db: Session, organizacion_id: uuid.UUID | None, actual: Usuario) -> list[dict]:
     validar_permiso_seguimiento(actual)
 
-    if actual.rol.codigo == "EVALUADOR_SST":
+    if actual.rol.codigo in ROLES_EVALUADOR:
         organizacion_id = actual.organizacion_id
 
     query = (
@@ -63,7 +64,7 @@ def crear_o_actualizar_estado(
 ) -> dict:
     validar_permiso_seguimiento(actual)
 
-    if actual.rol.codigo == "EVALUADOR_SST":
+    if actual.rol.codigo in ROLES_EVALUADOR:
         organizacion_id = actual.organizacion_id
 
     if not organizacion_id:

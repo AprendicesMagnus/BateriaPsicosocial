@@ -11,10 +11,11 @@ import { fetchAnalisisPredictivo } from "../api/prediccion";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import { crearEnlace } from "../api/enlaces";
 import BotonRegresar from "../components/BotonRegresar";
-import { esSuperAdmin } from "../utils/roles";
+import { esSuperAdmin, rutaInicial } from "../utils/roles";
+import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
-const ROLES_ENLACES = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
+const ROLES_ENLACES = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
 
 /* =========================================================
    CATEGORÍAS (fila principal)
@@ -83,6 +84,32 @@ const LABEL_NIVEL = {
 export default function Dashboard() {
   const { usuario, token, cerrarSesion } = useAuth();
   const navigate = useNavigate();
+
+  // Psicologo: puede crear varias empresas y elige con cuál trabaja (empresa activa).
+  const esPsicologo = usuario?.rol === "EVALUADOR_SST";
+  const [misEmpresas, setMisEmpresas] = useState([]);
+  const [cambiandoEmpresa, setCambiandoEmpresa] = useState(false);
+
+  useEffect(() => {
+    if (!esPsicologo || !token) return;
+    fetchMisEmpresas(token)
+      .then((lista) => setMisEmpresas(lista || []))
+      .catch(() => {});
+  }, [esPsicologo, token]);
+
+  async function handleCambiarEmpresa(e) {
+    const id = e.target.value;
+    if (!id || id === usuario?.organizacionId) return;
+    setCambiandoEmpresa(true);
+    try {
+      await cambiarEmpresaActiva(token, id);
+      // Recarga para que indicadores, reportes y enlaces se vuelvan a pedir con la nueva empresa.
+      window.location.reload();
+    } catch (err) {
+      setError(err.message || "No se pudo cambiar de empresa.");
+      setCambiandoEmpresa(false);
+    }
+  }
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [cuestionarioSeleccionado, setCuestionarioSeleccionado] = useState(null);
@@ -242,7 +269,7 @@ export default function Dashboard() {
       <aside className="sidebar">
         <div
           className="sidebar__logo"
-          onClick={() => navigate("/Inicio")}
+          onClick={() => navigate(rutaInicial(usuario?.rol))}
           style={{ cursor: "pointer" }}
           role="button"
           aria-label="Ir al inicio"
@@ -273,7 +300,7 @@ export default function Dashboard() {
             Reportes
           </button>
 
-          {["SUPER_ADMINISTRADOR", "EVALUADOR_SST"].includes(usuario?.rol) && (
+          {["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol) && (
             <button className="menu-item" type="button" onClick={() => navigate("/respuestas")}>
               <span>☰</span>
               Respuestas
@@ -302,6 +329,24 @@ export default function Dashboard() {
           <div>
             <h1>Bienvenido, {usuario?.nombre || "Usuario"}</h1>
             <p>Tu bienestar también es parte del trabajo</p>
+            {esPsicologo && misEmpresas.length > 0 && (
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13 }}>
+                <span>Empresa activa:</span>
+                <select
+                  value={usuario?.organizacionId ?? ""}
+                  onChange={handleCambiarEmpresa}
+                  disabled={cambiandoEmpresa}
+                  style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+                >
+                  {!usuario?.organizacionId && <option value="">Selecciona una empresa</option>}
+                  {misEmpresas.map((empresa) => (
+                    <option key={empresa.id} value={empresa.id}>
+                      {empresa.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
 
           <ProfileMenu />

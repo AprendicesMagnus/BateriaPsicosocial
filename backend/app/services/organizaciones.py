@@ -92,11 +92,10 @@ def autorregistrar_organizacion(db: Session, data, creador: Usuario | None = Non
         db.flush()
 
         if crea_psicologo:
-            # Limitación actual del modelo: un usuario pertenece a UNA sola organización
-            # (usuarios.organizacion_id). Se vincula a su primera empresa; las siguientes
-            # quedan registradas como "suyas" (Mis Empresas) pero sin cambiar esa vinculación.
-            if creador.organizacion_id is None:
-                creador.organizacion_id = org.id
+            # El Psicologo es independiente y puede crear varias empresas. usuarios.organizacion_id
+            # guarda su EMPRESA ACTIVA (sobre la que trabaja el Dashboard): la recién creada pasa a
+            # ser la activa. Puede cambiarla cuando quiera con cambiar_empresa_activa().
+            creador.organizacion_id = org.id
         else:
             usuario = Usuario(
                 nombre=data.usuarioNombre.strip(),
@@ -322,3 +321,20 @@ def eliminar_mi_organizacion(db: Session, org_id, actual: Usuario) -> dict:
         raise AppError(409, "No se puede eliminar: la empresa tiene información asociada.")
 
     return {"message": "Empresa eliminada correctamente."}
+
+
+def cambiar_empresa_activa(db: Session, actual: Usuario, org_id) -> Usuario:
+    """El Psicologo elige con cuál de las empresas que creó trabaja (Dashboard, reportes, enlaces...)."""
+    if actual.rol.codigo != "EVALUADOR_SST":
+        raise AppError(403, "Solo el Psicologo puede cambiar de empresa activa.")
+    org = (
+        db.query(Organizacion)
+        .filter(Organizacion.id == org_id, Organizacion.creada_por_id == actual.id)
+        .first()
+    )
+    if org is None:
+        raise AppError(404, "No se encontró esa empresa entre las que creaste.")
+    actual.organizacion_id = org.id
+    db.commit()
+    db.refresh(actual)
+    return actual

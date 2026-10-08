@@ -48,9 +48,9 @@ function IconoDescargar() {
 }
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
-const ROLES_ENLACES = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
-// Resultados individuales (confidenciales): solo Psicologo y Super Administrador.
-const ROLES_ENCUESTAS = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
+const ROLES_ENLACES = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
+// Resultados individuales (confidenciales): solo quienes gestionan la empresa y el Super Administrador.
+const ROLES_ENCUESTAS = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
 // Jefe y Administrador ven las empresas que crearon; el Jefe solo consulta (no descarga informes).
 const ROLES_POR_CREADOR = ["JEFE", "ADMINISTRADOR"];
 
@@ -91,7 +91,11 @@ export default function Reportes() {
 
   const {
     empresaNombre = usuario?.organizacionNombre ||
-      (ROLES_POR_CREADOR.includes(usuario?.rol) ? "Mis empresas" : "Organización"),
+      (usuario?.rol === "SUPER_ADMINISTRADOR"
+        ? "Todas las empresas"
+        : ROLES_POR_CREADOR.includes(usuario?.rol)
+        ? "Mis empresas"
+        : "Organización"),
     sector = usuario?.sector || "General",
     bateriaNombre = "Batería de riesgo psicosocial",
     rangoFechas = "vigente 2026",

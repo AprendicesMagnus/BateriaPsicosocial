@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.roles import ROLES_EVALUADOR
 from app.core.crypto import utcnow
 from app.core.encryption import cifrar_json, descifrar_json
 from app.core.errors import AppError
@@ -30,7 +31,7 @@ def _evaluador_asignado(usuario: Usuario, evaluacion: Evaluacion) -> None:
 
 def listar_evaluaciones(db: Session, actual: Usuario) -> list[dict]:
     query = db.query(Evaluacion).options(joinedload(Evaluacion.participantes))
-    if actual.rol.codigo == "EVALUADOR_SST":
+    if actual.rol.codigo in ROLES_EVALUADOR:
         query = query.filter(Evaluacion.evaluador_id == actual.id)
     # PACIENTE: invitado del enlace público; igual que el trabajador, solo ve sus evaluaciones
     elif actual.rol.codigo in {"TRABAJADOR", "PACIENTE"}:
@@ -46,9 +47,9 @@ def obtener_evaluacion(db: Session, evaluacion_id, actual: Usuario) -> dict:
 
 
 def crear_evaluacion(db: Session, data, actual: Usuario) -> dict:
-    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", "EVALUADOR_SST"}:
+    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR}:
         raise AppError(403, "No tiene permisos para crear evaluaciones.")
-    if actual.rol.codigo == "EVALUADOR_SST" and actual.organizacion_id != data.organizacionId:
+    if actual.rol.codigo in ROLES_EVALUADOR and actual.organizacion_id != data.organizacionId:
         raise AppError(403, "Solo puede crear evaluaciones de su organización.")
     version_id_explicito = data.versionId is not None
     version = (
@@ -599,7 +600,7 @@ def _participante_trabajador(db: Session, evaluacion_id, actual: Usuario) -> Eva
 def _autorizar_consulta(actual: Usuario, evaluacion: Evaluacion) -> None:
     if actual.rol.codigo == "SUPER_ADMINISTRADOR":
         return
-    if actual.rol.codigo == "EVALUADOR_SST" and evaluacion.evaluador_id == actual.id:
+    if actual.rol.codigo in ROLES_EVALUADOR and evaluacion.evaluador_id == actual.id:
         return
     if actual.rol.codigo == "TRABAJADOR" and any(p.trabajador_id == actual.id for p in evaluacion.participantes):
         return
