@@ -230,3 +230,74 @@ def test_enlace_inexistente_y_sin_permisos(client):
     assert client.get("/api/enlaces/publico/no-existe").status_code == 404
     # Sin sesión no se pueden crear enlaces
     assert client.post("/api/enlaces", json={"nombre": "X enlace"}).status_code == 401
+
+
+# Contrato con las vistas del frontend (useCuestionarioBackend.js): prefijo del código de cada
+# pregunta, cantidad de preguntas de la página y valores numéricos que envía cada mapa de opciones.
+VISTAS = {
+    "ESTRES": ("EST_", 31, {1, 2, 3, 4}),
+    "EXTRALABORAL": ("EXT_", 31, {1, 2, 3, 4, 5}),
+    "INTRALABORAL_A": ("INTRALABORAL_A_", 123, {0, 1, 2, 3, 4}),
+    "INTRALABORAL_B": ("INTRALABORAL_B_", 97, {0, 1, 2, 3, 4}),
+}
+
+
+@pytest.mark.parametrize(
+    "tipo_cargo, codigo_intra, filtros",
+    [
+        ("Profesional, analista, técnico, tecnólogo", "INTRALABORAL_A", {"CLIENTES": False, "JEFE": False}),
+        ("Jefatura - tiene personal a cargo", "INTRALABORAL_A", {"CLIENTES": True, "JEFE": True}),
+        ("Auxiliar, asistente administrativo, asistente técnico", "INTRALABORAL_B", {"CLIENTES": False}),
+        ("Operario, operador, ayudante, servicios generales", "INTRALABORAL_B", {"CLIENTES": True}),
+    ],
+)
+def test_vistas_de_cuestionarios_guardan_y_finalizan(client, tipo_cargo, codigo_intra, filtros):
+    """Recorre la batería como lo hacen las vistas: código "<prefijo><n>", valores de la escala de la
+    página y, en el intralaboral, solo las preguntas visibles según los filtros (Sí/No)."""
+    headers_psico = _psicologo(client)
+    _, eval_id, headers_pac = _iniciar_paciente(client, headers_psico)
+    res = client.post(f"/api/evaluaciones/{eval_id}/ficha", headers=headers_pac, json={**FICHA, "tipoCargo": tipo_cargo})
+    assert res.status_code == 200, res.text
+    assert res.json()["intralaboralAsignado"] == codigo_intra
+
+    vistos = []
+    final = None
+    for _ in range(5):
+        cuestionario = client.get(f"/api/evaluaciones/{eval_id}/cuestionario", headers=headers_pac).json()
+        codigo = cuestionario["codigo"]
+        if codigo is None:
+            break
+        vistos.append(codigo)
+        prefijo, cantidad, valores = VISTAS[codigo]
+        por_numero = {int(p["codigo"].removeprefix(prefijo)): p for p in cuestionario["preguntas"]}
+        assert all(p["codigo"].startswith(prefijo) for p in cuestionario["preguntas"])
+        assert sorted(por_numero) == list(range(1, cantidad + 1))
+
+        es_intra = codigo.startswith("INTRALABORAL")
+        for n, p in por_numero.items():
+            # Preguntas condicionales con filtro "No": la vista ni las muestra
+            if es_intra and p["filtro"] and not filtros.get(p["filtro"]):
+                continue
+            # Se recorren los valores de la escala para probar todos (incluido el 0 del intralaboral)
+            valor = sorted(valores)[n % len(valores)]
+            r = client.post(
+                f"/api/evaluaciones/{eval_id}/respuestas",
+                headers=headers_pac,
+                json={"preguntaId": p["id"], "valor": valor},
+            )
+            assert r.status_code == 200, r.text
+
+        # Al recargar la página las respuestas guardadas vuelven del backend
+        recargado = client.get(f"/api/evaluaciones/{eval_id}/cuestionario", headers=headers_pac).json()
+        assert any(p["respuesta"] is not None for p in recargado["preguntas"])
+
+        final = client.post(
+            f"/api/evaluaciones/{eval_id}/finalizar-cuestionario",
+            headers=headers_pac,
+            json={"filtros": filtros if es_intra else {}},
+        )
+        assert final.status_code == 200, final.text
+
+    assert vistos == ["ESTRES", "EXTRALABORAL", codigo_intra]
+    assert final.json()["completadoTotal"] is True
+    assert final.json()["resultados"]

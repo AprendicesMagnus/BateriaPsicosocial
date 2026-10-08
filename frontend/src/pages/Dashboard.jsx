@@ -273,6 +273,13 @@ export default function Dashboard() {
             Reportes
           </button>
 
+          {["SUPER_ADMINISTRADOR", "EVALUADOR_SST"].includes(usuario?.rol) && (
+            <button className="menu-item" type="button" onClick={() => navigate("/respuestas")}>
+              <span>☰</span>
+              Respuestas
+            </button>
+          )}
+
           <button className="menu-item" type="button" onClick={handleLogout}>
             <span>✕</span>
             Cerrar sesión

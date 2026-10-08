@@ -272,14 +272,16 @@ class ConsentimientoRequest(BaseModel):
 
 class RespuestaRequest(BaseModel):
     preguntaId: UUID
-    valor: int | str = Field(description="Valor Likert entre 1 y 5 o texto")
+    valor: int | str = Field(description="Valor Likert entre 0 y 5 o texto")
 
     @field_validator("valor")
     @classmethod
     def validar_valor(cls, v):
         if isinstance(v, int):
-            if v < 1 or v > 5:
-                raise ValueError("El valor numérico debe estar entre 1 y 5.")
+            # Se permite 0 porque el intralaboral usa la escala oficial 0-4 (Nunca=0 ... Siempre=4).
+            # El rango exacto de cada pregunta se valida en el servicio con valor_minimo/valor_maximo.
+            if v < 0 or v > 5:
+                raise ValueError("El valor numérico debe estar entre 0 y 5.")
         elif isinstance(v, str):
             if not v.strip():
                 raise ValueError("El valor de texto no puede estar vacío.")

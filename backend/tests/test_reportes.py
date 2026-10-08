@@ -36,7 +36,7 @@ def _crear_usuario(client, headers_admin, rol_codigo, organizacion_id, password,
     if area_id:
         body["areaId"] = str(area_id)
     res = client.post("/api/usuarios", headers=headers_admin, json=body)
-    assert res.status_code in (200, 201)
+    assert res.status_code in (200, 201), res.text
     return uuid.UUID(res.json()["id"]), email
 
 
@@ -60,7 +60,7 @@ def escenario_reportes(client, db_session):
 
     evaluador_a_id, email_evaluador_a = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_a, PASSWORD_EVALUADOR)
     _, email_evaluador_b = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_b, PASSWORD_EVALUADOR)
-    trabajador_a_id, email_trabajador_a = _crear_usuario(client, headers_admin, "TRABAJADOR", org_a, PASSWORD_TRABAJADOR, area_id=area_a.id)
+    trabajador_a_id, email_trabajador_a = _crear_usuario(client, headers_admin, "PACIENTE", org_a, PASSWORD_TRABAJADOR, area_id=area_a.id)
 
     # Crear evaluación en Org A
     version_id = client.get("/api/cuestionarios", headers=headers_admin).json()[0]["id"]
@@ -79,7 +79,7 @@ def escenario_reportes(client, db_session):
 
     # Crear 5 trabajadores en Area A y registrarlos completados
     for i in range(5):
-        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_a, PASSWORD_TRABAJADOR, area_id=area_a.id)
+        t_id, _ = _crear_usuario(client, headers_admin, "PACIENTE", org_a, PASSWORD_TRABAJADOR, area_id=area_a.id)
         part = EvaluacionParticipante(evaluacion_id=evaluacion_a_id, trabajador_id=t_id, estado="COMPLETADA")
         db_session.add(part)
     
@@ -96,7 +96,7 @@ def escenario_reportes(client, db_session):
     )
     evaluacion_b_id = uuid.UUID(res_ev_b.json()["id"])
     for i in range(2):
-        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_b, PASSWORD_TRABAJADOR, area_id=area_b.id)
+        t_id, _ = _crear_usuario(client, headers_admin, "PACIENTE", org_b, PASSWORD_TRABAJADOR, area_id=area_b.id)
         part = EvaluacionParticipante(evaluacion_id=evaluacion_b_id, trabajador_id=t_id, estado="COMPLETADA")
         db_session.add(part)
 
@@ -111,6 +111,8 @@ def escenario_reportes(client, db_session):
         "headers_evaluador_a": _encabezados(client, email_evaluador_a, PASSWORD_EVALUADOR),
         "headers_evaluador_b": _encabezados(client, email_evaluador_b, PASSWORD_EVALUADOR),
         "headers_trabajador_a": _encabezados(client, email_trabajador_a, PASSWORD_TRABAJADOR),
+        "evaluacion_a_id": evaluacion_a_id,
+        "trabajador_a_id": trabajador_a_id,
     }
 
 
@@ -184,7 +186,7 @@ def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session):
     })
     ev1_id = uuid.UUID(res_ev1.json()["id"])
     for i in range(3):
-        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_id, PASSWORD_TRABAJADOR, area_id=area.id)
+        t_id, _ = _crear_usuario(client, headers_admin, "PACIENTE", org_id, PASSWORD_TRABAJADOR, area_id=area.id)
         db_session.add(EvaluacionParticipante(evaluacion_id=ev1_id, trabajador_id=t_id, estado="COMPLETADA"))
     db_session.commit()
 
@@ -194,7 +196,7 @@ def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session):
     })
     ev2_id = uuid.UUID(res_ev2.json()["id"])
     for i in range(2):
-        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_id, PASSWORD_TRABAJADOR, area_id=area.id)
+        t_id, _ = _crear_usuario(client, headers_admin, "PACIENTE", org_id, PASSWORD_TRABAJADOR, area_id=area.id)
         db_session.add(EvaluacionParticipante(evaluacion_id=ev2_id, trabajador_id=t_id, estado="COMPLETADA"))
     db_session.commit()
 
@@ -208,3 +210,44 @@ def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session):
     assert item["participantesCompletados"] == 2
     assert item["estado"] == "restringido"
 
+
+
+def _participante_con_respuesta(db_session, escenario):
+    """Guarda una respuesta cifrada del trabajador A y devuelve (participante, pregunta)."""
+    from app.core.encryption import cifrar_json
+    from app.models.evaluation import Respuesta
+    from app.models.survey import Pregunta
+
+    part = (
+        db_session.query(EvaluacionParticipante)
+        .filter(
+            EvaluacionParticipante.evaluacion_id == escenario["evaluacion_a_id"],
+            EvaluacionParticipante.trabajador_id == escenario["trabajador_a_id"],
+        )
+        .one()
+    )
+    # Una pregunta del cuestionario de la evaluación
+    version_id = part.evaluacion.version_id
+    pregunta = (
+        db_session.query(Pregunta)
+        .join(Pregunta.dimension)
+        .filter_by(version_id=version_id)
+        .first()
+    )
+    db_session.add(Respuesta(participante_id=part.id, pregunta_id=pregunta.id, valor_cifrado=cifrar_json(3)))
+    db_session.commit()
+    return part, pregunta
+
+
+def test_respuestas_participante_devuelve_valores_descifrados(client, db_session, escenario_reportes):
+    part, pregunta = _participante_con_respuesta(db_session, escenario_reportes)
+    res = client.get(f"/api/reportes/encuestas/{part.id}/respuestas", headers=escenario_reportes["headers_evaluador_a"])
+    assert res.status_code == 200
+    respuestas = [r for inst in res.json()["instrumentos"] for r in inst["respuestas"]]
+    assert {"enunciado": pregunta.enunciado, "valor": 3}.items() <= respuestas[0].items()
+
+
+def test_respuestas_participante_no_visible_para_otra_organizacion(client, db_session, escenario_reportes):
+    part, _ = _participante_con_respuesta(db_session, escenario_reportes)
+    res = client.get(f"/api/reportes/encuestas/{part.id}/respuestas", headers=escenario_reportes["headers_evaluador_b"])
+    assert res.status_code == 404

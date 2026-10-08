@@ -1,7 +1,8 @@
 """
 Tests de validación del rango Likert en RespuestaRequest (Etapa 2 – auditoría de validaciones).
 
-Criterio: el valor de una respuesta en escala Likert debe ser un entero entre 1 y 5 (ge=1, le=5).
+Criterio: el schema acepta enteros entre 0 y 5 (0 por la escala 0-4 del intralaboral); el rango
+exacto de cada pregunta (valor_minimo/valor_maximo) lo valida el servicio con un 400.
 """
 import uuid
 import pytest
@@ -21,9 +22,10 @@ class TestRespuestaValorRangeSchema:
         obj = RespuestaRequest(preguntaId=uuid.uuid4(), valor=5)
         assert obj.valor == 5
 
-    def test_valor_invalido_cero(self):
-        with pytest.raises(ValidationError):
-            RespuestaRequest(preguntaId=uuid.uuid4(), valor=0)
+    def test_valor_valido_cero(self):
+        # El intralaboral usa la escala oficial 0-4 (Nunca=0); el rango exacto lo valida el servicio
+        obj = RespuestaRequest(preguntaId=uuid.uuid4(), valor=0)
+        assert obj.valor == 0
 
     def test_valor_invalido_seis(self):
         with pytest.raises(ValidationError):
@@ -99,13 +101,13 @@ class TestRespuestaEndpointRange:
         )
         assert res_rechazo_6.status_code == 422
 
-        # Probar valor=0 -> 422
+        # Probar valor=0 en una pregunta 1-5 -> 400 (lo rechaza el servicio por el rango de la pregunta)
         res_rechazo_0 = client.post(
             f"/api/evaluaciones/{eval_id}/respuestas",
             headers=headers_trab,
             json={"preguntaId": pregunta_id, "valor": 0},
         )
-        assert res_rechazo_0.status_code == 422
+        assert res_rechazo_0.status_code == 400
 
         # Probar valor=3 -> 200 (caso feliz)
         res_exitoso = client.post(

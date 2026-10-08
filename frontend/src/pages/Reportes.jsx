@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
 import { fetchReportes, fetchEncuestasRealizadas } from "../api/reportes";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import { fetchEnlaces, crearEnlace, eliminarEnlace } from "../api/enlaces";
+import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha } from "../utils/encuestas";
 import "../styles/app-shell.css";
 import "../styles/Reportes.css";
 
@@ -46,43 +47,12 @@ function IconoDescargar() {
   );
 }
 
-// Colores y textos de cada nivel de riesgo (mismos que usa CuestionarioTrabajador)
-const NIVELES = {
-  SIN_RIESGO: { bg: "#DEF7EC", text: "#03543F", label: "Sin riesgo" },
-  BAJO: { bg: "#E1EFFE", text: "#1E40AF", label: "Riesgo bajo" },
-  MEDIO: { bg: "#FEF08A", text: "#713F12", label: "Riesgo medio" },
-  ALTO: { bg: "#FDBA74", text: "#9A3412", label: "Riesgo alto" },
-  MUY_ALTO: { bg: "#FCA5A5", text: "#991B1B", label: "Riesgo muy alto" },
-};
-
-// Texto y estilo del estado de la encuesta del trabajador (EvaluacionParticipante.estado)
-const ESTADOS_ENCUESTA = {
-  COMPLETADA: { label: "Completada", clase: "reportes-status--listo" },
-  EN_PROGRESO: { label: "En progreso", clase: "reportes-status--progreso" },
-  PENDIENTE: { label: "Pendiente", clase: "reportes-status--restringido" },
-};
-
-// Nombre corto de cada instrumento para las etiquetas de avance
-const NOMBRES_INSTRUMENTO = {
-  FICHA_DATOS: "Ficha de datos",
-  ESTRES: "Estrés",
-  EXTRALABORAL: "Extralaboral",
-  INTRALABORAL_A: "Intralaboral A",
-  INTRALABORAL_B: "Intralaboral B",
-};
-
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
 const ROLES_ENLACES = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
 
 // URL completa que el psicólogo comparte con el paciente
 function urlEnlace(token) {
   return `${window.location.origin}/responder/${token}`;
-}
-
-// "2026-09-29T16:05:18-05:00" -> "29/09/2026, 4:05 p. m."
-function formatearFecha(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
 }
 
 export default function Reportes() {

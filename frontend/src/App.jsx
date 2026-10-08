@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Checkout from "./pages/Checkout";
 import Reportes from "./pages/Reportes";
+import Respuestas from "./pages/Respuestas";
 import Perfil from "./pages/Perfil";
 import VerificarNit from "./pages/VerificarNit";
 import MisEmpresas from "./pages/MisEmpresas";
@@ -83,6 +84,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Reportes />
+              </ProtectedRoute>
+            }
+          />
+          {/* Respuestas individuales (confidencial): solo administrador y evaluador SST */}
+          <Route
+            path="/respuestas"
+            element={
+              <ProtectedRoute roles={["SUPER_ADMINISTRADOR", "EVALUADOR_SST"]}>
+                <Respuestas />
               </ProtectedRoute>
             }
           />
