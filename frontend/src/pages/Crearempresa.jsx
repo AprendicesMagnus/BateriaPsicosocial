@@ -54,6 +54,7 @@ export default function CrearEmpresa() {
   const [usuarioApellido, setUsuarioApellido] = useState("");
   const [usuarioEmail, setUsuarioEmail] = useState("");
   const [usuarioPassword, setUsuarioPassword] = useState("");
+  const [usuarioResolucion, setUsuarioResolucion] = useState("");
 
   const [tocados, setTocados] = useState({});
   const [intento, setIntento] = useState(false);
@@ -128,6 +129,11 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
       : !passwordValida(usuarioPassword)
       ? TEXTO_AYUDA_PASSWORD
       : "",
+    usuarioResolucion: !usuarioResolucion
+      ? "Este campo es obligatorio."
+      : !/^\d{6}$/.test(usuarioResolucion)
+      ? "El número de resolución debe tener exactamente 6 dígitos."
+      : "",
   };
 
   const mostrarError = (campo) => Boolean((tocados[campo] || intento) && errores[campo]);
@@ -187,6 +193,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                 usuarioApellido: apeRespTrim,
                 usuarioEmail: correoUserNorm,
                 usuarioPassword,
+                usuarioNumeroResolucion: usuarioResolucion,
               }),
         },
       });
@@ -214,7 +221,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
   return (
     <div className="app-shell-page">
       <header className="app-topbar">
-        <Link to="/" aria-label="Ir a la página principal">
+        <Link to={usuario ? "/Inicio" : "/"} aria-label="Ir al inicio">
           <img src="/logo oscu.png" alt="Magnus SIG" className="app-topbar-logo" />
         </Link>
       </header>
@@ -511,6 +518,28 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                 </label>
               </div>
 
+              <div className="empresas-form-row">
+                <label className="field">
+                  <span className="field__label">Número de Resolución</span>
+                  <input
+                    className={`field__input ${mostrarError("usuarioResolucion") ? "field__input--invalid" : ""}`}
+                    aria-invalid={mostrarError("usuarioResolucion") ? "true" : "false"}
+                    aria-describedby={mostrarError("usuarioResolucion") ? "usuarioResolucion-error" : undefined}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Ej. 123456"
+                    value={usuarioResolucion}
+                    onChange={(e) => setUsuarioResolucion(soloDigitos(e.target.value, 6))}
+                    onBlur={() => marcar("usuarioResolucion")}
+                  />
+                  {mostrarError("usuarioResolucion") && (
+                    <span className="field__error" id="usuarioResolucion-error">
+                      {errores.usuarioResolucion}
+                    </span>
+                  )}
+                </label>
+              </div>
                 </>
               )}
 

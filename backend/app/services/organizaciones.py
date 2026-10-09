@@ -61,6 +61,9 @@ def autorregistrar_organizacion(db: Session, data, creador: Usuario | None = Non
         if not data.usuarioNombre or not data.usuarioApellido or not email_usuario or not data.usuarioPassword:
             raise AppError(400, "Todos los datos del usuario responsable de la empresa son obligatorios.")
 
+        if not data.usuarioNumeroResolucion:
+            raise AppError(400, "El número de resolución del usuario responsable es obligatorio (6 dígitos).")
+
         if not email_valido(email_usuario):
             raise AppError(400, "El correo electrónico del usuario no es válido.")
 
@@ -104,10 +107,14 @@ def autorregistrar_organizacion(db: Session, data, creador: Usuario | None = Non
                 password_hash=hash_password(data.usuarioPassword),
                 rol_id=rol_responsable.id,
                 organizacion_id=org.id,
+                numero_resolucion=data.usuarioNumeroResolucion,
                 email_verificado=False,
                 estado="ACTIVO",
             )
             db.add(usuario)
+        # Jefe/Administrador: la empresa recién creada pasa a ser su empresa activa (la de Reportes).
+        if creador is not None and creador.rol.codigo in {"JEFE", "ADMINISTRADOR"}:
+            creador.organizacion_id = org.id
         db.commit()
     except Exception:
         db.rollback()
@@ -324,9 +331,9 @@ def eliminar_mi_organizacion(db: Session, org_id, actual: Usuario) -> dict:
 
 
 def cambiar_empresa_activa(db: Session, actual: Usuario, org_id) -> Usuario:
-    """El Psicologo elige con cuál de las empresas que creó trabaja (Dashboard, reportes, enlaces...)."""
-    if actual.rol.codigo != "EVALUADOR_SST":
-        raise AppError(403, "Solo el Psicologo puede cambiar de empresa activa.")
+    """Psicologo, Jefe o Administrador eligen con cuál de las empresas que crearon trabajan."""
+    if actual.rol.codigo not in {"EVALUADOR_SST", "JEFE", "ADMINISTRADOR"}:
+        raise AppError(403, "Tu rol no puede cambiar de empresa activa.")
     org = (
         db.query(Organizacion)
         .filter(Organizacion.id == org_id, Organizacion.creada_por_id == actual.id)
@@ -338,3 +345,53 @@ def cambiar_empresa_activa(db: Session, actual: Usuario, org_id) -> Usuario:
     db.commit()
     db.refresh(actual)
     return actual
+
+
+# --- Usuario responsable de una empresa (editable desde "Mis Empresas") ----------------------
+
+
+def _responsable_de(db: Session, org_id) -> Usuario | None:
+    return (
+        db.query(Usuario)
+        .join(Rol, Rol.id == Usuario.rol_id)
+        .filter(Usuario.organizacion_id == org_id, Rol.codigo == "RESPONSABLE_SST")
+        .order_by(Usuario.email.asc())  # Usuario no tiene fecha de creación; el orden solo hace estable el resultado
+        .first()
+    )
+
+
+def _responsable_publico(usuario: Usuario) -> dict:
+    return {
+        "id": str(usuario.id),
+        "nombre": usuario.nombre,
+        "apellido": usuario.apellido,
+        "email": usuario.email,
+        "numeroResolucion": usuario.numero_resolucion,
+    }
+
+
+def obtener_responsable_empresa(db: Session, org_id, actual: Usuario) -> dict | None:
+    """Responsable de la empresa; None si no tiene (p. ej. la creó un Psicologo)."""
+    org = _obtener_organizacion_propia(db, org_id, actual)
+    usuario = _responsable_de(db, org.id)
+    return _responsable_publico(usuario) if usuario else None
+
+
+def actualizar_responsable_empresa(db: Session, org_id, data, actual: Usuario) -> dict:
+    """Solo nombre, apellido y número de resolución. El correo y la contraseña no se tocan."""
+    org = _obtener_organizacion_propia(db, org_id, actual)
+    usuario = _responsable_de(db, org.id)
+    if usuario is None:
+        raise AppError(404, "Esta empresa no tiene un usuario responsable.")
+    cambios = data.model_dump(exclude_unset=True, exclude_none=True)
+    if not cambios:
+        raise AppError(400, "No enviaste ningún cambio.")
+    if "nombre" in cambios:
+        usuario.nombre = cambios["nombre"].strip()
+    if "apellido" in cambios:
+        usuario.apellido = cambios["apellido"].strip()
+    if "numeroResolucion" in cambios:
+        usuario.numero_resolucion = cambios["numeroResolucion"]
+    db.commit()
+    db.refresh(usuario)
+    return _responsable_publico(usuario)

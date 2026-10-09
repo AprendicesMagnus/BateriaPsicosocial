@@ -41,6 +41,9 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
             .options(joinedload(Area.organizacion))
             .filter(Organizacion.creada_por_id == actual.id)
         )
+        # Con una empresa activa elegida, solo se muestran sus reportes.
+        if actual.organizacion_id:
+            query_areas = query_areas.filter(Organizacion.id == actual.organizacion_id)
     else:
         raise AppError(403, "No tiene permisos para consultar reportes.")
 

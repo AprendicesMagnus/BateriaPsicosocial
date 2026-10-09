@@ -67,6 +67,8 @@ class Usuario(Base):
     area_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("areas.id"))
     numero_identificacion: Mapped[str | None] = mapped_column(String(30))
     cargo: Mapped[str | None] = mapped_column(String(120))
+    # Número de resolución (6 dígitos) del usuario Responsable SST que se registra con la empresa.
+    numero_resolucion: Mapped[str | None] = mapped_column(String(6))
     # Ruta pública de la foto de perfil (p. ej. /api/uploads/avatars/xxx.jpg).
     foto_url: Mapped[str | None] = mapped_column(String(255))
     # Fecha de la última edición de perfil (base de la regla de 1 edición cada 15 días).

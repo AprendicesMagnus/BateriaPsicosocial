@@ -4,7 +4,13 @@ import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
 import { fetchMe } from "../api/auth";
-import { fetchMisEmpresas, editarMiEmpresa, eliminarMiEmpresa } from "../api/perfil";
+import {
+  fetchMisEmpresas,
+  editarMiEmpresa,
+  eliminarMiEmpresa,
+  fetchResponsableEmpresa,
+  editarResponsableEmpresa,
+} from "../api/perfil";
 import {
   MAX_EMAIL_LENGTH,
   MAX_LUGAR_LENGTH,
@@ -12,7 +18,9 @@ import {
   emailValido,
   soloDigitos,
   filtrarLugar,
+  filtrarNombrePersona,
   lugarValido,
+  nombrePersonaValido,
   normalizarEmail,
 } from "../utils/validaciones";
 import "../styles/app-shell.css";
@@ -34,7 +42,7 @@ function sectorParaFormulario(sector) {
 }
 
 export default function MisEmpresas() {
-  const { token, actualizarUsuario } = useAuth();
+  const { token, usuario, actualizarUsuario } = useAuth();
   const location = useLocation();
 
   const [empresas, setEmpresas] = useState([]);
@@ -48,6 +56,10 @@ export default function MisEmpresas() {
   const [intento, setIntento] = useState(false);
   const [errorForm, setErrorForm] = useState("");
   const [guardando, setGuardando] = useState(false);
+
+  // Usuario responsable de la empresa (solo si la creó un Jefe/Administrador; el Psicologo no tiene).
+  const [responsable, setResponsable] = useState(null);
+  const [formResp, setFormResp] = useState({ nombre: "", apellido: "", numeroResolucion: "" });
 
   // ---- eliminación ----
   const [eliminando, setEliminando] = useState(null); // empresa a eliminar
@@ -72,7 +84,22 @@ export default function MisEmpresas() {
       email: empresa.email ?? "",
       telefono: empresa.telefono ?? "",
     });
+    setResponsable(null);
     setEditando(empresa);
+
+    if (usuario?.rol !== "EVALUADOR_SST") {
+      fetchResponsableEmpresa(token, empresa.id)
+        .then((resp) => {
+          if (!resp) return;
+          setResponsable(resp);
+          setFormResp({
+            nombre: resp.nombre ?? "",
+            apellido: resp.apellido ?? "",
+            numeroResolucion: resp.numeroResolucion ?? "",
+          });
+        })
+        .catch(() => {});
+    }
   }
 
   const erroresForm = {
@@ -92,6 +119,16 @@ export default function MisEmpresas() {
       : !celularValido(form.telefono)
       ? "Ingresa un celular válido de 10 dígitos que empiece por 3."
       : "",
+    // Campos del responsable: solo se validan si la empresa tiene uno
+    respNombre: !responsable ? "" : !nombrePersonaValido(formResp.nombre.trim(), 100) ? "Ingresa un nombre válido." : "",
+    respApellido: !responsable ? "" : !nombrePersonaValido(formResp.apellido.trim(), 100) ? "Ingresa un apellido válido." : "",
+    respResolucion: !responsable
+      ? ""
+      : !formResp.numeroResolucion
+      ? "Este campo es obligatorio."
+      : !/^\d{6}$/.test(formResp.numeroResolucion)
+      ? "El número de resolución debe tener exactamente 6 dígitos."
+      : "",
   };
 
   async function guardarEdicion(e) {
@@ -109,6 +146,20 @@ export default function MisEmpresas() {
         telefono: form.telefono.trim(),
       });
       setEmpresas((lista) => lista.map((emp) => (emp.id === actualizada.id ? actualizada : emp)));
+
+      if (responsable) {
+        try {
+          await editarResponsableEmpresa(token, editando.id, {
+            nombre: formResp.nombre.trim(),
+            apellido: formResp.apellido.trim(),
+            numeroResolucion: formResp.numeroResolucion,
+          });
+        } catch (errResp) {
+          setErrorForm(`La empresa se guardó, pero no se pudo actualizar el responsable: ${errResp.message}`);
+          return;
+        }
+      }
+
       setEditando(null);
       setAviso("Empresa actualizada correctamente.");
     } catch (err) {
@@ -299,6 +350,66 @@ export default function MisEmpresas() {
               />
               {intento && erroresForm.telefono && <span className="field__error">{erroresForm.telefono}</span>}
             </label>
+
+            {responsable && (
+              <>
+                <hr className="mis-empresas-separador" />
+                <h3 className="mis-empresas-subtitulo">Datos del Usuario Evaluador SST (Responsable)</h3>
+
+                <div className="mis-empresas-fila">
+                  <label className="field">
+                    <span className="field__label">Nombre del responsable</span>
+                    <input
+                      className={campoClase("respNombre")}
+                      maxLength={100}
+                      value={formResp.nombre}
+                      onChange={(e) => setFormResp((f) => ({ ...f, nombre: filtrarNombrePersona(e.target.value, 100) }))}
+                    />
+                    {intento && erroresForm.respNombre && <span className="field__error">{erroresForm.respNombre}</span>}
+                  </label>
+                  <label className="field">
+                    <span className="field__label">Apellido del responsable</span>
+                    <input
+                      className={campoClase("respApellido")}
+                      maxLength={100}
+                      value={formResp.apellido}
+                      onChange={(e) =>
+                        setFormResp((f) => ({ ...f, apellido: filtrarNombrePersona(e.target.value, 100) }))
+                      }
+                    />
+                    {intento && erroresForm.respApellido && (
+                      <span className="field__error">{erroresForm.respApellido}</span>
+                    )}
+                  </label>
+                </div>
+
+                <div className="mis-empresas-fila">
+                  <label className="field">
+                    <span className="field__label">Correo personal (no se puede modificar)</span>
+                    <input className="field__input" value={responsable.email} disabled />
+                  </label>
+                  <label className="field">
+                    <span className="field__label">Contraseña (no se puede modificar)</span>
+                    <input className="field__input" type="password" value="••••••••" disabled readOnly />
+                  </label>
+                </div>
+
+                <label className="field">
+                  <span className="field__label">Número de Resolución</span>
+                  <input
+                    className={campoClase("respResolucion")}
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Ej. 123456"
+                    value={formResp.numeroResolucion}
+                    onChange={(e) => setFormResp((f) => ({ ...f, numeroResolucion: soloDigitos(e.target.value, 6) }))}
+                  />
+                  {intento && erroresForm.respResolucion && (
+                    <span className="field__error">{erroresForm.respResolucion}</span>
+                  )}
+                </label>
+              </>
+            )}
 
             {errorForm && <div className="mis-empresas-error">{errorForm}</div>}
 

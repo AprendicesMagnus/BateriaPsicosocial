@@ -13,6 +13,7 @@ from app.schemas.common import (
     OrganizacionAutorregistroCreate,
     OrganizacionCreate,
     OrganizacionMiaUpdate,
+    ResponsableEmpresaUpdate,
     OrganizacionUpdate,
 )
 from app.services import auditoria as auditoria_service
@@ -85,6 +86,31 @@ def editar_mi_organizacion(
         db, usuario=actual, accion="EDITAR_EMPRESA", entidad="Organizacion", entidad_id=str(org.id), request=request
     )
     return _organizacion_publica(org)
+
+
+@router.get("/mias/{organizacion_id}/responsable")
+def obtener_responsable_empresa(
+    organizacion_id: UUID,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    return organizaciones_service.obtener_responsable_empresa(db, organizacion_id, actual)
+
+
+@router.patch("/mias/{organizacion_id}/responsable")
+def editar_responsable_empresa(
+    organizacion_id: UUID,
+    data: ResponsableEmpresaUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    resultado = organizaciones_service.actualizar_responsable_empresa(db, organizacion_id, data, actual)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="EDITAR_RESPONSABLE_EMPRESA", entidad="Organizacion",
+        entidad_id=str(organizacion_id), request=request,
+    )
+    return resultado
 
 
 @router.delete("/mias/{organizacion_id}")

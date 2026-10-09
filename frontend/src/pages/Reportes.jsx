@@ -4,6 +4,7 @@ import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
 import { fetchReportes, fetchEncuestasRealizadas } from "../api/reportes";
+import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import { fetchEnlaces, crearEnlace, eliminarEnlace } from "../api/enlaces";
 import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha } from "../utils/encuestas";
@@ -79,6 +80,30 @@ export default function Reportes() {
   // Sección "Enlaces para pacientes" (solo psicólogo / super administrador)
   const puedeCrearEnlaces = ROLES_ENLACES.includes(usuario?.rol);
   const puedeVerEncuestas = ROLES_ENCUESTAS.includes(usuario?.rol);
+
+  // Jefe/Administrador: eligen con cuál de las empresas que crearon trabajan (empresa activa).
+  const eligeEmpresa = ROLES_POR_CREADOR.includes(usuario?.rol);
+  const [misEmpresas, setMisEmpresas] = useState([]);
+  const [cambiandoEmpresa, setCambiandoEmpresa] = useState(false);
+
+  useEffect(() => {
+    if (!eligeEmpresa || !token) return;
+    fetchMisEmpresas(token)
+      .then((lista) => setMisEmpresas(lista || []))
+      .catch(() => {});
+  }, [eligeEmpresa, token]);
+
+  async function handleCambiarEmpresa(e) {
+    const id = e.target.value;
+    if (!id || id === usuario?.organizacionId) return;
+    setCambiandoEmpresa(true);
+    try {
+      await cambiarEmpresaActiva(token, id);
+      window.location.reload(); // vuelve a pedir los reportes con la nueva empresa
+    } catch {
+      setCambiandoEmpresa(false);
+    }
+  }
   const puedeDescargar = usuario?.rol !== "JEFE";
   const [enlaces, setEnlaces] = useState([]);
   const [nombreEnlace, setNombreEnlace] = useState("");
@@ -245,6 +270,25 @@ export default function Reportes() {
           <p className="app-subtitle">
             {bateriaNombre} · {rangoFechas}
           </p>
+
+          {eligeEmpresa && misEmpresas.length > 0 && (
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, margin: "4px 0 12px", fontSize: 13 }}>
+              <span>Empresa activa:</span>
+              <select
+                value={usuario?.organizacionId ?? ""}
+                onChange={handleCambiarEmpresa}
+                disabled={cambiandoEmpresa}
+                style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+              >
+                {!usuario?.organizacionId && <option value="">Todas mis empresas</option>}
+                {misEmpresas.map((empresa) => (
+                  <option key={empresa.id} value={empresa.id}>
+                    {empresa.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           <p className="reportes-legal-note">
             Desglosados por área de la organización, según la Resolución 2764 de 2022 (Anonimizado mín. 5 participantes)

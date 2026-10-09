@@ -52,3 +52,16 @@ export function cambiarEmpresaActiva(token, organizacionId) {
     token,
   });
 }
+
+// Usuario responsable de una empresa (solo existe si la creó un Jefe/Administrador).
+export function fetchResponsableEmpresa(token, id) {
+  return request(`/organizaciones/mias/${id}/responsable`, { token });
+}
+
+export function editarResponsableEmpresa(token, id, { nombre, apellido, numeroResolucion }) {
+  return request(`/organizaciones/mias/${id}/responsable`, {
+    method: "PATCH",
+    body: { nombre, apellido, numeroResolucion },
+    token,
+  });
+}

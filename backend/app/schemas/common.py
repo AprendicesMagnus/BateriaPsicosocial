@@ -216,6 +216,14 @@ class OrganizacionMiaUpdate(BaseModel):
     telefono: str | None = Field(default=None, pattern=r"^3\d{9}$", description="Celular de 10 dígitos que empieza por 3")
 
 
+class ResponsableEmpresaUpdate(BaseModel):
+    """Datos que se pueden editar del usuario responsable de una empresa (correo y contraseña no)."""
+
+    nombre: NombrePersona | None = None
+    apellido: NombrePersona | None = None
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$", description="6 dígitos numéricos")
+
+
 class AreaCreate(BaseModel):
     organizacionId: UUID
     nombre: str = Field(min_length=2, max_length=120)
@@ -364,6 +372,8 @@ class OrganizacionAutorregistroCreate(BaseModel):
     usuarioApellido: NombrePersona | None = None
     usuarioEmail: Correo | None = None
     usuarioPassword: PasswordNueva | None = None
+    # Número de resolución del responsable: exactamente 6 dígitos numéricos.
+    usuarioNumeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$", description="6 dígitos numéricos")
 
 
 class CompraCreate(BaseModel):
