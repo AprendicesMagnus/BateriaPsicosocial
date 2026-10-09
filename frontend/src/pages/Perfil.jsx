@@ -6,7 +6,7 @@ import BotonRegresar from "../components/BotonRegresar";
 import "../styles/app-shell.css";
 import "../styles/Perfil.css";
 import { request, urlArchivo } from "../api/client";
-import { editarPerfil, cambiarPassword } from "../api/perfil";
+import { editarPerfil, cambiarPassword, fetchMisEmpresas, cambiarEmpresaActiva } from "../api/perfil";
 import {
   TEXTO_AYUDA_PASSWORD,
   filtrarNombrePersona,
@@ -83,7 +83,36 @@ export default function Perfil() {
     : "Usuario";
   const rolUsuario = etiquetaRol(usuario?.rol) || "Sin rol asignado";
   const correoUsuario = usuario?.email ?? usuario?.correo ?? "—";
-  const empresaUsuario = usuario?.empresa ?? "—";
+  // El Super Administrador no pertenece a ninguna organización creada: su "empresa" es la plataforma misma.
+  const empresaUsuario =
+    usuario?.rol === "SUPER_ADMINISTRADOR"
+      ? "MAGNUS | SIG"
+      : usuario?.organizacionNombre ?? "—";
+
+  // Jefe, Administrador y Psicólogo pueden manejar varias empresas y eligen con cuál trabajan.
+  // Los demás roles (ej. Responsable SST) ya vienen con la empresa fija que asignó su Jefe/Administrador.
+  const eligeEmpresa = ["JEFE", "ADMINISTRADOR", "EVALUADOR_SST"].includes(usuario?.rol);
+  const [misEmpresas, setMisEmpresas] = useState([]);
+  const [cambiandoEmpresa, setCambiandoEmpresa] = useState(false);
+
+  useEffect(() => {
+    if (!eligeEmpresa || !token) return;
+    fetchMisEmpresas(token)
+      .then((lista) => setMisEmpresas(lista || []))
+      .catch(() => {});
+  }, [eligeEmpresa, token]);
+
+  async function handleCambiarEmpresa(e) {
+    const id = e.target.value;
+    if (!id || id === usuario?.organizacionId) return;
+    setCambiandoEmpresa(true);
+    try {
+      await cambiarEmpresaActiva(token, id);
+      window.location.reload();
+    } catch {
+      setCambiandoEmpresa(false);
+    }
+  }
   const iniciales =
     nombreUsuario
       .split(" ")
@@ -375,7 +404,23 @@ export default function Perfil() {
                     </div>
                     <div className="perfil-field">
                       <span className="perfil-field-label">Empresa</span>
-                      <span className="perfil-field-value">{empresaUsuario}</span>
+                      {eligeEmpresa && misEmpresas.length > 0 ? (
+                        <select
+                          value={usuario?.organizacionId ?? ""}
+                          onChange={handleCambiarEmpresa}
+                          disabled={cambiandoEmpresa}
+                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14 }}
+                        >
+                          {!usuario?.organizacionId && <option value="">Selecciona una empresa</option>}
+                          {misEmpresas.map((empresa) => (
+                            <option key={empresa.id} value={empresa.id}>
+                              {empresa.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="perfil-field-value">{empresaUsuario}</span>
+                      )}
                     </div>
                   </div>
 

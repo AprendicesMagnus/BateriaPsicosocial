@@ -271,24 +271,7 @@ export default function Reportes() {
             {bateriaNombre} · {rangoFechas}
           </p>
 
-          {eligeEmpresa && misEmpresas.length > 0 && (
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, margin: "4px 0 12px", fontSize: 13 }}>
-              <span>Empresa activa:</span>
-              <select
-                value={usuario?.organizacionId ?? ""}
-                onChange={handleCambiarEmpresa}
-                disabled={cambiandoEmpresa}
-                style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
-              >
-                {!usuario?.organizacionId && <option value="">Todas mis empresas</option>}
-                {misEmpresas.map((empresa) => (
-                  <option key={empresa.id} value={empresa.id}>
-                    {empresa.nombre}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+          {/* El selector de "Empresa activa" para Jefe/Psicólogo ahora vive en el Dashboard. */}
 
           <p className="reportes-legal-note">
             Desglosados por área de la organización, según la Resolución 2764 de 2022 (Anonimizado mín. 5 participantes)

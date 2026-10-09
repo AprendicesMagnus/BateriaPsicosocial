@@ -85,17 +85,18 @@ export default function Dashboard() {
   const { usuario, token, cerrarSesion } = useAuth();
   const navigate = useNavigate();
 
-  // Psicologo: puede crear varias empresas y elige con cuál trabaja (empresa activa).
+  // Psicologo y Jefe: pueden crear varias empresas y eligen con cuál trabajan (empresa activa).
   const esPsicologo = usuario?.rol === "EVALUADOR_SST";
+  const eligeEmpresa = esPsicologo || ["JEFE", "ADMINISTRADOR"].includes(usuario?.rol);
   const [misEmpresas, setMisEmpresas] = useState([]);
   const [cambiandoEmpresa, setCambiandoEmpresa] = useState(false);
 
   useEffect(() => {
-    if (!esPsicologo || !token) return;
+    if (!eligeEmpresa || !token) return;
     fetchMisEmpresas(token)
       .then((lista) => setMisEmpresas(lista || []))
       .catch(() => {});
-  }, [esPsicologo, token]);
+  }, [eligeEmpresa, token]);
 
   async function handleCambiarEmpresa(e) {
     const id = e.target.value;
@@ -329,7 +330,7 @@ export default function Dashboard() {
           <div>
             <h1>Bienvenido, {usuario?.nombre || "Usuario"}</h1>
             <p>Tu bienestar también es parte del trabajo</p>
-            {esPsicologo && misEmpresas.length > 0 && (
+            {eligeEmpresa && misEmpresas.length > 0 && (
               <label style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13 }}>
                 <span>Empresa activa:</span>
                 <select
