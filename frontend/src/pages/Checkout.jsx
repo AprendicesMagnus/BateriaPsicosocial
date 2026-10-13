@@ -279,10 +279,20 @@ export default function Checkout() {
         <div className="app-decor app-decor--3" />
 
         <div className="app-content">
+          <button
+            type="button"
+            className="checkout-back-btn"
+            onClick={() => navigate("/Inicio")}
+          >
+            ← Volver al inicio
+          </button>
+
           <nav className="app-breadcrumb">
             Evaluaciones <span>›</span> Pago de la batería
           </nav>
+
           <h1 className="app-title">Completa tu pago</h1>
+
           <p className="app-subtitle">
             {bateriaNombre} · aplicación única para {empresaNombre}
           </p>

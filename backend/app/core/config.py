@@ -18,9 +18,16 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://usuario:contrasena@localhost:5432/magnussing"
     test_database_url: str = "postgresql://postgres:12345@localhost:5432/magnussing_test"
     port: int = 4000
+    port: int = 4000
     frontend_url: str = "http://localhost:5173"
-    jwt_secret: str = "cambia-este-valor-por-una-cadena-larga-y-aleatoria"
-    encryption_key: str = ""
+
+    wompi_api_url: str = "https://sandbox.wompi.co/v1"
+    wompi_public_key: str = ""
+    wompi_private_key: str = ""
+    wompi_events_secret: str = ""
+    wompi_integrity_secret: str = ""
+
+    jwt_secret: str = "B-Iqrp_tK8OJi4P1cpZH-9eHxWfJHvv2C0Ta88pXBCCXMyMkFZ5P32SOtwZvla8HVYySUwpFpBqOBLmzu_f-bw"
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
