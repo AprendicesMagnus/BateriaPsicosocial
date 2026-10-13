@@ -1,0 +1,70 @@
+/* Botones de la columna "Acciones" del Panel de administración */
+.adm-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.adm-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--adm-line-2, #d5dce6);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--adm-navy-2, #12314b);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.adm-accion:hover {
+  background: #f1f5f9;
+  border-color: #b6c2d3;
+  box-shadow: 0 1px 4px rgba(15, 26, 61, 0.12);
+}
+
+.adm-accion:focus-visible {
+  outline: 2px solid var(--adm-gold, #f5a623);
+  outline-offset: 2px;
+}
+
+/* Eliminar */
+.adm-accion--peligro {
+  border-color: #f3b4b4;
+  color: #b42318;
+}
+
+.adm-accion--peligro:hover {
+  background: #fdecec;
+  border-color: #e88b8b;
+}
+
+/* Reenviar credenciales (pendiente de verificar) */
+.adm-accion--aviso {
+  background: #fff7e6;
+  border-color: #f5c76a;
+  color: #8a4b00;
+}
+
+.adm-accion--aviso:hover {
+  background: #ffefcc;
+  border-color: #eab04a;
+}
+
+/* Reactivar */
+.adm-accion--ok {
+  background: #e7f6ec;
+  border-color: #9fd8b3;
+  color: #1f7a3f;
+}
+
+.adm-accion--ok:hover {
+  background: #d6f0df;
+  border-color: #79c795;
+}

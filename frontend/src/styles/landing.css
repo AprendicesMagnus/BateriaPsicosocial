@@ -781,3 +781,12 @@
   }
 
 }
+
+/* Botones del encabezado: rectangulares y en una sola línea */
+.btn-nav-secondary,
+.btn-nav-primary {
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 11px 24px;
+  border-radius: 8px;
+}

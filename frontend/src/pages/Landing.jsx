@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/landing.css";
+import ModalPlanes from "../components/ModalPlanes";
 
 const SLIDES = [
   "/pasare1.jpg",
@@ -84,19 +85,7 @@ const CONFIANZA = [
 
 export default function Landing() {
   const [slide, setSlide] = useState(0);
-  const [menuEmpresasAbierto, setMenuEmpresasAbierto] = useState(false);
-  const menuEmpresasRef = useRef(null);
-
-  // Cierra el desplegable "Empresas" si se hace clic fuera de él.
-  useEffect(() => {
-    function handleClickFuera(e) {
-      if (menuEmpresasRef.current && !menuEmpresasRef.current.contains(e.target)) {
-        setMenuEmpresasAbierto(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickFuera);
-    return () => document.removeEventListener("mousedown", handleClickFuera);
-  }, []);
+  const [planesAbierto, setPlanesAbierto] = useState(false);
 
   // Imagen anterior
   const prevSlide = () => {
@@ -170,58 +159,13 @@ export default function Landing() {
           <nav className="nav__links">
             <a href="#como-funciona">Cómo funciona</a>
 
-            <div className="nav__dropdown" ref={menuEmpresasRef} style={{ position: "relative" }}>
-              <button
-                type="button"
-                className="nav__dropdown-trigger"
-                onClick={() => setMenuEmpresasAbierto((v) => !v)}
-                aria-haspopup="true"
-                aria-expanded={menuEmpresasAbierto}
-                style={{
-                  background: "none",
-                  border: "none",
-                  font: "inherit",
-                  color: "inherit",
-                  cursor: "pointer",
-                  padding: 0,
-                  fontWeight: "bold"
-                }}
-              >
-                Empresas
-              </button>
-
-              {menuEmpresasAbierto && (
-                <div
-                  className="nav__dropdown-menu"
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 12px)",
-                    left: 0,
-                    background: "var(--white)",
-                    borderRadius: "var(--radius-md, 10px)",
-                    boxShadow: "var(--shadow-card, 0 8px 24px rgba(15,26,61,0.12))",
-                    padding: 6,
-                    minWidth: 170,
-                    zIndex: 20,
-                  }}
-                >
-                  <Link
-                    to="/verificar-nit"
-                    onClick={() => setMenuEmpresasAbierto(false)}
-                    style={{
-                      display: "block",
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--ink-900, #12314b)",
-                    }}
-                  >
-                    Crear empresa
-                  </Link>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setPlanesAbierto(true)}
+              style={{ background: "none", border: "none", font: "inherit", color: "inherit", cursor: "pointer", padding: 0, fontWeight: "bold" }}
+            >
+              Planes
+            </button>
 
             <a href="#psicologos">Clientes</a>
             <a href="#normativa">Normativa</a>
@@ -244,6 +188,8 @@ export default function Landing() {
           </div>
         </div>
       </header>
+
+      {planesAbierto && <ModalPlanes onCerrar={() => setPlanesAbierto(false)} />}
 
 
       {/* =====================================================

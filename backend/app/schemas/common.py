@@ -376,6 +376,22 @@ class OrganizacionAutorregistroCreate(BaseModel):
     usuarioNumeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$", description="6 dígitos numéricos")
 
 
+class PlanCreate(BaseModel):
+    nombre: str = Field(min_length=2, max_length=80)
+    cantidadMin: int = Field(ge=1, le=1000000)
+    cantidadMax: int | None = Field(default=None, ge=1, le=1000000)  # None = "en adelante"
+    precioUnitario: int = Field(ge=0, le=100000000, description="Pesos colombianos por batería")
+    activo: bool = True
+
+
+class PlanUpdate(BaseModel):
+    nombre: str | None = Field(default=None, min_length=2, max_length=80)
+    cantidadMin: int | None = Field(default=None, ge=1, le=1000000)
+    cantidadMax: int | None = Field(default=None, ge=1, le=1000000)
+    precioUnitario: int | None = Field(default=None, ge=0, le=100000000)
+    activo: bool | None = None
+
+
 class CompraCreate(BaseModel):
     cantidad: int = Field(gt=0, le=100000)
     bateriaNombre: str | None = Field(default="Batería de Riesgo Psicosocial", max_length=150)

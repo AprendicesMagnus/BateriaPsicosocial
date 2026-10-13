@@ -13,6 +13,8 @@ import "../styles/dashboard.css";
 import "../styles/Panel.css";
 import BotonRegresar from "../components/BotonRegresar";
 import Paginador from "../components/Paginador";
+import PanelPlanes from "../components/PanelPlanes";
+import "../styles/PanelAcciones.css";
 import { usePaginacion } from "../hooks/usePaginacion";
 
 /* =========================================================
@@ -80,6 +82,13 @@ function accionUsuario(u) {
   if (u.estado === "INACTIVO") return "Reactivar";
   if (!u.emailVerificado) return "Reenviar credenciales";
   return "Editar";
+}
+
+// Color del botón según la acción que le toca a cada usuario.
+function claseAccionUsuario(u) {
+  if (u.estado === "INACTIVO") return "adm-accion--ok";
+  if (!u.emailVerificado) return "adm-accion--aviso";
+  return "";
 }
 
 const formatoFecha = (iso) =>
@@ -241,7 +250,13 @@ export default function Panel() {
                           <td>{u.registro}</td>
                           <td><span className={`adm-chip adm-chip--${est.clase}`}>{est.label}</span></td>
                           <td className="adm-muted">{formatoFecha(u.ultimoAcceso)}</td>
-                          <td><button type="button" className="adm-link">{accionUsuario(u)}</button></td>
+                          <td>
+                            <div className="adm-acciones">
+                              <button type="button" className={`adm-accion ${claseAccionUsuario(u)}`.trim()}>
+                                {accionUsuario(u)}
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       );
                     })}
@@ -372,6 +387,8 @@ export default function Panel() {
             </section>
 
             {/* ---------- AUDITORÍA ---------- */}
+            <PanelPlanes />
+
             <section id="auditoria" className="adm-card">
               <div className="adm-card__head">
                 <div>
