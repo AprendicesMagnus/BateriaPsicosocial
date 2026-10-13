@@ -652,9 +652,6 @@ export default function Perfil() {
         )}
         <div className="app-content">
           <BotonRegresar />
-          <nav className="app-breadcrumb">
-            Mi cuenta <span>›</span> Perfil
-          </nav>
           <h1 className="app-title">Mi Perfil</h1>
           <p className="app-subtitle">Consulta y administra la información de tu cuenta.</p>
 
@@ -1105,98 +1102,6 @@ export default function Perfil() {
               )}
             </div>
           </div>
-          {/* ============ USUARIOS REGISTRADOS ============ */}
-          {
-            esSuperAdmin && (
-              <div className="app-card directorio-card">
-                <div className="directorio-encabezado">
-                  <div>
-                    <h2 className="compras-titulo">
-                      Usuarios registrados
-                    </h2>
-                    <p className="compras-subtitulo">
-                      {directorio.total} en total
-                    </p>
-                  </div>
-                  <input
-                    className="field__input directorio-busqueda"
-                    type="search"
-                    placeholder="Buscar por nombre o correo"
-                    maxLength={100}
-                    value={busqueda}
-                    onChange={(e) => {
-                      setBusqueda(e.target.value);
-                      setPagina(0);
-                    }}
-                  />
-                </div>
-                {errorDirectorio && (
-                  <p className="perfil-error">
-                    {errorDirectorio}
-                  </p>
-                )}
-                <div className="directorio-tabla-wrap">
-                  <table className="directorio-tabla">
-                    <thead>
-                      <tr>
-                        <th>
-                          Nombre completo
-                        </th>
-                        <th>
-                          Correo electrónico
-                        </th>
-                        <th>
-                          Rol
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {directorio.items.map((u) => (
-                        <tr key={u.email}>
-                          <td>
-                            {u.nombreCompleto}
-                          </td>
-                          <td>
-                            {u.email}
-                          </td>
-                          <td>
-                            {etiquetaRol(u.rol)}
-                          </td>
-                        </tr>
-                      ))}
-                      {!loadingDirectorio && directorio.items.length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="directorio-vacio">
-                            No se encontraron usuarios.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="directorio-paginacion">
-                  <button
-                    type="button"
-                    className="app-btn-secondary"
-                    onClick={() => setPagina((p) => Math.max(0, p - 1))}
-                    disabled={pagina === 0 || loadingDirectorio}
-                  >
-                    Anterior
-                  </button>
-                  <span>
-                    Página {pagina + 1} de {totalPaginas}
-                  </span>
-                  <button
-                    type="button"
-                    className="app-btn-secondary"
-                    onClick={() => setPagina((p) => p + 1)}
-                    disabled={pagina + 1 >= totalPaginas || loadingDirectorio}
-                  >
-                    Siguiente
-                  </button>
-                </div>
-              </div>
-            )}
         </div>
       </main>
     </div>
