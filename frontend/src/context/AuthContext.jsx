@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { fetchMe } from "../api/auth";
+import { hayPagoEnCurso } from "../utils/pagoPendiente";
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = "magnussing_token";
@@ -51,6 +52,18 @@ export function AuthProvider({ children }) {
   }
 
   function cerrarSesion() {
+    // Un pago en el widget de Wompi sigue su curso aunque se cierre la sesión,
+    // pero el usuario no vería el resultado hasta volver a ingresar.
+    if (
+      hayPagoEnCurso(usuario?.id) &&
+      !window.confirm(
+        "Tienes un pago en proceso. Si cierras sesión, el pago seguirá su curso " +
+        "y podrás ver su resultado cuando vuelvas a ingresar (en Mi perfil). ¿Cerrar sesión de todas formas?"
+      )
+    ) {
+      return;
+    }
+
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(ACTIVIDAD_KEY);
     setToken(null);

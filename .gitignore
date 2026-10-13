@@ -1,17 +1,87 @@
+```gitignore
+# =========================
+# Variables de entorno
+# =========================
 .env
+.env.*
+!.env.example
+
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+
+# =========================
+# Entornos virtuales Python
+# =========================
 .venv/
 venv/
+backend/.venv/
+backend/venv/
+
+
+# =========================
+# Cachés Python
+# =========================
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 *.egg-info/
-.pytest_cache/
-storage/
-backend/node_modules/
-backend/.venv/
-*.log
-dist/
-node_modules/
-bash.exe.stackdump
 
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+
+# =========================
+# Node / Frontend
+# =========================
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+dist/
+build/
+frontend/dist/
+
+
+# =========================
+# Archivos temporales
+# =========================
+*.log
+*.tmp
+*.temp
+*.bak
+*.stackdump
+
+
+
+# =========================
+# Archivos de desarrollo local
+# =========================
+backend/scratch/
+
+
+# =========================
+# Archivos generados
+# =========================
+storage/
 
 /generated/prisma
+
+
+# =========================
+# Sistema operativo / IDE
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+```

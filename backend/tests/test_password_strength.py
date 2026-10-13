@@ -31,6 +31,7 @@ def test_registro_password_valida(client):
         "nombre": "Pedro",
         "apellido": "Gómez",
         "email": "pedro3@test.com",
-        "password": "Password123"
+        "password": "Password123",
+        "rol": "JEFE",
     })
-    assert res.status_code == 200
+    assert res.status_code == 200, res.text

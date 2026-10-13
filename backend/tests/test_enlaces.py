@@ -167,7 +167,7 @@ def test_enlace_se_cierra_al_terminar_la_bateria(client):
             res = client.post(
                 f"/api/evaluaciones/{eval_id}/respuestas",
                 headers=headers_pac,
-                json={"preguntaId": p["id"], "valor": p["valorMinimo"]},
+                json={"pregunta_codigo": p["codigo"], "valor": p["valorMinimo"]},
             )
             assert res.status_code == 200, res.text
         final = client.post(f"/api/evaluaciones/{eval_id}/finalizar-cuestionario", headers=headers_pac, json={})

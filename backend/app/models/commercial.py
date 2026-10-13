@@ -35,16 +35,79 @@ class Compra(Base):
 class Pago(Base):
     __tablename__ = "pagos"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    compra_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("compras.id"), nullable=False)
-    metodo: Mapped[str] = mapped_column(String(30), nullable=False)
-    referencia: Mapped[str] = mapped_column(String(80), nullable=False, unique=True)
-    monto: Mapped[float] = mapped_column(Float, nullable=False)
-    estado: Mapped[str] = mapped_column(String(30), nullable=False, default="APROBADO")
-    banco: Mapped[str | None] = mapped_column(String(80))
-    ultimos_digitos: Mapped[str | None] = mapped_column(String(4))
-    titular: Mapped[str | None] = mapped_column(String(150))
-    mensaje_respuesta: Mapped[str | None] = mapped_column(String(255))
-    procesado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
 
-    compra: Mapped[Compra] = relationship(back_populates="pagos")
+    compra_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("compras.id"),
+        nullable=False,
+    )
+
+    metodo: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+    )
+
+    referencia: Mapped[str] = mapped_column(
+        String(80),
+        nullable=False,
+        unique=True,
+    )
+
+    monto: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+    )
+
+    estado: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="PENDIENTE",
+    )
+
+    # Información de la transacción procesada por Wompi.
+    wompi_transaction_id: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+        unique=True,
+    )
+
+    wompi_status: Mapped[str | None] = mapped_column(
+        String(30),
+        nullable=True,
+    )
+
+    wompi_payment_method: Mapped[str | None] = mapped_column(
+        String(80),
+        nullable=True,
+    )
+
+    banco: Mapped[str | None] = mapped_column(
+        String(80),
+    )
+
+    ultimos_digitos: Mapped[str | None] = mapped_column(
+        String(4),
+    )
+
+    titular: Mapped[str | None] = mapped_column(
+        String(150),
+    )
+
+    mensaje_respuesta: Mapped[str | None] = mapped_column(
+        String(255),
+    )
+
+    procesado_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        nullable=False,
+    )
+
+    compra: Mapped[Compra] = relationship(
+        back_populates="pagos",
+    )

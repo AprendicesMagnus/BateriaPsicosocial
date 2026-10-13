@@ -193,7 +193,7 @@ def resultados_evaluacion(db: Session, evaluacion_id, actual) -> list[dict]:
     )
     salida = []
     for participante in participantes:
-        if actual.rol.codigo == "TRABAJADOR" and participante.trabajador_id != actual.id:
+        if actual.rol.codigo in {"TRABAJADOR", "PACIENTE"} and participante.trabajador_id != actual.id:
             continue
         if not participante.resultados:
             continue
@@ -211,7 +211,7 @@ def resultados_evaluacion(db: Session, evaluacion_id, actual) -> list[dict]:
                 for r in participante.resultados
             ],
         }
-        if actual.rol.codigo != "TRABAJADOR":
+        if actual.rol.codigo not in {"TRABAJADOR", "PACIENTE"}:
             item["trabajadorId"] = str(participante.trabajador_id)
         salida.append(item)
     if not salida:

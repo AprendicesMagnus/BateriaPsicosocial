@@ -212,30 +212,34 @@ def guardar_ficha_datos(db: Session, evaluacion_id, data, actual: Usuario) -> di
     version_ficha = db.query(CuestionarioVersion).filter(CuestionarioVersion.codigo == "FICHA_DATOS").first()
     if version_ficha:
         preguntas_map = {p.codigo: p.id for dim in version_ficha.dimensiones for p in dim.preguntas}
+        # Las claves son los nombres de campo de FichaDatosRequest (snake_case),
+        # que es lo que devuelve data.model_dump().
         campo_pregunta_map = {
-            "nombreCompleto": "F1",
+            "nombre_completo": "F1",
             "sexo": "F2",
-            "anioNacimiento": "F3",
-            "estadoCivil": "F4",
-            "nivelEstudios": "F5",
+            "ano_nacimiento": "F3",
+            "estado_civil": "F4",
+            "nivel_estudios": "F5",
             "ocupacion": "F6",
-            "residenciaCiudad": "F7",
-            "residenciaDepartamento": "F8",
+            "ciudad_residencia": "F7",
+            "departamento_residencia": "F8",
             "estrato": "F9",
-            "tipoVivienda": "F10",
-            "personasACargo": "F11",
-            "trabajoCiudad": "F12",
-            "trabajoDepartamento": "F13",
-            "antiguedadEmpresa": "F14",
-            "nombreCargo": "F15",
-            "tipoCargo": "F16",
-            "antiguedadCargo": "F17",
-            "areaODepartamento": "F18",
-            "tipoContrato": "F19",
-            "horasDiarias": "F20",
-            "tipoSalario": "F21",
+            "tipo_vivienda": "F10",
+            "personas_a_cargo": "F11",
+            "trabajo_ciudad": "F12",
+            "trabajo_departamento": "F13",
+            "antiguedad_empresa": "F14",
+            "nombre_cargo": "F15",
+            "cargo_tipo": "F16",
+            "antiguedad_cargo": "F17",
+            "area_departamento": "F18",
+            "tipo_contrato": "F19",
+            "horas_diarias": "F20",
+            "salario_rango": "F21",
         }
         for campo, val in data.model_dump().items():
+            if val is None:
+                continue
             cod_p = campo_pregunta_map.get(campo)
             if cod_p and cod_p in preguntas_map:
                 pid = preguntas_map[cod_p]
@@ -280,7 +284,7 @@ def guardar_ficha_datos(db: Session, evaluacion_id, data, actual: Usuario) -> di
         "Jefatura - tiene personal a cargo",
         "Profesional, analista, técnico, tecnólogo",
     }
-    es_forma_a = data.tipoCargo in cargos_forma_a
+    es_forma_a = data.cargo_tipo in cargos_forma_a
     codigo_target = "INTRALABORAL_A" if es_forma_a else "INTRALABORAL_B"
     codigo_opuesto = "INTRALABORAL_B" if es_forma_a else "INTRALABORAL_A"
 
@@ -334,8 +338,8 @@ def guardar_ficha_datos(db: Session, evaluacion_id, data, actual: Usuario) -> di
 
     # El paciente del enlace no tiene cuenta: su nombre sale de la Ficha para que el
     # psicólogo sepa quién respondió en "Encuestas realizadas"
-    if actual.es_invitado:
-        actual.nombre = data.nombreCompleto.strip()[:120]
+    if actual.es_invitado and data.nombre_completo:
+        actual.nombre = data.nombre_completo.strip()[:120]
         actual.apellido = ""
 
     db.commit()
@@ -414,14 +418,38 @@ def obtener_cuestionario_asignado(db: Session, evaluacion_id, actual: Usuario) -
     }
 
 
+def _versiones_permitidas(participante: EvaluacionParticipante) -> list:
+    """Versiones de instrumento a las que puede responder el participante.
+
+    Son las de sus instrumentos asignados. Solo cuando no tiene ninguno (flujo con
+    un único cuestionario por evaluación) se usa la versión de la evaluación.
+    """
+    if participante.instrumentos_asignados:
+        return [pi.instrumento.version_id for pi in participante.instrumentos_asignados]
+    if participante.evaluacion.version_id:
+        return [participante.evaluacion.version_id]
+    return []
+
+
 def guardar_respuesta(db: Session, evaluacion_id, data, actual: Usuario) -> dict:
     participante = _participante_trabajador(db, evaluacion_id, actual)
     if participante.consentimiento is None:
         raise AppError(403, "Debe aceptar el consentimiento informado antes de acceder al cuestionario.")
     if participante.estado == "COMPLETADA":
         raise AppError(400, "No se permite editar respuestas después de haber finalizado y enviado la evaluación.")
-    pregunta = db.query(Pregunta).filter(Pregunta.id == data.preguntaId).first()
+    pregunta = (
+        db.query(Pregunta)
+        .join(Dimension, Pregunta.dimension_id == Dimension.id)
+        .filter(
+            Pregunta.codigo == data.pregunta_codigo,
+            Dimension.version_id.in_(_versiones_permitidas(participante)),
+        )
+        .first()
+    )
     if pregunta is None:
+        existe = db.query(Pregunta.id).filter(Pregunta.codigo == data.pregunta_codigo).first()
+        if existe is not None:
+            raise AppError(400, "La pregunta no pertenece a los instrumentos asignados al participante.")
         raise AppError(400, "La pregunta no existe.")
     # El valor puede ser número (Likert) o texto (ficha de datos). Solo se compara el rango
     # cuando es número; antes se comparaba siempre y un texto producía un error 500.
@@ -602,7 +630,7 @@ def _autorizar_consulta(actual: Usuario, evaluacion: Evaluacion) -> None:
         return
     if actual.rol.codigo in ROLES_EVALUADOR and evaluacion.evaluador_id == actual.id:
         return
-    if actual.rol.codigo == "TRABAJADOR" and any(p.trabajador_id == actual.id for p in evaluacion.participantes):
+    if actual.rol.codigo in {"TRABAJADOR", "PACIENTE"} and any(p.trabajador_id == actual.id for p in evaluacion.participantes):
         return
     raise AppError(403, "No tiene acceso a esta evaluación.")
 

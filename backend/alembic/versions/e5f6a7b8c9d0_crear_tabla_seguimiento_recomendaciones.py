@@ -1,19 +1,27 @@
 """crear_tabla_seguimiento_recomendaciones
 
 Revision ID: e5f6a7b8c9d0
+
 Revises: c4f1a2b3d5e6
+
 Create Date: 2026-09-25 17:42:00.000000
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
+
 import sqlalchemy as sa
 
 
+# revision identifiers, used by Alembic.
 revision: str = "e5f6a7b8c9d0"
+
 down_revision: Union[str, Sequence[str], None] = "c4f1a2b3d5e6"
+
 branch_labels: Union[str, Sequence[str], None] = None
+
 depends_on: Union[str, Sequence[str], None] = None
 
 
@@ -49,6 +57,6 @@ def upgrade() -> None:
             sa.UniqueConstraint("organizacion_id", "recomendacion_id", name="uq_seguimiento_org_rec"),
         )
 
-
 def downgrade() -> None:
+
     op.drop_table("seguimiento_recomendaciones")
