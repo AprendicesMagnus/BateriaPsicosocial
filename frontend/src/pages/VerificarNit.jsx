@@ -5,12 +5,16 @@ import "../styles/Empresas.css";
 import { request } from "../api/client";
 import { formatearNit } from "../utils/validaciones";
 import Toast from "../components/Toast";
+import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
+import { useAuth } from "../context/AuthContext";
 
 const MENSAJE_NIT_EXISTENTE = "La empresa con este NIT ya se encuentra registrada";
 const ESPERA_REDIRECCION_MS = 3000;
 
 export default function VerificarNit() {
   const navigate = useNavigate();
+  const { usuario } = useAuth();
   const [nit, setNit] = useState("");
   const [tocados, setTocados] = useState({});
   const [intento, setIntento] = useState(false);
@@ -79,11 +83,17 @@ export default function VerificarNit() {
         <Toast mensaje={MENSAJE_NIT_EXISTENTE} tipo="info" duracion={ESPERA_REDIRECCION_MS} />
       )}
 
-      <header className="app-topbar">
-        <Link to="/" aria-label="Ir a la página principal">
-          <img src="/logo oscu.png" alt="Magnus SIG" className="app-topbar-logo" />
-        </Link>
-      </header>
+      {/* Con sesión: barra completa (logo -> /Inicio y perfil a la derecha).
+          Sin sesión: solo el logo, que lleva a la página principal. */}
+      {usuario ? (
+        <AppTopbar />
+      ) : (
+        <header className="app-topbar">
+          <Link to="/" aria-label="Ir a la página principal">
+            <img src="/logo oscu.png" alt="Magnus SIG" className="app-topbar-logo" />
+          </Link>
+        </header>
+      )}
 
       <main className="app-hero">
         <div className="app-decor app-decor--1" />
@@ -92,6 +102,7 @@ export default function VerificarNit() {
 
         <div className="empresas-center">
           <div className="app-card empresas-card">
+            <BotonRegresar tono="oscuro" />
             <h1 className="empresas-titulo">Verificar NIT</h1>
             <p className="empresas-subtitulo">
               Antes de crear tu empresa, verifiquemos que no esté registrada todavía.
@@ -124,13 +135,6 @@ export default function VerificarNit() {
                 {verificando ? "Verificando..." : "Continuar"}
               </button>
             </form>
-
-            <p className="empresas-nota">
-              ¿Tu empresa ya está registrada?{" "}
-              <Link className="link-accent" to="/iniciar-sesion">
-                Inicia sesión
-              </Link>
-            </p>
           </div>
         </div>
       </main>

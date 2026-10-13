@@ -12,6 +12,7 @@ from app.api.v1 import (
     notificaciones,
     organizaciones,
     pagos,
+    panel,
     prediccion,
     reportes,
     roles,
@@ -37,6 +38,7 @@ router.include_router(notificaciones.router, prefix="/notificaciones", tags=["No
 router.include_router(auditoria.router, prefix="/auditoria", tags=["Auditoria"])
 router.include_router(compras.router, prefix="/compras", tags=["Compras"])
 router.include_router(pagos.router, prefix="/pagos", tags=["Pagos"])
+router.include_router(panel.router, prefix="/panel", tags=["Panel"])
 router.include_router(wompi.router, prefix="/wompi", tags=["Wompi"])
 router.include_router(
     seguimiento_recomendaciones.router,

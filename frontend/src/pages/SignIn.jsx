@@ -136,7 +136,7 @@ export default function SignIn() {
 
       iniciarSesion(data.token, data.usuario);
 
-      navigate(rutaInicial(data.usuario?.rol));
+      navigate(rutaInicial(data.usuario?.rol), { replace: true });
     } catch (err) {
       if (err.payload?.requiresVerification) {
         navigate("/verificar-cuenta", {
@@ -198,7 +198,7 @@ export default function SignIn() {
         data.usuario
       );
 
-      navigate(rutaInicial(data.usuario?.rol));
+      navigate(rutaInicial(data.usuario?.rol), { replace: true });
     } catch (err) {
       console.error(
         "Error iniciando sesión con Google:",
@@ -227,7 +227,7 @@ export default function SignIn() {
 
       iniciarSesion(data.token, data.usuario);
       setGooglePendiente(null);
-      navigate(rutaInicial(data.usuario?.rol));
+      navigate(rutaInicial(data.usuario?.rol), { replace: true });
     } catch (err) {
       setErrorRolGoogle(err.message || "No se pudo crear la cuenta con Google.");
     } finally {

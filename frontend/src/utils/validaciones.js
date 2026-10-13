@@ -146,3 +146,8 @@ export function uuidValido(valor) {
   if (!valor) return false;
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(valor.trim());
 }
+
+// Celular colombiano: 10 dígitos y empieza por 3.
+export function celularValido(valor) {
+  return /^3\d{9}$/.test(String(valor ?? "").trim());
+}

@@ -8,6 +8,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from openpyxl import Workbook
 
+from app.core.roles import ROLES_EVALUADOR
 from app.core.config import get_settings
 from app.core.crypto import utcnow
 from app.core.errors import AppError
@@ -529,12 +530,15 @@ def listar_informes(
     rol = actual.rol.codigo
     if rol == "SUPER_ADMINISTRADOR":
         pass
-    elif rol == "EVALUADOR_SST":
+    elif rol in ROLES_EVALUADOR:
         query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
-    elif rol == "RESPONSABLE_SST":
-        # Usuario limitado: solo informes agrupados de su propia organización.
+    elif rol == "ADMINISTRADOR":
+        # Informes agrupados de las empresas que creó.
         query = query.filter(
-            Evaluacion.organizacion_id == actual.organizacion_id, Informe.tipo == "AGRUPADO"
+            Evaluacion.organizacion_id.in_(
+                db.query(Organizacion.id).filter(Organizacion.creada_por_id == actual.id)
+            ),
+            Informe.tipo == "AGRUPADO",
         )
     elif rol == "TRABAJADOR":
         query = query.filter(Informe.tipo == "INDIVIDUAL", Informe.trabajador_id == actual.id)

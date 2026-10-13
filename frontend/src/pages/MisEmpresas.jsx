@@ -1,10 +1,32 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
-import { fetchMisEmpresas } from "../api/perfil";
+import { fetchMe } from "../api/auth";
+import {
+  fetchMisEmpresas,
+  editarMiEmpresa,
+  eliminarMiEmpresa,
+  fetchResponsableEmpresa,
+  editarResponsableEmpresa,
+} from "../api/perfil";
+import {
+  MAX_EMAIL_LENGTH,
+  MAX_LUGAR_LENGTH,
+  celularValido,
+  emailValido,
+  soloDigitos,
+  filtrarLugar,
+  filtrarNombrePersona,
+  lugarValido,
+  nombrePersonaValido,
+  normalizarEmail,
+} from "../utils/validaciones";
 import "../styles/app-shell.css";
 import "../styles/MisEmpresas.css";
+
+const SECTORES = ["Comercial", "Servicios", "Otros"];
 
 function formatearFecha(fechaIso) {
   if (!fechaIso) return "—";
@@ -13,14 +35,36 @@ function formatearFecha(fechaIso) {
   );
 }
 
+// Empresas antiguas pueden traer un sector que ya no existe ("Otro", "Energético"...).
+function sectorParaFormulario(sector) {
+  if (SECTORES.includes(sector)) return sector;
+  return sector === "Otro" ? "Otros" : "";
+}
+
 export default function MisEmpresas() {
-  const { token } = useAuth();
+  const { token, usuario, actualizarUsuario } = useAuth();
   const location = useLocation();
-  const mensajeInicial = location.state?.mensaje ?? "";
 
   const [empresas, setEmpresas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [aviso, setAviso] = useState(location.state?.mensaje ?? "");
+
+  // ---- edición ----
+  const [editando, setEditando] = useState(null); // empresa en edición
+  const [form, setForm] = useState({ sector: "", municipio: "", email: "", telefono: "" });
+  const [intento, setIntento] = useState(false);
+  const [errorForm, setErrorForm] = useState("");
+  const [guardando, setGuardando] = useState(false);
+
+  // Usuario responsable de la empresa (solo si la creó un Jefe/Administrador; el Psicologo no tiene).
+  const [responsable, setResponsable] = useState(null);
+  const [formResp, setFormResp] = useState({ nombre: "", apellido: "", numeroResolucion: "" });
+
+  // ---- eliminación ----
+  const [eliminando, setEliminando] = useState(null); // empresa a eliminar
+  const [errorEliminar, setErrorEliminar] = useState("");
+  const [borrando, setBorrando] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -29,6 +73,124 @@ export default function MisEmpresas() {
       .catch((err) => setError(err.message || "No se pudieron cargar tus empresas."))
       .finally(() => setCargando(false));
   }, [token]);
+
+  // ---------- editar ----------
+  function abrirEdicion(empresa) {
+    setErrorForm("");
+    setIntento(false);
+    setForm({
+      sector: sectorParaFormulario(empresa.sector),
+      municipio: empresa.municipio ?? "",
+      email: empresa.email ?? "",
+      telefono: empresa.telefono ?? "",
+    });
+    setResponsable(null);
+    setEditando(empresa);
+
+    if (usuario?.rol !== "EVALUADOR_SST") {
+      fetchResponsableEmpresa(token, empresa.id)
+        .then((resp) => {
+          if (!resp) return;
+          setResponsable(resp);
+          setFormResp({
+            nombre: resp.nombre ?? "",
+            apellido: resp.apellido ?? "",
+            numeroResolucion: resp.numeroResolucion ?? "",
+          });
+        })
+        .catch(() => {});
+    }
+  }
+
+  const erroresForm = {
+    sector: !form.sector ? "Selecciona una opción." : "",
+    municipio: !form.municipio.trim()
+      ? "Este campo es obligatorio."
+      : !lugarValido(form.municipio.trim())
+      ? "Solo letras, espacios, punto y guion (entre 2 y 80 caracteres)."
+      : "",
+    email: !form.email.trim()
+      ? "Este campo es obligatorio."
+      : !emailValido(normalizarEmail(form.email))
+      ? "Ingresa un correo válido."
+      : "",
+    telefono: !form.telefono.trim()
+      ? "Este campo es obligatorio."
+      : !celularValido(form.telefono)
+      ? "Ingresa un celular válido de 10 dígitos que empiece por 3."
+      : "",
+    // Campos del responsable: solo se validan si la empresa tiene uno
+    respNombre: !responsable ? "" : !nombrePersonaValido(formResp.nombre.trim(), 100) ? "Ingresa un nombre válido." : "",
+    respApellido: !responsable ? "" : !nombrePersonaValido(formResp.apellido.trim(), 100) ? "Ingresa un apellido válido." : "",
+    respResolucion: !responsable
+      ? ""
+      : !formResp.numeroResolucion
+      ? "Este campo es obligatorio."
+      : !/^\d{6}$/.test(formResp.numeroResolucion)
+      ? "El número de resolución debe tener exactamente 6 dígitos."
+      : "",
+  };
+
+  async function guardarEdicion(e) {
+    e.preventDefault();
+    setErrorForm("");
+    setIntento(true);
+    if (Object.values(erroresForm).some(Boolean)) return;
+
+    setGuardando(true);
+    try {
+      const actualizada = await editarMiEmpresa(token, editando.id, {
+        sector: form.sector,
+        municipio: form.municipio.trim(),
+        email: normalizarEmail(form.email),
+        telefono: form.telefono.trim(),
+      });
+      setEmpresas((lista) => lista.map((emp) => (emp.id === actualizada.id ? actualizada : emp)));
+
+      if (responsable) {
+        try {
+          await editarResponsableEmpresa(token, editando.id, {
+            nombre: formResp.nombre.trim(),
+            apellido: formResp.apellido.trim(),
+            numeroResolucion: formResp.numeroResolucion,
+          });
+        } catch (errResp) {
+          setErrorForm(`La empresa se guardó, pero no se pudo actualizar el responsable: ${errResp.message}`);
+          return;
+        }
+      }
+
+      setEditando(null);
+      setAviso("Empresa actualizada correctamente.");
+    } catch (err) {
+      setErrorForm(err.message || "No se pudo actualizar la empresa.");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  // ---------- eliminar ----------
+  async function confirmarEliminacion() {
+    setErrorEliminar("");
+    setBorrando(true);
+    try {
+      await eliminarMiEmpresa(token, eliminando.id);
+      setEmpresas((lista) => lista.filter((emp) => emp.id !== eliminando.id));
+      setEliminando(null);
+      setAviso("Empresa eliminada correctamente.");
+      // Si el usuario estaba vinculado a esa empresa, el backend lo desvincula: se refresca.
+      fetchMe(token)
+        .then((data) => actualizarUsuario(data.usuario))
+        .catch(() => {});
+    } catch (err) {
+      setErrorEliminar(err.message || "No se pudo eliminar la empresa.");
+    } finally {
+      setBorrando(false);
+    }
+  }
+
+  const campoClase = (campo) =>
+    `field__input ${intento && erroresForm[campo] ? "field__input--invalid" : ""}`.trim();
 
   return (
     <div className="app-shell-page">
@@ -40,13 +202,11 @@ export default function MisEmpresas() {
         <div className="app-decor app-decor--3" />
 
         <div className="app-content">
-          <nav className="app-breadcrumb">
-            Empresas <span>›</span> Mis empresas
-          </nav>
+          <BotonRegresar />
           <h1 className="app-title">Mis Empresas</h1>
           <p className="app-subtitle">Empresas que has registrado con tu cuenta.</p>
 
-          {mensajeInicial && <div className="mis-empresas-ok">{mensajeInicial}</div>}
+          {aviso && <div className="mis-empresas-ok">{aviso}</div>}
           {error && <div className="mis-empresas-error">{error}</div>}
 
           <div className="app-card mis-empresas-card">
@@ -68,7 +228,10 @@ export default function MisEmpresas() {
                       <th>NIT</th>
                       <th>Sector</th>
                       <th>Ciudad</th>
+                      <th>Correo</th>
+                      <th>Celular</th>
                       <th>Creada</th>
+                      <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -78,7 +241,32 @@ export default function MisEmpresas() {
                         <td>{empresa.nit}</td>
                         <td>{empresa.sector ?? "—"}</td>
                         <td>{empresa.municipio ?? "—"}</td>
+                        <td>{empresa.email ?? "—"}</td>
+                        <td>{empresa.telefono ?? "—"}</td>
                         <td>{formatearFecha(empresa.creadoEn)}</td>
+                        <td>
+                          <div className="mis-empresas-acciones">
+                            <button
+                              type="button"
+                              className="mis-empresas-accion"
+                              onClick={() => abrirEdicion(empresa)}
+                              aria-label={`Editar ${empresa.nombre}`}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              className="mis-empresas-accion mis-empresas-accion--peligro"
+                              onClick={() => {
+                                setErrorEliminar("");
+                                setEliminando(empresa);
+                              }}
+                              aria-label={`Eliminar ${empresa.nombre}`}
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -88,6 +276,196 @@ export default function MisEmpresas() {
           </div>
         </div>
       </main>
+
+      {/* ===================== MODAL EDITAR ===================== */}
+      {editando && (
+        <div className="mis-empresas-fondo" role="dialog" aria-modal="true" aria-labelledby="editar-titulo">
+          <form className="mis-empresas-modal" onSubmit={guardarEdicion} noValidate>
+            <h2 id="editar-titulo">Editar empresa</h2>
+
+            <label className="field">
+              <span className="field__label">NIT (no se puede modificar)</span>
+              <input className="field__input" value={editando.nit} disabled />
+            </label>
+
+            <label className="field">
+              <span className="field__label">Razón social (no se puede modificar)</span>
+              <input className="field__input" value={editando.nombre} disabled />
+            </label>
+
+            <label className="field">
+              <span className="field__label">Sector económico</span>
+              <select
+                className={campoClase("sector")}
+                value={form.sector}
+                onChange={(e) => setForm((f) => ({ ...f, sector: e.target.value }))}
+              >
+                <option value="" disabled>
+                  Selecciona un sector
+                </option>
+                {SECTORES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              {intento && erroresForm.sector && <span className="field__error">{erroresForm.sector}</span>}
+            </label>
+
+            <label className="field">
+              <span className="field__label">Ciudad / Municipio</span>
+              <input
+                className={campoClase("municipio")}
+                maxLength={MAX_LUGAR_LENGTH}
+                value={form.municipio}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, municipio: filtrarLugar(e.target.value, MAX_LUGAR_LENGTH) }))
+                }
+              />
+              {intento && erroresForm.municipio && <span className="field__error">{erroresForm.municipio}</span>}
+            </label>
+
+            <label className="field">
+              <span className="field__label">Correo institucional de la empresa</span>
+              <input
+                className={campoClase("email")}
+                type="email"
+                maxLength={MAX_EMAIL_LENGTH}
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
+              {intento && erroresForm.email && <span className="field__error">{erroresForm.email}</span>}
+            </label>
+
+            <label className="field">
+              <span className="field__label">Celular de contacto</span>
+              <input
+                className={campoClase("telefono")}
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="Ej. 3001234567"
+                value={form.telefono}
+                onChange={(e) => setForm((f) => ({ ...f, telefono: soloDigitos(e.target.value, 10) }))}
+              />
+              {intento && erroresForm.telefono && <span className="field__error">{erroresForm.telefono}</span>}
+            </label>
+
+            {responsable && (
+              <>
+                <hr className="mis-empresas-separador" />
+                <h3 className="mis-empresas-subtitulo">Datos del Usuario Evaluador SST (Responsable)</h3>
+
+                <div className="mis-empresas-fila">
+                  <label className="field">
+                    <span className="field__label">Nombre del responsable</span>
+                    <input
+                      className={campoClase("respNombre")}
+                      maxLength={100}
+                      value={formResp.nombre}
+                      onChange={(e) => setFormResp((f) => ({ ...f, nombre: filtrarNombrePersona(e.target.value, 100) }))}
+                    />
+                    {intento && erroresForm.respNombre && <span className="field__error">{erroresForm.respNombre}</span>}
+                  </label>
+                  <label className="field">
+                    <span className="field__label">Apellido del responsable</span>
+                    <input
+                      className={campoClase("respApellido")}
+                      maxLength={100}
+                      value={formResp.apellido}
+                      onChange={(e) =>
+                        setFormResp((f) => ({ ...f, apellido: filtrarNombrePersona(e.target.value, 100) }))
+                      }
+                    />
+                    {intento && erroresForm.respApellido && (
+                      <span className="field__error">{erroresForm.respApellido}</span>
+                    )}
+                  </label>
+                </div>
+
+                <div className="mis-empresas-fila">
+                  <label className="field">
+                    <span className="field__label">Correo personal (no se puede modificar)</span>
+                    <input className="field__input" value={responsable.email} disabled />
+                  </label>
+                  <label className="field">
+                    <span className="field__label">Contraseña (no se puede modificar)</span>
+                    <input className="field__input" type="password" value="••••••••" disabled readOnly />
+                  </label>
+                </div>
+
+                <label className="field">
+                  <span className="field__label">Número de Resolución</span>
+                  <input
+                    className={campoClase("respResolucion")}
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Ej. 123456"
+                    value={formResp.numeroResolucion}
+                    onChange={(e) => setFormResp((f) => ({ ...f, numeroResolucion: soloDigitos(e.target.value, 6) }))}
+                  />
+                  {intento && erroresForm.respResolucion && (
+                    <span className="field__error">{erroresForm.respResolucion}</span>
+                  )}
+                </label>
+              </>
+            )}
+
+            {errorForm && <div className="mis-empresas-error">{errorForm}</div>}
+
+            <div className="mis-empresas-modal-acciones">
+              <button type="submit" className="btn-primary mis-empresas-btn-modal" disabled={guardando}>
+                {guardando ? "Guardando..." : "Guardar cambios"}
+              </button>
+              <button
+                type="button"
+                className="app-btn-secondary"
+                onClick={() => setEditando(null)}
+                disabled={guardando}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ===================== MODAL ELIMINAR ===================== */}
+      {eliminando && (
+        <div className="mis-empresas-fondo" role="alertdialog" aria-modal="true" aria-labelledby="eliminar-titulo">
+          <div className="mis-empresas-modal">
+            <h2 id="eliminar-titulo">Eliminar empresa</h2>
+            <p className="mis-empresas-texto">
+              ¿Seguro que quieres eliminar <strong>{eliminando.nombre}</strong> (NIT {eliminando.nit})? Esta acción
+              no se puede deshacer y también se eliminarán los usuarios responsables creados para esta empresa.
+            </p>
+            <p className="mis-empresas-texto">
+              Solo se pueden eliminar empresas que todavía no tienen evaluaciones ni compras.
+            </p>
+
+            {errorEliminar && <div className="mis-empresas-error">{errorEliminar}</div>}
+
+            <div className="mis-empresas-modal-acciones">
+              <button
+                type="button"
+                className="mis-empresas-btn-peligro"
+                onClick={confirmarEliminacion}
+                disabled={borrando}
+              >
+                {borrando ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+              <button
+                type="button"
+                className="app-btn-secondary"
+                onClick={() => setEliminando(null)}
+                disabled={borrando}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

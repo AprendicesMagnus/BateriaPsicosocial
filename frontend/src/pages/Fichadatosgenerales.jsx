@@ -9,6 +9,7 @@ import {
 } from "../api/evaluaciones";
 import "../styles/cuestionario-estres.css";
 import "../styles/Fichadatosgenerales.css";
+import BotonRegresar from "../components/BotonRegresar";
 import {
   nombrePersonaValido,
   lugarValido,
@@ -396,10 +397,6 @@ export default function FichaDatosGenerales() {
     }
   };
 
-  const irAnterior = () => {
-    navigate("/dashboard");
-  };
-
 const camposRespondidos = CAMPOS_REQUERIDOS.filter(
   (campo) =>
     datos[campo] !== "" &&
@@ -456,6 +453,8 @@ return (
       ===================================================== */}
 
       <main className="questionnaire-main">
+        <BotonRegresar tono="oscuro" />
+
         <section className="questionnaire-intro">
           <div className="questionnaire-heart">♥</div>
 
@@ -996,11 +995,8 @@ return (
           </div>
 
           {/* BOTONES */}
-          <div className="questionnaire-navigation">
-            <button className="previous-button" type="button" onClick={irAnterior}>
-              ← Anterior
-            </button>
-
+          {/* La ficha es un solo paso: no hay "Anterior" interno. Salir del módulo = <BotonRegresar /> */}
+          <div className="questionnaire-navigation" style={{ justifyContent: "flex-end" }}>
             <button className="next-button" type="submit" disabled={guardando}>
               {guardando ? "Guardando..." : "Guardar y continuar →"}
             </button>

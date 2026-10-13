@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -25,3 +27,13 @@ def listar_encuestas_realizadas(
     actual: Usuario = Depends(require_gestor),
 ):
     return reportes_service.listar_encuestas_realizadas(db, actual)
+
+
+# Respuestas de un trabajador a cada pregunta (descifradas). Confidencial: solo gestores.
+@router.get("/encuestas/{participante_id}/respuestas")
+def respuestas_encuesta(
+    participante_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_gestor),
+):
+    return reportes_service.respuestas_participante(db, actual, participante_id)

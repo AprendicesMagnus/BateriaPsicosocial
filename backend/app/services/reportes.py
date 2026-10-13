@@ -2,6 +2,7 @@ import uuid
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
+from app.core.roles import ROLES_EVALUADOR
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.models.organization import Area, Organizacion
@@ -10,9 +11,11 @@ from app.models.evaluation import (
     EvaluacionInstrumento,
     EvaluacionParticipante,
     ParticipanteInstrumento,
+    Respuesta,
     ResultadoDimension,
 )
-from app.models.survey import Dimension
+from app.core.encryption import descifrar_json
+from app.models.survey import Dimension, Pregunta
 from app.models.user import Usuario
 
 settings = get_settings()
@@ -22,7 +25,7 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
     rol = actual.rol.codigo
     if rol == "SUPER_ADMINISTRADOR":
         query_areas = db.query(Area).options(joinedload(Area.organizacion))
-    elif rol in {"EVALUADOR_SST", "RESPONSABLE_SST"}:
+    elif rol in ROLES_EVALUADOR:
         if not actual.organizacion_id:
             return []
         query_areas = (
@@ -30,6 +33,17 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
             .options(joinedload(Area.organizacion))
             .filter(Area.organizacion_id == actual.organizacion_id)
         )
+    elif rol in {"JEFE", "ADMINISTRADOR"}:
+        # Solo las áreas de las empresas que el usuario creó.
+        query_areas = (
+            db.query(Area)
+            .join(Organizacion, Organizacion.id == Area.organizacion_id)
+            .options(joinedload(Area.organizacion))
+            .filter(Organizacion.creada_por_id == actual.id)
+        )
+        # Con una empresa activa elegida, solo se muestran sus reportes.
+        if actual.organizacion_id:
+            query_areas = query_areas.filter(Organizacion.id == actual.organizacion_id)
     else:
         raise AppError(403, "No tiene permisos para consultar reportes.")
 
@@ -83,11 +97,15 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
 # Instrumentos que no se califican (solo datos sociodemográficos): no se muestran sus "resultados"
 _INSTRUMENTOS_SIN_CALIFICACION = {"FICHA_DATOS"}
 
+# Roles que ven las encuestas de todas las organizaciones (require_gestor deja pasar a SUPER_ADMINISTRADOR)
+# Solo el Super Administrador ve todas las empresas. "ADMINISTRADOR" es el rol común (no global): no va aquí.
+_ROLES_VEN_TODAS = {"SUPER_ADMINISTRADOR"}
+
 
 def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
     """Lista las encuestas (participaciones en una evaluación) con su avance y resultados.
 
-    - ADMINISTRADOR: ve las de todas las organizaciones.
+    - SUPER_ADMINISTRADOR: ve las de todas las organizaciones.
     - EVALUADOR_SST: solo las de su organización.
     Se usa en la sección "Encuestas realizadas" de la página Reportes.
 
@@ -107,11 +125,11 @@ def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
             .joinedload(EvaluacionInstrumento.version),
         )
     )
-    if rol == "EVALUADOR_SST":
+    if rol in ROLES_EVALUADOR:
         if not actual.organizacion_id:
             return []
         query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
-    elif rol != "ADMINISTRADOR":
+    elif rol not in _ROLES_VEN_TODAS:
         raise AppError(403, "No tiene permisos para consultar encuestas.")
 
     # Las más recientes primero: primero las terminadas (fecha_fin), luego las que están en curso
@@ -159,6 +177,7 @@ def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
         encuestas.append(
             {
                 "participanteId": str(part.id),
+                "trabajadorId": str(trabajador.id),
                 "evaluacionId": str(evaluacion.id),
                 "evaluacionNombre": evaluacion.nombre,
                 "evaluacionEstado": evaluacion.estado,
@@ -176,3 +195,84 @@ def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
             }
         )
     return encuestas
+
+
+def respuestas_participante(db: Session, actual: Usuario, participante_id: uuid.UUID) -> dict:
+    """Respuestas descifradas de un participante, agrupadas por instrumento.
+
+    Mismo alcance que listar_encuestas_realizadas: el EVALUADOR_SST solo ve las de su organización.
+    Se usa en la sección "Respuestas por usuario" de Reportes.jsx y se pide solo al abrir un usuario.
+    """
+    rol = actual.rol.codigo
+    part = (
+        db.query(EvaluacionParticipante)
+        .options(
+            joinedload(EvaluacionParticipante.evaluacion),
+            joinedload(EvaluacionParticipante.trabajador),
+            joinedload(EvaluacionParticipante.instrumentos_asignados)
+            .joinedload(ParticipanteInstrumento.instrumento)
+            .joinedload(EvaluacionInstrumento.version),
+        )
+        .filter(EvaluacionParticipante.id == participante_id)
+        .first()
+    )
+    if part is None:
+        raise AppError(404, "La encuesta no existe.")
+    if rol in ROLES_EVALUADOR:
+        if part.evaluacion.organizacion_id != actual.organizacion_id:
+            raise AppError(404, "La encuesta no existe.")
+    elif rol not in _ROLES_VEN_TODAS:
+        raise AppError(403, "No tiene permisos para consultar respuestas.")
+
+    filas = (
+        db.query(Respuesta)
+        .options(joinedload(Respuesta.pregunta).joinedload(Pregunta.dimension).joinedload(Dimension.version))
+        .filter(Respuesta.participante_id == part.id)
+        .all()
+    )
+    # Respuestas agrupadas por la versión (instrumento) a la que pertenece cada pregunta
+    por_version: dict[uuid.UUID, list] = {}
+    for r in filas:
+        por_version.setdefault(r.pregunta.dimension.version_id, []).append(r)
+
+    # Primero los instrumentos asignados (en orden de respuesta); luego cualquier versión con
+    # respuestas sin instrumento asignado (evaluaciones antiguas creadas solo con version_id)
+    grupos = [
+        (pi.instrumento.version, pi.estado)
+        for pi in sorted(part.instrumentos_asignados, key=lambda i: i.instrumento.orden)
+    ]
+    asignadas = {version.id for version, _ in grupos}
+    for version_id, respuestas in por_version.items():
+        if version_id not in asignadas:
+            grupos.append((respuestas[0].pregunta.dimension.version, None))
+
+    instrumentos = []
+    for version, estado in grupos:
+        respuestas = sorted(por_version.get(version.id, []), key=lambda r: r.pregunta.orden)
+        instrumentos.append(
+            {
+                "codigo": version.codigo,
+                "nombre": version.nombre,
+                "estado": estado,
+                "respuestas": [
+                    {
+                        "orden": r.pregunta.orden,
+                        "codigo": r.pregunta.codigo,
+                        "enunciado": r.pregunta.enunciado,
+                        "dimension": r.pregunta.dimension.nombre,
+                        # Dominio de la dimensión: la vista Respuestas agrupa por dominio -> dimensión
+                        "dominio": r.pregunta.dimension.dominio,
+                        "tipo": r.pregunta.tipo_respuesta,
+                        "valor": descifrar_json(r.valor_cifrado),
+                    }
+                    for r in respuestas
+                ],
+            }
+        )
+
+    trabajador = part.trabajador
+    return {
+        "participanteId": str(part.id),
+        "trabajadorNombre": f"{trabajador.nombre} {trabajador.apellido}".strip(),
+        "instrumentos": instrumentos,
+    }

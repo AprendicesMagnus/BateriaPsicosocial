@@ -1,3 +1,10 @@
+"""
+Tests de validación del rango Likert en RespuestaRequest (Etapa 2 - auditoría de validaciones).
+
+Criterio: el schema acepta enteros entre 0 y 5 (0 por la escala 0-4 del intralaboral); el rango
+exacto de cada pregunta (valor_minimo/valor_maximo) lo valida el servicio con un 400.
+"""
+
 import uuid
 
 import pytest
@@ -156,6 +163,7 @@ class TestRespuestaEndpointRange:
                 f"se recibió HTTP {res_rechazo.status_code}: "
                 f"{res_rechazo.text}"
             )
+
 
         res_exitoso = client.post(
             f"/api/evaluaciones/{eval_id}/respuestas",

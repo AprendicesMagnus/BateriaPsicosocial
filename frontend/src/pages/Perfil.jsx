@@ -4,6 +4,7 @@ import { etiquetaRol } from "../utils/roles";
 import { useAuth } from "../context/AuthContext";
 import { recuperarPagoPendiente } from "../utils/pagoPendiente";
 import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
 import "../styles/app-shell.css";
 import "../styles/Perfil.css";
 import { request, urlArchivo } from "../api/client";
@@ -11,7 +12,10 @@ import {
   editarPerfil,
   cambiarPassword,
   fetchDirectorio,
+  fetchMisEmpresas,
+  cambiarEmpresaActiva
 } from "../api/perfil";
+
 import {
   TEXTO_AYUDA_PASSWORD,
   filtrarNombrePersona,
@@ -19,9 +23,10 @@ import {
   passwordValida,
 } from "../utils/validaciones";
 const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
-const MAX_FOTO_BYTES = 2 * 1024 * 1024;
+const MAX_FOTO_BYTES = 2 * 1024 * 1024; // 2 MB (el backend valida lo mismo)
 const POR_PAGINA_DIRECTORIO = 10;
 const INTERVALO_ACTUALIZACION_COMPRAS = 30 * 1000;
+
 function formatearFecha(fechaIso) {
   if (!fechaIso) return "—";
   return new Intl.DateTimeFormat("es-CO", {
@@ -168,6 +173,7 @@ export default function Perfil() {
   const [loadingDirectorio, setLoadingDirectorio] = useState(false);
   const [errorDirectorio, setErrorDirectorio] = useState("");
   // ---- cargar historial de compras ----
+
   useEffect(() => {
     if (!usuario?.id || !token) {
       return;
@@ -296,6 +302,7 @@ export default function Perfil() {
     pagina,
   ]);
   // ---- liberar URL temporal de la foto ----
+
   useEffect(() => {
     return () => {
       if (fotoPreview) {
@@ -306,16 +313,39 @@ export default function Perfil() {
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
     : "Usuario";
-  const rolUsuario =
-    etiquetaRol(usuario?.rol) ||
-    "Sin rol asignado";
-  const correoUsuario =
-    usuario?.email ??
-    usuario?.correo ??
-    "—";
+  const rolUsuario = etiquetaRol(usuario?.rol) || "Sin rol asignado";
+  const correoUsuario = usuario?.email ?? usuario?.correo ?? "—";
+  // El Super Administrador no pertenece a ninguna organización creada: su "empresa" es la plataforma misma.
   const empresaUsuario =
-    usuario?.empresa ??
-    "—";
+    usuario?.rol === "SUPER_ADMINISTRADOR"
+      ? "MAGNUS | SIG"
+      : usuario?.organizacionNombre ?? "—";
+
+  // Jefe, Administrador y Psicólogo pueden manejar varias empresas y eligen con cuál trabajan.
+  // Los demás roles (ej. Responsable SST) ya vienen con la empresa fija que asignó su Jefe/Administrador.
+  const eligeEmpresa = ["JEFE", "ADMINISTRADOR", "EVALUADOR_SST"].includes(usuario?.rol);
+  const [misEmpresas, setMisEmpresas] = useState([]);
+  const [cambiandoEmpresa, setCambiandoEmpresa] = useState(false);
+
+  useEffect(() => {
+    if (!eligeEmpresa || !token) return;
+    fetchMisEmpresas(token)
+      .then((lista) => setMisEmpresas(lista || []))
+      .catch(() => { });
+  }, [eligeEmpresa, token]);
+
+  async function handleCambiarEmpresa(e) {
+    const id = e.target.value;
+    if (!id || id === usuario?.organizacionId) return;
+    setCambiandoEmpresa(true);
+    try {
+      await cambiarEmpresaActiva(token, id);
+      window.location.reload();
+    } catch {
+      setCambiandoEmpresa(false);
+    }
+  }
+
   const iniciales =
     nombreUsuario
       .split(" ")
@@ -598,6 +628,7 @@ export default function Perfil() {
     mensajeOk
       ? `perfil-toast perfil-toast--${tipoMensajeToast(mensajeOk)}`
       : "perfil-toast";
+
   return (
     <div className="app-shell-page">
       <AppTopbar />
@@ -620,24 +651,13 @@ export default function Perfil() {
           </div>
         )}
         <div className="app-content">
-          <button
-            type="button"
-            className="checkout-back-btn"
-            onClick={() =>
-              navigate("/Inicio")
-            }
-          >
-            ← Volver al inicio
-          </button>
+          <BotonRegresar />
           <nav className="app-breadcrumb">
             Mi cuenta <span>›</span> Perfil
           </nav>
-          <h1 className="app-title">
-            Mi Perfil
-          </h1>
-          <p className="app-subtitle">
-            Consulta y administra la información de tu cuenta.
-          </p>
+          <h1 className="app-title">Mi Perfil</h1>
+          <p className="app-subtitle">Consulta y administra la información de tu cuenta.</p>
+
           <div className="perfil-layout">
             {/* ===================== PERFIL ===================== */}
             <div className="app-card perfil-card">
@@ -885,12 +905,24 @@ export default function Perfil() {
                       </span>
                     </div>
                     <div className="perfil-field">
-                      <span className="perfil-field-label">
-                        Empresa
-                      </span>
-                      <span className="perfil-field-value">
-                        {empresaUsuario}
-                      </span>
+                      <span className="perfil-field-label">Empresa</span>
+                      {eligeEmpresa && misEmpresas.length > 0 ? (
+                        <select
+                          value={usuario?.organizacionId ?? ""}
+                          onChange={handleCambiarEmpresa}
+                          disabled={cambiandoEmpresa}
+                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14 }}
+                        >
+                          {!usuario?.organizacionId && <option value="">Selecciona una empresa</option>}
+                          {misEmpresas.map((empresa) => (
+                            <option key={empresa.id} value={empresa.id}>
+                              {empresa.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="perfil-field-value">{empresaUsuario}</span>
+                      )}
                     </div>
                   </div>
                   <div className="perfil-actions">
@@ -1074,54 +1106,52 @@ export default function Perfil() {
             </div>
           </div>
           {/* ============ USUARIOS REGISTRADOS ============ */}
-          {esSuperAdmin && (
-            <div className="app-card directorio-card">
-              <div className="directorio-encabezado">
-                <div>
-                  <h2 className="compras-titulo">
-                    Usuarios registrados
-                  </h2>
-                  <p className="compras-subtitulo">
-                    {directorio.total} en total
-                  </p>
+          {
+            esSuperAdmin && (
+              <div className="app-card directorio-card">
+                <div className="directorio-encabezado">
+                  <div>
+                    <h2 className="compras-titulo">
+                      Usuarios registrados
+                    </h2>
+                    <p className="compras-subtitulo">
+                      {directorio.total} en total
+                    </p>
+                  </div>
+                  <input
+                    className="field__input directorio-busqueda"
+                    type="search"
+                    placeholder="Buscar por nombre o correo"
+                    maxLength={100}
+                    value={busqueda}
+                    onChange={(e) => {
+                      setBusqueda(e.target.value);
+                      setPagina(0);
+                    }}
+                  />
                 </div>
-                <input
-                  className="field__input directorio-busqueda"
-                  type="search"
-                  placeholder="Buscar por nombre o correo"
-                  maxLength={100}
-                  value={busqueda}
-                  onChange={(e) => {
-                    setBusqueda(
-                      e.target.value
-                    );
-                    setPagina(0);
-                  }}
-                />
-              </div>
-              {errorDirectorio && (
-                <p className="perfil-error">
-                  {errorDirectorio}
-                </p>
-              )}
-              <div className="directorio-tabla-wrap">
-                <table className="directorio-tabla">
-                  <thead>
-                    <tr>
-                      <th>
-                        Nombre completo
-                      </th>
-                      <th>
-                        Correo electrónico
-                      </th>
-                      <th>
-                        Rol
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {directorio.items.map(
-                      (u) => (
+                {errorDirectorio && (
+                  <p className="perfil-error">
+                    {errorDirectorio}
+                  </p>
+                )}
+                <div className="directorio-tabla-wrap">
+                  <table className="directorio-tabla">
+                    <thead>
+                      <tr>
+                        <th>
+                          Nombre completo
+                        </th>
+                        <th>
+                          Correo electrónico
+                        </th>
+                        <th>
+                          Rol
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {directorio.items.map((u) => (
                         <tr key={u.email}>
                           <td>
                             {u.nombreCompleto}
@@ -1130,71 +1160,43 @@ export default function Perfil() {
                             {u.email}
                           </td>
                           <td>
-                            {etiquetaRol(
-                              u.rol
-                            )}
+                            {etiquetaRol(u.rol)}
                           </td>
                         </tr>
-                      )
-                    )}
-                    {!loadingDirectorio &&
-                      directorio.items.length ===
-                      0 && (
+                      ))}
+                      {!loadingDirectorio && directorio.items.length === 0 && (
                         <tr>
-                          <td
-                            colSpan={3}
-                            className="directorio-vacio"
-                          >
+                          <td colSpan={3} className="directorio-vacio">
                             No se encontraron usuarios.
                           </td>
                         </tr>
                       )}
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="directorio-paginacion">
+                  <button
+                    type="button"
+                    className="app-btn-secondary"
+                    onClick={() => setPagina((p) => Math.max(0, p - 1))}
+                    disabled={pagina === 0 || loadingDirectorio}
+                  >
+                    Anterior
+                  </button>
+                  <span>
+                    Página {pagina + 1} de {totalPaginas}
+                  </span>
+                  <button
+                    type="button"
+                    className="app-btn-secondary"
+                    onClick={() => setPagina((p) => p + 1)}
+                    disabled={pagina + 1 >= totalPaginas || loadingDirectorio}
+                  >
+                    Siguiente
+                  </button>
+                </div>
               </div>
-              <div className="directorio-paginacion">
-                <button
-                  type="button"
-                  className="app-btn-secondary"
-                  onClick={() =>
-                    setPagina(
-                      (p) =>
-                        Math.max(
-                          0,
-                          p - 1
-                        )
-                    )
-                  }
-                  disabled={
-                    pagina === 0 ||
-                    loadingDirectorio
-                  }
-                >
-                  Anterior
-                </button>
-                <span>
-                  Página {pagina + 1} de{" "}
-                  {totalPaginas}
-                </span>
-                <button
-                  type="button"
-                  className="app-btn-secondary"
-                  onClick={() =>
-                    setPagina(
-                      (p) => p + 1
-                    )
-                  }
-                  disabled={
-                    pagina + 1 >=
-                    totalPaginas ||
-                    loadingDirectorio
-                  }
-                >
-                  Siguiente
-                </button>
-              </div>
-            </div>
-          )}
+            )}
         </div>
       </main>
     </div>

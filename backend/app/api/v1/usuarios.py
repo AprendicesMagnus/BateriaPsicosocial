@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, require_admin, require_gestor
 from app.db.session import get_db
 from app.models.user import Usuario
-from app.schemas.common import CambioPasswordPerfilRequest, CambioRolRequest, UsuarioCreate, UsuarioUpdate
+from app.schemas.common import CambioPasswordPerfilRequest, EmpresaActivaRequest, CambioRolRequest, UsuarioCreate, UsuarioUpdate
 from app.services import auditoria as auditoria_service
+from app.services import organizaciones as organizaciones_service
 from app.services import perfil as perfil_service
 from app.services import usuarios as usuarios_service
 from app.services.auth import usuario_publico
@@ -47,6 +48,21 @@ def cambiar_mi_password(
         db, usuario=actual, accion="CAMBIAR_PASSWORD_PERFIL", entidad="Usuario", entidad_id=str(actual.id), request=request
     )
     return {"message": "Contraseña actualizada correctamente.", "usuario": usuario_publico(usuario)}
+
+
+@router.post("/me/empresa-activa")
+def cambiar_mi_empresa_activa(
+    data: EmpresaActivaRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    usuario = organizaciones_service.cambiar_empresa_activa(db, actual, data.organizacionId)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="CAMBIAR_EMPRESA_ACTIVA", entidad="Organizacion",
+        entidad_id=str(data.organizacionId), request=request,
+    )
+    return {"usuario": usuario_publico(usuario)}
 
 
 @router.get("/directorio")

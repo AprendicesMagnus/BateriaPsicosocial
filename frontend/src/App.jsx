@@ -10,10 +10,12 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Checkout from "./pages/Checkout";
 import Reportes from "./pages/Reportes";
+import Respuestas from "./pages/Respuestas";
 import Perfil from "./pages/Perfil";
 import VerificarNit from "./pages/VerificarNit";
 import MisEmpresas from "./pages/MisEmpresas";
 import RestriccionRolLimitado from "./components/RestriccionRolLimitado";
+import CierreInactividad from "./components/CierreInactividad";
 import CrearEmpresa from "./pages/Crearempresa";
 import Panel from "./pages/Panel";
 import Dashboard from "./pages/Dashboard";
@@ -34,6 +36,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <CierreInactividad />
         <RestriccionRolLimitado>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -84,6 +87,15 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          {/* Respuestas individuales (confidencial): solo administrador y evaluador SST */}
+          <Route
+            path="/respuestas"
+            element={
+              <ProtectedRoute roles={["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"]}>
+                <Respuestas />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/perfil" element={<ProtectedRoute> <Perfil /> </ProtectedRoute>} />
           <Route path="/mis-empresas" element={<ProtectedRoute> <MisEmpresas /> </ProtectedRoute>} />
           <Route path="/verificar-nit" element={<VerificarNit />} />
@@ -91,7 +103,7 @@ export default function App() {
           <Route
             path="/panel"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={["SUPER_ADMINISTRADOR"]}>
                 <Panel />
               </ProtectedRoute>
             }

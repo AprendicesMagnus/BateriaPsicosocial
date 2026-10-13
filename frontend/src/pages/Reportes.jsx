@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
 import { fetchReportes, fetchEncuestasRealizadas } from "../api/reportes";
+import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import { fetchEnlaces, crearEnlace, eliminarEnlace } from "../api/enlaces";
+import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha } from "../utils/encuestas";
 import "../styles/app-shell.css";
 import "../styles/Reportes.css";
 
@@ -45,43 +48,16 @@ function IconoDescargar() {
   );
 }
 
-// Colores y textos de cada nivel de riesgo (mismos que usa CuestionarioTrabajador)
-const NIVELES = {
-  SIN_RIESGO: { bg: "#DEF7EC", text: "#03543F", label: "Sin riesgo" },
-  BAJO: { bg: "#E1EFFE", text: "#1E40AF", label: "Riesgo bajo" },
-  MEDIO: { bg: "#FEF08A", text: "#713F12", label: "Riesgo medio" },
-  ALTO: { bg: "#FDBA74", text: "#9A3412", label: "Riesgo alto" },
-  MUY_ALTO: { bg: "#FCA5A5", text: "#991B1B", label: "Riesgo muy alto" },
-};
-
-// Texto y estilo del estado de la encuesta del trabajador (EvaluacionParticipante.estado)
-const ESTADOS_ENCUESTA = {
-  COMPLETADA: { label: "Completada", clase: "reportes-status--listo" },
-  EN_PROGRESO: { label: "En progreso", clase: "reportes-status--progreso" },
-  PENDIENTE: { label: "Pendiente", clase: "reportes-status--restringido" },
-};
-
-// Nombre corto de cada instrumento para las etiquetas de avance
-const NOMBRES_INSTRUMENTO = {
-  FICHA_DATOS: "Ficha de datos",
-  ESTRES: "Estrés",
-  EXTRALABORAL: "Extralaboral",
-  INTRALABORAL_A: "Intralaboral A",
-  INTRALABORAL_B: "Intralaboral B",
-};
-
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
-const ROLES_ENLACES = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
+const ROLES_ENLACES = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
+// Resultados individuales (confidenciales): solo quienes gestionan la empresa y el Super Administrador.
+const ROLES_ENCUESTAS = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
+// Jefe y Administrador ven las empresas que crearon; el Jefe solo consulta (no descarga informes).
+const ROLES_POR_CREADOR = ["JEFE", "ADMINISTRADOR"];
 
 // URL completa que el psicólogo comparte con el paciente
 function urlEnlace(token) {
   return `${window.location.origin}/responder/${token}`;
-}
-
-// "2026-09-29T16:05:18-05:00" -> "29/09/2026, 4:05 p. m."
-function formatearFecha(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
 }
 
 export default function Reportes() {
@@ -103,6 +79,32 @@ export default function Reportes() {
 
   // Sección "Enlaces para pacientes" (solo psicólogo / super administrador)
   const puedeCrearEnlaces = ROLES_ENLACES.includes(usuario?.rol);
+  const puedeVerEncuestas = ROLES_ENCUESTAS.includes(usuario?.rol);
+
+  // Jefe/Administrador: eligen con cuál de las empresas que crearon trabajan (empresa activa).
+  const eligeEmpresa = ROLES_POR_CREADOR.includes(usuario?.rol);
+  const [misEmpresas, setMisEmpresas] = useState([]);
+  const [cambiandoEmpresa, setCambiandoEmpresa] = useState(false);
+
+  useEffect(() => {
+    if (!eligeEmpresa || !token) return;
+    fetchMisEmpresas(token)
+      .then((lista) => setMisEmpresas(lista || []))
+      .catch(() => {});
+  }, [eligeEmpresa, token]);
+
+  async function handleCambiarEmpresa(e) {
+    const id = e.target.value;
+    if (!id || id === usuario?.organizacionId) return;
+    setCambiandoEmpresa(true);
+    try {
+      await cambiarEmpresaActiva(token, id);
+      window.location.reload(); // vuelve a pedir los reportes con la nueva empresa
+    } catch {
+      setCambiandoEmpresa(false);
+    }
+  }
+  const puedeDescargar = usuario?.rol !== "JEFE";
   const [enlaces, setEnlaces] = useState([]);
   const [nombreEnlace, setNombreEnlace] = useState("");
   const [creandoEnlace, setCreandoEnlace] = useState(false);
@@ -113,7 +115,12 @@ export default function Reportes() {
   const [eliminandoEnlace, setEliminandoEnlace] = useState(null);
 
   const {
-    empresaNombre = usuario?.organizacionNombre || "Organización",
+    empresaNombre = usuario?.organizacionNombre ||
+      (usuario?.rol === "SUPER_ADMINISTRADOR"
+        ? "Todas las empresas"
+        : ROLES_POR_CREADOR.includes(usuario?.rol)
+        ? "Mis empresas"
+        : "Organización"),
     sector = usuario?.sector || "General",
     bateriaNombre = "Batería de riesgo psicosocial",
     rangoFechas = "vigente 2026",
@@ -122,7 +129,8 @@ export default function Reportes() {
   useEffect(() => {
     if (token) {
       cargarReportes();
-      cargarEncuestas();
+      if (puedeVerEncuestas) cargarEncuestas();
+      else setCargandoEncuestas(false);
     }
   }, [token]);
 
@@ -252,9 +260,7 @@ export default function Reportes() {
         <div className="app-decor app-decor--3" />
 
         <div className="app-content">
-          <nav className="app-breadcrumb">
-            Reportes <span>›</span> {empresaNombre}
-          </nav>
+          <BotonRegresar />
 
           <div className="app-title-row">
             <h1 className="app-title">{empresaNombre}</h1>
@@ -264,6 +270,8 @@ export default function Reportes() {
           <p className="app-subtitle">
             {bateriaNombre} · {rangoFechas}
           </p>
+
+          {/* El selector de "Empresa activa" para Jefe/Psicólogo ahora vive en el Dashboard. */}
 
           <p className="reportes-legal-note">
             Desglosados por área de la organización, según la Resolución 2764 de 2022 (Anonimizado mín. 5 participantes)
@@ -386,21 +394,25 @@ export default function Reportes() {
                     {reporte.estado === "listo" ? "Listo" : "Acceso restringido"}
                   </span>
 
-                  <button
-                    type="button"
-                    className={`reportes-download-btn ${
-                      reporte.estado === "restringido" || descargandoId === reporte.id ? "reportes-download-btn--disabled" : ""
-                    }`}
-                    onClick={() => handleDescargar(reporte)}
-                    disabled={reporte.estado === "restringido" || descargandoId === reporte.id}
-                  >
-                    <IconoDescargar /> {descargandoId === reporte.id ? "Generando..." : "Descargar"}
-                  </button>
+                  {puedeDescargar && (
+                    <button
+                      type="button"
+                      className={`reportes-download-btn ${
+                        reporte.estado === "restringido" || descargandoId === reporte.id ? "reportes-download-btn--disabled" : ""
+                      }`}
+                      onClick={() => handleDescargar(reporte)}
+                      disabled={reporte.estado === "restringido" || descargandoId === reporte.id}
+                    >
+                      <IconoDescargar /> {descargandoId === reporte.id ? "Generando..." : "Descargar"}
+                    </button>
+                  )}
                 </div>
               ))
             )}
           </div>
 
+          {puedeVerEncuestas && (
+          <>
           {/* =================================================
               ENCUESTAS REALIZADAS (datos de la BD)
               Una fila por trabajador y evaluación, con su avance y,
@@ -539,6 +551,8 @@ export default function Reportes() {
               })
             )}
           </div>
+          </>
+          )}
         </div>
       </main>
     </div>

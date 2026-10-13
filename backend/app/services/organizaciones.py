@@ -1,11 +1,15 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import asegurar_acceso_organizacion
 from app.core.crypto import email_valido, hash_password, password_valida
 from app.core.errors import AppError
 from app.core.nit_utils import validar_nit_con_dv
-from app.models.evaluation import Evaluacion, EvaluacionParticipante
+from app.models.audit import Auditoria
+from app.models.commercial import Compra
+from app.models.evaluation import Evaluacion, EvaluacionParticipante, Notificacion
 from app.models.organization import Area, Organizacion
+from app.models.survey import SeguimientoRecomendacion
 from app.models.user import Rol, Usuario
 from app.services.auth import crear_y_enviar_codigo
 
@@ -57,6 +61,9 @@ def autorregistrar_organizacion(db: Session, data, creador: Usuario | None = Non
         if not data.usuarioNombre or not data.usuarioApellido or not email_usuario or not data.usuarioPassword:
             raise AppError(400, "Todos los datos del usuario responsable de la empresa son obligatorios.")
 
+        if not data.usuarioNumeroResolucion:
+            raise AppError(400, "El número de resolución del usuario responsable es obligatorio (6 dígitos).")
+
         if not email_valido(email_usuario):
             raise AppError(400, "El correo electrónico del usuario no es válido.")
 
@@ -88,11 +95,10 @@ def autorregistrar_organizacion(db: Session, data, creador: Usuario | None = Non
         db.flush()
 
         if crea_psicologo:
-            # Limitación actual del modelo: un usuario pertenece a UNA sola organización
-            # (usuarios.organizacion_id). Se vincula a su primera empresa; las siguientes
-            # quedan registradas como "suyas" (Mis Empresas) pero sin cambiar esa vinculación.
-            if creador.organizacion_id is None:
-                creador.organizacion_id = org.id
+            # El Psicologo es independiente y puede crear varias empresas. usuarios.organizacion_id
+            # guarda su EMPRESA ACTIVA (sobre la que trabaja el Dashboard): la recién creada pasa a
+            # ser la activa. Puede cambiarla cuando quiera con cambiar_empresa_activa().
+            creador.organizacion_id = org.id
         else:
             usuario = Usuario(
                 nombre=data.usuarioNombre.strip(),
@@ -101,10 +107,14 @@ def autorregistrar_organizacion(db: Session, data, creador: Usuario | None = Non
                 password_hash=hash_password(data.usuarioPassword),
                 rol_id=rol_responsable.id,
                 organizacion_id=org.id,
+                numero_resolucion=data.usuarioNumeroResolucion,
                 email_verificado=False,
                 estado="ACTIVO",
             )
             db.add(usuario)
+        # Jefe/Administrador: la empresa recién creada pasa a ser su empresa activa (la de Reportes).
+        if creador is not None and creador.rol.codigo in {"JEFE", "ADMINISTRADOR"}:
+            creador.organizacion_id = org.id
         db.commit()
     except Exception:
         db.rollback()
@@ -239,3 +249,149 @@ def eliminar_area(db: Session, area_id, actual: Usuario) -> dict:
     db.delete(area)
     db.commit()
     return {"message": "Área eliminada."}
+
+
+# --- Edición y eliminación de "Mis Empresas" -------------------------------------------------
+
+
+def _obtener_organizacion_propia(db: Session, org_id, actual: Usuario) -> Organizacion:
+    """La empresa debe existir y ser del usuario (o ser Super Administrador)."""
+    org = db.query(Organizacion).filter(Organizacion.id == org_id).first()
+    if org is None:
+        raise AppError(404, "Empresa no encontrada.")
+    if org.creada_por_id != actual.id and actual.rol.codigo != "SUPER_ADMINISTRADOR":
+        raise AppError(403, "Solo puedes gestionar las empresas que tú creaste.")
+    return org
+
+
+def actualizar_mi_organizacion(db: Session, org_id, data, actual: Usuario) -> Organizacion:
+    org = _obtener_organizacion_propia(db, org_id, actual)
+    cambios = data.model_dump(exclude_unset=True, exclude_none=True)
+    if not cambios:
+        raise AppError(400, "No enviaste ningún cambio.")
+    # Razón social y NIT no se pueden modificar desde aquí.
+    for campo in ("sector", "municipio"):
+        if campo in cambios:
+            setattr(org, campo, cambios[campo].strip())
+    if "email" in cambios:
+        org.email = str(cambios["email"]).lower().strip()
+    if "telefono" in cambios:
+        org.telefono = cambios["telefono"].strip()
+    db.commit()
+    db.refresh(org)
+    return org
+
+
+def eliminar_mi_organizacion(db: Session, org_id, actual: Usuario) -> dict:
+    """Elimina una empresa que aún no tiene actividad.
+
+    Se bloquea si ya tiene evaluaciones, compras o seguimiento de recomendaciones, para no
+    perder información. Al eliminarla:
+    - los usuarios RESPONSABLE_SST creados para esta empresa se eliminan (quedarían sin acceso);
+    - cualquier otro usuario vinculado (p. ej. el Psicologo que la creó) queda sin empresa;
+    - se eliminan sus áreas.
+    """
+    org = _obtener_organizacion_propia(db, org_id, actual)
+
+    if db.query(Evaluacion).filter(Evaluacion.organizacion_id == org.id).first():
+        raise AppError(409, "No se puede eliminar: la empresa ya tiene evaluaciones registradas.")
+    if db.query(Compra).filter(Compra.organizacion_id == org.id).first():
+        raise AppError(409, "No se puede eliminar: la empresa ya tiene compras registradas.")
+    if db.query(SeguimientoRecomendacion).filter(SeguimientoRecomendacion.organizacion_id == org.id).first():
+        raise AppError(409, "No se puede eliminar: la empresa ya tiene seguimiento de recomendaciones.")
+
+    vinculados = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.organizacion_id == org.id).all()
+    responsables = [u for u in vinculados if u.rol.codigo == "RESPONSABLE_SST"]
+    ids_responsables = [u.id for u in responsables]
+    if ids_responsables and db.query(Compra).filter(Compra.usuario_id.in_(ids_responsables)).first():
+        raise AppError(409, "No se puede eliminar: un usuario de la empresa tiene compras registradas.")
+
+    try:
+        for usuario in vinculados:
+            if usuario.rol.codigo != "RESPONSABLE_SST":
+                usuario.organizacion_id = None
+        if ids_responsables:
+            db.query(Notificacion).filter(Notificacion.usuario_id.in_(ids_responsables)).delete(
+                synchronize_session=False
+            )
+            db.query(Auditoria).filter(Auditoria.usuario_id.in_(ids_responsables)).update(
+                {Auditoria.usuario_id: None}, synchronize_session=False
+            )
+            for usuario in responsables:
+                db.delete(usuario)
+        db.flush()
+        db.query(Area).filter(Area.organizacion_id == org.id).delete(synchronize_session=False)
+        db.delete(org)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise AppError(409, "No se puede eliminar: la empresa tiene información asociada.")
+
+    return {"message": "Empresa eliminada correctamente."}
+
+
+def cambiar_empresa_activa(db: Session, actual: Usuario, org_id) -> Usuario:
+    """Psicologo, Jefe o Administrador eligen con cuál de las empresas que crearon trabajan."""
+    if actual.rol.codigo not in {"EVALUADOR_SST", "JEFE", "ADMINISTRADOR"}:
+        raise AppError(403, "Tu rol no puede cambiar de empresa activa.")
+    org = (
+        db.query(Organizacion)
+        .filter(Organizacion.id == org_id, Organizacion.creada_por_id == actual.id)
+        .first()
+    )
+    if org is None:
+        raise AppError(404, "No se encontró esa empresa entre las que creaste.")
+    actual.organizacion_id = org.id
+    db.commit()
+    db.refresh(actual)
+    return actual
+
+
+# --- Usuario responsable de una empresa (editable desde "Mis Empresas") ----------------------
+
+
+def _responsable_de(db: Session, org_id) -> Usuario | None:
+    return (
+        db.query(Usuario)
+        .join(Rol, Rol.id == Usuario.rol_id)
+        .filter(Usuario.organizacion_id == org_id, Rol.codigo == "RESPONSABLE_SST")
+        .order_by(Usuario.email.asc())  # Usuario no tiene fecha de creación; el orden solo hace estable el resultado
+        .first()
+    )
+
+
+def _responsable_publico(usuario: Usuario) -> dict:
+    return {
+        "id": str(usuario.id),
+        "nombre": usuario.nombre,
+        "apellido": usuario.apellido,
+        "email": usuario.email,
+        "numeroResolucion": usuario.numero_resolucion,
+    }
+
+
+def obtener_responsable_empresa(db: Session, org_id, actual: Usuario) -> dict | None:
+    """Responsable de la empresa; None si no tiene (p. ej. la creó un Psicologo)."""
+    org = _obtener_organizacion_propia(db, org_id, actual)
+    usuario = _responsable_de(db, org.id)
+    return _responsable_publico(usuario) if usuario else None
+
+
+def actualizar_responsable_empresa(db: Session, org_id, data, actual: Usuario) -> dict:
+    """Solo nombre, apellido y número de resolución. El correo y la contraseña no se tocan."""
+    org = _obtener_organizacion_propia(db, org_id, actual)
+    usuario = _responsable_de(db, org.id)
+    if usuario is None:
+        raise AppError(404, "Esta empresa no tiene un usuario responsable.")
+    cambios = data.model_dump(exclude_unset=True, exclude_none=True)
+    if not cambios:
+        raise AppError(400, "No enviaste ningún cambio.")
+    if "nombre" in cambios:
+        usuario.nombre = cambios["nombre"].strip()
+    if "apellido" in cambios:
+        usuario.apellido = cambios["apellido"].strip()
+    if "numeroResolucion" in cambios:
+        usuario.numero_resolucion = cambios["numeroResolucion"]
+    db.commit()
+    db.refresh(usuario)
+    return _responsable_publico(usuario)

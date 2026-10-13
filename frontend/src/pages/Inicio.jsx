@@ -9,6 +9,7 @@ import "../styles/Inicio.css";
 import "../styles/app-shell.css";
 import { useAuth } from "../context/AuthContext"; // <-- EN LÍNEA NUEVA: IMPORTADO "useAuth"
 import { urlArchivo } from "../api/client";
+import { esSuperAdmin } from "../utils/roles";
 
 
 
@@ -361,6 +362,13 @@ export default function Inicio() {
                 <button type="button" onClick={handleVerPerfil}>
                   Ver perfil
                 </button>
+
+                {esSuperAdmin(usuario?.rol) && (
+                  <button type="button" onClick={() => { setMenuPerfilAbierto(false); navigate("/panel"); }}>
+                    Panel De Administrador
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className="app-profile-dropdown-danger"
@@ -460,9 +468,15 @@ export default function Inicio() {
 
           <div className="section__header">
 
-            <span className="section__eyebrow">
+            <span className="section__eyebrow"
+            style={{
+                    color: "var(--gold-500)",
+                    fontSize: "20px",
+                  }}
+                >
               Resolución 2764 de 2022
             </span>
+                
 
             <h2>
               Factores evaluados por la batería
@@ -542,6 +556,7 @@ export default function Inicio() {
               className="section__eyebrow"
               style={{
                 color: "var(--gold-500)",
+                fontSize: "20px",
               }}
             >
               Ley 1581 de 2012

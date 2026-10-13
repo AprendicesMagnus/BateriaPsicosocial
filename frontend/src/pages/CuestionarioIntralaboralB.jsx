@@ -151,11 +151,6 @@ const opciones = [
 
 const OPCIONES_SI_NO = ["Sí", "No"];
 
-// Las respuestas se guardan en sessionStorage para no perderlas
-// al recargar o al navegar a otro cuestionario. Se borran al
-// cerrar la pestaña (son datos sensibles del trabajador).
-const CLAVE_RESPUESTAS = "magnussing:intralaboralB:respuestas";
-
 // Navegación entre cuestionarios de la Forma B (menú lateral y pestañas).
 // Un solo lugar para las rutas: deben coincidir con App.jsx.
 const NAVEGACION = [
@@ -183,33 +178,8 @@ function obtenerPreguntasVisibles(respuestas) {
   return visibles;
 }
 
-/**
- * ⚠️ NO MODIFICAR: evita datos corruptos en el resultado.
- * Descarta las respuestas de preguntas que ya no son visibles.
- * Caso típico: el usuario contesta "Sí", responde 89-97 y luego
- * cambia el filtro a "No". Sin esta limpieza esas 9 respuestas
- * quedarían guardadas y se enviarían/calificarían aunque el
- * trabajador dijo que no atiende clientes.
- */
-function limpiarRespuestasHuerfanas(respuestas) {
-  const idsVisibles = new Set(
-    obtenerPreguntasVisibles(respuestas).map((p) => String(p.id))
-  );
-
-  return Object.fromEntries(
-    Object.entries(respuestas).filter(([id]) => idsVisibles.has(id))
-  );
-}
-
-function leerRespuestasGuardadas() {
-  try {
-    const guardado = JSON.parse(sessionStorage.getItem(CLAVE_RESPUESTAS));
-    return guardado && typeof guardado === "object" ? guardado : {};
-  } catch {
-    // sessionStorage bloqueado o contenido corrupto: empezamos vacío.
-    return {};
-  }
-}
+// Si el trabajador contesta "Sí", responde 89-97 y luego cambia el filtro a "No",
+// el backend borra esas respuestas al finalizar (finalizar_cuestionario), así no se califican.
 
 /* =========================================================
    FILA DE PREGUNTA

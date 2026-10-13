@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
@@ -40,7 +42,7 @@ def login(data: LoginRequest, request: Request, db: Session = Depends(get_db)):
     resultado = auth_service.login(db, data.email, data.password)
     auditoria_service.registrar_auditoria(
         db,
-        usuario=None,
+        usuario=db.get(Usuario, UUID(resultado["usuario"]["id"])),  # quién inició sesión
         accion="LOGIN",
         entidad="Usuario",
         entidad_id=resultado["usuario"]["id"],
@@ -80,7 +82,7 @@ def login_google(data: GoogleLoginRequest, request: Request, db: Session = Depen
 
     auditoria_service.registrar_auditoria(
         db,
-        usuario=None,
+        usuario=db.get(Usuario, UUID(resultado["usuario"]["id"])),  # quién inició sesión
         accion="LOGIN_GOOGLE",
         entidad="Usuario",
         entidad_id=resultado["usuario"]["id"],

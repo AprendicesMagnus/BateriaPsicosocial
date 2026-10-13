@@ -9,3 +9,8 @@ export async function fetchReportes(token) {
 export async function fetchEncuestasRealizadas(token) {
   return request("/reportes/encuestas", { token });
 }
+
+// Respuestas de un participante a cada pregunta, agrupadas por instrumento (se pide al abrirlo).
+export async function fetchRespuestasEncuesta(token, participanteId) {
+  return request(`/reportes/encuestas/${participanteId}/respuestas`, { token });
+}

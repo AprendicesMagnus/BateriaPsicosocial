@@ -279,3 +279,9 @@
 .reportes-download-btn.reportes-eliminar-btn:hover:not(:disabled) {
   background: #912018;
 }
+
+/* Enlace "Ver respuestas" (vista /respuestas) junto a "Actualizar" */
+.reportes-ver-respuestas {
+  margin-left: auto;
+  text-decoration: none;
+}

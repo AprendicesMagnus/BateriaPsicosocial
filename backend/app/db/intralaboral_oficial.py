@@ -4,7 +4,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from app.models.evaluation import ResultadoDimension
+from app.models.evaluation import Respuesta, ResultadoDimension
 from app.models.survey import Baremo, CuestionarioVersion, Dimension, Pregunta
 
 JSON_PATH = Path(__file__).resolve().parents[2] / "docs" / "referencia_intralaboral_A_B.json"
@@ -25,14 +25,64 @@ def cargar_referencia() -> dict:
     return json.loads(JSON_PATH.read_text(encoding="utf-8"))
 
 
+# Rangos de preguntas condicionales por filtro ({"CLIENTES": [desde, hasta], ...}).
+# La referencia oficial no los trae; se toman de app/db/data/intralaboral_forma_{A,B}.json.
+FILTROS_PATH = Path(__file__).parent / "data"
+
+
+@lru_cache(maxsize=2)
+def _filtros_forma(forma_key: str) -> dict:
+    datos = json.loads((FILTROS_PATH / f"intralaboral_{forma_key}.json").read_text(encoding="utf-8"))
+    return datos.get("filtros", {})
+
+
+def _filtro_de(numero: int, filtros: dict) -> str | None:
+    """Filtro ("CLIENTES" / "JEFE") del que depende la pregunta, o None si siempre se responde."""
+    for nombre, (desde, hasta) in filtros.items():
+        if desde <= numero <= hasta:
+            return nombre
+    return None
+
+
+def _completar_filtros(version: CuestionarioVersion, filtros: dict) -> None:
+    """Asigna el filtro a las preguntas de una versión ya sembrada sin él (BD sembradas antes)."""
+    for dim in version.dimensiones:
+        for p in dim.preguntas:
+            esperado = _filtro_de(p.orden, filtros)
+            if p.filtro != esperado:
+                p.filtro = esperado
+
+
 def _borrar_dimensiones(db, version: CuestionarioVersion) -> None:
     ids = [d.id for d in version.dimensiones]
     if not ids:
         return
-    db.query(ResultadoDimension).filter(ResultadoDimension.dimension_id.in_(ids)).delete(synchronize_session=False)
+
+    # Obtener preguntas pertenecientes a las dimensiones
+    pregunta_ids = [
+        p.id
+        for p in db.query(Pregunta)
+        .filter(Pregunta.dimension_id.in_(ids))
+        .all()
+    ]
+
+    # Eliminar resultados asociados a las dimensiones
+    db.query(ResultadoDimension).filter(
+        ResultadoDimension.dimension_id.in_(ids)
+    ).delete(synchronize_session=False)
+
+    # Eliminar respuestas antes de eliminar preguntas
+    if pregunta_ids:
+        db.query(Respuesta).filter(
+            Respuesta.pregunta_id.in_(pregunta_ids)
+        ).delete(synchronize_session=False)
+
+    # Eliminar dimensiones
     for dim in list(version.dimensiones):
         db.delete(dim)
+
     db.flush()
+
 
 
 def _agregar_baremos(db, dimension_id, baremos: list[dict]) -> None:
@@ -67,11 +117,14 @@ def sembrar_forma_intralaboral(db, forma_key: str) -> CuestionarioVersion:
         .filter(CuestionarioVersion.codigo == codigo, CuestionarioVersion.vigente.is_(True))
         .first()
     )
+    filtros = _filtros_forma(forma_key)
     n_dim_esperadas = len(forma["dimensiones"])
     n_actual = 0
     if version:
         n_actual = sum(1 for d in version.dimensiones if d.tipo == "DIMENSION")
         if n_actual == n_dim_esperadas:
+            _completar_filtros(version, filtros)
+            db.flush()
             return version
         _borrar_dimensiones(db, version)
     else:
@@ -112,6 +165,7 @@ def sembrar_forma_intralaboral(db, forma_key: str) -> CuestionarioVersion:
                     valor_minimo=0,
                     valor_maximo=4,
                     tipo_respuesta="LIKERT",
+                    filtro=_filtro_de(n, filtros),
                 )
             )
         orden += 1

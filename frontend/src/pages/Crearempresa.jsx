@@ -5,8 +5,10 @@ import "../styles/Empresas.css";
 import { request } from "../api/client";
 import { fetchMe } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
+import BotonRegresar from "../components/BotonRegresar";
 import {
   TEXTO_AYUDA_PASSWORD,
+  celularValido,
   emailValido,
   enteroEnRango,
   filtrarLugar,
@@ -21,7 +23,7 @@ import {
   textoLibreValido,
 } from "../utils/validaciones";
 
-const SECTORES = ["Agropecuario", "Energético", "Turístico", "Comercial", "Otro"];
+const SECTORES = ["Comercial", "Servicios", "Otros"];
 
 export default function CrearEmpresa() {
   const location = useLocation();
@@ -46,11 +48,13 @@ export default function CrearEmpresa() {
   const [numeroTrabajadores, setNumeroTrabajadores] = useState("");
   const [ciudad, setCiudad] = useState("");
   const [correoContacto, setCorreoContacto] = useState("");
+  const [celular, setCelular] = useState("");
 
   const [usuarioNombre, setUsuarioNombre] = useState("");
   const [usuarioApellido, setUsuarioApellido] = useState("");
   const [usuarioEmail, setUsuarioEmail] = useState("");
   const [usuarioPassword, setUsuarioPassword] = useState("");
+  const [usuarioResolucion, setUsuarioResolucion] = useState("");
 
   const [tocados, setTocados] = useState({});
   const [intento, setIntento] = useState(false);
@@ -100,6 +104,11 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
       : !emailValido(normalizarEmail(correoContacto))
       ? "Ingresa un correo válido."
       : "",
+    celular: !celular
+      ? "Este campo es obligatorio."
+      : !celularValido(celular)
+      ? "Ingresa un celular válido de 10 dígitos que empiece por 3."
+      : "",
     usuarioNombre: !usuarioNombre
       ? "Este campo es obligatorio."
       : !nombrePersonaValido(usuarioNombre.trim(), 100)
@@ -119,6 +128,11 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
       ? "Este campo es obligatorio."
       : !passwordValida(usuarioPassword)
       ? TEXTO_AYUDA_PASSWORD
+      : "",
+    usuarioResolucion: !usuarioResolucion
+      ? "Este campo es obligatorio."
+      : !/^\d{6}$/.test(usuarioResolucion)
+      ? "El número de resolución debe tener exactamente 6 dígitos."
       : "",
   };
 
@@ -171,6 +185,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
           numeroTrabajadores: parseInt(numeroTrabajadores, 10) || null,
           municipio: ciudadTrim,
           email: correoEmpresaNorm,
+          telefono: celular.trim(),
           ...(esPsicologo
             ? {}
             : {
@@ -178,6 +193,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                 usuarioApellido: apeRespTrim,
                 usuarioEmail: correoUserNorm,
                 usuarioPassword,
+                usuarioNumeroResolucion: usuarioResolucion,
               }),
         },
       });
@@ -188,7 +204,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
         fetchMe(token)
           .then((data) => actualizarUsuario(data.usuario))
           .catch(() => {});
-        navigate("/mis-empresas", { state: { mensaje: res.message } });
+        navigate("/mis-empresas", { state: { mensaje: res.message }, replace: true });
         return;
       }
 
@@ -205,7 +221,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
   return (
     <div className="app-shell-page">
       <header className="app-topbar">
-        <Link to="/" aria-label="Ir a la página principal">
+        <Link to={usuario ? "/Inicio" : "/"} aria-label="Ir al inicio">
           <img src="/logo oscu.png" alt="Magnus SIG" className="app-topbar-logo" />
         </Link>
       </header>
@@ -218,6 +234,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
         <div className="empresas-center">
           <div className="app-card empresas-card empresas-card--ancho">
             <div className="empresas-title-row">
+              <BotonRegresar tono="oscuro" />
               <h1 className="empresas-titulo">Crear empresa y usuario responsable</h1>
               <span className="empresas-badge">Empresa no registrada</span>
             </div>
@@ -388,7 +405,28 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                 </label>
               </div>
 
-              
+              <div className="empresas-form-row">
+                <label className="field">
+                  <span className="field__label">Celular de contacto</span>
+                  <input
+                    className={`field__input ${mostrarError("celular") ? "field__input--invalid" : ""}`}
+                    aria-invalid={mostrarError("celular") ? "true" : "false"}
+                    aria-describedby={mostrarError("celular") ? "celular-error" : undefined}
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="Ej. 3001234567"
+                    value={celular}
+                    onChange={(e) => setCelular(soloDigitos(e.target.value, 10))}
+                    onBlur={() => marcar("celular")}
+                  />
+                  {mostrarError("celular") && (
+                    <span className="field__error" id="celular-error">
+                      {errores.celular}
+                    </span>
+                  )}
+                </label>
+              </div>
 
               {!esPsicologo && (
                 <>
@@ -480,6 +518,28 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                 </label>
               </div>
 
+              <div className="empresas-form-row">
+                <label className="field">
+                  <span className="field__label">Número de Resolución</span>
+                  <input
+                    className={`field__input ${mostrarError("usuarioResolucion") ? "field__input--invalid" : ""}`}
+                    aria-invalid={mostrarError("usuarioResolucion") ? "true" : "false"}
+                    aria-describedby={mostrarError("usuarioResolucion") ? "usuarioResolucion-error" : undefined}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Ej. 123456"
+                    value={usuarioResolucion}
+                    onChange={(e) => setUsuarioResolucion(soloDigitos(e.target.value, 6))}
+                    onBlur={() => marcar("usuarioResolucion")}
+                  />
+                  {mostrarError("usuarioResolucion") && (
+                    <span className="field__error" id="usuarioResolucion-error">
+                      {errores.usuarioResolucion}
+                    </span>
+                  )}
+                </label>
+              </div>
                 </>
               )}
 

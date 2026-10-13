@@ -145,6 +145,10 @@ class CambioPasswordPerfilRequest(BaseModel):
     passwordNueva: PasswordNueva
 
 
+class EmpresaActivaRequest(BaseModel):
+    organizacionId: UUID
+
+
 class LoginRequest(BaseModel):
     email: Correo
     password: str = Field(min_length=1, max_length=72)
@@ -276,6 +280,10 @@ class CambioRolRequest(BaseModel):
     )
 
 
+# Sectores permitidos al registrar o editar una empresa desde "Crear empresa" / "Mis Empresas".
+SectorEmpresa = Literal["Comercial", "Servicios", "Otros"]
+
+
 class OrganizacionCreate(BaseModel):
     nombre: RazonSocial
     nit: str = Field(
@@ -310,6 +318,23 @@ class OrganizacionUpdate(BaseModel):
         le=1000000,
     )
     activa: bool | None = None
+
+
+class OrganizacionMiaUpdate(BaseModel):
+    """Campos que el creador de una empresa puede editar (razón social y NIT están bloqueados)."""
+
+    sector: SectorEmpresa | None = None
+    municipio: Lugar | None = None
+    email: Correo | None = None
+    telefono: str | None = Field(default=None, pattern=r"^3\d{9}$", description="Celular de 10 dígitos que empieza por 3")
+
+
+class ResponsableEmpresaUpdate(BaseModel):
+    """Datos que se pueden editar del usuario responsable de una empresa (correo y contraseña no)."""
+
+    nombre: NombrePersona | None = None
+    apellido: NombrePersona | None = None
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$", description="6 dígitos numéricos")
 
 
 class AreaCreate(BaseModel):
@@ -429,6 +454,37 @@ class PagoPublico(BaseModel):
     titular: str | None = None
     mensajeRespuesta: str | None = None
     procesadoEn: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class EvaluacionCierre(BaseModel):
+    justificacion: str | None = Field(default=None, max_length=1000)
+
+
+class ConsentimientoRequest(BaseModel):
+    aceptado: bool = True
+
+
+class RespuestaRequest(BaseModel):
+    preguntaId: UUID
+    valor: int | str = Field(description="Valor Likert entre 0 y 5 o texto")
+
+    @field_validator("valor")
+    @classmethod
+    def validar_valor(cls, v):
+        if isinstance(v, int):
+            # Se permite 0 porque el intralaboral usa la escala oficial 0-4 (Nunca=0 ... Siempre=4).
+            # El rango exacto de cada pregunta se valida en el servicio con valor_minimo/valor_maximo.
+            if v < 0 or v > 5:
+                raise ValueError("El valor numérico debe estar entre 0 y 5.")
+        elif isinstance(v, str):
+            if not v.strip():
+                raise ValueError("El valor de texto no puede estar vacío.")
+        else:
+            raise ValueError("Tipo de respuesta no válido.")
+        return v
+
 
 
 class FichaDatosRequest(BaseModel):
@@ -630,7 +686,9 @@ class OrganizacionAutorregistroCreate(BaseModel):
         pattern=r"^\d{9}-\d$",
         description="NIT con dígito de verificación, formato NNNNNNNNN-D",
     )
-    sector: str | None = Field(default=None, min_length=2, max_length=80)
+    sector: SectorEmpresa | None = None
+    numeroTrabajadores: int | None = Field(default=None, ge=1, le=1000000)
+
     municipio: Lugar | None = None
     telefono: str | None = Field(
         default=None,
@@ -639,6 +697,13 @@ class OrganizacionAutorregistroCreate(BaseModel):
     )
     email: Correo | None = None
     numeroTrabajadores: int | None = Field(default=None, ge=1, le=1000000)
+
+    # Celular de contacto de la empresa: 10 dígitos y empieza por 3 (formato Colombia).
+    telefono: str | None = Field(
+        default=None, 
+        pattern=r"^3\d{9}$", 
+        description="Celular de 10 dígitos que empieza por 3"
+    )
 
     # Datos del usuario responsable. Son opcionales porque un psicólogo
     # (EVALUADOR_SST) que registra una empresa no necesita crear otro usuario;
@@ -676,6 +741,13 @@ class OrganizacionAutorregistroCreate(BaseModel):
             "password_administrador",
             "passwordAdministrador",
         ),
+    )
+    
+    # Número de resolución del responsable: exactamente 6 dígitos numéricos.
+    usuarioNumeroResolucion: str | None = Field(
+        default=None, 
+        pattern=r"^\d{6}$", 
+        description="6 dígitos numéricos"
     )
 
     model_config = {"populate_by_name": True}

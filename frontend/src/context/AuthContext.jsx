@@ -4,6 +4,7 @@ import { hayPagoEnCurso } from "../utils/pagoPendiente";
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = "magnussing_token";
+const ACTIVIDAD_KEY = "magnussing_ultima_actividad"; // la usa CierreInactividad
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(STORAGE_KEY));
@@ -19,6 +20,7 @@ export function AuthProvider({ children }) {
       .then((data) => setUsuario(data.usuario))
       .catch(() => {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(ACTIVIDAD_KEY);
         setToken(null);
       })
       .finally(() => setLoading(false));
@@ -27,6 +29,7 @@ export function AuthProvider({ children }) {
   // Si cualquier petición recibe 401 (token vencido), se cierra la sesión en memoria.
   useEffect(() => {
     const alExpirar = () => {
+      localStorage.removeItem(ACTIVIDAD_KEY);
       setToken(null);
       setUsuario(null);
     };
@@ -36,6 +39,8 @@ export function AuthProvider({ children }) {
 
   function iniciarSesion(nuevoToken, nuevoUsuario) {
     localStorage.setItem(STORAGE_KEY, nuevoToken);
+    // Sesión nueva = actividad reciente (evita heredar una marca vieja de una sesión anterior)
+    localStorage.setItem(ACTIVIDAD_KEY, String(Date.now()));
     // Un inicio de sesión normal ya no es el de un paciente del enlace
     if (!nuevoUsuario?.esInvitado) localStorage.removeItem("magnussing_enlace");
     setToken(nuevoToken);
@@ -60,6 +65,7 @@ export function AuthProvider({ children }) {
     }
 
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(ACTIVIDAD_KEY);
     setToken(null);
     setUsuario(null);
   }

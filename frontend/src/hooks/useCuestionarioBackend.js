@@ -25,12 +25,13 @@ import {
 } from "../api/evaluaciones";
 
 // Prefijo del código de cada pregunta en la BD. El id numérico de la página + el prefijo
-// forman el código: la pregunta 12 de Estrés es "EST_12" (ver seed.py e intralaboral.py).
+// forman el código: la pregunta 12 de Estrés es "EST_12" (ver seed.py e intralaboral_oficial.py,
+// que siembra el intralaboral como "INTRALABORAL_A_12").
 const PREFIJOS = {
   ESTRES: "EST_",
   EXTRALABORAL: "EXT_",
-  INTRALABORAL_A: "INTA_",
-  INTRALABORAL_B: "INTB_",
+  INTRALABORAL_A: "INTRALABORAL_A_",
+  INTRALABORAL_B: "INTRALABORAL_B_",
 };
 
 // Ruta del frontend de cada instrumento, para redirigir al que esté pendiente
@@ -47,6 +48,29 @@ export const RUTAS = {
 // Las preguntas filtro ("¿Atiende clientes?", "¿Es jefe?") no se guardan como respuesta:
 // solo deciden qué preguntas condicionales se muestran y se exigen.
 const FILTROS = { clientes: "CLIENTES", jefe: "JEFE" };
+
+// Como el filtro no llega a la BD, un "No" se perdería al recargar la página. Se recuerda en
+// sessionStorage por evaluación e instrumento (solo "Sí"/"No", ningún dato del trabajador).
+const claveFiltros = (evaluacionId, codigo) => `magnussing:filtros:${evaluacionId}:${codigo}`;
+
+function leerFiltros(evaluacionId, codigo) {
+  try {
+    const guardado = JSON.parse(sessionStorage.getItem(claveFiltros(evaluacionId, codigo)));
+    return guardado && typeof guardado === "object" ? guardado : {};
+  } catch {
+    return {};
+  }
+}
+
+function guardarFiltro(evaluacionId, codigo, idFiltro, texto) {
+  try {
+    const filtros = leerFiltros(evaluacionId, codigo);
+    filtros[idFiltro] = texto;
+    sessionStorage.setItem(claveFiltros(evaluacionId, codigo), JSON.stringify(filtros));
+  } catch {
+    // sessionStorage bloqueado: el filtro solo vive en pantalla
+  }
+}
 
 export function useCuestionarioBackend(codigoEsperado, mapa) {
   const { token } = useAuth();
@@ -112,16 +136,18 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
           return;
         }
         const mapaUuid = {};
-        const previas = {};
+        // Filtros respondidos antes de recargar (incluye los "No", que no dejan respuestas en la BD)
+        const previas = { ...leerFiltros(evaluacionId, codigoEsperado) };
         data.preguntas.forEach((p) => {
           mapaUuid[p.codigo] = p.id;
           if (p.respuesta === null || p.respuesta === undefined) return;
           // "EST_12" -> 12, que es el id de la pregunta en la página
           previas[Number(p.codigo.replace(prefijo, ""))] = textoPorValor[p.respuesta];
           // Si hay respuestas de una pregunta condicional, el filtro se había respondido "Sí"
+          // (salvo que después lo cambiara a "No": manda lo recordado en sessionStorage)
           if (p.filtro) {
             const idFiltro = Object.keys(FILTROS).find((k) => FILTROS[k] === p.filtro);
-            previas[idFiltro] = "Sí";
+            if (previas[idFiltro] === undefined) previas[idFiltro] = "Sí";
           }
         });
         setUuidPorCodigo(mapaUuid);
@@ -135,8 +161,11 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
   const seleccionarRespuesta = useCallback(
     async (preguntaId, texto) => {
       setRespuestas((prev) => ({ ...prev, [preguntaId]: texto }));
-      // La pregunta filtro solo vive en pantalla; se envía al backend al finalizar
-      if (FILTROS[preguntaId]) return;
+      // La pregunta filtro no se guarda como respuesta; se envía al backend al finalizar
+      if (FILTROS[preguntaId]) {
+        if (evaluacionId) guardarFiltro(evaluacionId, codigoEsperado, preguntaId, texto);
+        return;
+      }
       // Sin evaluación no se puede guardar; se deja el mensaje de carga (no se sobrescribe)
       if (!evaluacionId) {
         setError((prev) => prev || "No hay una evaluación activa; esta respuesta no se guardó.");
@@ -162,7 +191,7 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
         setError(e.message);
       }
     },
-    [uuidPorCodigo, prefijo, token, evaluacionId, mapa]
+    [uuidPorCodigo, prefijo, token, evaluacionId, mapa, codigoEsperado]
   );
 
   // 4. Cierra el instrumento en el backend y navega al siguiente pendiente (o al dashboard)

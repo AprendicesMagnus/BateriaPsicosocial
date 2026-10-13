@@ -352,30 +352,6 @@ export default function Landing() {
       </div>
 
 
-      {/* =====================================================
-          ICONOS
-      ====================================================== */}
-
-      <div className="container icon-row">
-
-        <div className="icon-chip">
-          Intralaboral
-        </div>
-
-        <div className="icon-chip">
-          Extralaboral
-        </div>
-
-        <div className="icon-chip">
-          Sociodemográfico
-        </div>
-
-        <div className="icon-chip">
-          Informes
-        </div>
-
-      </div>
-
 
       {/* =====================================================
           FACTORES
@@ -390,7 +366,12 @@ export default function Landing() {
 
           <div className="section__header">
 
-            <span className="section__eyebrow">
+            <span className="section__eyebrow"
+            style={{
+                    color: "var(--gold-500)",
+                    fontSize: "20px",
+                  }}
+                >
               Resolución 2764 de 2022
             </span>
 
@@ -460,7 +441,12 @@ export default function Landing() {
 
           <div className="section__header">
 
-            <span className="section__eyebrow">
+            <span className="section__eyebrow"
+            style={{
+                    color: "var(--gold-500)",
+                    fontSize: "20px",
+                  }}
+                >
               Proceso
             </span>
 
@@ -522,10 +508,12 @@ export default function Landing() {
               className="section__eyebrow"
               style={{
                 color: "var(--gold-500)",
+                fontSize: "20px",
               }}
             >
               Ley 1581 de 2012
             </span>
+            
 
             <h2
               style={{
