@@ -85,6 +85,7 @@ def _ejecutar_envio_recordatorios(db: Session, horas_idempotencia: int = 24) -> 
         .filter(
             Evaluacion.estado == "EN_CURSO",
             EvaluacionParticipante.estado != "COMPLETADA",
+            Usuario.es_invitado.is_(False),
         )
     )
 

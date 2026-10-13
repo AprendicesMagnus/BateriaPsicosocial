@@ -6,12 +6,12 @@ from app.core.nit_utils import calcular_digito_verificador_nit
 from app.models.evaluation import Informe
 
 PASSWORD_EVALUADOR = "Evaluador1234"
-PASSWORD_TRABAJADOR = "Trabajador1234"
+PASSWORD_PACIENTE = "Paciente1234"
 
 
 def _encabezados(client, email, password):
     res = client.post("/api/auth/login", json={"email": email, "password": password})
-    assert res.status_code == 200
+    assert res.status_code == 200, res.text
     return {"Authorization": f"Bearer {res.json()['token']}"}
 
 
@@ -19,7 +19,7 @@ def _crear_organizacion(client, headers_admin, nombre):
     nit_base = f"9{str(uuid.uuid4().int)[:8]}"
     nit = f"{nit_base}-{calcular_digito_verificador_nit(nit_base)}"
     res = client.post("/api/organizaciones", headers=headers_admin, json={"nombre": nombre, "nit": nit})
-    assert res.status_code in (200, 201)
+    assert res.status_code in (200, 201), res.text
     return res.json()["id"]
 
 
@@ -37,7 +37,7 @@ def _crear_usuario(client, headers_admin, rol_codigo, organizacion_id, password)
             "organizacionId": organizacion_id,
         },
     )
-    assert res.status_code in (200, 201)
+    assert res.status_code in (200, 201), res.text
     return uuid.UUID(res.json()["id"]), email
 
 
@@ -58,9 +58,9 @@ def _registrar_informe(db, evaluacion_id, tipo, generado_por, trabajador_id=None
 
 
 @pytest.fixture
-def escenario(client, db_session):
+def escenario(client, db_session, crear_paciente):
     res = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
-    assert res.status_code == 200
+    assert res.status_code == 200, res.text
     headers_admin = {"Authorization": f"Bearer {res.json()['token']}"}
 
     org_a = _crear_organizacion(client, headers_admin, "Organizacion A Acceso")
@@ -70,11 +70,14 @@ def escenario(client, db_session):
         client, headers_admin, "EVALUADOR_SST", org_a, PASSWORD_EVALUADOR
     )
     _, email_evaluador_b = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_b, PASSWORD_EVALUADOR)
-    trabajador_a_id, email_trabajador_a = _crear_usuario(
-        client, headers_admin, "TRABAJADOR", org_a, PASSWORD_TRABAJADOR
-    )
 
-    version_id = client.get("/api/cuestionarios", headers=headers_admin).json()[0]["id"]
+    # El rol TRABAJADOR ya no existe: el participante es un PACIENTE con login.
+    paciente_a_id, email_paciente_a = crear_paciente(org_a, password=PASSWORD_PACIENTE)
+
+    res = client.get("/api/cuestionarios", headers=headers_admin)
+    assert res.status_code == 200, res.text
+    version_id = res.json()[0]["id"]
+
     res = client.post(
         "/api/evaluaciones",
         headers=headers_admin,
@@ -82,15 +85,15 @@ def escenario(client, db_session):
             "organizacionId": org_a,
             "nombre": "Evaluacion Acceso Organizacion A",
             "versionId": version_id,
-            "trabajadoresIds": [str(trabajador_a_id)],
+            "trabajadoresIds": [str(paciente_a_id)],
         },
     )
-    assert res.status_code in (200, 201)
+    assert res.status_code in (200, 201), res.text
     evaluacion_a_id = uuid.UUID(res.json()["id"])
 
     informe_agrupado = _registrar_informe(db_session, evaluacion_a_id, "AGRUPADO", evaluador_a_id)
     informe_individual = _registrar_informe(
-        db_session, evaluacion_a_id, "INDIVIDUAL", evaluador_a_id, trabajador_id=trabajador_a_id
+        db_session, evaluacion_a_id, "INDIVIDUAL", evaluador_a_id, trabajador_id=paciente_a_id
     )
 
     return {
@@ -100,12 +103,12 @@ def escenario(client, db_session):
         "headers_admin": headers_admin,
         "headers_evaluador_a": _encabezados(client, email_evaluador_a, PASSWORD_EVALUADOR),
         "headers_evaluador_b": _encabezados(client, email_evaluador_b, PASSWORD_EVALUADOR),
-        "headers_trabajador_a": _encabezados(client, email_trabajador_a, PASSWORD_TRABAJADOR),
+        "headers_paciente_a": _encabezados(client, email_paciente_a, PASSWORD_PACIENTE),
     }
 
 
 def _ids(respuesta):
-    assert respuesta.status_code == 200
+    assert respuesta.status_code == 200, respuesta.text
     return {item["id"] for item in respuesta.json()}
 
 
@@ -133,13 +136,14 @@ def test_evaluador_no_filtra_informes_de_otra_organizacion_por_evaluacion(client
         headers=escenario["headers_evaluador_b"],
         params={"evaluacion_id": escenario["evaluacion_a_id"]},
     )
-    assert res.status_code == 200
+    assert res.status_code == 200, res.text
     assert res.json() == []
 
 
-def test_trabajador_solo_lista_su_informe_individual(client, escenario):
-    ids = _ids(client.get("/api/informes", headers=escenario["headers_trabajador_a"]))
-    assert ids == {escenario["informe_individual_id"]}
+def test_paciente_no_puede_listar_informes(client, escenario):
+    # listar_informes responde 403 a cualquier rol no contemplado, incluido PACIENTE.
+    res = client.get("/api/informes", headers=escenario["headers_paciente_a"])
+    assert res.status_code == 403, res.text
 
 
 def test_listado_requiere_autenticacion(client):
@@ -154,14 +158,14 @@ def test_evaluador_no_puede_generar_informes_de_otra_organizacion(client, escena
         headers=headers,
         json={"evaluacionId": escenario["evaluacion_a_id"]},
     )
-    assert res_agrupado.status_code == 403
+    assert res_agrupado.status_code == 403, res_agrupado.text
 
     res_individual = client.post(
         "/api/informes/individual",
         headers=headers,
         json={"evaluacionId": escenario["evaluacion_a_id"], "participanteId": str(uuid.uuid4())},
     )
-    assert res_individual.status_code == 403
+    assert res_individual.status_code == 403, res_individual.text
 
 
 def test_generar_informe_de_evaluacion_inexistente_retorna_404(client, escenario):
@@ -170,7 +174,7 @@ def test_generar_informe_de_evaluacion_inexistente_retorna_404(client, escenario
         headers=escenario["headers_evaluador_a"],
         json={"evaluacionId": str(uuid.uuid4())},
     )
-    assert res.status_code == 404
+    assert res.status_code == 404, res.text
 
 
 def test_evaluador_no_puede_descargar_informe_de_otra_organizacion(client, escenario):
@@ -178,7 +182,7 @@ def test_evaluador_no_puede_descargar_informe_de_otra_organizacion(client, escen
         f"/api/informes/{escenario['informe_agrupado_id']}/descargar",
         headers=escenario["headers_evaluador_b"],
     )
-    assert res.status_code == 403
+    assert res.status_code == 403, res.text
 
 
 def test_evaluador_de_la_organizacion_supera_la_autorizacion_de_descarga(client, escenario):
@@ -187,4 +191,4 @@ def test_evaluador_de_la_organizacion_supera_la_autorizacion_de_descarga(client,
         f"/api/informes/{escenario['informe_agrupado_id']}/descargar",
         headers=escenario["headers_evaluador_a"],
     )
-    assert res.status_code == 404
+    assert res.status_code == 404, res.text

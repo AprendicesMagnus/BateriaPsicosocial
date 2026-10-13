@@ -9,7 +9,7 @@ from app.services import compras as compras_service
 router = APIRouter()
 
 
-@router.post("")
+@router.post("/")
 def procesar_pago(
     data: PagoCreate,
     db: Session = Depends(get_db),

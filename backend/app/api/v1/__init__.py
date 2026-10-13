@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
-    auth,
     auditoria,
+    auth,
     compras,
     cuestionarios,
     enlaces,
@@ -15,10 +15,9 @@ from app.api.v1 import (
     prediccion,
     reportes,
     roles,
-    # TODO: seguimiento_recomendaciones se quitó porque el archivo
-    # app/api/v1/seguimiento_recomendaciones.py no se subió en el commit 8e877ea.
-    # Cuando esté en el repo, volver a agregarlo aquí y en el include_router de abajo.
+    seguimiento_recomendaciones,
     usuarios,
+    wompi,
 )
 
 router = APIRouter(prefix="/api")
@@ -38,5 +37,9 @@ router.include_router(notificaciones.router, prefix="/notificaciones", tags=["No
 router.include_router(auditoria.router, prefix="/auditoria", tags=["Auditoria"])
 router.include_router(compras.router, prefix="/compras", tags=["Compras"])
 router.include_router(pagos.router, prefix="/pagos", tags=["Pagos"])
-# TODO: restaurar cuando exista el módulo:
-# router.include_router(seguimiento_recomendaciones.router, prefix="/seguimiento-recomendaciones", tags=["SeguimientoRecomendaciones"])
+router.include_router(wompi.router, prefix="/wompi", tags=["Wompi"])
+router.include_router(
+    seguimiento_recomendaciones.router,
+    prefix="/seguimiento-recomendaciones",
+    tags=["SeguimientoRecomendaciones"],
+)

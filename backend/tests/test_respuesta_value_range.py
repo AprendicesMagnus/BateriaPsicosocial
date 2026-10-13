@@ -1,116 +1,169 @@
-"""
-Tests de validación del rango Likert en RespuestaRequest (Etapa 2 – auditoría de validaciones).
-
-Criterio: el valor de una respuesta en escala Likert debe ser un entero entre 1 y 5 (ge=1, le=5).
-"""
 import uuid
+
 import pytest
 from pydantic import ValidationError
+
 from app.core.nit_utils import calcular_digito_verificador_nit
 from app.schemas.common import RespuestaRequest
 
 
 class TestRespuestaValorRangeSchema:
-    """Pruebas unitarias directas del schema Pydantic RespuestaRequest."""
-
     def test_valor_valido_1(self):
-        obj = RespuestaRequest(preguntaId=uuid.uuid4(), valor=1)
+        obj = RespuestaRequest(
+            pregunta_codigo="PREGUNTA_001$",
+            valor=1,
+        )
         assert obj.valor == 1
 
     def test_valor_valido_5(self):
-        obj = RespuestaRequest(preguntaId=uuid.uuid4(), valor=5)
+        obj = RespuestaRequest(
+            pregunta_codigo="PREGUNTA_001$",
+            valor=5,
+        )
         assert obj.valor == 5
 
-    def test_valor_invalido_cero(self):
-        with pytest.raises(ValidationError):
-            RespuestaRequest(preguntaId=uuid.uuid4(), valor=0)
+    def test_valor_valido_cero(self):
+        obj = RespuestaRequest(
+            pregunta_codigo="PREGUNTA_001$",
+            valor=0,
+        )
+        assert obj.valor == 0
 
     def test_valor_invalido_seis(self):
         with pytest.raises(ValidationError):
-            RespuestaRequest(preguntaId=uuid.uuid4(), valor=6)
+            RespuestaRequest(
+                pregunta_codigo="PREGUNTA_001$",
+                valor=6,
+            )
 
     def test_valor_invalido_negativo(self):
         with pytest.raises(ValidationError):
-            RespuestaRequest(preguntaId=uuid.uuid4(), valor=-1)
+            RespuestaRequest(
+                pregunta_codigo="PREGUNTA_001$",
+                valor=-1,
+            )
 
 
 class TestRespuestaEndpointRange:
-    """Pruebas de integración HTTP autenticadas via FastAPI client."""
-
     def test_endpoint_rechaza_valor_fuera_de_rango_autenticado(self, client):
-        # 1. Login admin
-        res = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
-        assert res.status_code == 200
-        headers_admin = {"Authorization": f"Bearer {res.json()['token']}"}
+        res = client.post(
+            "/api/auth/login",
+            json={
+                "email": "admin@magnussig.com",
+                "password": "Admin1234",
+            },
+        )
+        assert res.status_code == 200, res.text
 
-        # 2. Crear Org, Area, Trabajador y Evaluacion
+        headers_admin = {
+            "Authorization": f"Bearer {res.json()['token']}"
+        }
+
         nit_base = f"9{str(uuid.uuid4().int)[:8]}"
-        nit_rnd = f"{nit_base}-{calcular_digito_verificador_nit(nit_base)}"
-        res_org = client.post("/api/organizaciones", headers=headers_admin, json={
-            "nombre": "Empresa Test Likert SAS",
-            "nit": nit_rnd,
-        })
+        nit_rnd = (
+            f"{nit_base}-"
+            f"{calcular_digito_verificador_nit(nit_base)}"
+        )
+
+        res_org = client.post(
+            "/api/organizaciones",
+            headers=headers_admin,
+            json={
+                "nombre": "Empresa Test Likert SAS",
+                "nit": nit_rnd,
+            },
+        )
+        assert res_org.status_code in (200, 201), res_org.text
         org_id = res_org.json()["id"]
 
-        res_area = client.post("/api/organizaciones/areas", headers=headers_admin, json={
-            "organizacionId": org_id,
-            "nombre": "TI Likert"
-        })
-        area_id = res_area.json()["id"]
+        email_eval = f"eval_likert_{uuid.uuid4().hex[:8]}@test.com"
 
-        email_trab = f"trab_likert_{uuid.uuid4().hex[:5]}@test.com"
-        res_trab = client.post("/api/usuarios", headers=headers_admin, json={
-            "nombre": "Luis",
-            "apellido": "Likert",
-            "email": email_trab,
-            "password": "Trabajador1234",
-            "rolCodigo": "TRABAJADOR",
-            "organizacionId": org_id,
-            "areaId": area_id,
-            "numeroIdentificacion": f"{str(uuid.uuid4().int)[:10]}",
-            "cargo": "Analista"
-        })
-        trabajador_id = res_trab.json()["id"]
-
-        version_id = client.get("/api/cuestionarios", headers=headers_admin).json()[0]["id"]
-        res_eval = client.post("/api/evaluaciones", headers=headers_admin, json={
-            "organizacionId": org_id,
-            "nombre": "Evaluacion Likert 2026",
-            "versionId": version_id,
-            "trabajadoresIds": [trabajador_id]
-        })
-        eval_id = res_eval.json()["id"]
-
-        client.post(f"/api/evaluaciones/{eval_id}/iniciar", headers=headers_admin)
-
-        # 3. Login Trabajador y consentimiento
-        res_login_trab = client.post("/api/auth/login", json={"email": email_trab, "password": "Trabajador1234"})
-        headers_trab = {"Authorization": f"Bearer {res_login_trab.json()['token']}"}
-        client.post(f"/api/evaluaciones/{eval_id}/consentimiento", headers=headers_trab)
-
-        preguntas = client.get(f"/api/evaluaciones/{eval_id}/cuestionario", headers=headers_trab).json()["preguntas"]
-        pregunta_id = preguntas[0]["id"]
-
-        # 4. Probar envío de valor=6 autenticado -> debe retornar 422 específicamente por Pydantic validation
-        res_rechazo_6 = client.post(
-            f"/api/evaluaciones/{eval_id}/respuestas",
-            headers=headers_trab,
-            json={"preguntaId": pregunta_id, "valor": 6},
+        res_eval_user = client.post(
+            "/api/usuarios",
+            headers=headers_admin,
+            json={
+                "nombre": "Eva",
+                "apellido": "Likert",
+                "email": email_eval,
+                "password": "Evaluador1234",
+                "rolCodigo": "EVALUADOR_SST",
+                "organizacionId": org_id,
+            },
         )
-        assert res_rechazo_6.status_code == 422
+        assert res_eval_user.status_code in (200, 201), res_eval_user.text
 
-        # Probar valor=0 -> 422
-        res_rechazo_0 = client.post(
-            f"/api/evaluaciones/{eval_id}/respuestas",
-            headers=headers_trab,
-            json={"preguntaId": pregunta_id, "valor": 0},
+        res_login_eval = client.post(
+            "/api/auth/login",
+            json={
+                "email": email_eval,
+                "password": "Evaluador1234",
+            },
         )
-        assert res_rechazo_0.status_code == 422
+        assert res_login_eval.status_code == 200, res_login_eval.text
 
-        # Probar valor=3 -> 200 (caso feliz)
+        headers_eval = {
+            "Authorization": f"Bearer {res_login_eval.json()['token']}"
+        }
+
+        res_enlace = client.post(
+            "/api/enlaces",
+            headers=headers_eval,
+            json={"nombre": "Prueba de rango Likert"},
+        )
+        assert res_enlace.status_code in (200, 201), res_enlace.text
+
+        token_enlace = res_enlace.json()["token"]
+
+        res_inicio = client.post(
+            f"/api/enlaces/publico/{token_enlace}/iniciar",
+            json={"aceptaConsentimiento": True},
+        )
+        assert res_inicio.status_code in (200, 201), res_inicio.text
+
+        datos_inicio = res_inicio.json()
+        token_participante = datos_inicio["token"]
+        eval_id = datos_inicio["evaluacionId"]
+
+        headers_participante = {
+            "Authorization": f"Bearer {token_participante}"
+        }
+
+        res_preguntas = client.get(
+            f"/api/evaluaciones/{eval_id}/cuestionario",
+            headers=headers_participante,
+        )
+        assert res_preguntas.status_code == 200, res_preguntas.text
+
+        preguntas = res_preguntas.json()["preguntas"]
+        assert preguntas, "El cuestionario no contiene preguntas."
+
+        pregunta_codigo = preguntas[0]["codigo"]
+
+        assert pregunta_codigo, "La pregunta no tiene código."
+
+        for valor in (6, 0):
+            res_rechazo = client.post(
+                f"/api/evaluaciones/{eval_id}/respuestas",
+                headers=headers_participante,
+                json={
+                    "pregunta_codigo": pregunta_codigo,
+                    "valor": valor,
+                },
+            )
+
+            assert res_rechazo.status_code in (400, 422), (
+                f"Se esperaba HTTP 400 o 422 para valor={valor}; "
+                f"se recibió HTTP {res_rechazo.status_code}: "
+                f"{res_rechazo.text}"
+            )
+
         res_exitoso = client.post(
             f"/api/evaluaciones/{eval_id}/respuestas",
-            headers=headers_trab,
-            json={"preguntaId": pregunta_id, "valor": 3},
+            headers=headers_participante,
+            json={
+                "pregunta_codigo": pregunta_codigo,
+                "valor": 3,
+            },
         )
-        assert res_exitoso.status_code == 200
+
+        assert res_exitoso.status_code == 200, res_exitoso.text

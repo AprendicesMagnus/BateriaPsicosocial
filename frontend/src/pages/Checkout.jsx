@@ -1,49 +1,28 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import {
+  actualizarPagoPendiente,
+  guardarPagoPendiente,
+  limpiarPagoPendiente,
+} from "../utils/pagoPendiente";
 import AppTopbar from "../components/AppTopbar";
 import "../styles/app-shell.css";
 import "../styles/Checkout.css";
 import { request } from "../api/client";
-import {
-  nombrePersonaValido,
-  formatearVencimiento,
-  vencimientoValido,
-  enteroEnRango,
-  formatearTarjeta,
-  soloDigitos,
-  filtrarNombrePersona,
-} from "../utils/validaciones";
-
+import { enteroEnRango, soloDigitos } from "../utils/validaciones";
 // ==================================================
-// Datos de ejemplo — ajusta según venga de tu API
+// CONFIGURACIÓN
 // ==================================================
 const TARIFA_POR_BATERIA_DEFECTO = 10000; // COP
 const IVA_PORCENTAJE = 0.19;
-
-const BANCOS_PSE = [
-  { nombre: "Bancolombia", sigla: "B", color: "#FFDD00", textColor: "#111111" },
-  { nombre: "Davivienda", sigla: "D", color: "#DA291C", textColor: "#ffffff" },
-  { nombre: "BBVA", sigla: "BBVA", color: "#004481", textColor: "#ffffff" },
-  { nombre: "Banco de Bogotá", sigla: "BB", color: "#A6192E", textColor: "#ffffff" },
-  { nombre: "Banco Popular", sigla: "BP", color: "#EE3124", textColor: "#ffffff" },
-  { nombre: "Nequi", sigla: "N", color: "#EE2E7B", textColor: "#ffffff" },
-  { nombre: "Banco Caja Social", sigla: "CS", color: "#00558C", textColor: "#ffffff" },
-  { nombre: "Banco AV Villas", sigla: "AV", color: "#F58220", textColor: "#ffffff" },
-];
-
+// ==================================================
+// UTILIDADES
+// ==================================================
 function formatCOP(valor) {
   return "$" + Math.round(valor).toLocaleString("es-CO");
 }
-
-function detectarMarca(numero) {
-  const limpio = (numero || "").replace(/\s/g, "");
-  if (/^4/.test(limpio)) return "VISA";
-  if (/^5[1-5]/.test(limpio)) return "MASTERCARD";
-  return null;
-}
-
-function LockIcon({ small }) {
+function LockIcon({ small = false }) {
   const size = small ? 12 : 16;
   return (
     <svg
@@ -51,522 +30,733 @@ function LockIcon({ small }) {
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}
+      aria-hidden="true"
+      className="checkout-lock-icon"
     >
-      <rect x="5" y="11" width="14" height="9" rx="2" fill="currentColor" />
-      <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" strokeWidth="2" fill="none" />
+      <rect
+        x="5"
+        y="11"
+        width="14"
+        height="9"
+        rx="2"
+        fill="currentColor"
+      />
+      <path
+        d="M8 11V7a4 4 0 0 1 8 0v4"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+      />
     </svg>
   );
 }
-
-function VisaIcon({ size = 16 }) {
-  return (
-    <svg width={size * 1.7} height={size} viewBox="0 0 48 30" aria-label="Visa">
-      <rect width="48" height="30" rx="4" fill="#ffffff" stroke="#E4E7F0" />
-      <text
-        x="24"
-        y="20"
-        textAnchor="middle"
-        fontFamily="Arial, sans-serif"
-        fontStyle="italic"
-        fontWeight="700"
-        fontSize="13"
-        fill="#1A1F71"
-      >
-        VISA
-      </text>
-    </svg>
-  );
+// ==================================================
+// WOMPI
+// ==================================================
+function cargarWidgetWompi() {
+  return new Promise((resolve, reject) => {
+    if (window.WidgetCheckout) {
+      resolve();
+      return;
+    }
+    const scriptExistente = document.querySelector(
+      'script[src="https://checkout.wompi.co/widget.js"]'
+    );
+    if (scriptExistente) {
+      scriptExistente.addEventListener("load", () => resolve());
+      scriptExistente.addEventListener("error", () => {
+        reject(
+          new Error("No se pudo cargar el Widget de Wompi.")
+        );
+      });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.wompi.co/widget.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      reject(
+        new Error("No se pudo cargar el Widget de Wompi.")
+      );
+    };
+    document.body.appendChild(script);
+  });
 }
-
-function MastercardIcon({ size = 16 }) {
-  return (
-    <svg width={size * 1.7} height={size} viewBox="0 0 48 30" aria-label="Mastercard">
-      <rect width="48" height="30" rx="4" fill="#ffffff" stroke="#E4E7F0" />
-      <circle cx="20" cy="15" r="8.5" fill="#EB001B" />
-      <circle cx="28" cy="15" r="8.5" fill="#F79E1B" />
-      <path d="M24 8.2a8.5 8.5 0 0 1 0 13.6 8.5 8.5 0 0 1 0-13.6z" fill="#FF5F00" />
-    </svg>
-  );
-}
-
-function PseIcon({ size = 16 }) {
-  return (
-    <svg width={size * 1.7} height={size} viewBox="0 0 48 30" aria-label="PSE">
-      <rect width="48" height="30" rx="4" fill="#ffffff" stroke="#E4E7F0" />
-      <rect x="5" y="7" width="6" height="6" fill="#00A19A" />
-      <rect x="12" y="7" width="6" height="6" fill="#8DC63F" />
-      <rect x="5" y="14" width="6" height="6" fill="#0072BC" />
-      <rect x="12" y="14" width="6" height="6" fill="#00A19A" />
-      <text
-        x="34"
-        y="20"
-        textAnchor="middle"
-        fontFamily="Arial, sans-serif"
-        fontWeight="700"
-        fontSize="10"
-        fill="#0072BC"
-      >
-        PSE
-      </text>
-    </svg>
-  );
-}
-
+// ==================================================
+// CHECKOUT
+// ==================================================
 export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { usuario, token } = useAuth();
-
   const {
     bateriaNombre = "Batería de Riesgo Psicosocial",
     empresaNombre = usuario?.empresa || "Tu empresa",
     tarifaPorBateria = TARIFA_POR_BATERIA_DEFECTO,
     cantidadInicial = 1,
+    compraId = null,
+    totalCompra = null,
   } = location.state || {};
-
-  const [metodo, setMetodo] = useState("tarjeta"); // "tarjeta" | "pse"
-  const [bancoSeleccionado, setBancoSeleccionado] = useState(null);
+  // ==================================================
+  // ESTADOS
+  // ==================================================
   const [cantidad, setCantidad] = useState(cantidadInicial);
-  const [numeroTarjeta, setNumeroTarjeta] = useState("");
-  const [nombreTarjeta, setNombreTarjeta] = useState("");
-  const [vencimiento, setVencimiento] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [guardarTarjeta, setGuardarTarjeta] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [tocados, setTocados] = useState({});
   const [intento, setIntento] = useState(false);
-
+  const [cantidadTocada, setCantidadTocada] = useState(false);
+  // ==================================================
+  // CÁLCULOS
+  // ==================================================
   const cantidadTexto = String(cantidad).trim();
-  const cantidadNumerica = enteroEnRango(cantidadTexto, 1, 100000) ? Number(cantidadTexto) : 0;
-
-  const subtotal = cantidadNumerica * tarifaPorBateria;
-  const iva = subtotal * IVA_PORCENTAJE;
-  const total = subtotal + iva;
-
-  const marca = useMemo(() => detectarMarca(numeroTarjeta), [numeroTarjeta]);
-
-  const marcarTocado = (campo) => {
-    setTocados((prev) => ({ ...prev, [campo]: true }));
-  };
-
-  const errores = useMemo(() => {
-    const errs = {};
-    if (!enteroEnRango(cantidadTexto, 1, 100000)) {
-      errs.cantidad = "La cantidad debe ser un número entero entre 1 y 100,000.";
-    }
-
-    if (metodo === "tarjeta") {
-      const numLimpio = numeroTarjeta.replace(/\s/g, "");
-      if (!numLimpio) {
-        errs.numeroTarjeta = "Ingresa el número de tarjeta.";
-      } else if (!/^\d{13,19}$/.test(numLimpio)) {
-        errs.numeroTarjeta = "El número de tarjeta debe tener entre 13 y 19 dígitos.";
-      }
-
-      if (!nombreTarjeta.trim()) {
-        errs.nombreTarjeta = "Ingresa el nombre en la tarjeta.";
-      } else if (!nombrePersonaValido(nombreTarjeta)) {
-        errs.nombreTarjeta = "Ingresa un nombre válido (solo letras, mín. 2 letras).";
-      }
-
-      if (!vencimiento.trim()) {
-        errs.vencimiento = "Ingresa la fecha de vencimiento.";
-      } else if (!vencimientoValido(vencimiento)) {
-        errs.vencimiento = "Fecha de vencimiento inválida o tarjeta vencida.";
-      }
-
-      if (!cvv.trim()) {
-        errs.cvv = "Ingresa el CVV.";
-      } else if (!/^\d{3,4}$/.test(cvv)) {
-        errs.cvv = "El CVV debe tener 3 o 4 dígitos.";
-      }
-    } else if (metodo === "pse") {
-      if (!bancoSeleccionado) {
-        errs.banco = "Selecciona tu banco para continuar con el pago PSE.";
-      }
-    }
-
-    return errs;
-  }, [cantidadTexto, metodo, numeroTarjeta, nombreTarjeta, vencimiento, cvv, bancoSeleccionado]);
-
+  const cantidadNumerica = enteroEnRango(
+    cantidadTexto,
+    1,
+    100000
+  )
+    ? Number(cantidadTexto)
+    : 0;
+  const cantidadValida = enteroEnRango(
+    cantidadTexto,
+    1,
+    100000
+  );
+  const subtotal =
+    cantidadNumerica * tarifaPorBateria;
+  const iva =
+    subtotal * IVA_PORCENTAJE;
+  const total =
+    subtotal + iva;
+  const esCompraExistente = Boolean(compraId);
+  const totalMostrado =
+    esCompraExistente && Number(totalCompra) > 0
+      ? Number(totalCompra)
+      : total;
+  const subtotalMostrado =
+    totalMostrado / (1 + IVA_PORCENTAJE);
+  const ivaMostrado =
+    totalMostrado - subtotalMostrado;
+  // ==================================================
+  // CANTIDAD
+  // ==================================================
   function ajustarCantidad(delta) {
-    setCantidad((c) => {
-      const actual = enteroEnRango(String(c).trim(), 1, 100000) ? Number(String(c).trim()) : 0;
-      return Math.min(100000, Math.max(1, actual + delta));
+    setCantidad((actual) => {
+      const valorActual = enteroEnRango(
+        String(actual).trim(),
+        1,
+        100000
+      )
+        ? Number(String(actual).trim())
+        : 0;
+      return Math.min(
+        100000,
+        Math.max(1, valorActual + delta)
+      );
     });
   }
-
+  // ==================================================
+  // PAGO WOMPI
+  // ==================================================
   async function handlePagar(e) {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     setError("");
     setIntento(true);
-
-    const numCantidad = cantidadNumerica;
-
-    if (metodo === "tarjeta") {
-      if (errores.cantidad || errores.numeroTarjeta || errores.nombreTarjeta || errores.vencimiento || errores.cvv) {
-        setTimeout(() => {
-          const primInvalido = document.querySelector(".field__input--invalid, .field__error");
-          if (primInvalido && typeof primInvalido.focus === "function") {
-            primInvalido.focus();
-          }
-        }, 0);
-        return;
-      }
-    } else if (metodo === "pse") {
-      if (errores.cantidad || errores.banco) {
-        setTimeout(() => {
-          const primInvalido = document.querySelector(".field__input--invalid, .checkout-bank-grid, .field__error");
-          if (primInvalido && typeof primInvalido.focus === "function") {
-            primInvalido.focus();
-          }
-        }, 0);
-        return;
-      }
+    if (!cantidadValida) {
+      setError(
+        "La cantidad debe ser un número entero entre 1 y 100.000."
+      );
+      return;
     }
-
     setLoading(true);
     try {
-      const resCompra = await request("/compras", {
-        method: "POST",
-        body: {
-          cantidad: numCantidad,
-          bateriaNombre,
-          organizacionId: usuario?.organizacionId || null,
-        },
-        token,
+      // ==================================================
+      // 1. CREAR O REUTILIZAR COMPRA
+      // ==================================================
+      const resCompra = compraId
+        ? { id: compraId }
+        : await request("/compras", {
+          method: "POST",
+          body: {
+            cantidad: cantidadNumerica,
+            bateriaNombre,
+            organizacionId:
+              usuario?.organizacionId || null,
+          },
+          token,
+        });
+      // ==================================================
+      // 2. PREPARAR CHECKOUT WOMPI
+      // ==================================================
+      const resCheckout = await request(
+        `/compras/${resCompra.id}/wompi/checkout`,
+        {
+          method: "POST",
+          token,
+        }
+      );
+      // ==================================================
+      // 3. CARGAR WIDGET
+      // ==================================================
+      await cargarWidgetWompi();
+      if (!window.WidgetCheckout) {
+        throw new Error(
+          "El Widget de Wompi no está disponible."
+        );
+      }
+      // ==================================================
+      // 4. CREAR WIDGET
+      // ==================================================
+      const checkout =
+        new window.WidgetCheckout({
+          currency: resCheckout.currency,
+          amountInCents:
+            resCheckout.amountInCents,
+          reference: resCheckout.reference,
+          publicKey: resCheckout.publicKey,
+          signature: {
+            integrity:
+              resCheckout.signature,
+          },
+        });
+      // ==================================================
+      // 5. ABRIR WIDGET
+      // ==================================================
+      // Se recuerda el pago en curso: si el usuario cierra sesión o la
+      // sesión vence antes de que se confirme, el resultado se recupera
+      // al volver a ingresar.
+      guardarPagoPendiente({
+        usuarioId: usuario?.id,
+        compraId: resCompra.id,
+        reference: resCheckout.reference,
       });
-
-      const resPago = await request("/pagos", {
-        method: "POST",
-        body: {
-          compraId: resCompra.id,
-          metodo,
-          numeroTarjeta: metodo === "tarjeta" ? numeroTarjeta.replace(/\s/g, "") : null,
-          nombreTarjeta: metodo === "tarjeta" ? nombreTarjeta : null,
-          vencimiento: metodo === "tarjeta" ? vencimiento : null,
-          cvv: metodo === "tarjeta" ? cvv : null,
-          banco: metodo === "pse" ? bancoSeleccionado : null,
-          monto: total,
-        },
-        token,
+      
+      window.scrollTo({ top: 0 });
+      checkout.open(async (result) => {
+        try {
+          const transaction =
+            result?.transaction;
+          if (!transaction?.id) {
+            // El usuario cerró el widget sin crear una transacción.
+            limpiarPagoPendiente();
+            setError(
+              "Wompi no devolvió un identificador de transacción."
+            );
+            setLoading(false);
+            return;
+          }
+          // ==================================================
+          // VALIDAR ESTADO DE LA TRANSACCIÓN
+          // ==================================================
+          // Se guarda el id para poder confirmarlo luego si esta llamada falla.
+          actualizarPagoPendiente({ transactionId: transaction.id });
+          const estadoWompi = String(
+            transaction.status || ""
+          ).toUpperCase();
+          // ==================================================
+          // 6. ENVIAR TRANSACCIÓN AL BACKEND
+          // ==================================================
+          //
+          // IMPORTANTE:
+          // Todos los estados devueltos por Wompi se envían
+          // al backend. Esto permite que el backend registre
+          // correctamente APPROVED, DECLINED, PENDING,
+          // ERROR y VOIDED.
+          //
+          const resPago = await request(
+            "/pagos",
+            {
+              method: "POST",
+              body: {
+                compraId: resCompra.id,
+                wompiTransactionId:
+                  transaction.id,
+              },
+              token,
+            }
+          );
+          // El backend ya registró la transacción: si el estado es final,
+          // el pago deja de estar "en curso".
+          if (["APPROVED", "DECLINED", "VOIDED", "ERROR"].includes(estadoWompi)) {
+            limpiarPagoPendiente();
+          }
+          // ==================================================
+          // 7. RESULTADO FINAL - APROBADO
+          // ==================================================
+          if (
+            estadoWompi === "APPROVED" ||
+            resPago?.estado === "APROBADO"
+          ) {
+            navigate("/perfil", {
+              state: {
+                message:
+                  `¡Pago aprobado! Referencia: ${resPago?.referencia ||
+                  resCheckout.reference
+                  }. ` +
+                  "Tu compra ha sido registrada correctamente.",
+              },
+            });
+            return;
+          }
+          // ==================================================
+          // 8. PAGO RECHAZADO
+          // ==================================================
+          if (
+            estadoWompi === "DECLINED" ||
+            resPago?.estado === "RECHAZADO"
+          ) {
+            navigate("/perfil", {
+              state: {
+                message:
+                  "El pago fue rechazado. El resultado quedó registrado en tu historial de compras.",
+              },
+            });
+            return;
+          }
+          // ==================================================
+          // 9. PAGO CANCELADO
+          // ==================================================
+          if (
+            estadoWompi === "VOIDED" ||
+            resPago?.estado === "VOIDED"
+          ) {
+            navigate("/perfil", {
+              state: {
+                message:
+                  "El pago fue cancelado. El resultado quedó registrado en tu historial de compras.",
+              },
+            });
+            return;
+          }
+          // ==================================================
+          // 10. ERROR DE PAGO
+          // ==================================================
+          if (
+            estadoWompi === "ERROR" ||
+            resPago?.estado === "ERROR"
+          ) {
+            navigate("/perfil", {
+              state: {
+                message:
+                  "Wompi reportó un error al procesar el pago. El resultado quedó registrado en tu historial de compras.",
+              },
+            });
+            return;
+          }
+          // ==================================================
+          // 11. PAGO PENDIENTE
+          // ==================================================
+          if (
+            estadoWompi === "PENDING" ||
+            resPago?.estado === "PENDIENTE"
+          ) {
+            navigate("/perfil", {
+              state: {
+                message:
+                  "El pago quedó pendiente de confirmación. Puedes revisar su estado desde tu historial de compras.",
+              },
+            });
+            return;
+          }
+          // ==================================================
+          // 12. VERIFICAR SI EL WEBHOOK YA PROCESÓ LA COMPRA
+          // ==================================================
+          if (!resPago) {
+            const compraActualizada =
+              await request(
+                `/compras/${resCompra.id}`,
+                {
+                  method: "GET",
+                  token,
+                }
+              );
+            if (
+              compraActualizada?.estado ===
+              "PAGADA"
+            ) {
+              navigate("/perfil", {
+                state: {
+                  message:
+                    "¡Pago aprobado! Tu compra ha sido registrada correctamente.",
+                },
+              });
+              return;
+            }
+            setError(
+              "El pago fue procesado, pero todavía no se ha podido confirmar el estado de la compra. Por favor, espera unos momentos y revisa tu historial."
+            );
+            return;
+          }
+          setError(
+            resPago.mensajeRespuesta ||
+            "El pago no fue aprobado por Wompi."
+          );
+        } catch (err) {
+          // 401: la sesión se cerró o venció, pero el pago sigue su curso en Wompi.
+          // El resultado se confirma al volver a iniciar sesión.
+          setError(
+            err.status === 401
+              ? "Tu sesión expiró, pero tu pago sigue su curso. Inicia sesión de nuevo y revisa tu historial de compras."
+              : err.message ||
+              "No se pudo verificar el pago con el servidor."
+          );
+        } finally {
+          setLoading(false);
+        }
       });
-
-      if (resPago.estado === "RECHAZADO") {
-        setError(resPago.mensajeRespuesta || "El pago fue rechazado por la pasarela de pagos.");
+      // ==================================================
+      // WOMPI YA ESTÁ ABIERTO
+      // ==================================================
+      //
+      // Ya no necesitamos mantener el botón de MagnusSIG
+      // en "Procesando pago..." mientras el usuario
+      // interactúa con el Widget.
+      //
+      // El resultado de la transacción será manejado
+      // por el callback anterior.
+      //
+      setLoading(false);
+    } catch (err) {
+      // ==================================================
+      // COMPRA PENDIENTE EXISTENTE
+      // ==================================================
+      if (
+        err.status === 409 &&
+        err.payload?.compraId
+      ) {
+        setError(
+          "Ya tienes una compra pendiente de esta batería. Puedes continuar el pago desde tu historial de compras."
+        );
+        setLoading(false);
         return;
       }
-
-      navigate("/perfil", {
-        state: { message: `¡Pago exitoso! Referencia: ${resPago.referencia}. Tu compra ha sido registrada.` },
-      });
-    } catch (err) {
-      setError(err.message || "No se pudo procesar el pago.");
-    } finally {
+      setError(
+        err.message ||
+        "No se pudo iniciar el proceso de pago con Wompi."
+      );
       setLoading(false);
     }
   }
-
+  // ==================================================
+  // RENDER
+  // ==================================================
   return (
     <div className="app-shell-page">
       <AppTopbar />
-
       <main className="app-hero">
         <div className="app-decor app-decor--1" />
         <div className="app-decor app-decor--2" />
         <div className="app-decor app-decor--3" />
-
-        <div className="app-content">
+        <div className="app-content checkout-page">
+          {/* VOLVER */}
           <button
             type="button"
             className="checkout-back-btn"
-            onClick={() => navigate("/Inicio")}
+            onClick={() =>
+              navigate("/Inicio")
+            }
           >
             ← Volver al inicio
           </button>
-
+          {/* BREADCRUMB */}
           <nav className="app-breadcrumb">
-            Evaluaciones <span>›</span> Pago de la batería
+            Evaluaciones
+            <span>›</span>
+            Pago de la batería
           </nav>
-
-          <h1 className="app-title">Completa tu pago</h1>
-
-          <p className="app-subtitle">
-            {bateriaNombre} · aplicación única para {empresaNombre}
-          </p>
-
-          <div className="checkout-grid">
-            {/* ===================== FORMULARIO DE PAGO ===================== */}
-            <section className="app-card checkout-form-card">
-              <div className="checkout-tabs">
-                <button
-                  type="button"
-                  className={`checkout-tab ${metodo === "tarjeta" ? "checkout-tab--active" : ""}`}
-                  onClick={() => setMetodo("tarjeta")}
-                >
-                  Tarjeta de crédito o débito
-                </button>
-                <button
-                  type="button"
-                  className={`checkout-tab ${metodo === "pse" ? "checkout-tab--active" : ""}`}
-                  onClick={() => setMetodo("pse")}
-                >
-                  PSE
-                </button>
+          {/* ENCABEZADO */}
+          <div className="checkout-heading">
+            <div>
+              <span className="checkout-heading-kicker">
+                COMPRA SEGURA
+              </span>
+              <h1 className="app-title">
+                Completa tu pago
+              </h1>
+              <p className="app-subtitle">
+                {bateriaNombre} · aplicación única
+                para {empresaNombre}
+              </p>
+            </div>
+          </div>
+          {/* CONTENIDO */}
+          {esCompraExistente && (
+            <div
+              style={{
+                marginBottom: "18px",
+                padding: "14px 16px",
+                borderRadius: "12px",
+                background: "#eff6ff",
+                border: "1px solid #bfdbfe",
+                color: "#1e3a8a",
+                fontSize: "14px",
+                lineHeight: 1.5,
+              }}
+            >
+              <strong>Compra pendiente</strong>
+              <br />
+              Estás continuando una compra que ya habías iniciado.
+              No se creará una nueva compra.
+            </div>
+          )}
+          <div className="checkout-grid checkout-grid--modern">
+            {/* ==================================================
+                PAGO
+            ================================================== */}
+            <section className="app-card checkout-form-card checkout-payment-card">
+              <div className="checkout-section-header">
+                <div className="checkout-section-number">
+                  01
+                </div>
+                <div>
+                  <span className="checkout-section-kicker">
+                    MÉTODO DE PAGO
+                  </span>
+                  <h2 className="checkout-section-title">
+                    Pago seguro
+                  </h2>
+                </div>
               </div>
-
-              {metodo === "tarjeta" ? (
-                <form className="checkout-form" onSubmit={handlePagar} noValidate>
-                  <label className="field">
-                    <span className="field__label">Número de tarjeta</span>
-                    <div className="checkout-input-with-badge">
-                      <input
-                        className={`field__input ${
-                          errores.numeroTarjeta && (intento || tocados.numeroTarjeta) ? "field__input--invalid" : ""
-                        }`}
-                        inputMode="numeric"
-                        maxLength={23}
-                        placeholder="0000 0000 0000 0000"
-                        value={numeroTarjeta}
-                        onChange={(e) => setNumeroTarjeta(formatearTarjeta(e.target.value))}
-                        onBlur={() => marcarTocado("numeroTarjeta")}
-                        aria-invalid={!!(errores.numeroTarjeta && (intento || tocados.numeroTarjeta))}
-                        aria-describedby={
-                          errores.numeroTarjeta && (intento || tocados.numeroTarjeta) ? "numeroTarjeta-error" : undefined
-                        }
-                      />
-                      {marca === "VISA" && (
-                        <span className="checkout-input-icon">
-                          <VisaIcon />
-                        </span>
-                      )}
-                      {marca === "MASTERCARD" && (
-                        <span className="checkout-input-icon">
-                          <MastercardIcon />
-                        </span>
-                      )}
-                    </div>
-                    {errores.numeroTarjeta && (intento || tocados.numeroTarjeta) && (
-                      <span className="field__error" id="numeroTarjeta-error">
-                        {errores.numeroTarjeta}
-                      </span>
-                    )}
-                  </label>
-
-                  <label className="field">
-                    <span className="field__label">Nombre en la tarjeta</span>
-                    <input
-                      className={`field__input ${
-                        errores.nombreTarjeta && (intento || tocados.nombreTarjeta) ? "field__input--invalid" : ""
-                      }`}
-                      placeholder="Como aparece en la tarjeta"
-                      maxLength={100}
-                      value={nombreTarjeta}
-                      onChange={(e) => setNombreTarjeta(filtrarNombrePersona(e.target.value, 100))}
-                      onBlur={() => marcarTocado("nombreTarjeta")}
-                      aria-invalid={!!(errores.nombreTarjeta && (intento || tocados.nombreTarjeta))}
-                      aria-describedby={
-                        errores.nombreTarjeta && (intento || tocados.nombreTarjeta) ? "nombreTarjeta-error" : undefined
-                      }
-                    />
-                    {errores.nombreTarjeta && (intento || tocados.nombreTarjeta) && (
-                      <span className="field__error" id="nombreTarjeta-error">
-                        {errores.nombreTarjeta}
-                      </span>
-                    )}
-                  </label>
-
-                  <div className="form-row">
-                    <label className="field">
-                      <span className="field__label">Vencimiento (MM/AA)</span>
-                      <input
-                        className={`field__input ${
-                          errores.vencimiento && (intento || tocados.vencimiento) ? "field__input--invalid" : ""
-                        }`}
-                        placeholder="MM/AA"
-                        inputMode="numeric"
-                        maxLength={5}
-                        value={vencimiento}
-                        onChange={(e) => setVencimiento(formatearVencimiento(e.target.value))}
-                        onBlur={() => marcarTocado("vencimiento")}
-                        aria-invalid={!!(errores.vencimiento && (intento || tocados.vencimiento))}
-                        aria-describedby={
-                          errores.vencimiento && (intento || tocados.vencimiento) ? "vencimiento-error" : undefined
-                        }
-                      />
-                      {errores.vencimiento && (intento || tocados.vencimiento) && (
-                        <span className="field__error" id="vencimiento-error">
-                          {errores.vencimiento}
-                        </span>
-                      )}
-                    </label>
-                    <label className="field">
-                      <span className="field__label">CVV</span>
-                      <input
-                        className={`field__input ${
-                          errores.cvv && (intento || tocados.cvv) ? "field__input--invalid" : ""
-                        }`}
-                        placeholder="•••"
-                        inputMode="numeric"
-                        maxLength={4}
-                        value={cvv}
-                        onChange={(e) => setCvv(soloDigitos(e.target.value, 4))}
-                        onBlur={() => marcarTocado("cvv")}
-                        aria-invalid={!!(errores.cvv && (intento || tocados.cvv))}
-                        aria-describedby={errores.cvv && (intento || tocados.cvv) ? "cvv-error" : undefined}
-                      />
-                      {errores.cvv && (intento || tocados.cvv) && (
-                        <span className="field__error" id="cvv-error">
-                          {errores.cvv}
-                        </span>
-                      )}
-                    </label>
-                  </div>
-
-                  <label className="checkout-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={guardarTarjeta}
-                      onChange={(e) => setGuardarTarjeta(e.target.checked)}
-                    />
-                    Guardar esta tarjeta para futuros pagos
-                  </label>
-
-                  <div className="checkout-accepted">
-                    <span>Aceptamos</span>
-                    <VisaIcon />
-                    <MastercardIcon />
-                    <PseIcon />
-                  </div>
-
-                  {error && <div className="form-message form-message--error">{error}</div>}
-
-                  <button type="submit" className="btn-primary checkout-pay-btn" disabled={loading}>
-                    <LockIcon /> {loading ? "Procesando..." : `Pagar ${formatCOP(total)}`}
-                  </button>
-
-                  <p className="checkout-terms">
-                    Al confirmar aceptas los términos del servicio y la política de privacidad.
+              {/* WOMPI */}
+              <div className="checkout-wompi-box">
+                <div className="checkout-wompi-icon">
+                  <LockIcon />
+                </div>
+                <div className="checkout-wompi-content">
+                  <h3>
+                    Procesado de forma segura
+                    por Wompi
+                  </h3>
+                  <p>
+                    Al continuar se abrirá el
+                    checkout seguro de Wompi.
+                    Allí podrás seleccionar el
+                    método de pago disponible
+                    y completar tu transacción.
                   </p>
-                </form>
-              ) : (
-                <div className="checkout-form">
-                  <p className="auth-subtitle" style={{ margin: 0 }}>
-                    Selecciona tu banco para continuar con el pago por PSE.
-                  </p>
-
-                  <div className="checkout-bank-grid">
-                    {BANCOS_PSE.map((banco) => (
-                      <button
-                        key={banco.nombre}
-                        type="button"
-                        className={`checkout-bank-btn ${
-                          bancoSeleccionado === banco.nombre ? "checkout-bank-btn--active" : ""
-                        }`}
-                        onClick={() => {
-                          setBancoSeleccionado(banco.nombre);
-                          marcarTocado("banco");
-                        }}
-                      >
-                        <span
-                          className="checkout-bank-icon"
-                          style={{ background: banco.color, color: banco.textColor }}
-                        >
-                          {banco.sigla}
-                        </span>
-                        <span className="checkout-bank-name">{banco.nombre}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {errores.banco && intento && (
-                    <span className="field__error" id="banco-error">
-                      {errores.banco}
-                    </span>
-                  )}
-
-                  {error && <div className="form-message form-message--error">{error}</div>}
-
-                  <button
-                    type="button"
-                    className="btn-primary checkout-pay-btn"
-                    onClick={handlePagar}
-                    disabled={loading}
-                  >
-                    {loading
-                      ? "Redirigiendo..."
-                      : `Continuar con ${bancoSeleccionado || "tu banco"} · ${formatCOP(total)}`}
-                  </button>
+                </div>
+              </div>
+              {/* TOTAL */}
+              <div className="checkout-payment-amount">
+                <span>
+                  Total a pagar
+                </span>
+                <strong>
+                  {formatCOP(totalMostrado)}
+                </strong>
+              </div>
+              {/* ERROR */}
+              {error && (
+                <div className="form-message form-message--error">
+                  {error}
                 </div>
               )}
-            </section>
-
-            {/* ===================== RESUMEN DEL PAGO ===================== */}
-            <aside className="app-card checkout-summary-card">
-              <h2 className="checkout-summary-title">Resumen del pago</h2>
-
-              <div className="checkout-summary-item">
-                <strong>{bateriaNombre}</strong>
-                <span className="checkout-summary-muted">Aplicación única · {empresaNombre}</span>
+              {/* BOTÓN */}
+              <button
+                type="button"
+                className="btn-primary checkout-pay-btn checkout-pay-btn--large"
+                onClick={handlePagar}
+                disabled={loading}
+              >
+                <LockIcon />
+                <span>
+                  {loading
+                    ? "Procesando pago..."
+                    : `Continuar con el pago · ${formatCOP(totalMostrado)}`}
+                </span>
+                {!loading && (
+                  <span className="checkout-pay-arrow">
+                    →
+                  </span>
+                )}
+              </button>
+              {/* SEGURIDAD */}
+              <div className="checkout-security-note">
+                <LockIcon small />
+                <span>
+                  Tus datos de pago son
+                  procesados directamente
+                  por Wompi.
+                </span>
               </div>
-
-              <div className="checkout-summary-row checkout-summary-row--stepper">
-                <span>Cantidad de Baterías a comprar</span>
+              <p className="checkout-terms">
+                Al continuar aceptas los términos
+                del servicio y la política de
+                privacidad.
+              </p>
+            </section>
+            {/* ==================================================
+                RESUMEN
+            ================================================== */}
+            <aside className="app-card checkout-summary-card checkout-summary-card--modern">
+              <div className="checkout-section-header">
+                <div className="checkout-section-number">
+                  02
+                </div>
+                <div>
+                  <span className="checkout-section-kicker">
+                    RESUMEN
+                  </span>
+                  <h2 className="checkout-section-title">
+                    Tu compra
+                  </h2>
+                </div>
+              </div>
+              {/* PRODUCTO */}
+              <div className="checkout-product">
+                <div className="checkout-product-icon">
+                  ✓
+                </div>
+                <div className="checkout-product-info">
+                  <strong>
+                    {bateriaNombre}
+                  </strong>
+                  <span>
+                    Aplicación única
+                  </span>
+                </div>
+              </div>
+              {/* CANTIDAD */}
+              <div className="checkout-quantity-section">
+                <div>
+                  <span className="checkout-detail-label">
+                    Cantidad
+                  </span>
+                  <span className="checkout-detail-description">
+                    Baterías a comprar
+                  </span>
+                </div>
                 <div className="checkout-stepper">
-                  <button type="button" onClick={() => ajustarCantidad(-1)} aria-label="Restar">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      ajustarCantidad(-1)
+                    }
+                    aria-label="Restar"
+                    disabled={
+                      esCompraExistente ||
+                      cantidad <= 1
+                    }
+                  >
                     −
                   </button>
                   <input
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
-                    className={`checkout-stepper-input ${
-                      errores.cantidad && (intento || tocados.cantidad) ? "field__input--invalid" : ""
-                    }`}
+                    className={`checkout-stepper-input ${!cantidadValida &&
+                      (intento ||
+                        cantidadTocada)
+                      ? "field__input--invalid"
+                      : ""
+                      }`}
                     value={cantidad}
-                    onChange={(e) => setCantidad(soloDigitos(e.target.value, 6))}
-                    onBlur={() => marcarTocado("cantidad")}
+                    disabled={esCompraExistente}
+                    onChange={(e) =>
+                      setCantidad(
+                        soloDigitos(
+                          e.target.value,
+                          6
+                        )
+                      )
+                    }
+                    onBlur={() =>
+                      setCantidadTocada(
+                        true
+                      )
+                    }
+                    aria-label="Cantidad de baterías"
                   />
-                  <button type="button" onClick={() => ajustarCantidad(1)} aria-label="Sumar">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      ajustarCantidad(1)
+                    }
+                    aria-label="Sumar"
+                    disabled={
+                      esCompraExistente ||
+                      cantidad >= 100000
+                    }
+                  >
                     +
                   </button>
                 </div>
               </div>
-              {errores.cantidad && (intento || tocados.cantidad) && (
-                <span className="field__error" id="cantidad-error">
-                  {errores.cantidad}
-                </span>
-              )}
-
-              <div className="checkout-summary-row">
-                <span>Tarifa por Batería</span>
-                <span>{formatCOP(tarifaPorBateria)}</span>
+              {/* ERROR CANTIDAD */}
+              {!cantidadValida &&
+                (intento ||
+                  cantidadTocada) && (
+                  <span
+                    className="field__error"
+                    id="cantidad-error"
+                  >
+                    La cantidad debe ser un
+                    número entero entre 1 y
+                    100.000.
+                  </span>
+                )}
+              {/* PRECIOS */}
+              <div className="checkout-price-list">
+                <div className="checkout-price-row">
+                  <span>
+                    Tarifa por batería
+                  </span>
+                  <strong>
+                    {formatCOP(
+                      tarifaPorBateria
+                    )}
+                  </strong>
+                </div>
+                <div className="checkout-price-row">
+                  <span>
+                    Subtotal
+                  </span>
+                  <strong>
+                    {formatCOP(
+                      subtotal
+                    )}
+                  </strong>
+                </div>
+                <div className="checkout-price-row">
+                  <span>
+                    IVA <small>(19%)</small>
+                  </span>
+                  <strong>
+                    {formatCOP(ivaMostrado)}
+                  </strong>
+                </div>
               </div>
-
-              <div className="checkout-summary-row">
-                <span>
-                  Subtotal ({cantidad} x {formatCOP(tarifaPorBateria)})
-                </span>
-                <span>{formatCOP(subtotal)}</span>
+              {/* TOTAL */}
+              <div className="checkout-total">
+                <div>
+                  <span>
+                    Total a pagar
+                  </span>
+                  <small>
+                    Impuestos incluidos
+                  </small>
+                </div>
+                <strong>
+                  {formatCOP(totalMostrado)}
+                </strong>
               </div>
-
-              <div className="checkout-summary-row">
-                <span>IVA (19%)</span>
-                <span>{formatCOP(iva)}</span>
+              {/* SEGURIDAD */}
+              <div className="checkout-summary-security">
+                <div className="checkout-security-icon">
+                  <LockIcon small />
+                </div>
+                <div>
+                  <strong>
+                    Pago seguro
+                  </strong>
+                  <span>
+                    Tu información de pago
+                    es procesada por Wompi.
+                  </span>
+                </div>
               </div>
-
-              <div className="checkout-summary-divider" />
-
-              <div className="checkout-summary-row checkout-summary-row--total">
-                <span>Total a pagar</span>
-                <span>{formatCOP(total)}</span>
-              </div>
-
-              <p className="checkout-secure-note">
-                <LockIcon small /> Pago seguro · tus datos viajan cifrados SSL.
-              </p>
             </aside>
           </div>
         </div>

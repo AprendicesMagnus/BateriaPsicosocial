@@ -8,8 +8,9 @@ Verifica:
 4. numeroTrabajadores 0 y 1000001 -> 422
 5. Password < 8 caracteres o > 72 bytes -> 422
 6. resend-code tipo VERIFICACION_EMAIL/RESET_PASSWORD -> 200; otro/verificacion_email -> 422
-7. Número de tarjeta con espacios normalizado -> 200
-8. Mensajes de error en español en respuesta 422 (propiedad 'error' traducida sin 'pattern' ni 'String should')
+7. Mensajes de error en español en respuesta 422 (propiedad 'error' traducida sin 'pattern' ni 'String should')
+
+La validación de pagos vive en tests/test_pago_monto.py.
 """
 import uuid
 
@@ -50,20 +51,6 @@ def test_rechazo_rol_codigo_minusculas(client):
     assert res_rol.status_code == 422
 
 
-def test_rechazo_pago_cvv_invalido(client):
-    """Verifica que un CVV con más de 4 dígitos sea rechazado por Pydantic."""
-    res = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
-    assert res.status_code == 200
-    headers = {"Authorization": f"Bearer {res.json()['token']}"}
-
-    res_pago = client.post("/api/pagos", headers=headers, json={
-        "compraId": str(uuid.uuid4()),
-        "metodo": "tarjeta",
-        "cvv": "12345"  # 5 dígitos, max 4
-    })
-    assert res_pago.status_code == 422
-
-
 def test_nombre_persona_validations(client):
     """Prueba rechazos y aceptaciones de NombrePersona."""
     # Rechazos
@@ -72,18 +59,19 @@ def test_nombre_persona_validations(client):
             "nombre": nombre_invalido,
             "apellido": "Pérez",
             "email": f"test_{uuid.uuid4().hex[:6]}@test.com",
-            "password": "Password123"
+            "password": "Password123",
+            "rol": "JEFE",
         })
         assert res.status_code == 422, f"Debió rechazar {nombre_invalido}"
 
-    # Aceptación con acentos, tildes, ñ y espacios múltiples que se normalizan
     res_ok = client.post("/api/auth/register", json={
         "nombre": "  Ana   María ",
         "apellido": "Núñez",
         "email": f"test_{uuid.uuid4().hex[:6]}@test.com",
-        "password": "Password123"
+        "password": "Password123",
+        "rol": "JEFE",
     })
-    assert res_ok.status_code == 200
+    assert res_ok.status_code == 200, res_ok.text
 
 
 def test_razon_social_validations(client):
@@ -206,30 +194,6 @@ def test_resend_code_tipo_validations(client):
         assert res_bad.status_code == 422, f"Debió rechazar tipo={tipo_inv}"
 
 
-def test_pago_numero_tarjeta_espacios(client):
-    """Verifica que un número de tarjeta con espacios sea normalizado por el validator antes de procesar."""
-    res_login = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
-    headers = {"Authorization": f"Bearer {res_login.json()['token']}"}
-
-    res_compra = client.post("/api/compras", headers=headers, json={
-        "cantidad": 1,
-        "bateriaNombre": "Batería Test"
-    })
-    assert res_compra.status_code in (200, 201)
-    compra_id = res_compra.json()["id"]
-
-    res_pago = client.post("/api/pagos", headers=headers, json={
-        "compraId": compra_id,
-        "metodo": "tarjeta",
-        "numeroTarjeta": "4532 0151 1234 5678",  # Con espacios
-        "nombreTarjeta": "JUAN PEREZ",
-        "vencimiento": "12/28",
-        "cvv": "123",
-        "monto": 11900
-    })
-    assert res_pago.status_code == 200
-
-
 def test_spanish_error_messages(client):
     """Verifica que las respuestas 422 devuelvan mensajes traducidos al español sin 'pattern' ni 'String should'."""
     res = client.post("/api/auth/register", json={
@@ -276,4 +240,3 @@ def test_organizaciones_autorregistro_schema_validations(client):
     bad_usr_nom = dict(payload_base, usuarioNombre="1212122")
     res_usr_nom = client.post("/api/organizaciones/autorregistro", json=bad_usr_nom)
     assert res_usr_nom.status_code == 422
-

@@ -11,7 +11,7 @@ PASSWORD_TRABAJADOR = "Trabajador1234"
 
 def _encabezados(client, email, password):
     res = client.post("/api/auth/login", json={"email": email, "password": password})
-    assert res.status_code == 200
+    assert res.status_code == 200, res.text
     return {"Authorization": f"Bearer {res.json()['token']}"}
 
 
@@ -19,7 +19,7 @@ def _crear_organizacion(client, headers_admin, nombre):
     nit_base = f"9{str(uuid.uuid4().int)[:8]}"
     nit = f"{nit_base}-{calcular_digito_verificador_nit(nit_base)}"
     res = client.post("/api/organizaciones", headers=headers_admin, json={"nombre": nombre, "nit": nit})
-    assert res.status_code in (200, 201)
+    assert res.status_code in (200, 201), res.text
     return res.json()["id"]
 
 
@@ -36,12 +36,12 @@ def _crear_usuario(client, headers_admin, rol_codigo, organizacion_id, password,
     if area_id:
         body["areaId"] = str(area_id)
     res = client.post("/api/usuarios", headers=headers_admin, json=body)
-    assert res.status_code in (200, 201)
+    assert res.status_code in (200, 201), res.text
     return uuid.UUID(res.json()["id"]), email
 
 
 @pytest.fixture
-def escenario_reportes(client, db_session):
+def escenario_reportes(client, db_session, crear_paciente):
     res = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
     assert res.status_code == 200
     headers_admin = {"Authorization": f"Bearer {res.json()['token']}"}
@@ -49,9 +49,9 @@ def escenario_reportes(client, db_session):
     org_a = _crear_organizacion(client, headers_admin, "Organizacion A Reportes")
     org_b = _crear_organizacion(client, headers_admin, "Organizacion B Reportes")
 
-    # Crear área A (con 5 trabajadores completados -> listo)
+    # Crear área A (con 5 pacientes completados -> listo)
     area_a = Area(organizacion_id=uuid.UUID(org_a), nombre=f"Area A Listo {uuid.uuid4().hex[:4]}")
-    # Crear área B (con 2 trabajadores completados -> restringido)
+    # Crear área B (con 2 pacientes completados -> restringido)
     area_b = Area(organizacion_id=uuid.UUID(org_b), nombre=f"Area B Restringido {uuid.uuid4().hex[:4]}")
     db_session.add_all([area_a, area_b])
     db_session.commit()
@@ -60,7 +60,8 @@ def escenario_reportes(client, db_session):
 
     evaluador_a_id, email_evaluador_a = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_a, PASSWORD_EVALUADOR)
     _, email_evaluador_b = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_b, PASSWORD_EVALUADOR)
-    trabajador_a_id, email_trabajador_a = _crear_usuario(client, headers_admin, "TRABAJADOR", org_a, PASSWORD_TRABAJADOR, area_id=area_a.id)
+    # Paciente con login (para probar que no accede a reportes)
+    trabajador_a_id, email_trabajador_a = crear_paciente(org_a, area_id=area_a.id, password=PASSWORD_TRABAJADOR)
 
     # Crear evaluación en Org A
     version_id = client.get("/api/cuestionarios", headers=headers_admin).json()[0]["id"]
@@ -74,16 +75,16 @@ def escenario_reportes(client, db_session):
             "trabajadoresIds": [str(trabajador_a_id)],
         },
     )
-    assert res_ev_a.status_code in (200, 201)
+    assert res_ev_a.status_code in (200, 201), res_ev_a.text
     evaluacion_a_id = uuid.UUID(res_ev_a.json()["id"])
 
-    # Crear 5 trabajadores en Area A y registrarlos completados
+    # Crear 5 pacientes en Area A y registrarlos completados
     for i in range(5):
-        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_a, PASSWORD_TRABAJADOR, area_id=area_a.id)
+        t_id, _ = crear_paciente(org_a, area_id=area_a.id)
         part = EvaluacionParticipante(evaluacion_id=evaluacion_a_id, trabajador_id=t_id, estado="COMPLETADA")
         db_session.add(part)
-    
-    # Crear 2 trabajadores en Area B con evaluación en Org B y registrarlos completados
+
+    # Crear 2 pacientes en Area B con evaluación en Org B y registrarlos completados
     res_ev_b = client.post(
         "/api/evaluaciones",
         headers=headers_admin,
@@ -94,9 +95,10 @@ def escenario_reportes(client, db_session):
             "trabajadoresIds": [],
         },
     )
+    assert res_ev_b.status_code in (200, 201), res_ev_b.text
     evaluacion_b_id = uuid.UUID(res_ev_b.json()["id"])
     for i in range(2):
-        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_b, PASSWORD_TRABAJADOR, area_id=area_b.id)
+        t_id, _ = crear_paciente(org_b, area_id=area_b.id)
         part = EvaluacionParticipante(evaluacion_id=evaluacion_b_id, trabajador_id=t_id, estado="COMPLETADA")
         db_session.add(part)
 
@@ -157,11 +159,12 @@ def test_reportes_requiere_autenticacion(client):
 
 
 def test_trabajador_sin_acceso_reportes(client, escenario_reportes):
+    # Un PACIENTE (antes TRABAJADOR) no debe acceder a los reportes
     res = client.get("/api/reportes", headers=escenario_reportes["headers_trabajador_a"])
     assert res.status_code == 403
 
 
-def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session):
+def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session, crear_paciente):
     """Demuestra que el conteo de anonimato se calcula únicamente sobre la evaluación más reciente de la organización."""
     res_login = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
     assert res_login.status_code == 200
@@ -182,9 +185,10 @@ def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session):
     res_ev1 = client.post("/api/evaluaciones", headers=headers_admin, json={
         "organizacionId": org_id, "nombre": "Eval 1 Antigua", "versionId": version_id, "trabajadoresIds": []
     })
+    assert res_ev1.status_code in (200, 201), res_ev1.text
     ev1_id = uuid.UUID(res_ev1.json()["id"])
     for i in range(3):
-        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_id, PASSWORD_TRABAJADOR, area_id=area.id)
+        t_id, _ = crear_paciente(org_id, area_id=area.id)
         db_session.add(EvaluacionParticipante(evaluacion_id=ev1_id, trabajador_id=t_id, estado="COMPLETADA"))
     db_session.commit()
 
@@ -192,9 +196,10 @@ def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session):
     res_ev2 = client.post("/api/evaluaciones", headers=headers_admin, json={
         "organizacionId": org_id, "nombre": "Eval 2 Reciente", "versionId": version_id, "trabajadoresIds": []
     })
+    assert res_ev2.status_code in (200, 201), res_ev2.text
     ev2_id = uuid.UUID(res_ev2.json()["id"])
     for i in range(2):
-        t_id, _ = _crear_usuario(client, headers_admin, "TRABAJADOR", org_id, PASSWORD_TRABAJADOR, area_id=area.id)
+        t_id, _ = crear_paciente(org_id, area_id=area.id)
         db_session.add(EvaluacionParticipante(evaluacion_id=ev2_id, trabajador_id=t_id, estado="COMPLETADA"))
     db_session.commit()
 
@@ -207,4 +212,3 @@ def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session):
     assert item["evaluacionId"] == str(ev2_id)
     assert item["participantesCompletados"] == 2
     assert item["estado"] == "restringido"
-
