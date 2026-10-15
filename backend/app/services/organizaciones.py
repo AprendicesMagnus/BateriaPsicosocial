@@ -9,7 +9,6 @@ from app.models.audit import Auditoria
 from app.models.commercial import Compra
 from app.models.evaluation import Evaluacion, EvaluacionParticipante, Notificacion
 from app.models.organization import Area, Organizacion
-from app.models.survey import SeguimientoRecomendacion
 from app.models.user import Rol, Usuario
 from app.services.auth import crear_y_enviar_codigo
 
@@ -285,7 +284,7 @@ def actualizar_mi_organizacion(db: Session, org_id, data, actual: Usuario) -> Or
 def eliminar_mi_organizacion(db: Session, org_id, actual: Usuario) -> dict:
     """Elimina una empresa que aún no tiene actividad.
 
-    Se bloquea si ya tiene evaluaciones, compras o seguimiento de recomendaciones, para no
+    Se bloquea si ya tiene evaluaciones o compras, para no
     perder información. Al eliminarla:
     - los usuarios RESPONSABLE_SST creados para esta empresa se eliminan (quedarían sin acceso);
     - cualquier otro usuario vinculado (p. ej. el Psicologo que la creó) queda sin empresa;
@@ -297,8 +296,6 @@ def eliminar_mi_organizacion(db: Session, org_id, actual: Usuario) -> dict:
         raise AppError(409, "No se puede eliminar: la empresa ya tiene evaluaciones registradas.")
     if db.query(Compra).filter(Compra.organizacion_id == org.id).first():
         raise AppError(409, "No se puede eliminar: la empresa ya tiene compras registradas.")
-    if db.query(SeguimientoRecomendacion).filter(SeguimientoRecomendacion.organizacion_id == org.id).first():
-        raise AppError(409, "No se puede eliminar: la empresa ya tiene seguimiento de recomendaciones.")
 
     vinculados = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.organizacion_id == org.id).all()
     responsables = [u for u in vinculados if u.rol.codigo == "RESPONSABLE_SST"]

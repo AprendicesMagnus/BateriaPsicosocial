@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -66,21 +66,6 @@ def obtener_mapa_calor(
         organizacion_id = actual.organizacion_id
 
     return indicadores_service.obtener_mapa_calor(db, organizacion_id, codigo)
-
-
-@router.get("/priorizacion")
-def obtener_priorizacion(
-    organizacion_id: UUID | None = None,
-    limite: int = Query(10, ge=1, le=30),
-    db: Session = Depends(get_db),
-    actual: Usuario = Depends(get_current_user),
-):
-    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR}:
-        raise AppError(403, "No tiene permisos para consultar la priorización de intervenciones.")
-    if actual.rol.codigo != "SUPER_ADMINISTRADOR":
-        organizacion_id = actual.organizacion_id
-
-    return indicadores_service.obtener_priorizacion(db, organizacion_id, limite)
 
 
 @router.get("/grupos")

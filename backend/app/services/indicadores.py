@@ -8,7 +8,7 @@ from app.core.encryption import descifrar_json
 from app.core.errors import AppError
 from app.models.evaluation import Evaluacion, EvaluacionParticipante, Respuesta, ResultadoDimension
 from app.models.organization import Organizacion, Area
-from app.models.survey import CuestionarioVersion, Dimension, Pregunta, Recomendacion, SeguimientoRecomendacion
+from app.models.survey import CuestionarioVersion, Dimension, Pregunta
 from app.models.user import Usuario
 
 settings = get_settings()
@@ -349,136 +349,6 @@ def obtener_mapa_calor(
 
 
 NIVELES_PRIORIZABLES = ("MUY_ALTO", "ALTO")
-
-
-def obtener_priorizacion(
-    db: Session,
-    organizacion_id: UUID | None = None,
-    limite: int = 10,
-) -> dict:
-    """Ranking de dimensiones con mayor riesgo y sus recomendaciones.
-
-    indice = (2 * personas en MUY_ALTO + personas en ALTO) / participantes, entre 0 y 2.
-    Las dimensiones con menos de settings.min_grupo_anonimato participantes no se listan
-    y solo se informa cuantas quedaron ocultas.
-    """
-    minimo = get_settings().min_grupo_anonimato
-
-    consulta = (
-        db.query(
-            Dimension.id,
-            Dimension.nombre,
-            Dimension.dominio,
-            CuestionarioVersion.nombre,
-            ResultadoDimension.nivel,
-            func.count(ResultadoDimension.id),
-        )
-        .select_from(ResultadoDimension)
-        .join(EvaluacionParticipante, ResultadoDimension.participante_id == EvaluacionParticipante.id)
-        .join(Evaluacion, EvaluacionParticipante.evaluacion_id == Evaluacion.id)
-        .join(Dimension, ResultadoDimension.dimension_id == Dimension.id)
-        .join(CuestionarioVersion, Dimension.version_id == CuestionarioVersion.id)
-        .filter(EvaluacionParticipante.estado == "COMPLETADA")
-    )
-    if organizacion_id:
-        consulta = consulta.filter(Evaluacion.organizacion_id == organizacion_id)
-
-    filas = consulta.group_by(
-        Dimension.id,
-        Dimension.nombre,
-        Dimension.dominio,
-        CuestionarioVersion.nombre,
-        ResultadoDimension.nivel,
-    ).all()
-
-    dimensiones: dict = {}
-    for dim_id, nombre, dominio, cuestionario, nivel, conteo in filas:
-        dimension = dimensiones.setdefault(
-            dim_id,
-            {
-                "id": dim_id,
-                "nombre": nombre,
-                "dominio": dominio,
-                "cuestionario": cuestionario,
-                "distribucion": {n: 0 for n in ORDEN_NIVELES},
-            },
-        )
-        if nivel in dimension["distribucion"]:
-            dimension["distribucion"][nivel] += conteo
-
-    ocultas = 0
-    candidatas = []
-    for dimension in dimensiones.values():
-        distribucion = dimension["distribucion"]
-        total = sum(distribucion.values())
-        if total < minimo:
-            ocultas += 1
-            continue
-        muy_alto = distribucion["MUY_ALTO"]
-        alto = distribucion["ALTO"]
-        if muy_alto + alto == 0:
-            continue
-        candidatas.append(
-            {
-                **dimension,
-                "total": total,
-                "indice": round((2 * muy_alto + alto) / total, 2),
-                "porcentajeAltoMuyAlto": round((muy_alto + alto) * 100 / total, 1),
-            }
-        )
-
-    candidatas.sort(key=lambda d: (-d["indice"], -d["distribucion"]["MUY_ALTO"], -d["total"], d["nombre"]))
-    seleccionadas = candidatas[:limite]
-
-    recomendaciones: dict = {}
-    seguimientos: dict = {}
-    if seleccionadas:
-        consulta_recs = (
-            db.query(Recomendacion)
-            .filter(
-                Recomendacion.dimension_id.in_([d["id"] for d in seleccionadas]),
-                Recomendacion.nivel.in_(NIVELES_PRIORIZABLES),
-            )
-            .order_by(Recomendacion.prioridad)
-        )
-        for rec in consulta_recs.all():
-            recomendaciones.setdefault(rec.dimension_id, []).append(rec)
-        if organizacion_id:
-            seguimientos = {
-                s.recomendacion_id: s.estado
-                for s in db.query(SeguimientoRecomendacion).filter(
-                    SeguimientoRecomendacion.organizacion_id == organizacion_id
-                )
-            }
-
-    return {
-        "dimensiones": [
-            {
-                "id": str(d["id"]),
-                "nombre": d["nombre"],
-                "dominio": d["dominio"],
-                "cuestionario": d["cuestionario"],
-                "total": d["total"],
-                "distribucion": d["distribucion"],
-                "indice": d["indice"],
-                "porcentajeAltoMuyAlto": d["porcentajeAltoMuyAlto"],
-                "recomendaciones": [
-                    {
-                        "id": str(r.id),
-                        "titulo": r.titulo,
-                        "descripcion": r.descripcion,
-                        "nivel": r.nivel,
-                        "estadoSeguimiento": seguimientos.get(r.id),
-                    }
-                    for r in recomendaciones.get(d["id"], [])
-                    if d["distribucion"][r.nivel] > 0
-                ],
-            }
-            for d in seleccionadas
-        ],
-        "dimensionesOcultas": ocultas,
-        "minimoAnonimato": minimo,
-    }
 
 
 def _grupo_texto(valor) -> str | None:

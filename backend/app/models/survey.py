@@ -1,7 +1,7 @@
 import uuid
-from datetime import date, datetime
+from datetime import datetime
 
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -87,36 +87,3 @@ class Recomendacion(Base):
     prioridad: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
     dimension: Mapped[Dimension] = relationship(back_populates="recomendaciones")
-
-class SeguimientoRecomendacion(Base):
-    """Seguimiento del estado de las recomendaciones por organizacion.
-
-    Nota: Recomendacion es catalogo compartido (por nivel/dimension), por eso el
-    seguimiento se registra por separado, con clave organizacion_id + recomendacion_id.
-    """
-    __tablename__ = "seguimiento_recomendaciones"
-    __table_args__ = (
-        UniqueConstraint("organizacion_id", "recomendacion_id", name="uq_seguimiento_org_rec"),
-    )
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    organizacion_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("organizaciones.id"), nullable=False
-    )
-    recomendacion_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("recomendaciones.id"), nullable=False
-    )
-    estado: Mapped[str] = mapped_column(
-        String(20), default="PENDIENTE", nullable=False
-    )
-    responsable: Mapped[str | None] = mapped_column(String(180), nullable=True)
-    fecha_estado: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
-    notas: Mapped[str | None] = mapped_column(Text, nullable=True)
-    fecha_limite: Mapped[date | None] = mapped_column(Date, nullable=True)
-    creado_en: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, nullable=False
-    )
-
-    recomendacion: Mapped["Recomendacion"] = relationship()

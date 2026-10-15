@@ -26,13 +26,6 @@ export async function fetchMapaCalor(token, organizacionId = null, codigo = null
   return request(`/indicadores/mapa-calor${query}`, { token });
 }
 
-export async function fetchPriorizacion(token, organizacionId = null) {
-  const path = organizacionId
-    ? `/indicadores/priorizacion?organizacion_id=${organizacionId}`
-    : "/indicadores/priorizacion";
-  return request(path, { token });
-}
-
 export async function fetchAnalisisGrupos(token, organizacionId = null, { codigo = null, variable = null } = {}) {
   const params = new URLSearchParams();
   if (organizacionId) params.append("organizacion_id", organizacionId);
