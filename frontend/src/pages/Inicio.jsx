@@ -50,6 +50,29 @@ const FACTORES = [
   },
 ];
 
+const BENEFICIOS = [
+  {
+    titulo: "Cumplimiento legal",
+    items: [
+      "Cumple la Resolución 2764 de 2022 y evita sanciones del Ministerio del Trabajo",
+      "Evidencia documentada ante la ARL y entes de control",
+    ],
+  },
+  {
+    titulo: "Prevención real",
+    items: [
+      "Detecta a tiempo factores de estrés, acoso o sobrecarga laboral",
+      "Permite diseñar planes de intervención antes de que el riesgo se convierta en incapacidad o rotación",
+    ],
+  },
+  {
+    titulo: "Beneficio organizacional",
+    items: [
+      "Reduce el ausentismo y la rotación asociados al riesgo psicosocial",
+      "Mejora el clima laboral y la productividad del equipo",
+    ],
+  },
+];
 
 const CONFIANZA = [
   {
@@ -512,6 +535,68 @@ export default function Inicio() {
         </div>
       </section>
 
+      {/* =====================================================
+          BENEFICIOS
+      ====================================================== */}
+
+      <section
+        className="section"
+        id="beneficios"
+        style={{
+          background: "var(--white)",
+        }}
+      >
+
+        <div className="container">
+
+          <div className="section__header">
+
+            <span className="section__eyebrow"
+            style={{
+                    color: "var(--gold-500)",
+                    fontSize: "20px",
+                  }}
+                >
+              Por qué aplicarla
+            </span>
+
+            <h2>
+              Beneficios de aplicar la batería
+            </h2>
+
+            <p>
+              Más allá del cumplimiento normativo, aplicar la
+              batería de riesgo psicosocial de forma periódica
+              trae beneficios concretos para la empresa y sus
+              trabajadores.
+            </p>
+
+          </div>
+
+          <div className="factor-grid">
+            {BENEFICIOS.map((beneficio) => (
+              <div
+                className="factor-card"
+                key={beneficio.titulo}
+              >
+                <h3>
+                  {beneficio.titulo}
+                </h3>
+                <ul>
+                  {beneficio.items.map((item) => (
+                    <li key={item}>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+        </div>
+
+      </section>
+
         {/* =====================================================
             CÓMO FUNCIONA
         ====================================================== */}
@@ -658,12 +743,6 @@ export default function Inicio() {
                 </li>
 
                 <li>
-                  <Link to="/crear-cuenta">
-                    Crear cuenta
-                  </Link>
-                </li>
-
-                <li>
                   <a href="#normativa">
                     Normativa
                   </a>
@@ -694,12 +773,6 @@ export default function Inicio() {
                     Para clientes
                   </a>
                 </li>
-
-                <li>
-                  <Link to="/iniciar-sesion">
-                    Iniciar sesión
-                  </Link>
-                </li>
               </ul>
             </div>
 
@@ -709,7 +782,7 @@ export default function Inicio() {
               <h5>    Contacto  </h5>
               <ul>
                 <li>
-                  direccion_software@fet.edu.co
+                  aprendizmagnus@gmail.com
                 </li>
                 <li>   Neiva, Huila — Colombia </li>
               </ul>
@@ -721,6 +794,20 @@ export default function Inicio() {
                   aria-label="Facebook"
                 >
                   f
+                </a>
+
+                <a
+                  href="#"
+                  aria-label="Instagram"
+                >
+                  in
+                </a>
+
+                <a
+                  href="#"
+                  aria-label="X"
+                >
+                  x
                 </a>
 
               </div>

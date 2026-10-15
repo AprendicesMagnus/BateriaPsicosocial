@@ -28,7 +28,7 @@ export default function ModalPlanes({ onCerrar }) {
         <div className="planes-modal__cabecera">
           <div>
             <h2 id="planes-titulo">Planes</h2>
-            <p>Precio por batería según la cantidad que necesites.</p>
+            <p>Elige el plan según la cantidad de baterías que necesites. Precios antes de IVA.</p>
           </div>
           <button type="button" className="planes-modal__cerrar" onClick={onCerrar} aria-label="Cerrar">
             ×
@@ -45,7 +45,7 @@ export default function ModalPlanes({ onCerrar }) {
               <span className="plan-tarjeta__rango">{etiquetaRango(plan.cantidadMin, plan.cantidadMax)}</span>
               <span className="plan-tarjeta__nombre">{plan.nombre}</span>
               <span className="plan-tarjeta__precio">{formatearPrecio(plan.precioUnitario)}</span>
-              <span className="plan-tarjeta__nota">por batería</span>
+              <span className="plan-tarjeta__nota">precio del plan</span>
             </article>
           ))}
         </div>

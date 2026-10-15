@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { fetchPlanes } from "../api/planes";
+import { etiquetaRango } from "../utils/planes";
 import {
   actualizarPagoPendiente,
   guardarPagoPendiente,
@@ -107,6 +109,15 @@ export default function Checkout() {
   // ESTADOS
   // ==================================================
   const [cantidad, setCantidad] = useState(cantidadInicial);
+
+  // Plan elegido (rango de baterías + precio por batería). Los administra el Super Administrador.
+  const [planes, setPlanes] = useState([]);
+  const [planId, setPlanId] = useState("");
+  useEffect(() => {
+    fetchPlanes()
+      .then((lista) => setPlanes(lista || []))
+      .catch(() => {});
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [intento, setIntento] = useState(false);
@@ -115,15 +126,24 @@ export default function Checkout() {
   // ==================================================
   // CÁLCULOS
   // ==================================================
+  const planActual = planes.find((p) => p.id === planId) || null;
+  const tarifaActual = planActual ? planActual.precioUnitario : tarifaPorBateria;
+  const cantidadMinima = planActual ? planActual.cantidadMin : CANTIDAD_MINIMA;
+  const cantidadMaxima = planActual?.cantidadMax ?? CANTIDAD_MAXIMA;
+  const mensajeCantidad = planActual
+    ? `Para este plan la cantidad debe estar entre ${cantidadMinima} y ${planActual.cantidadMax ?? "100.000"}.`
+    : MENSAJE_CANTIDAD_INVALIDA;
+
   const cantidadTexto = String(cantidad).trim();
   const cantidadValida = enteroEnRango(
     cantidadTexto,
-    CANTIDAD_MINIMA,
-    CANTIDAD_MAXIMA
+    cantidadMinima,
+    cantidadMaxima
   );
   const cantidadNumerica = cantidadValida ? Number(cantidadTexto) : 0;
 
-  const subtotal = cantidadNumerica * tarifaPorBateria;
+  // Con plan: precio fijo del plan (no se multiplica por la cantidad). Sin plan: cantidad x tarifa.
+  const subtotal = planActual ? (cantidadValida ? planActual.precioUnitario : 0) : cantidadNumerica * tarifaActual;
   const iva = subtotal * IVA_PORCENTAJE;
   const total = subtotal + iva;
 
@@ -141,15 +161,29 @@ export default function Checkout() {
   function ajustarCantidad(delta) {
     setCantidad((actual) => {
       const texto = String(actual).trim();
-      const valorActual = enteroEnRango(texto, CANTIDAD_MINIMA, CANTIDAD_MAXIMA)
+      const valorActual = enteroEnRango(texto, cantidadMinima, cantidadMaxima)
         ? Number(texto)
         : 0;
 
       return Math.min(
-        CANTIDAD_MAXIMA,
-        Math.max(CANTIDAD_MINIMA, valorActual + delta)
+        cantidadMaxima,
+        Math.max(cantidadMinima, valorActual + delta)
       );
     });
+  }
+
+  function elegirPlan(id) {
+    setPlanId(id);
+    setError("");
+    const plan = planes.find((p) => p.id === id);
+    if (plan) {
+      // Si la cantidad actual no cabe en el plan, se ajusta al mínimo del plan.
+      setCantidad((actual) => {
+        const n = Number(actual);
+        const cabe = n >= plan.cantidadMin && (plan.cantidadMax == null || n <= plan.cantidadMax);
+        return cabe ? n : plan.cantidadMin;
+      });
+    }
   }
 
   // ==================================================
@@ -163,8 +197,13 @@ export default function Checkout() {
     setError("");
     setIntento(true);
 
+    if (!compraId && planes.length > 0 && !planId) {
+      setError("Selecciona un plan para continuar.");
+      return;
+    }
+
     if (!cantidadValida) {
-      setError(MENSAJE_CANTIDAD_INVALIDA);
+      setError(mensajeCantidad);
       return;
     }
 
@@ -178,6 +217,7 @@ export default function Checkout() {
           method: "POST",
           body: {
             cantidad: cantidadNumerica,
+            planId: planId || null,
             bateriaNombre,
             organizacionId: usuario?.organizacionId || null,
           },
@@ -397,13 +437,6 @@ export default function Checkout() {
             ← Volver al inicio
           </button>
 
-          {/* BREADCRUMB */}
-          <nav className="app-breadcrumb">
-            Evaluaciones
-            <span>›</span>
-            Pago de la batería
-          </nav>
-
           {/* ENCABEZADO */}
           <div className="checkout-heading">
             <div>
@@ -511,6 +544,29 @@ export default function Checkout() {
                 </div>
               </div>
 
+              {/* PLAN */}
+              {!esCompraExistente && planes.length > 0 && (
+                <div className="checkout-plan-section" style={{ display: "flex", flexDirection: "column", gap: 6, margin: "14px 0" }}>
+                  <label className="checkout-detail-label" htmlFor="checkout-plan">
+                    Plan
+                  </label>
+                  <select
+                    id="checkout-plan"
+                    className="field__input"
+                    value={planId}
+                    onChange={(e) => elegirPlan(e.target.value)}
+                    disabled={loading}
+                  >
+                    <option value="">Selecciona un plan</option>
+                    {planes.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {`${etiquetaRango(p.cantidadMin, p.cantidadMax)} · ${formatCOP(p.precioUnitario)}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* CANTIDAD */}
               <div className="checkout-quantity-section">
                 <div>
@@ -525,7 +581,7 @@ export default function Checkout() {
                     type="button"
                     onClick={() => ajustarCantidad(-1)}
                     aria-label="Restar"
-                    disabled={esCompraExistente || cantidadNumerica <= CANTIDAD_MINIMA}
+                    disabled={esCompraExistente || cantidadNumerica <= cantidadMinima}
                   >
                     −
                   </button>
@@ -551,7 +607,7 @@ export default function Checkout() {
                     type="button"
                     onClick={() => ajustarCantidad(1)}
                     aria-label="Sumar"
-                    disabled={esCompraExistente || cantidadNumerica >= CANTIDAD_MAXIMA}
+                    disabled={esCompraExistente || cantidadNumerica >= cantidadMaxima}
                   >
                     +
                   </button>
@@ -561,15 +617,15 @@ export default function Checkout() {
               {/* ERROR CANTIDAD */}
               {mostrarErrorCantidad && (
                 <span className="field__error" id="cantidad-error">
-                  {MENSAJE_CANTIDAD_INVALIDA}
+                  {mensajeCantidad}
                 </span>
               )}
 
               {/* PRECIOS */}
               <div className="checkout-price-list">
                 <div className="checkout-price-row">
-                  <span>Tarifa por batería</span>
-                  <strong>{formatCOP(tarifaPorBateria)}</strong>
+                  <span>{planActual ? "Precio del plan" : "Tarifa por batería"}</span>
+                  <strong>{formatCOP(tarifaActual)}</strong>
                 </div>
                 <div className="checkout-price-row">
                   <span>Subtotal</span>

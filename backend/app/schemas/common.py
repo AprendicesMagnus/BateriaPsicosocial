@@ -404,6 +404,7 @@ class CompraCreate(BaseModel):
     cantidad: int = Field(gt=0)
     organizacionId: UUID | None = None
     bateriaNombre: str | None = None
+    planId: UUID | None = None
 
 
 class RespuestaEnvio(BaseModel):
@@ -773,6 +774,9 @@ class CompraCreate(BaseModel):
     cantidad: int = Field(gt=0, le=100000)
     bateriaNombre: str | None = Field(default="Batería de Riesgo Psicosocial", max_length=150)
     organizacionId: UUID | None = None
+    planId: UUID | None = None  # plan elegido en la pasarela de pago
+
+
 class OrganizacionPublica(BaseModel):
     id: UUID
     nombre: str

@@ -88,7 +88,7 @@ export default function PanelPlanes() {
       <div className="adm-card__head">
         <div>
           <h2>Planes de baterías</h2>
-          <span>Lo que ven los visitantes en "Planes" de la página principal. Precio en pesos por batería.</span>
+          <span>Lo que ven los visitantes en "Planes" de la página principal. Precio de cada plan en pesos (antes de IVA).</span>
         </div>
         <button type="button" className="adm-btn adm-btn--oscuro" onClick={abrirNuevo}>
           + Agregar plan
@@ -112,7 +112,7 @@ export default function PanelPlanes() {
             <input type="number" min={1} value={form.cantidadMax} onChange={cambiar("cantidadMax")} />
           </label>
           <label>
-            Precio por batería (COP)
+            Precio del plan (COP)
             <input type="number" min={0} value={form.precioUnitario} onChange={cambiar("precioUnitario")} />
           </label>
           <div className="plan-form__acciones">
@@ -136,7 +136,7 @@ export default function PanelPlanes() {
             <tr>
               <th>Plan</th>
               <th>Rango</th>
-              <th>Precio por batería</th>
+              <th>Precio del plan</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
