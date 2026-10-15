@@ -1,12 +1,14 @@
+from datetime import date
 from uuid import UUID
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func
+from sqlalchemy import case, func
 
 from app.core.config import get_settings
+from app.core.encryption import descifrar_json
 from app.core.errors import AppError
-from app.models.evaluation import Evaluacion, EvaluacionParticipante, ResultadoDimension
+from app.models.evaluation import Evaluacion, EvaluacionParticipante, Respuesta, ResultadoDimension
 from app.models.organization import Organizacion, Area
-from app.models.survey import Dimension
+from app.models.survey import CuestionarioVersion, Dimension, Pregunta
 from app.models.user import Usuario
 
 settings = get_settings()
@@ -114,10 +116,12 @@ def obtener_historico_indicadores(
                 "fecha": (eval_obj.fecha_fin or eval_obj.creado_en).isoformat(),
                 "creadoEn": eval_obj.creado_en,
                 "puntajes": [],
+                "participantes": set(),
                 "niveles": {"SIN_RIESGO": 0, "BAJO": 0, "MEDIO": 0, "ALTO": 0, "MUY_ALTO": 0},
             }
 
         evals_map[e_id]["puntajes"].append(r.puntaje_transformado)
+        evals_map[e_id]["participantes"].add(r.participante_id)
         if r.nivel in evals_map[e_id]["niveles"]:
             evals_map[e_id]["niveles"][r.nivel] += 1
 
@@ -133,7 +137,7 @@ def obtener_historico_indicadores(
             "nombreEvaluacion": item["nombreEvaluacion"],
             "fecha": item["fecha"],
             "promedioPuntajeTransformado": promedio,
-            "totalParticipantes": len(pts),
+            "totalParticipantes": len(item["participantes"]),
             "distribucionNiveles": item["niveles"],
         })
 
@@ -220,3 +224,315 @@ def obtener_distribucion_por_categoria(
             }
 
     return {"categorias": resultado}
+
+
+ORDEN_NIVELES = ["SIN_RIESGO", "BAJO", "MEDIO", "ALTO", "MUY_ALTO"]
+NOMBRE_SIN_AREA = "Sin área asignada"
+
+
+def _resumir_celda(distribucion: dict[str, int], minimo: int) -> dict:
+    total = sum(distribucion.values())
+    if total < minimo:
+        return {"anonimizado": True}
+    predominante = max(
+        ORDEN_NIVELES,
+        key=lambda nivel: (distribucion[nivel], ORDEN_NIVELES.index(nivel)),
+    )
+    riesgo_alto = distribucion["ALTO"] + distribucion["MUY_ALTO"]
+    return {
+        "anonimizado": False,
+        "total": total,
+        "nivel": predominante,
+        "porcentajeAltoMuyAlto": round(riesgo_alto * 100 / total, 1),
+        "distribucion": distribucion,
+    }
+
+
+def obtener_mapa_calor(
+    db: Session,
+    organizacion_id: UUID | None = None,
+    codigo: str | None = None,
+) -> dict:
+    """Mapa de calor area x dimension para un cuestionario.
+
+    Cada celda resume los niveles de riesgo de los participantes COMPLETADOS del area.
+    Si la celda tiene menos de settings.min_grupo_anonimato participantes no se expone
+    ningun dato de ella. En empates gana el nivel de mayor riesgo.
+    """
+    minimo = get_settings().min_grupo_anonimato
+
+    consulta = (
+        db.query(
+            CuestionarioVersion.codigo,
+            CuestionarioVersion.nombre,
+            Dimension.codigo,
+            Dimension.nombre,
+            Dimension.dominio,
+            Dimension.orden,
+            Usuario.area_id,
+            Area.nombre,
+            ResultadoDimension.nivel,
+            func.count(ResultadoDimension.id),
+        )
+        .select_from(ResultadoDimension)
+        .join(EvaluacionParticipante, ResultadoDimension.participante_id == EvaluacionParticipante.id)
+        .join(Evaluacion, EvaluacionParticipante.evaluacion_id == Evaluacion.id)
+        .join(Usuario, EvaluacionParticipante.trabajador_id == Usuario.id)
+        .outerjoin(Area, Usuario.area_id == Area.id)
+        .join(Dimension, ResultadoDimension.dimension_id == Dimension.id)
+        .join(CuestionarioVersion, Dimension.version_id == CuestionarioVersion.id)
+        .filter(EvaluacionParticipante.estado == "COMPLETADA")
+    )
+    if organizacion_id:
+        consulta = consulta.filter(Evaluacion.organizacion_id == organizacion_id)
+
+    filas = consulta.group_by(
+        CuestionarioVersion.codigo,
+        CuestionarioVersion.nombre,
+        Dimension.codigo,
+        Dimension.nombre,
+        Dimension.dominio,
+        Dimension.orden,
+        Usuario.area_id,
+        Area.nombre,
+        ResultadoDimension.nivel,
+    ).all()
+
+    categorias: dict[str, str] = {}
+    for cod_cuestionario, nombre_cuestionario, *_ in filas:
+        categorias.setdefault(cod_cuestionario, nombre_cuestionario)
+
+    if not categorias:
+        return {"categorias": [], "codigo": None, "dimensiones": [], "areas": [], "minimoAnonimato": minimo}
+
+    seleccionado = codigo if codigo in categorias else sorted(categorias)[0]
+
+    dimensiones: dict[str, dict] = {}
+    areas: dict = {}
+    for cod_cuestionario, _nombre, cod_dim, nombre_dim, dominio, orden, area_id, nombre_area, nivel, conteo in filas:
+        if cod_cuestionario != seleccionado or nivel not in ORDEN_NIVELES:
+            continue
+        dimensiones.setdefault(
+            cod_dim,
+            {"codigo": cod_dim, "nombre": nombre_dim, "dominio": dominio, "orden": orden},
+        )
+        area = areas.setdefault(
+            area_id,
+            {
+                "id": str(area_id) if area_id else None,
+                "nombre": nombre_area or NOMBRE_SIN_AREA,
+                "distribuciones": {},
+            },
+        )
+        distribucion = area["distribuciones"].setdefault(cod_dim, {n: 0 for n in ORDEN_NIVELES})
+        distribucion[nivel] += conteo
+
+    areas_salida = [
+        {
+            "id": area["id"],
+            "nombre": area["nombre"],
+            "celdas": {
+                cod_dim: _resumir_celda(distribucion, minimo)
+                for cod_dim, distribucion in area["distribuciones"].items()
+            },
+        }
+        for area in sorted(areas.values(), key=lambda a: (a["id"] is None, a["nombre"].lower()))
+    ]
+
+    return {
+        "categorias": [{"codigo": c, "nombre": n} for c, n in sorted(categorias.items())],
+        "codigo": seleccionado,
+        "dimensiones": sorted(dimensiones.values(), key=lambda d: d["orden"]),
+        "areas": areas_salida,
+        "minimoAnonimato": minimo,
+    }
+
+
+NIVELES_PRIORIZABLES = ("MUY_ALTO", "ALTO")
+
+
+def _grupo_texto(valor) -> str | None:
+    texto = str(valor).strip()
+    return texto or None
+
+
+def _grupo_sexo(valor) -> str | None:
+    texto = str(valor).strip().lower()
+    return texto.capitalize() if texto else None
+
+
+def _grupo_edad(valor) -> str | None:
+    try:
+        edad = date.today().year - int(valor)
+    except (TypeError, ValueError):
+        return None
+    if edad < 30:
+        return "Menos de 30 años"
+    if edad < 40:
+        return "30 a 39 años"
+    if edad < 50:
+        return "40 a 49 años"
+    return "50 años o más"
+
+
+def _grupo_antiguedad(valor) -> str | None:
+    texto = str(valor).strip().lower()
+    if not texto:
+        return None
+    if texto.startswith("menos"):
+        return "Menos de 1 año"
+    try:
+        anios = int(texto)
+    except ValueError:
+        return None
+    if anios < 1:
+        return "Menos de 1 año"
+    if anios < 5:
+        return "1 a 4 años"
+    if anios < 10:
+        return "5 a 9 años"
+    return "10 años o más"
+
+
+# clave -> (etiqueta, codigo de pregunta de la ficha, funcion que asigna el grupo)
+VARIABLES_GRUPO = {
+    "sexo": ("Sexo", "F2", _grupo_sexo),
+    "rango_edad": ("Rango de edad", "F3", _grupo_edad),
+    "estado_civil": ("Estado civil", "F4", _grupo_texto),
+    "nivel_estudios": ("Nivel de estudios", "F5", _grupo_texto),
+    "estrato": ("Estrato socioeconómico", "F9", _grupo_texto),
+    "tipo_cargo": ("Tipo de cargo", "F16", _grupo_texto),
+    "antiguedad_empresa": ("Antigüedad en la empresa", "F14", _grupo_antiguedad),
+    "tipo_contrato": ("Tipo de contrato", "F19", _grupo_texto),
+    "tipo_salario": ("Tipo de salario", "F21", _grupo_texto),
+}
+
+
+def obtener_analisis_grupos(
+    db: Session,
+    organizacion_id: UUID | None = None,
+    codigo: str | None = None,
+    variable: str = "sexo",
+) -> dict:
+    """Riesgo por grupos de la ficha de datos generales para un cuestionario.
+
+    Las respuestas de la ficha estan cifradas, por eso se descifran en memoria solo para
+    agrupar; nunca se devuelven valores individuales. Los grupos con menos de
+    settings.min_grupo_anonimato participantes no se listan y solo se cuentan.
+    """
+    if variable not in VARIABLES_GRUPO:
+        raise AppError(400, "Variable de agrupación no válida.")
+    _etiqueta, codigo_pregunta, agrupar = VARIABLES_GRUPO[variable]
+    minimo = get_settings().min_grupo_anonimato
+    variables = [{"clave": clave, "etiqueta": datos[0]} for clave, datos in VARIABLES_GRUPO.items()]
+
+    consulta = (
+        db.query(
+            CuestionarioVersion.codigo,
+            CuestionarioVersion.nombre,
+            EvaluacionParticipante.id,
+            func.count(ResultadoDimension.id),
+            func.sum(case((ResultadoDimension.nivel.in_(NIVELES_PRIORIZABLES), 1), else_=0)),
+            func.sum(ResultadoDimension.puntaje_transformado),
+        )
+        .select_from(ResultadoDimension)
+        .join(EvaluacionParticipante, ResultadoDimension.participante_id == EvaluacionParticipante.id)
+        .join(Evaluacion, EvaluacionParticipante.evaluacion_id == Evaluacion.id)
+        .join(Dimension, ResultadoDimension.dimension_id == Dimension.id)
+        .join(CuestionarioVersion, Dimension.version_id == CuestionarioVersion.id)
+        .filter(EvaluacionParticipante.estado == "COMPLETADA")
+    )
+    if organizacion_id:
+        consulta = consulta.filter(Evaluacion.organizacion_id == organizacion_id)
+
+    filas = consulta.group_by(
+        CuestionarioVersion.codigo,
+        CuestionarioVersion.nombre,
+        EvaluacionParticipante.id,
+    ).all()
+
+    categorias: dict[str, str] = {}
+    for cod_cuestionario, nombre_cuestionario, *_ in filas:
+        categorias.setdefault(cod_cuestionario, nombre_cuestionario)
+
+    if not categorias:
+        return {
+            "categorias": [],
+            "codigo": None,
+            "variables": variables,
+            "variable": variable,
+            "grupos": [],
+            "gruposOcultos": 0,
+            "sinDato": 0,
+            "minimoAnonimato": minimo,
+        }
+
+    seleccionado = codigo if codigo in categorias else sorted(categorias)[0]
+    por_participante = {
+        participante_id: (int(total), int(altos or 0), float(suma or 0.0))
+        for cod_cuestionario, _nombre, participante_id, total, altos, suma in filas
+        if cod_cuestionario == seleccionado
+    }
+
+    respuestas = (
+        db.query(Respuesta.participante_id, Respuesta.valor_cifrado)
+        .join(Pregunta, Respuesta.pregunta_id == Pregunta.id)
+        .join(Dimension, Pregunta.dimension_id == Dimension.id)
+        .join(CuestionarioVersion, Dimension.version_id == CuestionarioVersion.id)
+        .filter(
+            CuestionarioVersion.codigo == "FICHA_DATOS",
+            Pregunta.codigo == codigo_pregunta,
+            Respuesta.participante_id.in_(list(por_participante)),
+        )
+        .all()
+    )
+
+    acumulado: dict[str, dict] = {}
+    con_dato: set = set()
+    for participante_id, valor_cifrado in respuestas:
+        try:
+            nombre_grupo = agrupar(descifrar_json(valor_cifrado))
+        except ValueError:
+            continue
+        if not nombre_grupo:
+            continue
+        resultados, altos, suma = por_participante[participante_id]
+        grupo = acumulado.setdefault(
+            nombre_grupo,
+            {"participantes": 0, "resultados": 0, "altos": 0, "suma": 0.0},
+        )
+        grupo["participantes"] += 1
+        grupo["resultados"] += resultados
+        grupo["altos"] += altos
+        grupo["suma"] += suma
+        con_dato.add(participante_id)
+
+    grupos = []
+    ocultos = 0
+    for nombre_grupo, grupo in acumulado.items():
+        if grupo["participantes"] < minimo:
+            ocultos += 1
+            continue
+        grupos.append(
+            {
+                "nombre": nombre_grupo,
+                "participantes": grupo["participantes"],
+                "porcentajeAltoMuyAlto": round(grupo["altos"] * 100 / grupo["resultados"], 1),
+                "promedioPuntaje": round(grupo["suma"] / grupo["resultados"], 1),
+            }
+        )
+    grupos.sort(key=lambda g: (-g["porcentajeAltoMuyAlto"], g["nombre"]))
+
+    return {
+        "categorias": [{"codigo": c, "nombre": n} for c, n in sorted(categorias.items())],
+        "codigo": seleccionado,
+        "variables": variables,
+        "variable": variable,
+        "grupos": grupos,
+        "gruposOcultos": ocultos,
+        "sinDato": len(por_participante) - len(con_dato),
+        "minimoAnonimato": minimo,
+    }
+
+
+

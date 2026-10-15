@@ -21,6 +21,7 @@ AUTORREGISTRO_BASE = {
     "usuarioApellido": "Pérez",
     "usuarioEmail": "jperez_dv@test.com",
     "usuarioPassword": "Abc12345",
+    "usuarioNumeroResolucion": "123456",
 }
 
 

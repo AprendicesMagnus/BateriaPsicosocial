@@ -1,0 +1,132 @@
+.mapa-calor__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mapa-calor__titulo {
+  margin: 0;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.mapa-calor__subtitulo {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.mapa-calor__selector {
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 13px;
+}
+
+.mapa-calor__contenedor {
+  overflow-x: auto;
+}
+
+.mapa-calor__tabla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 3px;
+  font-size: 12px;
+}
+
+.mapa-calor__tabla thead th {
+  padding: 8px 6px;
+  min-width: 96px;
+  color: #334155;
+  font-weight: 600;
+  text-align: center;
+  vertical-align: bottom;
+}
+
+.mapa-calor__esquina,
+.mapa-calor__area {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 140px;
+  padding: 8px;
+  background: #ffffff;
+  color: #1e293b;
+  text-align: left;
+}
+
+.mapa-calor__celda {
+  padding: 8px 6px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.mapa-calor__nivel,
+.mapa-calor__n {
+  display: block;
+}
+
+.mapa-calor__nivel {
+  font-weight: 600;
+}
+
+.mapa-calor__n {
+  margin-top: 2px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.mapa-calor__celda--vacia {
+  color: #94a3b8;
+  background: #f8fafc;
+}
+
+.mapa-calor__celda--oculta {
+  color: #64748b;
+  background: #e2e8f0;
+  font-style: italic;
+}
+
+.mapa-calor__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: #475569;
+}
+
+.mapa-calor__leyenda li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mapa-calor__muestra {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+}
+
+.mapa-calor__nota,
+.mapa-calor__estado {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.mapa-calor__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+}

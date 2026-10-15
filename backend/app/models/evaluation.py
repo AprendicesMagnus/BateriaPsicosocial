@@ -175,6 +175,8 @@ class Informe(Base):
     generado_por: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=False)
     generado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     anonimizado: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    codigo_verificacion: Mapped[str | None] = mapped_column(String(40), unique=True, index=True)
+    hash_sha256: Mapped[str | None] = mapped_column(String(64))
 
     evaluacion: Mapped[Evaluacion] = relationship(back_populates="informes")
 

@@ -77,6 +77,8 @@ def generar_informe_individual(
         "rutaArchivo": informe.ruta_archivo,
         "generadoEn": informe.generado_en.isoformat(),
         "anonimizado": informe.anonimizado,
+        "codigoVerificacion": informe.codigo_verificacion,
+        "hashSha256": informe.hash_sha256,
     }
 
 
@@ -106,7 +108,14 @@ def generar_informe_agrupado(
         "rutaArchivo": informe.ruta_archivo,
         "generadoEn": informe.generado_en.isoformat(),
         "anonimizado": informe.anonimizado,
+        "codigoVerificacion": informe.codigo_verificacion,
+        "hashSha256": informe.hash_sha256,
     }
+
+
+@router.get("/verificar/{codigo}")
+def verificar_informe(codigo: str, db: Session = Depends(get_db)):
+    return informes_service.obtener_verificacion_informe(db, codigo)
 
 
 @router.get("/{informe_id}/descargar")

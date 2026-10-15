@@ -13,6 +13,10 @@ import { crearEnlace } from "../api/enlaces";
 import BotonRegresar from "../components/BotonRegresar";
 import { esSuperAdmin, rutaInicial } from "../utils/roles";
 import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
+import QrEnlaceModal from "../components/QrEnlaceModal";
+import MapaCalorAreas from "../components/MapaCalorAreas";
+import HistoricoComparativo from "../components/HistoricoComparativo";
+import AnalisisGruposFicha from "../components/AnalisisGruposFicha";
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
 const ROLES_ENLACES = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
@@ -136,6 +140,7 @@ export default function Dashboard() {
   const [creandoEnlace, setCreandoEnlace] = useState(false);
   const [errorEnlace, setErrorEnlace] = useState(null);
   const [enlaceCopiado, setEnlaceCopiado] = useState(false);
+  const [mostrarQr, setMostrarQr] = useState(false);
 
   const categoriaActiva = TODAS_CATEGORIAS.find((c) => c.id === categoriaActivaId);
 
@@ -403,6 +408,31 @@ export default function Dashboard() {
   ))}
 </div>
 
+        {(enlaceCreado || errorEnlace) && (
+          <div className="enlace-creado" role="status">
+            {errorEnlace ? (
+              <span className="enlace-creado__error">{errorEnlace}</span>
+            ) : (
+              <>
+                <span className="enlace-creado__texto">
+                  Enlace listo. Compártelo con el paciente; se cierra cuando termine la encuesta.
+                </span>
+                <span className="enlace-creado__url">{enlaceCreado}</span>
+              </>
+            )}
+            {enlaceCreado && (
+              <button type="button" onClick={copiarEnlace}>
+                {enlaceCopiado ? "¡Copiado!" : "Copiar"}
+              </button>
+            )}
+            {enlaceCreado && (
+              <button type="button" onClick={() => setMostrarQr(true)}>Ver QR</button>
+            )}
+          </div>
+        )}
+
+        {/* Segunda fila: versiones "B" de Estrés, Extralaboral e Intralaboral */}
+
 {/* Pestañas de categorías del formulario B */}
 <div
   className="category-tabs category-tabs--b"
@@ -629,6 +659,24 @@ export default function Dashboard() {
             ]}
           />
         </section>
+
+        {puedeCrearEnlaces && usuario?.organizacionId && (
+          <section className="responders-card" style={{ marginTop: "24px" }}>
+            <MapaCalorAreas token={token} organizacionId={usuario.organizacionId} />
+          </section>
+        )}
+
+        {puedeCrearEnlaces && usuario?.organizacionId && (
+          <section className="responders-card" style={{ marginTop: "24px" }}>
+            <AnalisisGruposFicha token={token} organizacionId={usuario.organizacionId} />
+          </section>
+        )}
+
+        {puedeCrearEnlaces && usuario?.organizacionId && (
+          <section style={{ marginTop: "24px" }}>
+            <HistoricoComparativo token={token} organizacionId={usuario.organizacionId} />
+          </section>
+        )}
 
         {/* =========================================================
             SECCIÓN DE ANÁLISIS PREDICTIVO CON IA (K-MEANS)
@@ -890,6 +938,9 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+      )}
+      {mostrarQr && enlaceCreado && (
+        <QrEnlaceModal url={enlaceCreado} titulo="Enlace de evaluación" onCerrar={() => setMostrarQr(false)} />
       )}
     </div>
   );

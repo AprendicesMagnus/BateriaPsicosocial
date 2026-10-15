@@ -14,6 +14,7 @@ PAYLOAD_BASE = {
     "usuarioApellido": "García",
     "usuarioEmail": "ana_dup_nit@test.com",
     "usuarioPassword": "Abc12345",
+    "usuarioNumeroResolucion": "123456",
 }
 
 

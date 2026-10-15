@@ -1,6 +1,10 @@
-﻿import os
+import hashlib
+import os
+import secrets
 import uuid
 from sqlalchemy.orm import Session, contains_eager, joinedload
+from reportlab.graphics.barcode.qr import QrCodeWidget
+from reportlab.graphics.shapes import Drawing
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -19,10 +23,51 @@ from app.models.user import Usuario
 
 settings = get_settings()
 
+
 def _asegurar_directorio_storage() -> str:
     path = os.path.join(settings.storage_path, "informes")
     os.makedirs(path, exist_ok=True)
     return path
+
+
+def _calcular_sha256(file_path: str) -> str:
+    sha = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            sha.update(chunk)
+    return sha.hexdigest()
+
+
+def _url_verificacion(codigo: str) -> str:
+    base = settings.frontend_url.rstrip("/")
+    return f"{base}/verificar-informe/{codigo}"
+
+
+def _bloque_verificacion(codigo: str, cell_style) -> list:
+    from reportlab.platypus import KeepTogether
+    from reportlab.graphics import renderPDF
+    url = _url_verificacion(codigo)
+    qr = QrCodeWidget(url)
+    bounds = qr.getBounds()
+    ancho = bounds[2] - bounds[0]
+    alto = bounds[3] - bounds[1]
+    escala = 72 / max(ancho, alto)
+    drawing = Drawing(escala * ancho, escala * alto)
+    drawing.add(qr)
+    drawing.transform = (escala, 0, 0, escala, 0, 0)
+    elementos = [
+        HRFlowable(width="100%", thickness=0.5, color=colors.grey),
+        Spacer(1, 6),
+        Paragraph("<b>Verificación de autenticidad</b>", cell_style),
+        Spacer(1, 4),
+        Paragraph(f"Código: <font name='Courier'>{codigo}</font>", cell_style),
+        Spacer(1, 4),
+        drawing,
+        Spacer(1, 4),
+        Paragraph(f"Consulte la validez en: {url}", cell_style),
+        Spacer(1, 6),
+    ]
+    return [KeepTogether(elementos)]
 
 
 def generar_informe_individual(
@@ -46,15 +91,16 @@ def generar_informe_individual(
     )
 
     if participante is None:
-        raise AppError(404, "Participante o evaluaciÃ³n no encontrado.")
+        raise AppError(404, "Participante o evaluación no encontrado.")
 
     if participante.estado != "COMPLETADA" or not participante.resultados:
-        raise AppError(400, "El participante no ha completado la evaluaciÃ³n o no existen resultados calculados.")
+        raise AppError(400, "El participante no ha completado la evaluación o no existen resultados calculados.")
 
     dir_path = _asegurar_directorio_storage()
     filename = f"informe_individual_{participante.id}_{uuid.uuid4().hex[:6]}.pdf"
     file_path = os.path.join(dir_path, filename)
 
+    codigo_verificacion = secrets.token_urlsafe(16)
     file_path_tmp = file_path + ".tmp"
     try:
         doc = SimpleDocTemplate(
@@ -102,7 +148,7 @@ def generar_informe_individual(
 
         story.append(Paragraph("INFORME INDIVIDUAL DE RIESGO PSICOSOCIAL", title_style))
         story.append(Spacer(1, 4))
-        story.append(Paragraph("BaterÃ­a de Riesgo Psicosocial â€” Res. 2764 de 2022", subtitle_style))
+        story.append(Paragraph("Batería de Riesgo Psicosocial — Res. 2764 de 2022", subtitle_style))
         story.append(Spacer(1, 10))
         story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1E3A8A")))
         story.append(Spacer(1, 10))
@@ -111,10 +157,10 @@ def generar_informe_individual(
         org = participante.evaluacion.organizacion
         datos_tabla = [
             [Paragraph("Trabajador:", cell_bold_style), Paragraph(f"{trabajador.nombre} {trabajador.apellido}", cell_style)],
-            [Paragraph("IdentificaciÃ³n:", cell_bold_style), Paragraph(f"{trabajador.numero_identificacion or 'N/A'}", cell_style)],
+            [Paragraph("Identificación:", cell_bold_style), Paragraph(f"{trabajador.numero_identificacion or 'N/A'}", cell_style)],
             [Paragraph("Cargo:", cell_bold_style), Paragraph(f"{trabajador.cargo or 'N/A'}", cell_style)],
-            [Paragraph("OrganizaciÃ³n:", cell_bold_style), Paragraph(f"{org.nombre} (NIT: {org.nit})", cell_style)],
-            [Paragraph("EvaluaciÃ³n:", cell_bold_style), Paragraph(f"{participante.evaluacion.nombre}", cell_style)],
+            [Paragraph("Organización:", cell_bold_style), Paragraph(f"{org.nombre} (NIT: {org.nit})", cell_style)],
+            [Paragraph("Evaluación:", cell_bold_style), Paragraph(f"{participante.evaluacion.nombre}", cell_style)],
             [Paragraph("Fecha de Cierre:", cell_bold_style), Paragraph(f"{participante.fecha_fin.strftime('%Y-%m-%d %H:%M') if participante.fecha_fin else 'N/A'}", cell_style)],
         ]
         t_datos = Table(datos_tabla, colWidths=[120, 420])
@@ -127,10 +173,10 @@ def generar_informe_individual(
         story.append(t_datos)
         story.append(Spacer(1, 14))
 
-        story.append(Paragraph("Resultados Evaluados por DimensiÃ³n", section_style))
+        story.append(Paragraph("Resultados Evaluados por Dimensión", section_style))
 
         res_headers = [
-            Paragraph("DimensiÃ³n", header_cell_style),
+            Paragraph("Dimensión", header_cell_style),
             Paragraph("Dominio", header_cell_style),
             Paragraph("Puntaje Bruto", header_cell_style),
             Paragraph("Puntaje Transf.", header_cell_style),
@@ -171,9 +217,9 @@ def generar_informe_individual(
         ]))
         story.append(t_res)
 
-        # Recomendaciones de IntervenciÃ³n (Res. 2764 de 2022)
+        # Recomendaciones de Intervención (Res. 2764 de 2022)
         story.append(Spacer(1, 14))
-        story.append(Paragraph("Recomendaciones de IntervenciÃ³n (Res. 2764 de 2022)", section_style))
+        story.append(Paragraph("Recomendaciones de Intervención (Res. 2764 de 2022)", section_style))
 
         has_recs = False
         for res in sorted(participante.resultados, key=lambda r: r.dimension.orden):
@@ -185,12 +231,13 @@ def generar_informe_individual(
             )
             for rec in recs:
                 has_recs = True
-                story.append(Paragraph(f"â€¢ <b>[{res.dimension.nombre} â€” {res.nivel.replace('_', ' ')}]</b> <b>{rec.titulo}:</b> {rec.descripcion}", cell_style))
+                story.append(Paragraph(f"• <b>[{res.dimension.nombre} — {res.nivel.replace('_', ' ')}]</b> <b>{rec.titulo}:</b> {rec.descripcion}", cell_style))
                 story.append(Spacer(1, 4))
 
         if not has_recs:
-            story.append(Paragraph("No existen recomendaciones de intervenciÃ³n especÃ­ficas para los niveles actuales.", cell_style))
+            story.append(Paragraph("No existen recomendaciones de intervención específicas para los niveles actuales.", cell_style))
 
+        story.extend(_bloque_verificacion(codigo_verificacion, cell_style))
         doc.build(story)
         os.replace(file_path_tmp, file_path)
     finally:
@@ -200,6 +247,7 @@ def generar_informe_individual(
             except OSError:
                 pass
 
+    hash_archivo = _calcular_sha256(file_path)
     informe_obj = Informe(
         evaluacion_id=evaluacion_id,
         tipo="INDIVIDUAL",
@@ -209,6 +257,8 @@ def generar_informe_individual(
         generado_por=generado_por,
         generado_en=utcnow(),
         anonimizado=False,
+        codigo_verificacion=codigo_verificacion,
+        hash_sha256=hash_archivo,
     )
     db.add(informe_obj)
     db.commit()
@@ -225,7 +275,7 @@ def generar_informe_agrupado(
 ) -> Informe:
     evaluacion = db.query(Evaluacion).filter(Evaluacion.id == evaluacion_id).first()
     if evaluacion is None:
-        raise AppError(404, "EvaluaciÃ³n no encontrada.")
+        raise AppError(404, "Evaluación no encontrada.")
 
     query = (
         db.query(EvaluacionParticipante)
@@ -249,7 +299,7 @@ def generar_informe_agrupado(
         raise AppError(
             400,
             f"No se puede generar el informe agrupado. El grupo tiene {num_participantes} participantes completados, "
-            f"lo cual es inferior al mÃ­nimo requerido de anonimato ({settings.min_grupo_anonimato} personas).",
+            f"lo cual es inferior al mínimo requerido de anonimato ({settings.min_grupo_anonimato} personas).",
         )
 
     dimensiones = db.query(Dimension).filter(Dimension.version_id == evaluacion.version_id).order_by(Dimension.orden).all()
@@ -278,12 +328,13 @@ def generar_informe_agrupado(
     extension = "xlsx" if formato_upper == "EXCEL" else "pdf"
     filename = f"informe_agrupado_{evaluacion_id}_{uuid.uuid4().hex[:6]}.{extension}"
     file_path = os.path.join(dir_path, filename)
+    codigo_verificacion = secrets.token_urlsafe(16)
     file_path_tmp = file_path + ".tmp"
 
     try:
         if formato_upper == "EXCEL":
             from openpyxl.chart import BarChart, Reference
-            from openpyxl.worksheet.table import Table, TableStyleInfo
+            from openpyxl.worksheet.table import Table as TablaExcel, TableStyleInfo
             from openpyxl.styles import Font, PatternFill, Alignment
 
             wb = Workbook()
@@ -327,7 +378,7 @@ def generar_informe_agrupado(
 
             if data_end_row >= data_start_row:
                 tabla_ref = f"A{header_row}:H{data_end_row}"
-                tabla = Table(displayName="TablaDimensiones", ref=tabla_ref)
+                tabla = TablaExcel(displayName="TablaDimensiones", ref=tabla_ref)
                 estilo_tabla = TableStyleInfo(
                     name="TableStyleMedium2",
                     showFirstColumn=False,
@@ -399,15 +450,15 @@ def generar_informe_agrupado(
             story = [
                 Paragraph("INFORME AGRUPADO DE RIESGO PSICOSOCIAL", title_style),
                 Spacer(1, 4),
-                Paragraph(f"<b>EvaluaciÃ³n:</b> {evaluacion.nombre} &nbsp;|&nbsp; <b>Total Participantes:</b> {num_participantes} (Anonimizado)", subtitle_style),
+                Paragraph(f"<b>Evaluación:</b> {evaluacion.nombre} &nbsp;|&nbsp; <b>Total Participantes:</b> {num_participantes} (Anonimizado)", subtitle_style),
                 Spacer(1, 10),
                 HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1E3A8A")),
                 Spacer(1, 12),
-                Paragraph("DistribuciÃ³n de Riesgo y Promedios por DimensiÃ³n", section_style),
+                Paragraph("Distribución de Riesgo y Promedios por Dimensión", section_style),
             ]
 
             table_data = [[
-                Paragraph("DimensiÃ³n", header_cell_style),
+                Paragraph("Dimensión", header_cell_style),
                 Paragraph("Dominio", header_cell_style),
                 Paragraph("Prom. Transf.", header_cell_style),
                 Paragraph("Sin Riesgo", header_cell_style),
@@ -439,14 +490,14 @@ def generar_informe_agrupado(
             ]))
             story.append(t)
 
-            # Recomendaciones de IntervenciÃ³n Colectiva
+            # Recomendaciones de Intervención Colectiva
             story.append(Spacer(1, 14))
-            story.append(Paragraph("Recomendaciones de IntervenciÃ³n Colectiva (Res. 2764 de 2022)", section_style))
+            story.append(Paragraph("Recomendaciones de Intervención Colectiva (Res. 2764 de 2022)", section_style))
 
             has_recs = False
             for agg in agregados:
                 n = agg["niveles"]
-                # Determinar el nivel predominante o crÃ­tico de la dimensiÃ³n
+                # Determinar el nivel predominante o crítico de la dimensión
                 if n["ALTO"] + n["MUY_ALTO"] > 0 or agg["promedio"] >= 50.0:
                     nivel_prioridad = "MUY_ALTO" if n["MUY_ALTO"] > 0 else "ALTO"
                 elif n["MEDIO"] > 0:
@@ -462,12 +513,13 @@ def generar_informe_agrupado(
                 )
                 for rec in recs:
                     has_recs = True
-                    story.append(Paragraph(f"â€¢ <b>[{agg['dimension']} â€” Enfoque {nivel_prioridad.replace('_', ' ')}]</b> <b>{rec.titulo}:</b> {rec.descripcion}", cell_style))
+                    story.append(Paragraph(f"• <b>[{agg['dimension']} — Enfoque {nivel_prioridad.replace('_', ' ')}]</b> <b>{rec.titulo}:</b> {rec.descripcion}", cell_style))
                     story.append(Spacer(1, 4))
 
             if not has_recs:
-                story.append(Paragraph("No se requieren recomendaciones de intervenciÃ³n colectiva urgente.", cell_style))
+                story.append(Paragraph("No se requieren recomendaciones de intervención colectiva urgente.", cell_style))
 
+            story.extend(_bloque_verificacion(codigo_verificacion, cell_style))
             doc.build(story)
             os.replace(file_path_tmp, file_path)
     finally:
@@ -477,6 +529,7 @@ def generar_informe_agrupado(
             except OSError:
                 pass
 
+    hash_archivo = _calcular_sha256(file_path)
     informe_obj = Informe(
         evaluacion_id=evaluacion_id,
         tipo="AGRUPADO",
@@ -486,6 +539,8 @@ def generar_informe_agrupado(
         generado_por=generado_por,
         generado_en=utcnow(),
         anonimizado=True,
+        codigo_verificacion=codigo_verificacion,
+        hash_sha256=hash_archivo,
     )
     db.add(informe_obj)
     db.commit()
@@ -506,6 +561,8 @@ def _serializar_informe(informe: Informe) -> dict:
         "areaId": str(informe.area_id) if informe.area_id else None,
         "generadoEn": informe.generado_en.isoformat(),
         "anonimizado": informe.anonimizado,
+        "codigoVerificacion": informe.codigo_verificacion,
+        "hashSha256": informe.hash_sha256,
     }
 
 
@@ -554,3 +611,27 @@ def listar_informes(
     return [_serializar_informe(informe) for informe in informes]
 
 
+def obtener_verificacion_informe(db: Session, codigo: str) -> dict:
+    """Verifica la autenticidad de un informe a partir de su código. Endpoint público."""
+    informe = (
+        db.query(Informe)
+        .options(joinedload(Informe.evaluacion).joinedload(Evaluacion.organizacion))
+        .filter(Informe.codigo_verificacion == codigo)
+        .first()
+    )
+    if informe is None:
+        raise AppError(404, "Código de verificación no encontrado.")
+
+    hash_actual = _calcular_sha256(informe.ruta_archivo) if os.path.exists(informe.ruta_archivo) else None
+    valido = hash_actual is not None and hash_actual == informe.hash_sha256
+
+    return {
+        "valido": valido,
+        "tipo": informe.tipo,
+        "formato": informe.formato,
+        "organizacionNombre": informe.evaluacion.organizacion.nombre,
+        "evaluacionNombre": informe.evaluacion.nombre,
+        "generadoEn": informe.generado_en.isoformat(),
+        "anonimizado": informe.anonimizado,
+        "hashSha256": informe.hash_sha256,
+    }
