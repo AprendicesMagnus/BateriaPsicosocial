@@ -124,11 +124,7 @@ def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
         if not actual.organizacion_id:
             return []
         query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
-<<<<<<< HEAD
-    elif rol not in _ROLES_VEN_TODAS:
-=======
     elif rol != "SUPER_ADMINISTRADOR":
->>>>>>> fbda8549701f072fb0bd3d23034ef4eaf1b52ca9
         raise AppError(403, "No tiene permisos para consultar encuestas.")
 
     # Las más recientes primero: primero las terminadas (fecha_fin), luego las que están en curso

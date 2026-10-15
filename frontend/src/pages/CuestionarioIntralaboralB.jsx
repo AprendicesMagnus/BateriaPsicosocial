@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
 // Muestra "Cargando…" o el error cuando las respuestas no se pueden guardar
 import AvisoCuestionario from "../components/AvisoCuestionario";
+import Toast from "../components/Toast";
 import "../styles/cuestionario-estres.css";
 
 /* =========================================================
    PREGUNTAS PRINCIPALES (1-88) — Forma B
 
-   ⚠️ NO MODIFICAR el texto, el orden ni los ids: son parte
+    NO MODIFICAR el texto, el orden ni los ids: son parte
    del instrumento oficial (Batería de Riesgo Psicosocial,
    Forma B). Los ids se usan como clave de calificación por
    dominio/dimensión; cambiarlos rompe los resultados.
@@ -248,6 +249,7 @@ export default function CuestionarioIntralaboralB() {
     respuestas,
     seleccionarRespuesta: seleccionarRespuestaBackend,
     finalizarYNavegar,
+    mensajeFinal,
     cargando, // true mientras se carga el cuestionario desde el backend
     error, // mensaje cuando no hay evaluación o falla el guardado
   } = useCuestionarioBackend("INTRALABORAL_B", MAPA_INTRALABORAL);
@@ -332,6 +334,7 @@ export default function CuestionarioIntralaboralB() {
 
   return (
     <div className="questionnaire-page">
+      <Toast mensaje={mensajeFinal} tipo="exito" duracion={6000} />
 
       {/* =====================================================
           MENÚ LATERAL
@@ -424,6 +427,13 @@ export default function CuestionarioIntralaboralB() {
 
           </div>
 
+          {/* LOGOS INSTITUCIONALES */}
+          <div className="questionnaire-logos">
+            <img src="/ministerio r.png" alt="Ministerio de la Protección Social" />
+          </div>
+          <div className="questionnaire-javeriana">
+            <img src="/logo javeriana r.png" alt="Pontificia Universidad Javeriana" />
+          </div>
         </section>
 
 

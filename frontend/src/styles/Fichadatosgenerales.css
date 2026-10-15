@@ -190,3 +190,34 @@
     flex-direction: column;
   }
 }
+/* Encabezado: botón Regresar + logos institucionales */
+.ficha-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ficha-logos {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-left: auto;
+}
+
+.ficha-logos img {
+  height: 70px;
+  width: auto;
+  object-fit: contain;
+}
+
+@media (max-width: 00px) {
+  .ficha-logos img {
+    height: 36px;
+  }
+}
+
+.ficha-topbar .boton-regresar {
+  align-self: center;
+}

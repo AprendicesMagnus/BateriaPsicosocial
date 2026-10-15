@@ -1,0 +1,449 @@
+
+/* =====================================================
+   1. CONFIGURACIÓN GENERAL DE LA PÁGINA
+   Define colores, fondo y tamaño mínimo de la pantalla.
+   ===================================================== */
+.enlace-shell {
+  --enlace-azul: #0b1538;
+  --enlace-dorado: #ffad1f;
+  --enlace-texto: #26324b;
+  --enlace-secundario: #68738a;
+  --enlace-borde: #e7eaf0;
+  --enlace-fondo: #f6f8fc;
+
+  min-height: 100vh;
+  padding: 0 24px;
+  background:
+    radial-gradient(
+      circle at 10% 5%,
+      rgba(255, 173, 31, 0.09),
+      transparent 28%
+    ),
+    var(--enlace-fondo);
+  color: var(--enlace-texto);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+/* Aplica box-sizing a todos los elementos de esta página */
+.enlace-shell *,
+.enlace-shell *::before,
+.enlace-shell *::after {
+  box-sizing: border-box;
+}
+
+/* =====================================================
+   2. ENCABEZADO SUPERIOR
+   Organiza la marca a la izquierda y la confidencialidad
+   a la derecha.
+   ===================================================== */
+.enlace__header {
+  width: 100%;
+  max-width: 1100px;
+  min-height: 90px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+/* Nombre y marca Magnus SIG */
+.enlace__marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--enlace-azul);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Cuadro dorado con la letra M */
+.enlace__marca-icono {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--enlace-azul);
+  color: var(--enlace-dorado);
+  font-size: 23px;
+  font-weight: 800;
+}
+
+/* Separador entre Magnus y SIG */
+.enlace__marca-separador {
+  color: #9aa3b5;
+  font-weight: 400;
+}
+
+/* Texto SIG de la marca */
+.enlace__marca strong {
+  color: var(--enlace-azul);
+}
+
+/* Indicador de evaluación confidencial */
+.enlace__confidencial {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--enlace-secundario);
+  font-size: 13px;
+}
+
+/* Punto que acompaña el texto de confidencialidad */
+.enlace__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #28a879;
+  box-shadow: 0 0 0 4px rgba(40, 168, 121, 0.12);
+}
+
+/* =====================================================
+   3. CONTENEDOR CENTRAL
+   Centra la tarjeta de evaluación en la página.
+   ===================================================== */
+.enlace__contenedor {
+  width: 100%;
+  max-width: 680px;
+  margin: 48px auto 0;
+}
+
+/* Tarjeta blanca principal */
+.enlace__tarjeta {
+  padding: 42px;
+  overflow: hidden;
+  border: 1px solid rgba(231, 234, 240, 0.9);
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 18px 55px rgba(11, 21, 56, 0.08);
+}
+
+/* Espacio de la presentación inicial */
+.enlace__presentacion {
+  margin-bottom: 28px;
+}
+
+/* Etiqueta pequeña sobre el título */
+.enlace__eyebrow {
+  margin: 0 0 12px;
+  color: #b5790b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+/* Título principal de la tarjeta */
+.enlace__tarjeta h1 {
+  margin: 0 0 18px;
+  color: var(--enlace-azul);
+  font-size: clamp(27px, 4vw, 36px);
+  font-weight: 750;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+/* Párrafos explicativos */
+.enlace__texto {
+  margin: 0;
+  color: var(--enlace-secundario);
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+/* Texto resaltado dentro de los párrafos */
+.enlace__texto strong {
+  color: var(--enlace-azul);
+}
+
+/* =====================================================
+   4. AVISO DE PRIVACIDAD
+   Recuadro informativo antes del consentimiento.
+   ===================================================== */
+.enlace__privacidad {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 26px 0;
+  padding: 18px;
+  border: 1px solid #e5ebf6;
+  border-radius: 14px;
+  background: #f7f9fd;
+}
+
+/* Icono de verificación del aviso */
+.enlace__privacidad-icono {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e3f5ed;
+  color: #16845c;
+  font-weight: 800;
+}
+
+/* Título del aviso de privacidad */
+.enlace__privacidad strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--enlace-azul);
+  font-size: 14px;
+}
+
+/* Descripción del aviso */
+.enlace__privacidad p {
+  margin: 0;
+  color: var(--enlace-secundario);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* Separación del componente de consentimiento */
+.enlace__consentimiento {
+  margin-top: 28px;
+}
+
+/* =====================================================
+   5. BOTONES
+   Mejora el aspecto de los botones de la tarjeta.
+   ===================================================== */
+.enlace__tarjeta button {
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* Efecto al pasar el cursor por un botón habilitado */
+.enlace__tarjeta button:not(:disabled):hover {
+  box-shadow: 0 7px 18px rgba(11, 21, 56, 0.15);
+}
+
+/* Efecto de enfoque con teclado */
+.enlace__tarjeta button:focus-visible {
+  outline: 3px solid rgba(255, 173, 31, 0.65);
+  outline-offset: 3px;
+}
+
+/* Apariencia de un botón deshabilitado */
+.enlace__tarjeta button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* =====================================================
+   6. ESTADOS DE LA EVALUACIÓN
+   Presenta mensajes de bienvenida, progreso o finalización.
+   ===================================================== */
+.enlace__estado {
+  padding: 12px 0;
+  text-align: center;
+}
+
+/* Etiqueta de los estados */
+.enlace__estado .enlace__eyebrow {
+  margin-top: 20px;
+}
+
+/* Texto de los estados */
+.enlace__estado .enlace__texto {
+  margin: 0 auto 26px;
+  max-width: 490px;
+}
+
+/* Botón de continuar centrado */
+.enlace__estado > button {
+  margin-top: 22px;
+}
+
+/* Círculo que contiene el icono del estado */
+.enlace__icono {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+  border-radius: 20px;
+  background: #edf1fb;
+  color: var(--enlace-azul);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+/* Icono para evaluación completada */
+.enlace__icono--exito {
+  background: #e3f5ed;
+  color: #16845c;
+}
+
+/* Icono para enlaces cerrados o no disponibles */
+.enlace__icono--alerta {
+  background: #fff0e8;
+  color: #bd5729;
+}
+
+/* =====================================================
+   7. INDICADOR DE CARGA
+   Aparece mientras se prepara la evaluación.
+   ===================================================== */
+.enlace__cargando {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+/* Mensaje que acompaña el indicador */
+.enlace__cargando p {
+  margin: 0;
+  color: var(--enlace-secundario);
+  font-size: 14px;
+}
+
+/* Círculo giratorio de carga */
+.enlace__spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid #e7eaf0;
+  border-top-color: var(--enlace-dorado);
+  border-radius: 50%;
+  animation: enlace-girar 0.8s linear infinite;
+}
+
+/* Movimiento giratorio del indicador */
+@keyframes enlace-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =====================================================
+   8. MENSAJES DE ERROR
+   Ajusta el espacio de los mensajes de FormMessage.
+   ===================================================== */
+.enlace__tarjeta [role="alert"] {
+  margin-bottom: 16px;
+}
+
+/* =====================================================
+   9. PIE DE PÁGINA
+   Texto inferior con el nombre del sistema y la resolución.
+   ===================================================== */
+.enlace__footer {
+  padding: 28px 10px 32px;
+  color: #8790a3;
+  text-align: center;
+}
+
+/* Nombre del sistema */
+.enlace__footer p {
+  margin: 0 0 7px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Referencia normativa */
+.enlace__footer span {
+  font-size: 11px;
+}
+
+/* =====================================================
+   10. ADAPTACIÓN PARA CELULARES
+   Reduce espacios y tamaños en pantallas pequeñas.
+   ===================================================== */
+@media (max-width: 640px) {
+  .enlace-shell {
+    padding: 0 16px;
+  }
+
+  .enlace__header {
+    min-height: 76px;
+    align-items: center;
+  }
+
+  .enlace__marca {
+    gap: 9px;
+    font-size: 18px;
+  }
+
+  .enlace__marca-icono {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 20px;
+  }
+
+  .enlace__confidencial {
+    font-size: 11px;
+  }
+
+  .enlace__contenedor {
+    margin-top: 28px;
+  }
+
+  .enlace__tarjeta {
+    padding: 27px 22px;
+    border-radius: 18px;
+  }
+
+  .enlace__tarjeta h1 {
+    font-size: 28px;
+  }
+
+  .enlace__texto {
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .enlace__privacidad {
+    gap: 11px;
+    padding: 14px;
+  }
+}
+
+/* Ajustes para celulares muy pequeños */
+@media (max-width: 380px) {
+  .enlace-shell {
+    padding: 0 10px;
+  }
+
+  .enlace__header {
+    gap: 8px;
+  }
+
+  .enlace__marca {
+    font-size: 16px;
+  }
+
+  .enlace__confidencial {
+    font-size: 10px;
+  }
+
+  .enlace__tarjeta {
+    padding: 23px 17px;
+  }
+
+  .enlace__tarjeta h1 {
+    font-size: 25px;
+  }
+}
+
+/* Respeta la configuración de movimiento reducido del usuario */
+@media (prefers-reduced-motion: reduce) {
+  .enlace__spinner {
+    animation: none;
+  }
+
+  .enlace__tarjeta button {
+    transition: none;
+  }
+}
