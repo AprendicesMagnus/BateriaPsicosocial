@@ -2,6 +2,7 @@ import uuid
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
+from app.core.roles import ROLES_EVALUADOR
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.models.organization import Area, Organizacion
@@ -24,7 +25,7 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
     rol = actual.rol.codigo
     if rol == "SUPER_ADMINISTRADOR":
         query_areas = db.query(Area).options(joinedload(Area.organizacion))
-    elif rol in {"EVALUADOR_SST", "RESPONSABLE_SST"}:
+    elif rol in ROLES_EVALUADOR:
         if not actual.organizacion_id:
             return []
         query_areas = (
@@ -40,6 +41,9 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
             .options(joinedload(Area.organizacion))
             .filter(Organizacion.creada_por_id == actual.id)
         )
+        # Con una empresa activa elegida, solo se muestran sus reportes.
+        if actual.organizacion_id:
+            query_areas = query_areas.filter(Organizacion.id == actual.organizacion_id)
     else:
         raise AppError(403, "No tiene permisos para consultar reportes.")
 
@@ -94,7 +98,8 @@ def listar_reportes_por_area(db: Session, actual: Usuario) -> list[dict]:
 _INSTRUMENTOS_SIN_CALIFICACION = {"FICHA_DATOS"}
 
 # Roles que ven las encuestas de todas las organizaciones (require_gestor deja pasar a SUPER_ADMINISTRADOR)
-_ROLES_VEN_TODAS = {"SUPER_ADMINISTRADOR", "ADMINISTRADOR"}
+# Solo el Super Administrador ve todas las empresas. "ADMINISTRADOR" es el rol común (no global): no va aquí.
+_ROLES_VEN_TODAS = {"SUPER_ADMINISTRADOR"}
 
 
 def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
@@ -120,11 +125,11 @@ def listar_encuestas_realizadas(db: Session, actual: Usuario) -> list[dict]:
             .joinedload(EvaluacionInstrumento.version),
         )
     )
-    if rol == "EVALUADOR_SST":
+    if rol in ROLES_EVALUADOR:
         if not actual.organizacion_id:
             return []
         query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
-    elif rol != "SUPER_ADMINISTRADOR":
+    elif rol not in _ROLES_VEN_TODAS:
         raise AppError(403, "No tiene permisos para consultar encuestas.")
 
     # Las más recientes primero: primero las terminadas (fecha_fin), luego las que están en curso
@@ -213,7 +218,7 @@ def respuestas_participante(db: Session, actual: Usuario, participante_id: uuid.
     )
     if part is None:
         raise AppError(404, "La encuesta no existe.")
-    if rol == "EVALUADOR_SST":
+    if rol in ROLES_EVALUADOR:
         if part.evaluacion.organizacion_id != actual.organizacion_id:
             raise AppError(404, "La encuesta no existe.")
     elif rol not in _ROLES_VEN_TODAS:

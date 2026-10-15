@@ -4,6 +4,7 @@ import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
 import { fetchReportes, fetchEncuestasRealizadas } from "../api/reportes";
+import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import { fetchEnlaces, crearEnlace, eliminarEnlace } from "../api/enlaces";
 import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha } from "../utils/encuestas";
@@ -48,9 +49,9 @@ function IconoDescargar() {
 }
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
-const ROLES_ENLACES = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
-// Resultados individuales (confidenciales): solo Psicologo y Super Administrador.
-const ROLES_ENCUESTAS = ["EVALUADOR_SST", "SUPER_ADMINISTRADOR"];
+const ROLES_ENLACES = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
+// Resultados individuales (confidenciales): solo quienes gestionan la empresa y el Super Administrador.
+const ROLES_ENCUESTAS = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
 // Jefe y Administrador ven las empresas que crearon; el Jefe solo consulta (no descarga informes).
 const ROLES_POR_CREADOR = ["JEFE", "ADMINISTRADOR"];
 
@@ -79,6 +80,30 @@ export default function Reportes() {
   // Sección "Enlaces para pacientes" (solo psicólogo / super administrador)
   const puedeCrearEnlaces = ROLES_ENLACES.includes(usuario?.rol);
   const puedeVerEncuestas = ROLES_ENCUESTAS.includes(usuario?.rol);
+
+  // Jefe/Administrador: eligen con cuál de las empresas que crearon trabajan (empresa activa).
+  const eligeEmpresa = ROLES_POR_CREADOR.includes(usuario?.rol);
+  const [misEmpresas, setMisEmpresas] = useState([]);
+  const [cambiandoEmpresa, setCambiandoEmpresa] = useState(false);
+
+  useEffect(() => {
+    if (!eligeEmpresa || !token) return;
+    fetchMisEmpresas(token)
+      .then((lista) => setMisEmpresas(lista || []))
+      .catch(() => {});
+  }, [eligeEmpresa, token]);
+
+  async function handleCambiarEmpresa(e) {
+    const id = e.target.value;
+    if (!id || id === usuario?.organizacionId) return;
+    setCambiandoEmpresa(true);
+    try {
+      await cambiarEmpresaActiva(token, id);
+      window.location.reload(); // vuelve a pedir los reportes con la nueva empresa
+    } catch {
+      setCambiandoEmpresa(false);
+    }
+  }
   const puedeDescargar = usuario?.rol !== "JEFE";
   const [enlaces, setEnlaces] = useState([]);
   const [nombreEnlace, setNombreEnlace] = useState("");
@@ -91,7 +116,11 @@ export default function Reportes() {
 
   const {
     empresaNombre = usuario?.organizacionNombre ||
-      (ROLES_POR_CREADOR.includes(usuario?.rol) ? "Mis empresas" : "Organización"),
+      (usuario?.rol === "SUPER_ADMINISTRADOR"
+        ? "Todas las empresas"
+        : ROLES_POR_CREADOR.includes(usuario?.rol)
+        ? "Mis empresas"
+        : "Organización"),
     sector = usuario?.sector || "General",
     bateriaNombre = "Batería de riesgo psicosocial",
     rangoFechas = "vigente 2026",
@@ -241,6 +270,8 @@ export default function Reportes() {
           <p className="app-subtitle">
             {bateriaNombre} · {rangoFechas}
           </p>
+
+          {/* El selector de "Empresa activa" para Jefe/Psicólogo ahora vive en el Dashboard. */}
 
           <p className="reportes-legal-note">
             Desglosados por área de la organización, según la Resolución 2764 de 2022 (Anonimizado mín. 5 participantes)

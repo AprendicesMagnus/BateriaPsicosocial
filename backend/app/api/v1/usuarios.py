@@ -6,8 +6,17 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, require_admin, require_gestor
 from app.db.session import get_db
 from app.models.user import Usuario
-from app.schemas.common import CambioPasswordPerfilRequest, CambioRolRequest, UsuarioCreate, UsuarioUpdate
+from app.schemas.common import (
+    CambioPasswordPerfilRequest,
+    CambioRolRequest,
+    EmpresaActivaRequest,
+    ResolucionRequest,
+    UsuarioCreate,
+    UsuarioUpdate,
+    VerificarResolucionRequest,
+)
 from app.services import auditoria as auditoria_service
+from app.services import organizaciones as organizaciones_service
 from app.services import perfil as perfil_service
 from app.services import usuarios as usuarios_service
 from app.services.auth import usuario_publico
@@ -47,6 +56,51 @@ def cambiar_mi_password(
         db, usuario=actual, accion="CAMBIAR_PASSWORD_PERFIL", entidad="Usuario", entidad_id=str(actual.id), request=request
     )
     return {"message": "Contraseña actualizada correctamente.", "usuario": usuario_publico(usuario)}
+
+
+@router.post("/me/empresa-activa")
+def cambiar_mi_empresa_activa(
+    data: EmpresaActivaRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    usuario = organizaciones_service.cambiar_empresa_activa(db, actual, data.organizacionId)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="CAMBIAR_EMPRESA_ACTIVA", entidad="Organizacion",
+        entidad_id=str(data.organizacionId), request=request,
+    )
+    return {"usuario": usuario_publico(usuario)}
+
+
+@router.post("/me/resolucion")
+def guardar_mi_resolucion(
+    data: ResolucionRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    usuario = perfil_service.guardar_mi_resolucion(db, actual, data.numeroResolucion)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="GUARDAR_RESOLUCION", entidad="Usuario", entidad_id=str(actual.id), request=request
+    )
+    return {"usuario": usuario_publico(usuario)}
+
+
+@router.post("/{usuario_id}/verificar-resolucion")
+def verificar_resolucion_usuario(
+    usuario_id: UUID,
+    data: VerificarResolucionRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_admin),
+):
+    resultado = perfil_service.verificar_resolucion(db, usuario_id, data.verificada)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="VERIFICAR_RESOLUCION" if data.verificada else "QUITAR_VERIFICACION_RESOLUCION",
+        entidad="Usuario", entidad_id=str(usuario_id), request=request,
+    )
+    return resultado
 
 
 @router.get("/directorio")

@@ -1,6 +1,7 @@
 from datetime import timedelta
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.roles import ROLES_EVALUADOR
 from app.core.crypto import utcnow
 from app.core.errors import AppError
 from app.models.evaluation import Evaluacion, EvaluacionParticipante, Notificacion
@@ -85,6 +86,7 @@ def _ejecutar_envio_recordatorios(db: Session, horas_idempotencia: int = 24) -> 
         .filter(
             Evaluacion.estado == "EN_CURSO",
             EvaluacionParticipante.estado != "COMPLETADA",
+            Usuario.es_invitado.is_(False),
         )
     )
 
@@ -160,7 +162,7 @@ def _ejecutar_envio_recordatorios(db: Session, horas_idempotencia: int = 24) -> 
 def enviar_recordatorios_pendientes(
     db: Session, actual: Usuario, horas_idempotencia: int = 24
 ) -> dict:
-    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", "EVALUADOR_SST"}:
+    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR}:
         raise AppError(403, "No tiene permisos para enviar recordatorios de evaluación.")
 
     # Si es EVALUADOR_SST, la query interna no filtra por evaluador — el endpoint original tampoco

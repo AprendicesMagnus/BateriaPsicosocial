@@ -66,13 +66,13 @@ class TestNitAutorregistroConDigitoVerificador:
         # BANCO DE BOGOTA S.A.: 860003020-1 (DV real = 1)
         payload = {**AUTORREGISTRO_BASE, "nit": "860003020-1", "usuarioEmail": "banco_test@test.com"}
         res = client.post("/api/organizaciones/autorregistro", json=payload)
-        assert res.status_code == 200
+        assert res.status_code == 200, res.text
 
     def test_nit_con_dv_incorrecto_rechazo_especifico_400(self, client):
         # 899999068 tiene DV real = 1. Se envía 899999068-9 (DV incorrecto)
         payload = {**AUTORREGISTRO_BASE, "nit": "899999068-9", "usuarioEmail": "dv_incorrecto@test.com"}
         res = client.post("/api/organizaciones/autorregistro", json=payload)
-        assert res.status_code == 400
+        assert res.status_code == 400, res.text
         data = res.json()
         assert "dígito de verificación" in str(data).lower()
 

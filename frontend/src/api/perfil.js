@@ -43,3 +43,35 @@ export function editarMiEmpresa(token, id, { sector, municipio, email, telefono 
 export function eliminarMiEmpresa(token, id) {
   return request(`/organizaciones/mias/${id}`, { method: "DELETE", token });
 }
+
+// Psicologo: elegir con cuál de las empresas que creó trabaja (empresa activa).
+export function cambiarEmpresaActiva(token, organizacionId) {
+  return request("/usuarios/me/empresa-activa", {
+    method: "POST",
+    body: { organizacionId },
+    token,
+  });
+}
+
+// Usuario responsable de una empresa (solo existe si la creó un Jefe/Administrador).
+export function fetchResponsableEmpresa(token, id) {
+  return request(`/organizaciones/mias/${id}/responsable`, { token });
+}
+
+export function editarResponsableEmpresa(token, id, { nombre, apellido, numeroResolucion }) {
+  return request(`/organizaciones/mias/${id}/responsable`, {
+    method: "PATCH",
+    body: { nombre, apellido, numeroResolucion },
+    token,
+  });
+}
+
+// Psicologo: registrar su número de resolución (6 dígitos).
+export function guardarMiResolucion(token, numeroResolucion) {
+  return request("/usuarios/me/resolucion", { method: "POST", body: { numeroResolucion }, token });
+}
+
+// Super Administrador: marcar o quitar la verificación del número de resolución de un usuario.
+export function verificarResolucion(token, usuarioId, verificada) {
+  return request(`/usuarios/${usuarioId}/verificar-resolucion`, { method: "POST", body: { verificada }, token });
+}

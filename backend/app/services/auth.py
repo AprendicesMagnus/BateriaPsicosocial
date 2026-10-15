@@ -28,6 +28,15 @@ GOOGLE_CLIENT_ID = "615740449491-340ojlb2h90f13j4ut7u0rhtm2k90589.apps.googleuse
 ROLES_AUTOREGISTRO = {"JEFE", "ADMINISTRADOR", "EVALUADOR_SST"}
 
 
+def _exigir_resolucion_psicologo(rol: str, numero: str | None) -> str | None:
+    """El Psicologo debe registrar su número de resolución (6 dígitos); los demás roles no."""
+    if rol == "EVALUADOR_SST":
+        if not numero or not numero.isdigit() or len(numero) != 6:
+            raise AppError(400, "El número de resolución es obligatorio y debe tener exactamente 6 dígitos.")
+        return numero
+    return None
+
+
 def usuario_publico(usuario: Usuario) -> dict:
     return {
         "id": str(usuario.id),
@@ -38,6 +47,10 @@ def usuario_publico(usuario: Usuario) -> dict:
         "emailVerificado": usuario.email_verificado,
         "estado": usuario.estado,
         "organizacionId": str(usuario.organizacion_id) if usuario.organizacion_id else None,
+        # Nombre de la empresa activa: lo muestra el título de Reportes
+        "organizacionNombre": usuario.organizacion.nombre if usuario.organizacion else None,
+        "numeroResolucion": usuario.numero_resolucion,
+        "resolucionVerificada": usuario.resolucion_verificada,
         "areaId": str(usuario.area_id) if usuario.area_id else None,
         "numeroIdentificacion": usuario.numero_identificacion,
         "cargo": usuario.cargo,
@@ -87,6 +100,7 @@ def registrar(db: Session, data) -> dict:
         )
     if data.rol not in ROLES_AUTOREGISTRO:
         raise AppError(400, "El rol seleccionado no es válido.")
+    numero_resolucion = _exigir_resolucion_psicologo(data.rol, getattr(data, "numeroResolucion", None))
     if db.query(Usuario).filter(Usuario.email == str(data.email).lower()).first():
         raise AppError(409, "Ya existe una cuenta registrada con este correo.")
 
@@ -96,6 +110,7 @@ def registrar(db: Session, data) -> dict:
         email=str(data.email).lower(),
         password_hash=hash_password(data.password),
         rol_id=_obtener_rol(db, data.rol).id,
+        numero_resolucion=numero_resolucion,
         email_verificado=False,
         estado="ACTIVO",
     )
@@ -201,7 +216,7 @@ def login(db: Session, email: str, password: str) -> dict:
     return {"token": token, "usuario": usuario_publico(usuario)}
 
 
-def login_con_google(db: Session, credential: str, rol: str | None = None) -> dict:
+def login_con_google(db: Session, credential: str, rol: str | None = None, numero_resolucion: str | None = None) -> dict:
     # Verifica con los servidores de Google que el token es real y no fue
     # falsificado, y que efectivamente fue emitido para nuestro Client ID.
     try:
@@ -243,6 +258,7 @@ def login_con_google(db: Session, credential: str, rol: str | None = None) -> di
             }
         if rol not in ROLES_AUTOREGISTRO:
             raise AppError(400, "El rol seleccionado no es válido.")
+        numero_resolucion = _exigir_resolucion_psicologo(rol, numero_resolucion)
 
         # Se le pone una contraseña aleatoria e inutilizable porque nunca la
         # va a necesitar (siempre entrará por Google).
@@ -252,6 +268,7 @@ def login_con_google(db: Session, credential: str, rol: str | None = None) -> di
             email=email.lower(),
             password_hash=hash_password(secrets.token_urlsafe(32)),
             rol_id=_obtener_rol(db, rol).id,
+            numero_resolucion=numero_resolucion,
             email_verificado=True,
             estado="ACTIVO",
         )

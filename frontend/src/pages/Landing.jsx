@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/landing.css";
+import ModalPlanes from "../components/ModalPlanes";
 
 const SLIDES = [
   "/pasare1.jpg",
@@ -32,6 +33,30 @@ const FACTORES = [
       "Características sociodemográficas",
       "Estilos de afrontamiento",
       "Síntomas de estrés",
+    ],
+  },
+];
+
+const BENEFICIOS = [
+  {
+    titulo: "Cumplimiento legal",
+    items: [
+      "Cumple la Resolución 2764 de 2022 y evita sanciones del Ministerio del Trabajo",
+      "Evidencia documentada ante la ARL y entes de control",
+    ],
+  },
+  {
+    titulo: "Prevención real",
+    items: [
+      "Detecta a tiempo factores de estrés, acoso o sobrecarga laboral",
+      "Permite diseñar planes de intervención antes de que el riesgo se convierta en incapacidad o rotación",
+    ],
+  },
+  {
+    titulo: "Beneficio organizacional",
+    items: [
+      "Reduce el ausentismo y la rotación asociados al riesgo psicosocial",
+      "Mejora el clima laboral y la productividad del equipo",
     ],
   },
 ];
@@ -84,19 +109,7 @@ const CONFIANZA = [
 
 export default function Landing() {
   const [slide, setSlide] = useState(0);
-  const [menuEmpresasAbierto, setMenuEmpresasAbierto] = useState(false);
-  const menuEmpresasRef = useRef(null);
-
-  // Cierra el desplegable "Empresas" si se hace clic fuera de él.
-  useEffect(() => {
-    function handleClickFuera(e) {
-      if (menuEmpresasRef.current && !menuEmpresasRef.current.contains(e.target)) {
-        setMenuEmpresasAbierto(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickFuera);
-    return () => document.removeEventListener("mousedown", handleClickFuera);
-  }, []);
+  const [planesAbierto, setPlanesAbierto] = useState(false);
 
   // Imagen anterior
   const prevSlide = () => {
@@ -170,60 +183,15 @@ export default function Landing() {
           <nav className="nav__links">
             <a href="#como-funciona">Cómo funciona</a>
 
-            <div className="nav__dropdown" ref={menuEmpresasRef} style={{ position: "relative" }}>
-              <button
-                type="button"
-                className="nav__dropdown-trigger"
-                onClick={() => setMenuEmpresasAbierto((v) => !v)}
-                aria-haspopup="true"
-                aria-expanded={menuEmpresasAbierto}
-                style={{
-                  background: "none",
-                  border: "none",
-                  font: "inherit",
-                  color: "inherit",
-                  cursor: "pointer",
-                  padding: 0,
-                  fontWeight: "bold"
-                }}
-              >
-                Empresas
-              </button>
+            <button
+              type="button"
+              onClick={() => setPlanesAbierto(true)}
+              style={{ background: "none", border: "none", font: "inherit", color: "inherit", cursor: "pointer", padding: 0, fontWeight: "bold" }}
+            >
+              Planes
+            </button>
 
-              {menuEmpresasAbierto && (
-                <div
-                  className="nav__dropdown-menu"
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 12px)",
-                    left: 0,
-                    background: "var(--white)",
-                    borderRadius: "var(--radius-md, 10px)",
-                    boxShadow: "var(--shadow-card, 0 8px 24px rgba(15,26,61,0.12))",
-                    padding: 6,
-                    minWidth: 170,
-                    zIndex: 20,
-                  }}
-                >
-                  <Link
-                    to="/verificar-nit"
-                    onClick={() => setMenuEmpresasAbierto(false)}
-                    style={{
-                      display: "block",
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--ink-900, #12314b)",
-                    }}
-                  >
-                    Crear empresa
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            <a href="#psicologos">Clientes</a>
+            <a href="#beneficios">Beneficios</a>
             <a href="#normativa">Normativa</a>
           </nav>
 
@@ -244,6 +212,8 @@ export default function Landing() {
           </div>
         </div>
       </header>
+
+      {planesAbierto && <ModalPlanes onCerrar={() => setPlanesAbierto(false)} />}
 
 
       {/* =====================================================
@@ -307,9 +277,9 @@ export default function Landing() {
 
               <a
                 className="cta-secondary"
-                href="#psicologos"
+                href="#beneficios"
               >
-                Más información — Clientes
+                Más información — Beneficios
               </a>
             </div>
           </div>
@@ -405,6 +375,80 @@ export default function Landing() {
                 <ul>
 
                   {factor.items.map((item) => (
+
+                    <li key={item}>
+                      {item}
+                    </li>
+
+                  ))}
+
+                </ul>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          BENEFICIOS
+      ====================================================== */}
+
+      <section
+        className="section"
+        id="beneficios"
+        style={{
+          background: "var(--white)",
+        }}
+      >
+
+        <div className="container">
+
+          <div className="section__header">
+
+            <span className="section__eyebrow"
+            style={{
+                    color: "var(--gold-500)",
+                    fontSize: "20px",
+                  }}
+                >
+              Por qué aplicarla
+            </span>
+
+            <h2>
+              Beneficios de aplicar la batería
+            </h2>
+
+            <p>
+              Más allá del cumplimiento normativo, aplicar la
+              batería de riesgo psicosocial de forma periódica
+              trae beneficios concretos para la empresa y sus
+              trabajadores.
+            </p>
+
+          </div>
+
+          <div className="factor-grid">
+
+            {BENEFICIOS.map((beneficio) => (
+
+              <div
+                className="factor-card"
+                key={beneficio.titulo}
+              >
+
+                <h3>
+                  {beneficio.titulo}
+                </h3>
+
+                <ul>
+
+                  {beneficio.items.map((item) => (
 
                     <li key={item}>
                       {item}
@@ -636,15 +680,11 @@ export default function Landing() {
               <ul>
 
                 <li>
-                  <Link to="/verificar-nit">
-                    Para MiPymes
-                  </Link>
+                  Para MiPymes
                 </li>
 
                 <li>
-                  <a href="#psicologos">
-                    Para clientes
-                  </a>
+                  Para clientes
                 </li>
 
                 <li>
@@ -667,7 +707,7 @@ export default function Landing() {
               <ul>
 
                 <li>
-                  direccion_software@fet.edu.co
+                  aprendizmagnus@gmail.com
                 </li>
 
                 <li>

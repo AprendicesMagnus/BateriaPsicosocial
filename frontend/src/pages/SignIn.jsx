@@ -214,7 +214,7 @@ export default function SignIn() {
     }
   }
 
-  async function confirmarRolGoogle(rol) {
+  async function confirmarRolGoogle(rol, numeroResolucion) {
     if (!googlePendiente) return;
     setErrorRolGoogle("");
     setLoadingGoogle(true);
@@ -222,7 +222,8 @@ export default function SignIn() {
     try {
       const data = await loginConGoogle({
         credential: googlePendiente.credential,
-        rol
+        rol,
+        numeroResolucion
       });
 
       iniciarSesion(data.token, data.usuario);

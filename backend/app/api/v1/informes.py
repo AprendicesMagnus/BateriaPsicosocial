@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.roles import ROLES_EVALUADOR
 from app.api.deps import (
     asegurar_acceso_organizacion_db,
     get_current_user,
@@ -125,7 +126,7 @@ def descargar_informe(
 
     # Validar permisos de acceso según el tipo de informe
     es_admin = actual.rol.codigo == "SUPER_ADMINISTRADOR"
-    es_evaluador = actual.rol.codigo == "EVALUADOR_SST"
+    es_evaluador = actual.rol.codigo in ROLES_EVALUADOR
     misma_org = puede_acceder_organizacion(db, actual, informe.evaluacion.organizacion_id)
 
     if informe.tipo == "INDIVIDUAL":
