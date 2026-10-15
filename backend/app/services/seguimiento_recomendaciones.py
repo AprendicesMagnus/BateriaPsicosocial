@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.roles import ROLES_EVALUADOR
@@ -11,6 +12,16 @@ from app.models.user import Usuario
 def validar_permiso_seguimiento(actual: Usuario):
     if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR}:
         raise AppError(403, "No tiene permisos para gestionar el plan de acción / seguimiento de recomendaciones.")
+
+
+def _esta_vencida(registro: SeguimientoRecomendacion) -> bool:
+    return bool(
+        registro.fecha_limite
+        and registro.fecha_limite < date.today()
+        and registro.estado != "IMPLEMENTADA"
+    )
+
+
 
 
 def listar_seguimientos(db: Session, organizacion_id: uuid.UUID | None, actual: Usuario) -> list[dict]:
@@ -40,6 +51,8 @@ def listar_seguimientos(db: Session, organizacion_id: uuid.UUID | None, actual: 
             "responsable": s.responsable,
             "fechaEstado": s.fecha_estado.isoformat() if s.fecha_estado else None,
             "notas": s.notas,
+            "fechaLimite": s.fecha_limite.isoformat() if s.fecha_limite else None,
+            "vencida": _esta_vencida(s),
             "creadoEn": s.creado_en.isoformat() if s.creado_en else None,
             "recomendacion": {
                 "id": str(s.recomendacion.id),
@@ -61,6 +74,8 @@ def crear_o_actualizar_estado(
     actual: Usuario,
     responsable: str | None = None,
     notas: str | None = None,
+    fecha_limite: date | None = None,
+    actualizar_fecha_limite: bool = False,
 ) -> dict:
     validar_permiso_seguimiento(actual)
 
@@ -89,12 +104,15 @@ def crear_o_actualizar_estado(
 
     ahora = utcnow()
     if registro:
+        if registro.estado != estado:
+            registro.fecha_estado = ahora
         registro.estado = estado
-        registro.fecha_estado = ahora
         if responsable is not None:
             registro.responsable = responsable
         if notas is not None:
             registro.notas = notas
+        if actualizar_fecha_limite:
+            registro.fecha_limite = fecha_limite
     else:
         registro = SeguimientoRecomendacion(
             organizacion_id=organizacion_id,
@@ -103,6 +121,7 @@ def crear_o_actualizar_estado(
             responsable=responsable,
             fecha_estado=ahora,
             notas=notas,
+            fecha_limite=fecha_limite,
             creado_en=ahora,
         )
         db.add(registro)
@@ -118,5 +137,7 @@ def crear_o_actualizar_estado(
         "responsable": registro.responsable,
         "fechaEstado": registro.fecha_estado.isoformat(),
         "notas": registro.notas,
+        "fechaLimite": registro.fecha_limite.isoformat() if registro.fecha_limite else None,
+        "vencida": _esta_vencida(registro),
         "creadoEn": registro.creado_en.isoformat(),
     }

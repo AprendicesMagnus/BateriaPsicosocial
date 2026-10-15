@@ -1,0 +1,95 @@
+.grupos__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.grupos__titulo {
+  margin: 0;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.grupos__subtitulo {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.grupos__controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.grupos__selector {
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 13px;
+}
+
+.grupos__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grupos__item {
+  margin-bottom: 14px;
+}
+
+.grupos__fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.grupos__nombre {
+  font-weight: 600;
+}
+
+.grupos__valor {
+  color: #475569;
+}
+
+.grupos__barra {
+  height: 8px;
+  margin: 6px 0 4px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #e2e8f0;
+}
+
+.grupos__relleno {
+  display: block;
+  height: 100%;
+  background: #1e3a8a;
+}
+
+.grupos__meta,
+.grupos__nota,
+.grupos__estado {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.grupos__nota,
+.grupos__estado {
+  margin: 10px 0 0;
+}
+
+.grupos__error {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+}

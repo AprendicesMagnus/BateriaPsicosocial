@@ -42,3 +42,7 @@ export async function descargarInforme(token, informeId) {
   a.click();
   a.remove();
 }
+
+export async function fetchVerificacionInforme(codigo) {
+  return request(`/informes/verificar/${encodeURIComponent(codigo)}`);
+}

@@ -1,0 +1,86 @@
+.verificacion {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f1f5f9;
+}
+
+.verificacion__tarjeta {
+  width: 100%;
+  max-width: 560px;
+  padding: 28px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+.verificacion__titulo {
+  margin: 0 0 16px;
+  font-size: 22px;
+  color: #1e3a8a;
+}
+
+.verificacion__datos {
+  margin: 16px 0;
+}
+
+.verificacion__datos div {
+  margin-bottom: 12px;
+}
+
+.verificacion__datos dt {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.verificacion__datos dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.verificacion__hash {
+  font-family: monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.verificacion__comparar {
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.verificacion__etiqueta {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.verificacion__nota,
+.verificacion__estado {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.verificacion__ok {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 13px;
+}
+
+.verificacion__error {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+}

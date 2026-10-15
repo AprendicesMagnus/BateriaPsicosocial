@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -114,6 +114,7 @@ class SeguimientoRecomendacion(Base):
         DateTime(timezone=True), default=utcnow, nullable=False
     )
     notas: Mapped[str | None] = mapped_column(Text, nullable=True)
+    fecha_limite: Mapped[date | None] = mapped_column(Date, nullable=True)
     creado_en: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )

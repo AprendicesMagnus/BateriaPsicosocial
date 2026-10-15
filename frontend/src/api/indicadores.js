@@ -18,3 +18,30 @@ export async function fetchIndicadoresPorCategoria(token, organizacionId = null)
   return request(path, { token });
 }
 
+export async function fetchMapaCalor(token, organizacionId = null, codigo = null) {
+  const params = new URLSearchParams();
+  if (organizacionId) params.append("organizacion_id", organizacionId);
+  if (codigo) params.append("codigo", codigo);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return request(`/indicadores/mapa-calor${query}`, { token });
+}
+
+export async function fetchPriorizacion(token, organizacionId = null) {
+  const path = organizacionId
+    ? `/indicadores/priorizacion?organizacion_id=${organizacionId}`
+    : "/indicadores/priorizacion";
+  return request(path, { token });
+}
+
+export async function fetchAnalisisGrupos(token, organizacionId = null, { codigo = null, variable = null } = {}) {
+  const params = new URLSearchParams();
+  if (organizacionId) params.append("organizacion_id", organizacionId);
+  if (codigo) params.append("codigo", codigo);
+  if (variable) params.append("variable", variable);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return request(`/indicadores/grupos${query}`, { token });
+}
+
+
+
+

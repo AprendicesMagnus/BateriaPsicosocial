@@ -48,6 +48,23 @@ export default function PlanDeAccion({ token, organizacionId }) {
     }
   }
 
+  async function handleCambiarFechaLimite(item, valor) {
+    setGuardandoId(item.recomendacionId);
+    try {
+      await guardarSeguimientoRecomendacion(token, {
+        organizacionId,
+        recomendacionId: item.recomendacionId,
+        estado: item.estado,
+        fechaLimite: valor || null,
+      });
+      await cargarSeguimientos();
+    } catch (err) {
+      alert(`Error al actualizar la fecha límite: ${err.message}`);
+    } finally {
+      setGuardandoId(null);
+    }
+  }
+
   if (cargando) {
     return (
       <div style={{ padding: "20px", textAlign: "center", color: "#64748b" }}>
@@ -65,6 +82,11 @@ export default function PlanDeAccion({ token, organizacionId }) {
         <p style={{ fontSize: "14px", color: "#64748B", margin: 0 }}>
           Gestión del estado de implementación de las recomendaciones preventivas y correctivas por organización.
         </p>
+        {seguimientos.filter((s) => s.vencida).length > 0 && (
+          <p style={{ fontSize: "13px", color: "#991B1B", margin: "8px 0 0 0" }}>
+            {seguimientos.filter((s) => s.vencida).length} acción(es) vencida(s)
+          </p>
+        )}
       </div>
 
       {error && (
@@ -87,6 +109,7 @@ export default function PlanDeAccion({ token, organizacionId }) {
                 <th style={{ padding: "12px", borderBottom: "2px solid #CBD5E1" }}>Recomendación / Título</th>
                 <th style={{ padding: "12px", borderBottom: "2px solid #CBD5E1" }}>Nivel Riesgo</th>
                 <th style={{ padding: "12px", borderBottom: "2px solid #CBD5E1" }}>Estado Actual</th>
+                <th style={{ padding: "12px", borderBottom: "2px solid #CBD5E1" }}>Fecha límite</th>
                 <th style={{ padding: "12px", borderBottom: "2px solid #CBD5E1" }}>Acciones</th>
               </tr>
             </thead>
@@ -131,6 +154,25 @@ export default function PlanDeAccion({ token, organizacionId }) {
                       >
                         {estadoObj.etiqueta}
                       </span>
+                    </td>
+                    <td style={{ padding: "12px" }}>
+                      <input
+                        type="date"
+                        value={item.fechaLimite || ""}
+                        disabled={guardandoId === item.recomendacionId}
+                        onChange={(e) => handleCambiarFechaLimite(item, e.target.value)}
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "13px",
+                        }}
+                      />
+                      {item.vencida && (
+                        <span style={{ display: "block", marginTop: "4px", fontSize: "12px", fontWeight: 600, color: "#991B1B", background: "#FEE2E2", padding: "2px 8px", borderRadius: 4 }}>
+                          Vencida
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: "12px" }}>
                       <select

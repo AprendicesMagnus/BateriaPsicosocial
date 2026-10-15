@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -17,6 +18,7 @@ class SeguimientoCreateUpdate(BaseModel):
     estado: str = Field(..., description="PENDIENTE, EN_PROGRESO o IMPLEMENTADA")
     responsable: str | None = None
     notas: str | None = None
+    fechaLimite: date | None = None
 
 
 @router.get("")
@@ -45,4 +47,7 @@ def crear_o_actualizar_seguimiento(
         actual=actual,
         responsable=body.responsable,
         notas=body.notas,
+        fecha_limite=body.fechaLimite,
+        actualizar_fecha_limite="fechaLimite" in body.model_fields_set,
     )
+

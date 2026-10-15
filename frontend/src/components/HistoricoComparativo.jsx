@@ -1,177 +1,329 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchHistoricoIndicadores } from "../api/indicadores";
+import "../styles/HistoricoComparativo.css";
 
-const NIVELES_COLOR = {
-  SIN_RIESGO: { bg: "#DEF7EC", text: "#03543F", label: "Sin Riesgo" },
-  BAJO: { bg: "#E1EFFE", text: "#1E40AF", label: "Bajo" },
-  MEDIO: { bg: "#FEF08A", text: "#713F12", label: "Medio" },
-  ALTO: { bg: "#FDBA74", text: "#9A3412", label: "Alto" },
-  MUY_ALTO: { bg: "#FCA5A5", text: "#991B1B", label: "Muy Alto" },
-};
+const TAMANO_VENTANA = 6;
+const TAMANO_PAGINA = 5;
+
+const NIVELES = [
+  { clave: "SIN_RIESGO", etiqueta: "Sin riesgo", color: "#10b981" },
+  { clave: "BAJO", etiqueta: "Bajo", color: "#3b82f6" },
+  { clave: "MEDIO", etiqueta: "Medio", color: "#facc15" },
+  { clave: "ALTO", etiqueta: "Alto", color: "#f97316" },
+  { clave: "MUY_ALTO", etiqueta: "Muy alto", color: "#dc2626" },
+];
+
+function redondear(valor) {
+  return Math.round(valor * 100) / 100;
+}
+
+function normalizar(texto) {
+  return (texto || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function fechaCorta(iso) {
+  return new Date(iso).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "2-digit" });
+}
+
+function fechaCompleta(iso) {
+  return new Date(iso).toLocaleDateString("es-CO");
+}
+
+function DistribucionNiveles({ distribucion }) {
+  const total = NIVELES.reduce((suma, nivel) => suma + (distribucion?.[nivel.clave] || 0), 0);
+  if (total === 0) return <span className="historico__sin-datos">Sin datos</span>;
+  const descripcion = NIVELES.filter((nivel) => distribucion[nivel.clave] > 0)
+    .map((nivel) => `${nivel.etiqueta}: ${distribucion[nivel.clave]}`)
+    .join(", ");
+  return (
+    <div className="historico__distribucion" role="img" aria-label={descripcion} title={descripcion}>
+      {NIVELES.map((nivel) => {
+        const cantidad = distribucion[nivel.clave] || 0;
+        if (!cantidad) return null;
+        return <span key={nivel.clave} style={{ width: `${(cantidad * 100) / total}%`, background: nivel.color }} />;
+      })}
+    </div>
+  );
+}
 
 export default function HistoricoComparativo({ token, organizacionId }) {
-  const [dataHistorica, setDataHistorica] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [historico, setHistorico] = useState([]);
+  const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [finVentana, setFinVentana] = useState(0);
+  const [busqueda, setBusqueda] = useState("");
+  const [pagina, setPagina] = useState(1);
 
-  useEffect(() => {
-    cargarHistorico();
-  }, [token, organizacionId]);
-
-  async function cargarHistorico() {
-    setLoading(true);
+  const cargar = useCallback(async () => {
+    setCargando(true);
     setError(null);
     try {
-      const data = await fetchHistoricoIndicadores(token, organizacionId);
-      setDataHistorica(data);
+      const datos = await fetchHistoricoIndicadores(token, organizacionId);
+      const lista = datos?.historico || [];
+      setHistorico(lista);
+      setFinVentana(lista.length);
+      setPagina(1);
     } catch (err) {
-      setError(err.message || "Error al cargar el histórico comparativo.");
+      setError(err.message || "No se pudo cargar el histórico comparativo.");
     } finally {
-      setLoading(false);
+      setCargando(false);
     }
-  }
+  }, [token, organizacionId]);
 
-  if (loading) {
-    return <p style={{ color: "#64748B" }}>Cargando histórico comparativo BRP...</p>;
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  const total = historico.length;
+  const inicioVentana = Math.max(0, finVentana - TAMANO_VENTANA);
+  const ventana = historico.slice(inicioVentana, finVentana);
+
+  const resumen = useMemo(() => {
+    if (historico.length === 0) return null;
+    const ultimo = historico[historico.length - 1];
+    const anterior = historico.length > 1 ? historico[historico.length - 2] : null;
+    const menor = historico.reduce((a, b) =>
+      b.promedioPuntajeTransformado < a.promedioPuntajeTransformado ? b : a
+    );
+    const mayor = historico.reduce((a, b) =>
+      b.promedioPuntajeTransformado > a.promedioPuntajeTransformado ? b : a
+    );
+    const diferencia = anterior
+      ? redondear(ultimo.promedioPuntajeTransformado - anterior.promedioPuntajeTransformado)
+      : null;
+    return { ultimo, menor, mayor, diferencia };
+  }, [historico]);
+
+  const filas = useMemo(() => {
+    const termino = normalizar(busqueda.trim());
+    return [...historico]
+      .reverse()
+      .filter((item) => !termino || normalizar(item.nombreEvaluacion).includes(termino));
+  }, [historico, busqueda]);
+
+  const totalPaginas = Math.max(1, Math.ceil(filas.length / TAMANO_PAGINA));
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const filasPagina = filas.slice((paginaActual - 1) * TAMANO_PAGINA, paginaActual * TAMANO_PAGINA);
+
+  if (cargando) {
+    return <p className="historico__estado">Cargando histórico comparativo...</p>;
   }
 
   if (error) {
     return (
-      <div style={{ padding: 16, background: "#FEF2F2", color: "#991B1B", borderRadius: 8, fontSize: 14 }}>
-        ⚠️ {error}
-      </div>
-    );
-  }
-
-  const historico = dataHistorica?.historico || [];
-
-  if (historico.length === 0) {
-    return (
-      <div style={{ background: "white", padding: 24, borderRadius: 12, border: "1px solid #E2E8F0" }}>
-        <h3 style={{ fontSize: 18, color: "#1E293B", marginTop: 0, marginBottom: 8 }}>
-          📈 Histórico Comparativo BRP
-        </h3>
-        <p style={{ color: "#64748B", fontSize: 14, margin: 0 }}>
-          Aún no existen múltiples evaluaciones finalizadas y tabuladas en esta organización para comparar la tendencia histórica de riesgo.
+      <div className="historico">
+        <p className="historico__error" role="alert">
+          {error}
         </p>
       </div>
     );
   }
 
+  if (!resumen) {
+    return (
+      <div className="historico">
+        <h2 className="historico__titulo">Histórico comparativo BRP</h2>
+        <p className="historico__vacio">
+          Aún no existen evaluaciones finalizadas y tabuladas en esta organización para comparar la tendencia
+          histórica de riesgo.
+        </p>
+      </div>
+    );
+  }
+
+  const { ultimo, menor, mayor, diferencia } = resumen;
+  let textoCambio = "Sin evaluación anterior";
+  let claseCambio = "";
+  let detalleCambio = "";
+  if (diferencia !== null) {
+    if (diferencia < 0) {
+      textoCambio = `Bajó ${Math.abs(diferencia)} pts`;
+      claseCambio = " historico__tarjeta-valor--mejora";
+      detalleCambio = "Menor riesgo que la evaluación anterior";
+    } else if (diferencia > 0) {
+      textoCambio = `Subió ${diferencia} pts`;
+      claseCambio = " historico__tarjeta-valor--empeora";
+      detalleCambio = "Mayor riesgo que la evaluación anterior";
+    } else {
+      textoCambio = "Sin cambio";
+      detalleCambio = "Igual que la evaluación anterior";
+    }
+  }
+
   return (
-    <div style={{ background: "white", padding: 24, borderRadius: 12, border: "1px solid #E2E8F0" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+    <div className="historico">
+      <div className="historico__encabezado">
         <div>
-          <h3 style={{ fontSize: 18, color: "#1E293B", margin: 0 }}>
-            📈 Histórico Comparativo BRP (Serie Temporal)
-          </h3>
-          <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>
-            Evolución del puntaje promedio de riesgo psicosocial a través de las evaluaciones.
+          <h2 className="historico__titulo">Histórico comparativo BRP</h2>
+          <p className="historico__subtitulo">
+            Evolución del puntaje promedio de riesgo psicosocial entre evaluaciones. Un puntaje menor indica menor
+            riesgo.
           </p>
         </div>
-        <button className="btn-secondary" onClick={cargarHistorico} style={{ fontSize: 12 }}>
-          🔄 Actualizar
+        <button type="button" className="historico__boton" onClick={cargar}>
+          Actualizar
         </button>
       </div>
 
-      {/* GRAFICO DE TENDENCIA DE BARRAS SIMPLE */}
-      <div style={{ background: "#F8FAFC", padding: 20, borderRadius: 8, border: "1px solid #CBD5E1", marginBottom: 24 }}>
-        <div style={{ fontSize: 13, fontWeight: "bold", color: "#1E3A8A", marginBottom: 16 }}>
-          Tendencia del Puntaje Transformado Promedio (Menor puntaje = Menor riesgo)
-        </div>
-        <div style={{ display: "flex", gap: 24, alignItems: "flex-end", height: 160, paddingTop: 20, borderBottom: "2px solid #CBD5E1" }}>
-          {historico.map((h, idx) => {
-            const pctHeight = Math.min(100, Math.max(10, h.promedioPuntajeTransformado));
-            const esUltimo = idx === historico.length - 1;
-            const anterior = idx > 0 ? historico[idx - 1] : null;
-            let variacion = null;
-            if (anterior) {
-              const diff = roundTwo(h.promedioPuntajeTransformado - anterior.promedioPuntajeTransformado);
-              variacion = diff <= 0 ? `▼ ${Math.abs(diff)} pts (Mejoró)` : `▲ ${diff} pts (Aumentó riesgo)`;
-            }
+      <ul className="historico__resumen">
+        <li className="historico__tarjeta">
+          <span className="historico__tarjeta-etiqueta">Último puntaje</span>
+          <span className="historico__tarjeta-valor">{ultimo.promedioPuntajeTransformado} pts</span>
+          <span className="historico__tarjeta-detalle">{ultimo.nombreEvaluacion}</span>
+        </li>
+        <li className="historico__tarjeta">
+          <span className="historico__tarjeta-etiqueta">Cambio frente a la anterior</span>
+          <span className={`historico__tarjeta-valor${claseCambio}`}>{textoCambio}</span>
+          {detalleCambio && <span className="historico__tarjeta-detalle">{detalleCambio}</span>}
+        </li>
+        <li className="historico__tarjeta">
+          <span className="historico__tarjeta-etiqueta">Menor puntaje registrado</span>
+          <span className="historico__tarjeta-valor">{menor.promedioPuntajeTransformado} pts</span>
+          <span className="historico__tarjeta-detalle">{menor.nombreEvaluacion}</span>
+        </li>
+        <li className="historico__tarjeta">
+          <span className="historico__tarjeta-etiqueta">Mayor puntaje registrado</span>
+          <span className="historico__tarjeta-valor">{mayor.promedioPuntajeTransformado} pts</span>
+          <span className="historico__tarjeta-detalle">{mayor.nombreEvaluacion}</span>
+        </li>
+      </ul>
 
+      <div className="historico__grafico" role="group" aria-label="Puntaje promedio por evaluación">
+        <h3 className="historico__grafico-titulo">Puntaje promedio por evaluación</h3>
+        <ul className="historico__barras">
+          {ventana.map((item) => {
+            const esUltima = item.evaluacionId === ultimo.evaluacionId;
+            const altura = Math.min(100, Math.max(4, item.promedioPuntajeTransformado));
             return (
-              <div key={h.evaluacionId} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }}>
-                <div style={{ fontSize: 12, fontWeight: "bold", color: "#1E293B", marginBottom: 4 }}>
-                  {h.promedioPuntajeTransformado} pts
-                </div>
-                <div style={{ flex: 1, width: "100%", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                  <div
-                    style={{
-                      width: "60%",
-                      maxWidth: 60,
-                      height: `${pctHeight}%`,
-                      background: esUltimo ? "#1E3A8A" : "#64748B",
-                      borderRadius: "6px 6px 0 0",
-                      transition: "height 0.4s ease",
-                    }}
+              <li
+                key={item.evaluacionId}
+                className="historico__barra-item"
+                title={`${item.nombreEvaluacion}: ${item.promedioPuntajeTransformado} pts`}
+              >
+                <span className="historico__barra-valor">{item.promedioPuntajeTransformado}</span>
+                <span className="historico__barra-area">
+                  <span
+                    className={`historico__barra${esUltima ? " historico__barra--ultima" : ""}`}
+                    style={{ height: `${altura}%` }}
                   />
-                </div>
-                <div style={{ fontSize: 11, fontWeight: "600", color: "#475569", marginTop: 8, textAlign: "center" }}>
-                  {h.nombreEvaluacion}
-                </div>
-                {variacion && (
-                  <div style={{ fontSize: 10, color: variacion.includes("Mejoró") ? "#059669" : "#DC2626", fontWeight: "bold" }}>
-                    {variacion}
-                  </div>
-                )}
-              </div>
+                </span>
+                <span className="historico__barra-fecha">{fechaCorta(item.fecha)}</span>
+                <span className="historico__oculto">{item.nombreEvaluacion}</span>
+              </li>
             );
           })}
-        </div>
+        </ul>
+        {total > TAMANO_VENTANA && (
+          <div className="historico__navegacion">
+            <button
+              type="button"
+              className="historico__boton"
+              onClick={() =>
+                setFinVentana(Math.max(Math.min(TAMANO_VENTANA, total), finVentana - TAMANO_VENTANA))
+              }
+              disabled={inicioVentana === 0}
+            >
+              Anteriores
+            </button>
+            <span aria-live="polite">
+              Mostrando {inicioVentana + 1} a {finVentana} de {total} evaluaciones
+            </span>
+            <button
+              type="button"
+              className="historico__boton"
+              onClick={() => setFinVentana(Math.min(total, finVentana + TAMANO_VENTANA))}
+              disabled={finVentana >= total}
+            >
+              Más recientes
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* TABLA COMPARATIVA DETALLADA */}
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "left" }}>
-        <thead>
-          <tr style={{ background: "#F1F5F9", color: "#334155", borderBottom: "2px solid #CBD5E1" }}>
-            <th style={{ padding: "10px 12px" }}>Evaluación</th>
-            <th style={{ padding: "10px 12px" }}>Fecha</th>
-            <th style={{ padding: "10px 12px" }}>Participantes</th>
-            <th style={{ padding: "10px 12px" }}>Promedio R.P.</th>
-            <th style={{ padding: "10px 12px" }}>Desglose Niveles</th>
-          </tr>
-        </thead>
-        <tbody>
-          {historico.map((item) => (
-            <tr key={item.evaluacionId} style={{ borderBottom: "1px solid #E2E8F0" }}>
-              <td style={{ padding: "12px", fontWeight: "600", color: "#1E293B" }}>{item.nombreEvaluacion}</td>
-              <td style={{ padding: "12px", color: "#64748B" }}>{new Date(item.fecha).toLocaleDateString()}</td>
-              <td style={{ padding: "12px", color: "#334155" }}>{item.totalParticipantes}</td>
-              <td style={{ padding: "12px", fontWeight: "bold", color: "#1E3A8A" }}>
-                {item.promedioPuntajeTransformado} pts
-              </td>
-              <td style={{ padding: "12px" }}>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {Object.entries(item.distribucionNiveles || {}).map(([niv, count]) => {
-                    if (count === 0) return null;
-                    const conf = NIVELES_COLOR[niv] || { bg: "#F1F5F9", text: "#334155", label: niv };
-                    return (
-                      <span
-                        key={niv}
-                        style={{
-                          background: conf.bg,
-                          color: conf.text,
-                          padding: "2px 8px",
-                          borderRadius: 12,
-                          fontSize: 11,
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {conf.label}: {count}
-                      </span>
-                    );
-                  })}
-                </div>
-              </td>
+      <div className="historico__herramientas">
+        <label className="historico__busqueda" htmlFor="historico-busqueda">
+          Buscar evaluación
+          <input
+            id="historico-busqueda"
+            type="search"
+            value={busqueda}
+            placeholder="Nombre de la evaluación"
+            onChange={(evento) => {
+              setBusqueda(evento.target.value);
+              setPagina(1);
+            }}
+          />
+        </label>
+        <span className="historico__contador" aria-live="polite">
+          {filas.length} evaluación(es)
+        </span>
+      </div>
+
+      <div className="historico__tabla-contenedor">
+        <table className="historico__tabla">
+          <caption className="historico__oculto">Evaluaciones registradas, de la más reciente a la más antigua</caption>
+          <thead>
+            <tr>
+              <th scope="col">Evaluación</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Participantes</th>
+              <th scope="col">Promedio</th>
+              <th scope="col">Distribución de niveles</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filasPagina.map((item) => (
+              <tr key={item.evaluacionId}>
+                <td className="historico__nombre">{item.nombreEvaluacion}</td>
+                <td>{fechaCompleta(item.fecha)}</td>
+                <td>{item.totalParticipantes}</td>
+                <td className="historico__promedio">{item.promedioPuntajeTransformado} pts</td>
+                <td>
+                  <DistribucionNiveles distribucion={item.distribucionNiveles} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {filas.length === 0 && <p className="historico__vacio">No hay evaluaciones que coincidan con la búsqueda.</p>}
+
+      {filas.length > TAMANO_PAGINA && (
+        <div className="historico__navegacion">
+          <button
+            type="button"
+            className="historico__boton"
+            onClick={() => setPagina(paginaActual - 1)}
+            disabled={paginaActual === 1}
+          >
+            Anterior
+          </button>
+          <span aria-live="polite">
+            Página {paginaActual} de {totalPaginas}
+          </span>
+          <button
+            type="button"
+            className="historico__boton"
+            onClick={() => setPagina(paginaActual + 1)}
+            disabled={paginaActual === totalPaginas}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+
+      <ul className="historico__leyenda" aria-label="Leyenda de niveles de riesgo">
+        {NIVELES.map((nivel) => (
+          <li key={nivel.clave}>
+            <span className="historico__muestra" style={{ background: nivel.color }} />
+            {nivel.etiqueta}
+          </li>
+        ))}
+      </ul>
     </div>
   );
-}
-
-function roundTwo(num) {
-  return Math.round(num * 100) / 100;
 }

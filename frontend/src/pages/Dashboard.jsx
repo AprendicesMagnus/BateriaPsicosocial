@@ -13,6 +13,12 @@ import { crearEnlace } from "../api/enlaces";
 import BotonRegresar from "../components/BotonRegresar";
 import { esSuperAdmin, rutaInicial } from "../utils/roles";
 import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
+import QrEnlaceModal from "../components/QrEnlaceModal";
+import MapaCalorAreas from "../components/MapaCalorAreas";
+import PlanDeAccion from "../components/PlanDeAccion";
+import PriorizacionIntervenciones from "../components/PriorizacionIntervenciones";
+import HistoricoComparativo from "../components/HistoricoComparativo";
+import AnalisisGruposFicha from "../components/AnalisisGruposFicha";
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
 const ROLES_ENLACES = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
@@ -136,6 +142,8 @@ export default function Dashboard() {
   const [creandoEnlace, setCreandoEnlace] = useState(false);
   const [errorEnlace, setErrorEnlace] = useState(null);
   const [enlaceCopiado, setEnlaceCopiado] = useState(false);
+  const [mostrarQr, setMostrarQr] = useState(false);
+  const [versionPlan, setVersionPlan] = useState(0);
 
   const categoriaActiva = TODAS_CATEGORIAS.find((c) => c.id === categoriaActivaId);
 
@@ -423,6 +431,9 @@ export default function Dashboard() {
         {enlaceCopiado ? "¡Copiado!" : "Copiar"}
       </button>
     )}
+    {enlaceCreado && (
+      <button type="button" onClick={() => setMostrarQr(true)}>Ver QR</button>
+    )}
   </div>
 )}
 
@@ -641,6 +652,40 @@ export default function Dashboard() {
             ]}
           />
         </section>
+
+        {puedeCrearEnlaces && usuario?.organizacionId && (
+          <section className="responders-card" style={{ marginTop: "24px" }}>
+            <MapaCalorAreas token={token} organizacionId={usuario.organizacionId} />
+          </section>
+        )}
+
+        {puedeCrearEnlaces && usuario?.organizacionId && (
+          <section className="responders-card" style={{ marginTop: "24px" }}>
+            <AnalisisGruposFicha token={token} organizacionId={usuario.organizacionId} />
+          </section>
+        )}
+
+        {puedeCrearEnlaces && usuario?.organizacionId && (
+          <section className="responders-card" style={{ marginTop: "24px" }}>
+            <PriorizacionIntervenciones
+              token={token}
+              organizacionId={usuario.organizacionId}
+              onPlanActualizado={() => setVersionPlan((version) => version + 1)}
+            />
+          </section>
+        )}
+
+        {puedeCrearEnlaces && usuario?.organizacionId && (
+          <section className="responders-card" style={{ marginTop: "24px" }}>
+            <PlanDeAccion key={versionPlan} token={token} organizacionId={usuario.organizacionId} />
+          </section>
+        )}
+
+        {puedeCrearEnlaces && usuario?.organizacionId && (
+          <section style={{ marginTop: "24px" }}>
+            <HistoricoComparativo token={token} organizacionId={usuario.organizacionId} />
+          </section>
+        )}
 
         {/* =========================================================
             SECCIÓN DE ANÁLISIS PREDICTIVO CON IA (K-MEANS)
@@ -902,6 +947,9 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+      )}
+      {mostrarQr && enlaceCreado && (
+        <QrEnlaceModal url={enlaceCreado} titulo="Enlace de evaluación" onCerrar={() => setMostrarQr(false)} />
       )}
     </div>
   );

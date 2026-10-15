@@ -8,6 +8,7 @@ import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import { fetchEnlaces, crearEnlace, eliminarEnlace } from "../api/enlaces";
 import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha } from "../utils/encuestas";
+import QrEnlaceModal from "../components/QrEnlaceModal";
 import "../styles/app-shell.css";
 import "../styles/Reportes.css";
 
@@ -113,6 +114,7 @@ export default function Reportes() {
   const [enlaceCopiado, setEnlaceCopiado] = useState(null);
   // evaluacionId del enlace que se está eliminando
   const [eliminandoEnlace, setEliminandoEnlace] = useState(null);
+  const [qrEnlace, setQrEnlace] = useState(null);
 
   const {
     empresaNombre = usuario?.organizacionNombre ||
@@ -339,6 +341,7 @@ export default function Reportes() {
                     <button type="button" className="reportes-download-btn" onClick={() => copiarEnlace(enlace.token)}>
                       {enlaceCopiado === enlace.token ? "¡Copiado!" : "Copiar enlace"}
                     </button>
+                    <button type="button" className="reportes-download-btn" onClick={() => setQrEnlace({ url: urlEnlace(enlace.token), titulo: enlace.nombre })}>Ver QR</button>
                     <button
                       type="button"
                       className="reportes-download-btn reportes-eliminar-btn"
@@ -555,6 +558,9 @@ export default function Reportes() {
           )}
         </div>
       </main>
+      {qrEnlace && (
+        <QrEnlaceModal url={qrEnlace.url} titulo={qrEnlace.titulo} onCerrar={() => setQrEnlace(null)} />
+      )}
     </div>
   );
 }
