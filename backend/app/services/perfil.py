@@ -1,7 +1,7 @@
 """Edición de perfil del propio usuario y directorio de usuarios (solo Super Administrador).
 
 Reglas de negocio:
-- Nombres, apellidos, contraseña y foto se pueden editar UNA vez cada 5 días.
+- Nombres, apellidos, contraseña y foto se pueden editar UNA vez cada 15 días.
   La fecha de la última edición se guarda en usuarios.perfil_actualizado_en.
 - El SUPER_ADMINISTRADOR está exento de esa restricción.
 - El cambio de contraseña desde el perfil es independiente del flujo "Olvidé mi contraseña":
@@ -22,7 +22,7 @@ from app.core.errors import AppError
 from app.models.user import Rol, Usuario
 from app.schemas.common import PATRON_NOMBRE_PERSONA
 
-DIAS_ENTRE_EDICIONES = 5
+DIAS_ENTRE_EDICIONES = 15
 MAX_FOTO_BYTES = 2 * 1024 * 1024  # 2 MB
 FORMATOS_FOTO = {"JPEG", "PNG", "WEBP"}
 LADO_MAXIMO_FOTO = 512
@@ -50,8 +50,8 @@ def _asegurar_puede_editar(usuario: Usuario) -> None:
     if desbloqueo is not None:
         raise AppError(
             403,
-            "Solo puedes editar tu perfil cada 5 días. "
-            f"Podrás hacerlo de nuevo el {desbloqueo.strftime('%d/%m/%Y a las %I:%M %p')}.",
+            "Solo puedes editar tu perfil cada 15 días. "
+            f"Podrás hacerlo de nuevo el {desbloqueo.strftime('%d/%m/%Y')}.",
         )
 
 
@@ -173,14 +173,16 @@ def listar_directorio(db: Session, q: str | None, limite: int, desplazamiento: i
 
 
 def guardar_mi_resolucion(db: Session, usuario: Usuario, numero: str) -> Usuario:
-    """El Psicologo registra (o corrige) su número de resolución. Si ya fue verificada, queda bloqueada."""
-    if usuario.rol.codigo != "EVALUADOR_SST":
-        raise AppError(403, "Solo el Psicologo registra su número de resolución desde aquí.")
-    if usuario.resolucion_verificada:
-        raise AppError(403, "Tu número de resolución ya fue verificado y no se puede modificar.")
-    if usuario.numero_resolucion != numero:
-        usuario.numero_resolucion = numero
-        usuario.resolucion_verificada = False
+    """Psicologo / Usuario SST: registran su número de resolución UNA sola vez.
+
+    Sirve para quienes ya estaban registrados sin número. Una vez guardado queda bloqueado.
+    """
+    if usuario.rol.codigo not in {"EVALUADOR_SST", "RESPONSABLE_SST"}:
+        raise AppError(403, "Solo el Psicologo y el usuario SST registran su número de resolución.")
+    if usuario.numero_resolucion:
+        raise AppError(403, "Tu número de resolución ya está registrado y no se puede modificar.")
+    usuario.numero_resolucion = numero
+    usuario.resolucion_verificada = False
     db.commit()
     db.refresh(usuario)
     return usuario

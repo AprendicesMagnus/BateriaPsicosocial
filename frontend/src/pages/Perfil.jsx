@@ -13,7 +13,8 @@ import {
   cambiarPassword,
   fetchDirectorio,
   fetchMisEmpresas,
-  cambiarEmpresaActiva
+  cambiarEmpresaActiva,
+  guardarMiResolucion
 } from "../api/perfil";
 
 import {
@@ -21,6 +22,7 @@ import {
   filtrarNombrePersona,
   nombrePersonaValido,
   passwordValida,
+  soloDigitos,
 } from "../utils/validaciones";
 const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FOTO_BYTES = 2 * 1024 * 1024; // 2 MB (el backend valida lo mismo)
@@ -146,6 +148,30 @@ export default function Perfil() {
   const location = useLocation();
   const navigate = useNavigate();
   const { usuario, token, actualizarUsuario } = useAuth();
+
+  // Número de resolución: solo Psicologo y usuario SST. Se puede agregar una vez; luego queda fijo.
+  const muestraResolucion = ["EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol);
+  const [resolucion, setResolucion] = useState("");
+  const [guardandoResolucion, setGuardandoResolucion] = useState(false);
+  const [errorResolucion, setErrorResolucion] = useState("");
+
+  async function handleGuardarResolucion() {
+    if (!/^\d{6}$/.test(resolucion)) {
+      setErrorResolucion("El número de resolución debe tener exactamente 6 dígitos.");
+      return;
+    }
+    setErrorResolucion("");
+    setGuardandoResolucion(true);
+    try {
+      const res = await guardarMiResolucion(token, resolucion);
+      actualizarUsuario(res.usuario);
+      setResolucion("");
+    } catch (err) {
+      setErrorResolucion(err.message || "No se pudo guardar el número de resolución.");
+    } finally {
+      setGuardandoResolucion(false);
+    }
+  }
   const [compras, setCompras] = useState([]);
   const [loadingCompras, setLoadingCompras] = useState(false);
   const [errorCompras, setErrorCompras] = useState(null);
@@ -355,7 +381,7 @@ export default function Perfil() {
         p[0]?.toUpperCase()
       )
       .join("") || "U";
-  // Regla de 5 días
+  // Regla de 15 días
   const proximaEdicion =
     usuario?.proximaEdicionPerfil ??
     null;
@@ -738,7 +764,7 @@ export default function Perfil() {
                   </label>
                   {!esSuperAdmin && (
                     <p className="perfil-aviso">
-                      Solo puedes editar tu perfil una vez cada 5 días.
+                      Solo puedes editar tu perfil una vez cada 15 días.
                     </p>
                   )}
                   {errorForm && (
@@ -921,6 +947,37 @@ export default function Perfil() {
                         <span className="perfil-field-value">{empresaUsuario}</span>
                       )}
                     </div>
+                    {muestraResolucion && (
+                      <div className="perfil-field">
+                        <span className="perfil-field-label">Número de resolución</span>
+                        {usuario?.numeroResolucion ? (
+                          <span className="perfil-field-value">{usuario.numeroResolucion}</span>
+                        ) : (
+                          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              placeholder="Ej. 123456"
+                              value={resolucion}
+                              onChange={(e) => setResolucion(soloDigitos(e.target.value, 6))}
+                              style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14, width: 130 }}
+                            />
+                            <button
+                              type="button"
+                              className="app-btn-secondary"
+                              onClick={handleGuardarResolucion}
+                              disabled={guardandoResolucion}
+                            >
+                              {guardandoResolucion ? "Guardando..." : "Guardar"}
+                            </button>
+                            {errorResolucion && (
+                              <span style={{ color: "#b91c1c", fontSize: 12, flexBasis: "100%" }}>{errorResolucion}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="perfil-actions">
                     <button
@@ -950,9 +1007,9 @@ export default function Perfil() {
                   </div>
                   {edicionBloqueada && (
                     <p className="perfil-aviso">
-                      Solo puedes editar tu perfil una vez cada 5 días.
+                      Solo puedes editar tu perfil una vez cada 15 días.
                       Podrás hacerlo de nuevo el{" "}
-                      {formatearFechaHora(
+                      {formatearFecha(
                         proximaEdicion
                       )}
                       .
