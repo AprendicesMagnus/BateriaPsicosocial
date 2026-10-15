@@ -20,6 +20,7 @@
   display: flex;
   flex-wrap: wrap;
   min-height: 100vh;
+  min-width: 0;
   background: var(--adm-bg);
   color: var(--adm-ink);
   font-family: "Manrope", system-ui, sans-serif;
@@ -49,6 +50,7 @@
 .adm-sidebar {
   flex: 1 1 240px;
   max-width: 100%;
+  min-width: 0;
   background: var(--adm-navy);
   color: #ffffff;
   padding: 28px 18px;

@@ -355,7 +355,7 @@ export default function Perfil() {
         p[0]?.toUpperCase()
       )
       .join("") || "U";
-  // Regla de 15 días
+  // Regla de 5 días
   const proximaEdicion =
     usuario?.proximaEdicionPerfil ??
     null;
@@ -738,7 +738,7 @@ export default function Perfil() {
                   </label>
                   {!esSuperAdmin && (
                     <p className="perfil-aviso">
-                      Solo puedes editar tu perfil una vez cada 15 días.
+                      Solo puedes editar tu perfil una vez cada 5 días.
                     </p>
                   )}
                   {errorForm && (
@@ -950,9 +950,9 @@ export default function Perfil() {
                   </div>
                   {edicionBloqueada && (
                     <p className="perfil-aviso">
-                      Solo puedes editar tu perfil una vez cada 15 días.
+                      Solo puedes editar tu perfil una vez cada 5 días.
                       Podrás hacerlo de nuevo el{" "}
-                      {formatearFecha(
+                      {formatearFechaHora(
                         proximaEdicion
                       )}
                       .

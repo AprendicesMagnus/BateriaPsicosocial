@@ -1,7 +1,7 @@
 """Edición de perfil del propio usuario y directorio de usuarios (solo Super Administrador).
 
 Reglas de negocio:
-- Nombres, apellidos, contraseña y foto se pueden editar UNA vez cada 15 días.
+- Nombres, apellidos, contraseña y foto se pueden editar UNA vez cada 5 días.
   La fecha de la última edición se guarda en usuarios.perfil_actualizado_en.
 - El SUPER_ADMINISTRADOR está exento de esa restricción.
 - El cambio de contraseña desde el perfil es independiente del flujo "Olvidé mi contraseña":
@@ -22,7 +22,7 @@ from app.core.errors import AppError
 from app.models.user import Rol, Usuario
 from app.schemas.common import PATRON_NOMBRE_PERSONA
 
-DIAS_ENTRE_EDICIONES = 15
+DIAS_ENTRE_EDICIONES = 5
 MAX_FOTO_BYTES = 2 * 1024 * 1024  # 2 MB
 FORMATOS_FOTO = {"JPEG", "PNG", "WEBP"}
 LADO_MAXIMO_FOTO = 512
@@ -50,8 +50,8 @@ def _asegurar_puede_editar(usuario: Usuario) -> None:
     if desbloqueo is not None:
         raise AppError(
             403,
-            "Solo puedes editar tu perfil cada 15 días. "
-            f"Podrás hacerlo de nuevo el {desbloqueo.strftime('%d/%m/%Y')}.",
+            "Solo puedes editar tu perfil cada 5 días. "
+            f"Podrás hacerlo de nuevo el {desbloqueo.strftime('%d/%m/%Y a las %I:%M %p')}.",
         )
 
 
