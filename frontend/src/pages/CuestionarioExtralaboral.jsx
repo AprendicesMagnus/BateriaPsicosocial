@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
 // Muestra "Cargando…" o el error cuando las respuestas no se pueden guardar
 import AvisoCuestionario from "../components/AvisoCuestionario";
+import Toast from "../components/Toast";
 import "../styles/cuestionario-estres.css";
 
 const preguntas = [
@@ -62,6 +63,7 @@ export default function CuestionarioExtralaboral() {
     respuestas,
     seleccionarRespuesta,
     finalizarYNavegar,
+    mensajeFinal,
     cargando, // true mientras se carga el cuestionario desde el backend
     error, // mensaje cuando no hay evaluación o falla el guardado
   } = useCuestionarioBackend("EXTRALABORAL", MAPA_EXTRALABORAL);
@@ -112,6 +114,7 @@ export default function CuestionarioExtralaboral() {
 
   return (
     <div className="questionnaire-page">
+      <Toast mensaje={mensajeFinal} tipo="exito" duracion={6000} />
 
       {/* =====================================================
           MENÚ LATERAL
@@ -234,6 +237,13 @@ export default function CuestionarioExtralaboral() {
 
           </div>
 
+          {/* LOGOS INSTITUCIONALES */}
+          <div className="questionnaire-logos">
+            <img src="/ministerio r.png" alt="Ministerio de la Protección Social" />
+          </div>
+          <div className="questionnaire-javeriana">
+            <img src="/logo javeriana r.png" alt="Pontificia Universidad Javeriana" />
+          </div>
         </section>
 
 

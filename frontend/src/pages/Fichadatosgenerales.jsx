@@ -453,7 +453,14 @@ return (
       ===================================================== */}
 
       <main className="questionnaire-main">
-        <BotonRegresar tono="oscuro" />
+        <div className="ficha-topbar">
+          <BotonRegresar tono="oscuro" />
+
+          <div className="ficha-logos">
+            <img src="/ministerio r.png" alt="Ministerio de la Protección Social" />
+            <img src="/logo javeriana r.png" alt="Pontificia Universidad Javeriana" />
+          </div>
+        </div>
 
         <section className="questionnaire-intro">
           <div className="questionnaire-heart">♥</div>

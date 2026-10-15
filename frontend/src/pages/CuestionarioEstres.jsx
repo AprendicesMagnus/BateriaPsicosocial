@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
 // Muestra "Cargando…" o el error cuando las respuestas no se pueden guardar
 import AvisoCuestionario from "../components/AvisoCuestionario";
+import Toast from "../components/Toast";
 import "../styles/cuestionario-estres.css";
 
 const preguntas = [
@@ -61,6 +62,7 @@ export default function CuestionarioEstres() {
     respuestas,
     seleccionarRespuesta,
     finalizarYNavegar,
+    mensajeFinal,
     cargando, // true mientras se carga el cuestionario desde el backend
     error, // mensaje cuando no hay evaluación o falla el guardado
   } = useCuestionarioBackend("ESTRES", MAPA_ESTRES);
@@ -68,6 +70,9 @@ export default function CuestionarioEstres() {
   const inicio = pagina * PREGUNTAS_POR_PAGINA;
   const fin = Math.min(inicio + PREGUNTAS_POR_PAGINA, preguntas.length);
   const preguntasPagina = preguntas.slice(inicio, fin);
+  const progreso = Math.round(
+    (Object.keys(respuestas).length / preguntas.length) * 100
+  );
 
   const irAnterior = () => {
     if (pagina === 0) {
@@ -111,6 +116,7 @@ export default function CuestionarioEstres() {
 
   return (
     <div className="questionnaire-page">
+      <Toast mensaje={mensajeFinal} tipo="exito" duracion={6000} />
 
       {/* =====================================================
           MENÚ LATERAL
@@ -194,6 +200,13 @@ export default function CuestionarioEstres() {
               últimos tres meses.
             </p>
           </div>
+          {/* LOGOS INSTITUCIONALES */}
+          <div className="questionnaire-logos">
+            <img src="/ministerio r.png" alt="Ministerio de la Protección Social" />
+          </div>
+          <div className="questionnaire-javeriana">
+            <img src="/logo javeriana r.png" alt="Pontificia Universidad Javeriana" />
+          </div>
         </section>
 
         {/* PESTAÑAS */}
@@ -222,50 +235,92 @@ export default function CuestionarioEstres() {
             <strong>Intralaboral - Forma A</strong>
             <span>123</span>
           </button>
+
+          <div className="general-progress">
+            <span>Progreso general</span>
+            <div className="general-progress-bar">
+              <div style={{ width: `${progreso}%` }}></div>
+            </div>
+            <small>{progreso}%</small>
+          </div>
         </div>
 
-        {/* PREGUNTAS Y NAVEGACIÓN */}
-        <section className="questionnaire-content">
+        {/* CONTENEDOR DE PREGUNTAS */}
+        {/* --num-opciones: Estrés tiene 4 opciones, la cuadrícula por defecto es de 5 */}
+        <section className="questions-card" style={{ "--num-opciones": opciones.length }}>
+          {/* ENCABEZADO DE PREGUNTAS */}
+          <div className="questions-header">
+            <div>
+              <strong>
+                Pregunta {inicio + 1}–{fin} de {preguntas.length}
+              </strong>
+              <div className="questions-progress">
+                <div style={{ width: `${progreso}%` }}></div>
+              </div>
+            </div>
+            <span>Sección: Estrés</span>
+          </div>
+
+          {/* ENCABEZADO DE OPCIONES */}
+          <div className="answers-header">
+            <span>Frecuencia:</span>
+            {opciones.map((opcion) => (
+              <span key={opcion}>{opcion}</span>
+            ))}
+          </div>
+
+          {/* PREGUNTAS */}
           <div className="questions-list">
             {preguntasPagina.map((pregunta) => (
-              <div key={pregunta.id} className="question-item">
-                <p className="question-text">
+              <div
+                className={`question-row ${
+                  intentoFinalizar && respuestas[pregunta.id] === undefined
+                    ? "question-row-error"
+                    : ""
+                }`}
+                key={pregunta.id}
+              >
+                {/* NÚMERO */}
+                <div className="question-number">{pregunta.id}</div>
+
+                {/* TEXTO */}
+                <div className="question-text">
                   {pregunta.id}. {pregunta.texto}
-                </p>
-                <div className="options-group">
-                  {opciones.map((opcion) => (
-                    <label key={opcion} className="option-label">
-                      <input
-                        type="radio"
-                        name={`pregunta-${pregunta.id}`}
-                        // Se compara y se envía el TEXTO de la opción ("Siempre", "A veces"...):
-                        // useCuestionarioBackend lo convierte a número con MAPA_ESTRES al guardar.
-                        // Antes se enviaba el número y el hook buscaba MAPA_ESTRES[4] -> undefined,
-                        // por eso el backend respondía "El campo 'valor' es obligatorio".
-                        checked={respuestas[pregunta.id] === opcion}
-                        onChange={() => seleccionarRespuesta(pregunta.id, opcion)}
-                      />
-                      <span>{opcion}</span>
-                    </label>
-                  ))}
                 </div>
+
+                {/* RESPUESTAS */}
+                {opciones.map((opcion) => (
+                  <label className="answer-option" key={opcion}>
+                    <input
+                      type="radio"
+                      name={`pregunta-${pregunta.id}`}
+                      value={opcion}
+                      // Se envía el TEXTO de la opción; useCuestionarioBackend lo convierte
+                      // a número con MAPA_ESTRES al guardar.
+                      checked={respuestas[pregunta.id] === opcion}
+                      onChange={() => seleccionarRespuesta(pregunta.id, opcion)}
+                    />
+                    <span className="custom-radio"></span>
+                    <small>{opcion}</small>
+                  </label>
+                ))}
               </div>
             ))}
           </div>
 
+          {/* BOTONES */}
           <div className="questionnaire-navigation">
-            <button type="button" className="btn-nav" onClick={irAnterior}>
-              {pagina === 0 ? "Volver al Dashboard" : "Anterior"}
+            <button className="previous-button" type="button" onClick={irAnterior}>
+              ← Anterior
             </button>
-            <div className="page-indicator">
+            <span className="page-indicator">
               Página {pagina + 1} de {TOTAL_PAGINAS}
-            </div>
-            <button type="button" className="btn-nav btn-primary" onClick={irSiguiente}>
-              {pagina === TOTAL_PAGINAS - 1 ? "Finalizar" : "Siguiente"}
+            </span>
+            <button className="next-button" type="button" onClick={irSiguiente}>
+              {pagina < TOTAL_PAGINAS - 1 ? "Siguiente →" : "Finalizar"}
             </button>
           </div>
         </section>
-
       </main>
     </div>
   );
