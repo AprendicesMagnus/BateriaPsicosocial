@@ -16,6 +16,7 @@ import VerificarNit from "./pages/VerificarNit";
 import MisEmpresas from "./pages/MisEmpresas";
 import RestriccionRolLimitado from "./components/RestriccionRolLimitado";
 import CierreInactividad from "./components/CierreInactividad";
+import CompletarResolucion from "./components/CompletarResolucion";
 import CrearEmpresa from "./pages/Crearempresa";
 import Panel from "./pages/Panel";
 import Dashboard from "./pages/Dashboard";
@@ -38,6 +39,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <CierreInactividad />
+        <CompletarResolucion />
         <RestriccionRolLimitado>
         <Routes>
           <Route path="/" element={<Landing />} />

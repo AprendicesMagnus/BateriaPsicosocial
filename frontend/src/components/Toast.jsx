@@ -7,7 +7,7 @@ export default function Toast({ mensaje, tipo = "info", duracion = 3000 }) {
   return (
     <div className={`toast toast--${tipo}`} role="status" aria-live="polite">
       <span className="toast__icono" aria-hidden="true">
-        {tipo === "error" ? "!" : "i"}
+        {tipo === "error" ? "!" : tipo === "exito" ? "✓" : "i"}
       </span>
       <span className="toast__texto">{mensaje}</span>
       <span className="toast__barra" style={{ animationDuration: `${duracion}ms` }} />

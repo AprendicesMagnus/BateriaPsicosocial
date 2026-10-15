@@ -1,17 +1,21 @@
 import { useState } from "react";
 import { PrimaryButton, SecondaryButton, FormMessage } from "./FormControls";
 import { ROLES_REGISTRO } from "../utils/roles";
+import { soloDigitos } from "../utils/validaciones";
 
 // Pantalla rápida que se muestra cuando alguien entra con Google por primera vez.
 // La cuenta NO se crea hasta que confirme un rol.
 export default function SeleccionRolGoogle({ email, loading, error, onConfirmar, onCancelar }) {
   const [rol, setRol] = useState("");
+  const [numero, setNumero] = useState("");
   const [intento, setIntento] = useState(false);
+  const pideResolucion = rol === "EVALUADOR_SST";
+  const resolucionInvalida = pideResolucion && !/^\d{6}$/.test(numero);
 
   function confirmar() {
     setIntento(true);
-    if (!rol) return;
-    onConfirmar(rol);
+    if (!rol || resolucionInvalida) return;
+    onConfirmar(rol, pideResolucion ? numero : undefined);
   }
 
   return (
@@ -66,6 +70,24 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
           </select>
           {intento && !rol && <span className="field__error">Selecciona un rol para continuar.</span>}
         </label>
+
+        {pideResolucion && (
+          <label className="field" htmlFor="resolucion-google" style={{ marginTop: 12 }}>
+            <span className="field__label">Número de Resolución</span>
+            <input
+              id="resolucion-google"
+              className={`field__input ${intento && resolucionInvalida ? "field__input--invalid" : ""}`.trim()}
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="Ej. 123456"
+              value={numero}
+              onChange={(e) => setNumero(soloDigitos(e.target.value, 6))}
+            />
+            {intento && resolucionInvalida && (
+              <span className="field__error">Ingresa los 6 dígitos de tu número de resolución.</span>
+            )}
+          </label>
+        )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
           <PrimaryButton type="button" loading={loading} onClick={confirmar}>

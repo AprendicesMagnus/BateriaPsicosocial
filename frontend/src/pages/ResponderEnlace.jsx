@@ -1,20 +1,26 @@
-/**
- * Página pública del enlace que el psicólogo comparte con sus pacientes (/responder/:token).
- *
- * - Paciente nuevo: ve el consentimiento informado y pulsa "Comenzar". El backend crea un
- *   usuario invitado y le abre sesión; empieza por la Ficha de datos generales (que dice quién es)
- *   y sigue con los demás cuestionarios.
- * - Paciente que ya empezó en este navegador: ve "Continuar" hacia el cuestionario pendiente,
- *   o el mensaje de agradecimiento si ya terminó toda la batería.
- */
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import AuthLayout from "../components/AuthLayout";
+
+import ConsentimientoInformado from "../components/ConsentimientoInformado";
 import { FormMessage, PrimaryButton } from "../components/FormControls";
 import { useAuth } from "../context/AuthContext";
-import { CLAVE_ENLACE, fetchEnlacePublico, iniciarEnlace } from "../api/enlaces";
-import { fetchEvaluaciones, fetchInstrumentosParticipante } from "../api/evaluaciones";
+
+import {
+  CLAVE_ENLACE,
+  fetchEnlacePublico,
+  iniciarEnlace,
+} from "../api/enlaces";
+
+import {
+  fetchEvaluaciones,
+  fetchInstrumentosParticipante,
+} from "../api/evaluaciones";
+
 import { RUTAS } from "../hooks/useCuestionarioBackend";
+
+import "../styles/auth.css";
+import "../styles/ResponderEnlace.css";
 
 function enlaceGuardado() {
   try {
@@ -27,46 +33,90 @@ function enlaceGuardado() {
 export default function ResponderEnlace() {
   const { token: tokenEnlace } = useParams();
   const navigate = useNavigate();
+
   const { token, usuario, loading, iniciarSesion } = useAuth();
 
   const [info, setInfo] = useState(null);
   const [error, setError] = useState(null);
   const [acepta, setAcepta] = useState(false);
   const [iniciando, setIniciando] = useState(false);
-  // Avance del paciente que ya empezó: { evaluacionId, siguiente } (siguiente = null si terminó)
   const [avance, setAvance] = useState(null);
 
-  const yaEmpezo = Boolean(usuario?.esInvitado) && enlaceGuardado() === tokenEnlace;
+  const yaEmpezo =
+    Boolean(usuario?.esInvitado) &&
+    enlaceGuardado() === tokenEnlace;
 
   useEffect(() => {
+    let activo = true;
+
     fetchEnlacePublico(tokenEnlace)
-      .then(setInfo)
-      .catch((e) => setError(e.message));
+      .then((datos) => {
+        if (activo) setInfo(datos);
+      })
+      .catch((e) => {
+        if (activo) setError(e.message);
+      });
+
+    return () => {
+      activo = false;
+    };
   }, [tokenEnlace]);
 
-  // Si el paciente ya empezó en este navegador, se busca su siguiente cuestionario pendiente
   useEffect(() => {
     if (loading || !yaEmpezo || !token) return;
-    fetchEvaluaciones(token)
-      .then(async (evs) => {
-        const evaluacionId = evs[0]?.id;
-        if (!evaluacionId) return;
-        const instrumentos = await fetchInstrumentosParticipante(token, evaluacionId);
-        const siguiente = instrumentos.find((i) => i.estado !== "COMPLETADA");
-        setAvance({ evaluacionId, siguiente: siguiente ? RUTAS[siguiente.codigo] : null });
-      })
-      .catch((e) => setError(e.message));
+
+    let activo = true;
+
+    async function cargarAvance() {
+      try {
+        const evaluaciones = await fetchEvaluaciones(token);
+        const evaluacionId = evaluaciones[0]?.id;
+
+        if (!evaluacionId) {
+          if (activo) setAvance({ evaluacionId: null, siguiente: null });
+          return;
+        }
+
+        const instrumentos = await fetchInstrumentosParticipante(
+          token,
+          evaluacionId
+        );
+
+        const siguiente = instrumentos.find(
+          (instrumento) => instrumento.estado !== "COMPLETADA"
+        );
+
+        if (activo) {
+          setAvance({
+            evaluacionId,
+            siguiente: siguiente ? RUTAS[siguiente.codigo] : null,
+          });
+        }
+      } catch (e) {
+        if (activo) setError(e.message);
+      }
+    }
+
+    cargarAvance();
+
+    return () => {
+      activo = false;
+    };
   }, [loading, yaEmpezo, token]);
 
   async function comenzar() {
     setIniciando(true);
     setError(null);
+
     try {
       const res = await iniciarEnlace(tokenEnlace, acepta);
+
       localStorage.setItem(CLAVE_ENLACE, tokenEnlace);
       iniciarSesion(res.token, res.usuario);
-      // Primero la Ficha de datos: ahí el paciente dice quién es
-      navigate("/ficha-datos-generales", { state: { evaluacionId: res.evaluacionId } });
+
+      navigate("/ficha-datos-generales", {
+        state: { evaluacionId: res.evaluacionId },
+      });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -75,81 +125,148 @@ export default function ResponderEnlace() {
   }
 
   let contenido;
+
   if (!info || (yaEmpezo && !avance)) {
-    contenido = !error && <p className="auth-subtitle">Cargando…</p>;
-  } else if (yaEmpezo && avance && !avance.siguiente) {
+    contenido = !error ? (
+      <div className="enlace__cargando">
+        <span className="enlace__spinner" />
+        <p>Preparando tu evaluación...</p>
+      </div>
+    ) : null;
+  } else if (yaEmpezo && !avance.siguiente) {
     contenido = (
-      <>
-        <h1>¡Gracias!</h1>
-        <p className="auth-subtitle">
-          Completaste todos los cuestionarios. Tus respuestas quedaron guardadas y ya las puede ver
-          {info.evaluadorNombre ? ` ${info.evaluadorNombre}` : " tu psicólogo"}. Puedes cerrar esta página.
+      <section className="enlace__estado">
+        <div className="enlace__icono enlace__icono--exito">✓</div>
+        <p className="enlace__eyebrow">Evaluación finalizada</p>
+        <h1>¡Gracias por participar!</h1>
+        <p className="enlace__texto">
+          Completaste todos los cuestionarios. Tus respuestas quedaron
+          guardadas y ya las puede consultar
+          {info.evaluadorNombre
+            ? ` ${info.evaluadorNombre}`
+            : " tu psicólogo"}.
+          Puedes cerrar esta página.
         </p>
-      </>
+      </section>
     );
   } else if (yaEmpezo && avance) {
     contenido = (
-      <>
-        <h1>{info.nombre}</h1>
-        <p className="auth-subtitle">Ya empezaste a responder. Continúa donde quedaste.</p>
+      <section className="enlace__estado">
+        <div className="enlace__icono">↗</div>
+        <p className="enlace__eyebrow">Tu progreso</p>
+        <h1>Continúa tu evaluación</h1>
+        <p className="enlace__texto">
+          Ya comenzaste a responder. Puedes continuar desde el cuestionario
+          que quedó pendiente.
+        </p>
+
         <PrimaryButton
           type="button"
-          onClick={() => navigate(avance.siguiente, { state: { evaluacionId: avance.evaluacionId } })}
+          onClick={() =>
+            navigate(avance.siguiente, {
+              state: { evaluacionId: avance.evaluacionId },
+            })
+          }
         >
-          Continuar
+          Continuar evaluación
         </PrimaryButton>
-      </>
+      </section>
     );
   } else if (!info.activo || info.enUso) {
-    // Cada enlace es para un solo paciente y se cierra cuando termina la batería
     contenido = (
-      <>
+      <section className="enlace__estado">
+        <div className="enlace__icono enlace__icono--alerta">!</div>
+        <p className="enlace__eyebrow">Estado del enlace</p>
         <h1>{info.nombre}</h1>
+
         <FormMessage type="error">
           {info.activo
-            ? "Este enlace ya está siendo usado por otro paciente. Pide un enlace nuevo a tu psicólogo."
-            : "Este enlace ya fue cerrado. Pide un enlace nuevo a tu psicólogo."}
+            ? "Este enlace ya está siendo usado por otro paciente. Solicita uno nuevo a tu psicólogo."
+            : "Este enlace ya fue cerrado. Solicita uno nuevo a tu psicólogo."}
         </FormMessage>
-      </>
+      </section>
     );
   } else {
     contenido = (
       <>
-        <h1>{info.nombre}</h1>
-        <p className="auth-subtitle">
-          {info.evaluadorNombre ? `${info.evaluadorNombre} te invitó` : "Te invitaron"} a responder la
-          Batería de riesgo psicosocial
-          {info.organizacionNombre ? ` (${info.organizacionNombre})` : ""}. No necesitas crear una cuenta.
-          Primero llenarás tus datos generales y luego los cuestionarios; tus respuestas se guardan a medida
-          que avanzas.
-        </p>
+        <div className="enlace__presentacion">
+          <p className="enlace__eyebrow">
+            EVALUACIÓN · {info.nombre}
+          </p>
+
+          <h1>Bienvenido a tu evaluación</h1>
+
+          <p className="enlace__texto">
+            {info.evaluadorNombre
+              ? `${info.evaluadorNombre} te invitó`
+              : "Te invitaron"}{" "}
+            a responder la Batería de Riesgo Psicosocial
+            {info.organizacionNombre
+              ? ` de ${info.organizacionNombre}`
+              : ""}.
+            Primero completarás tus datos generales y después los
+            cuestionarios.
+          </p>
+        </div>
+
+        <div className="enlace__privacidad">
+          <span className="enlace__privacidad-icono">✓</span>
+          <div>
+            <strong>Tu información es importante</strong>
+            <p>
+              Tus respuestas deben ser tratadas con confidencialidad y
+              conforme a las condiciones del consentimiento informado.
+            </p>
+          </div>
+        </div>
 
         {usuario && !usuario.esInvitado && (
           <FormMessage type="error">
-            Al comenzar se cerrará la sesión de {usuario.email} en este navegador.
+            Al comenzar, se cerrará la sesión de {usuario.email} en este
+            navegador.
           </FormMessage>
         )}
 
-        <label style={{ display: "flex", gap: 10, alignItems: "flex-start", margin: "16px 0", lineHeight: 1.4 }}>
-          <input type="checkbox" checked={acepta} onChange={(e) => setAcepta(e.target.checked)} />
-          <span>
-            Acepto el consentimiento informado: autorizo el uso de mis respuestas para la evaluación de
-            factores de riesgo psicosocial. La información es confidencial y solo la consulta el psicólogo
-            responsable.
-          </span>
-        </label>
-
-        <PrimaryButton type="button" onClick={comenzar} loading={iniciando} disabled={!acepta || iniciando}>
-          Comenzar
-        </PrimaryButton>
+        <div className="enlace__consentimiento">
+          <ConsentimientoInformado
+            acepta={acepta}
+            onChange={setAcepta}
+            onComenzar={comenzar}
+            iniciando={iniciando}
+          />
+        </div>
       </>
     );
   }
 
   return (
-    <AuthLayout>
-      <FormMessage type="error">{error}</FormMessage>
-      {contenido}
-    </AuthLayout>
+    <main className="enlace-shell">
+      <header className="enlace__header">
+        <div
+          className="sidebar__logo"
+          onClick={() => navigate("/Inicio")}
+          style={{ cursor: "pointer" }}
+        >
+          <img src="/logo oscu.png" alt="Magnus" style={{ height: 70, marginRight: "auto" }} />
+        </div>
+
+        <div className="enlace__confidencial">
+          <span className="enlace__punto" />
+          Evaluación confidencial
+        </div>
+      </header>
+
+      <div className="enlace__contenedor">
+        <div className="enlace__tarjeta">
+          <FormMessage type="error">{error}</FormMessage>
+          {contenido}
+        </div>
+
+        <footer className="enlace__footer">
+          <p>Magnus | SIG · Gestión de Riesgo Psicosocial</p>
+          <span>Resolución 2764 de 2022</span>
+        </footer>
+      </div>
+    </main>
   );
 }

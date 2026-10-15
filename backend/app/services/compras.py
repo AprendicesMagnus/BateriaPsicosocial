@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.crypto import utcnow
 from app.core.errors import AppError
 from app.models.commercial import Compra, Pago
+from app.models.plan import PlanBateria
 from app.models.user import Usuario
 from app.services import wompi as wompi_service
 
@@ -198,6 +199,19 @@ def _expirar_compras_vencidas(
     db.commit()
 
 
+def _calcular_subtotal(db: Session, cantidad: int, plan_id) -> float:
+    """Subtotal antes de IVA. Con plan elegido es el PRECIO FIJO del plan (no se multiplica por la
+    cantidad); la cantidad solo debe caber en el rango del plan. Sin plan: cantidad x tarifa por defecto."""
+    if not plan_id:
+        return cantidad * TARIFA_POR_BATERIA
+    plan = db.query(PlanBateria).filter(PlanBateria.id == plan_id, PlanBateria.activo.is_(True)).first()
+    if plan is None:
+        raise AppError(404, "El plan seleccionado ya no está disponible. Elige otro.")
+    if cantidad < plan.cantidad_min or (plan.cantidad_max is not None and cantidad > plan.cantidad_max):
+        raise AppError(400, "La cantidad no corresponde al plan seleccionado.")
+    return float(plan.precio_unitario)
+
+
 def crear_compra(
     db: Session,
     data,
@@ -267,7 +281,8 @@ def crear_compra(
     # CALCULAR VALORES
     # ==================================================
 
-    subtotal = cantidad * TARIFA_POR_BATERIA
+    subtotal = _calcular_subtotal(db, cantidad, getattr(data, "planId", None))
+    tarifa = subtotal / cantidad  # tarifa efectiva por batería (informativa)
     iva = subtotal * IVA_PORCENTAJE
     total = subtotal + iva
 
@@ -280,7 +295,7 @@ def crear_compra(
         organizacion_id=organizacion_id,
         bateria_nombre=bateria_nombre,
         cantidad=cantidad,
-        tarifa_unitario=TARIFA_POR_BATERIA,
+        tarifa_unitario=tarifa,
         subtotal=subtotal,
         iva=iva,
         total=total,

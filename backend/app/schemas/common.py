@@ -138,11 +138,21 @@ class RegistroRequest(BaseModel):
     email: Correo
     password: PasswordNueva
     rol: RolRegistro
+    # Obligatorio solo para el Psicologo (se valida en el servicio): 6 dígitos numéricos.
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
 
 
 class CambioPasswordPerfilRequest(BaseModel):
     passwordActual: str = Field(min_length=1, max_length=72)
     passwordNueva: PasswordNueva
+
+
+class ResolucionRequest(BaseModel):
+    numeroResolucion: str = Field(pattern=r"^\d{6}$", description="6 dígitos numéricos")
+
+
+class VerificarResolucionRequest(BaseModel):
+    verificada: bool
 
 
 class EmpresaActivaRequest(BaseModel):
@@ -160,6 +170,7 @@ class GoogleLoginRequest(BaseModel):
         description="ID token (JWT) entregado por Google Identity Services",
     )
     rol: RolRegistro | None = None
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
 
 
 class VerificarEmailRequest(BaseModel):
@@ -404,6 +415,7 @@ class CompraCreate(BaseModel):
     cantidad: int = Field(gt=0)
     organizacionId: UUID | None = None
     bateriaNombre: str | None = None
+    planId: UUID | None = None
 
 
 class RespuestaEnvio(BaseModel):
@@ -751,6 +763,29 @@ class OrganizacionAutorregistroCreate(BaseModel):
     )
 
     model_config = {"populate_by_name": True}
+
+
+class PlanCreate(BaseModel):
+    nombre: str = Field(min_length=2, max_length=80)
+    cantidadMin: int = Field(ge=1, le=1000000)
+    cantidadMax: int | None = Field(default=None, ge=1, le=1000000)  # None = "en adelante"
+    precioUnitario: int = Field(ge=0, le=100000000, description="Pesos colombianos por batería")
+    activo: bool = True
+
+
+class PlanUpdate(BaseModel):
+    nombre: str | None = Field(default=None, min_length=2, max_length=80)
+    cantidadMin: int | None = Field(default=None, ge=1, le=1000000)
+    cantidadMax: int | None = Field(default=None, ge=1, le=1000000)
+    precioUnitario: int | None = Field(default=None, ge=0, le=100000000)
+    activo: bool | None = None
+
+
+class CompraCreate(BaseModel):
+    cantidad: int = Field(gt=0, le=100000)
+    bateriaNombre: str | None = Field(default="Batería de Riesgo Psicosocial", max_length=150)
+    organizacionId: UUID | None = None
+    planId: UUID | None = None  # plan elegido en la pasarela de pago
 
 
 class OrganizacionPublica(BaseModel):

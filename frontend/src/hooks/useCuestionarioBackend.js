@@ -13,7 +13,7 @@
  * @param {string} codigoEsperado Código del instrumento en BD (ESTRES, EXTRALABORAL, INTRALABORAL_A, INTRALABORAL_B).
  * @param {Record<string, number>} mapa Texto de la opción -> valor numérico que se guarda.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -85,6 +85,10 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
   const [respuestas, setRespuestas] = useState({});
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  // Mensaje flotante al terminar el último cuestionario de la batería
+  const [mensajeFinal, setMensajeFinal] = useState(null);
+  // Respuestas elegidas antes de que terminara de cargar el cuestionario: { preguntaId: texto }
+  const pendientesRef = useRef({});
 
   const prefijo = PREFIJOS[codigoEsperado];
 
@@ -157,15 +161,9 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
       .finally(() => setCargando(false));
   }, [evaluacionId, token, codigoEsperado]);
 
-  // 3. Guarda la respuesta en pantalla y en la BD en cuanto el trabajador hace clic
-  const seleccionarRespuesta = useCallback(
+  // Guarda una respuesta (no filtro) en la BD y muestra el error si falla
+  const guardarEnBackend = useCallback(
     async (preguntaId, texto) => {
-      setRespuestas((prev) => ({ ...prev, [preguntaId]: texto }));
-      // La pregunta filtro no se guarda como respuesta; se envía al backend al finalizar
-      if (FILTROS[preguntaId]) {
-        if (evaluacionId) guardarFiltro(evaluacionId, codigoEsperado, preguntaId, texto);
-        return;
-      }
       // Sin evaluación no se puede guardar; se deja el mensaje de carga (no se sobrescribe)
       if (!evaluacionId) {
         setError((prev) => prev || "No hay una evaluación activa; esta respuesta no se guardó.");
@@ -173,7 +171,13 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
       }
       const uuid = uuidPorCodigo[`${prefijo}${preguntaId}`];
       if (!uuid) {
-        setError(`La pregunta ${preguntaId} no existe en la base de datos.`);
+        // Sin preguntas cargadas la carga falló (p. ej. "restringido al trabajador asignado"):
+        // se conserva ese mensaje, que es el que explica el problema, en vez de taparlo
+        if (Object.keys(uuidPorCodigo).length === 0) {
+          setError((prev) => prev || "No se pudo cargar el cuestionario; la respuesta no se guardó.");
+        } else {
+          setError(`La pregunta ${preguntaId} no existe en la base de datos.`);
+        }
         return;
       }
       // La página debe enviar el TEXTO de la opción; si no está en el mapa no hay valor numérico
@@ -191,8 +195,36 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
         setError(e.message);
       }
     },
-    [uuidPorCodigo, prefijo, token, evaluacionId, mapa, codigoEsperado]
+    [uuidPorCodigo, prefijo, token, evaluacionId, mapa]
   );
+
+  // 3. Guarda la respuesta en pantalla y en la BD en cuanto el trabajador hace clic
+  const seleccionarRespuesta = useCallback(
+    async (preguntaId, texto) => {
+      setRespuestas((prev) => ({ ...prev, [preguntaId]: texto }));
+      // La pregunta filtro no se guarda como respuesta; se envía al backend al finalizar
+      if (FILTROS[preguntaId]) {
+        if (evaluacionId) guardarFiltro(evaluacionId, codigoEsperado, preguntaId, texto);
+        return;
+      }
+      // Clic mientras el cuestionario aún se carga: se guarda en cuanto lleguen las preguntas
+      // (antes se perdía y quedaba el aviso rojo aunque la carga terminara bien)
+      if (cargando && Object.keys(uuidPorCodigo).length === 0) {
+        pendientesRef.current[preguntaId] = texto;
+        return;
+      }
+      await guardarEnBackend(preguntaId, texto);
+    },
+    [uuidPorCodigo, evaluacionId, codigoEsperado, cargando, guardarEnBackend]
+  );
+
+  // 3b. Al terminar la carga se guardan las respuestas que se dieron mientras cargaba
+  useEffect(() => {
+    if (Object.keys(uuidPorCodigo).length === 0) return;
+    const pendientes = pendientesRef.current;
+    pendientesRef.current = {};
+    Object.entries(pendientes).forEach(([preguntaId, texto]) => guardarEnBackend(preguntaId, texto));
+  }, [uuidPorCodigo, guardarEnBackend]);
 
   // 4. Cierra el instrumento en el backend y navega al siguiente pendiente (o al dashboard)
   const finalizarYNavegar = useCallback(async () => {
@@ -211,8 +243,9 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
       const res = await finalizarCuestionario(token, evaluacionId, filtros);
       // completadoTotal = true cuando era el último instrumento de la batería
       if (res.completadoTotal) {
-        alert("¡Completaste toda la batería!");
-        navigate("/dashboard");
+        // Aviso flotante en la misma página; se oculta solo a los 6 segundos
+        setMensajeFinal("¡Terminaste todas las encuestas! Gracias por tu participación.");
+        setTimeout(() => setMensajeFinal(null), 6000);
         return;
       }
       const instrumentos = await fetchInstrumentosParticipante(token, evaluacionId);
@@ -227,5 +260,5 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
     }
   }, [respuestas, token, evaluacionId, navigate]);
 
-  return { respuestas, seleccionarRespuesta, finalizarYNavegar, cargando, error };
+  return { respuestas, seleccionarRespuesta, finalizarYNavegar, cargando, error, mensajeFinal };
 }

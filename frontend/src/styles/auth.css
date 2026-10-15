@@ -318,7 +318,7 @@
   .auth-form-panel {
     padding: 36px 24px;
   }
-}
+
 
 /* ============================================
    Recuperar Contraseña — tarjeta centrada
@@ -389,4 +389,5 @@
   .verify-card {
     padding: 28px 24px;
   }
+}
 }

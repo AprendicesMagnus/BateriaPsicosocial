@@ -388,6 +388,8 @@ def actualizar_responsable_empresa(db: Session, org_id, data, actual: Usuario) -
     if "apellido" in cambios:
         usuario.apellido = cambios["apellido"].strip()
     if "numeroResolucion" in cambios:
+        if usuario.numero_resolucion != cambios["numeroResolucion"]:
+            usuario.resolucion_verificada = False
         usuario.numero_resolucion = cambios["numeroResolucion"]
     db.commit()
     db.refresh(usuario)

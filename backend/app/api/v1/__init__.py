@@ -13,6 +13,7 @@ from app.api.v1 import (
     organizaciones,
     pagos,
     panel,
+    planes,
     prediccion,
     reportes,
     roles,
@@ -38,4 +39,8 @@ router.include_router(auditoria.router, prefix="/auditoria", tags=["Auditoria"])
 router.include_router(compras.router, prefix="/compras", tags=["Compras"])
 router.include_router(pagos.router, prefix="/pagos", tags=["Pagos"])
 router.include_router(panel.router, prefix="/panel", tags=["Panel"])
+router.include_router(planes.router, prefix="/planes", tags=["Planes"])
+
+# TODO: restaurar cuando exista el módulo:
+# router.include_router(seguimiento_recomendaciones.router, prefix="/seguimiento-recomendaciones", tags=["SeguimientoRecomendaciones"])
 router.include_router(wompi.router, prefix="/wompi", tags=["Wompi"])

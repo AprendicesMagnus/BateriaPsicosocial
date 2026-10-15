@@ -385,10 +385,20 @@ export default function Dashboard() {
     <button
       key={categoria.id}
       type="button"
-      className={categoria.id === categoriaActivaId ? "selected" : ""}
+      className={
+        categoria.id === categoriaActivaId ? "selected" : ""
+      }
       onClick={() => {
         setCategoriaActivaId(categoria.id);
-        navigate(categoria.ruta);
+
+        const destino = document.getElementById(
+          `tabla-categoria-${categoria.id}`
+        );
+
+        destino?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       }}
       aria-pressed={categoria.id === categoriaActivaId}
     >
@@ -396,45 +406,33 @@ export default function Dashboard() {
       <small>{categoria.totalPreguntas} preguntas</small>
     </button>
   ))}
-
-  {/* Crea un enlace para que un paciente responda la batería sin cuenta */}
-  {puedeCrearEnlaces && (
-    <button
-      type="button"
-      className="category-tabs__enlace"
-      onClick={handleCrearEnlace}
-      disabled={creandoEnlace}
-    >
-      {creandoEnlace ? "Creando..." : "+ Crear enlace"}
-      <small>para paciente</small>
-    </button>
-  )}
 </div>
 
-{(enlaceCreado || errorEnlace) && (
-  <div className="enlace-creado" role="status">
-    {errorEnlace ? (
-      <span className="enlace-creado__error">{errorEnlace}</span>
-    ) : (
-      <>
-        <span className="enlace-creado__texto">
-          Enlace listo. Compártelo con el paciente; se cierra cuando termine la encuesta.
-        </span>
-        <span className="enlace-creado__url">{enlaceCreado}</span>
-      </>
-    )}
-    {enlaceCreado && (
-      <button type="button" onClick={copiarEnlace}>
-        {enlaceCopiado ? "¡Copiado!" : "Copiar"}
-      </button>
-    )}
-    {enlaceCreado && (
-      <button type="button" onClick={() => setMostrarQr(true)}>Ver QR</button>
-    )}
-  </div>
-)}
+        {(enlaceCreado || errorEnlace) && (
+          <div className="enlace-creado" role="status">
+            {errorEnlace ? (
+              <span className="enlace-creado__error">{errorEnlace}</span>
+            ) : (
+              <>
+                <span className="enlace-creado__texto">
+                  Enlace listo. Compártelo con el paciente; se cierra cuando termine la encuesta.
+                </span>
+                <span className="enlace-creado__url">{enlaceCreado}</span>
+              </>
+            )}
+            {enlaceCreado && (
+              <button type="button" onClick={copiarEnlace}>
+                {enlaceCopiado ? "¡Copiado!" : "Copiar"}
+              </button>
+            )}
+            {enlaceCreado && (
+              <button type="button" onClick={() => setMostrarQr(true)}>Ver QR</button>
+            )}
+          </div>
+        )}
 
-{/* Segunda fila: versiones "B" de Estrés, Extralaboral e Intralaboral */}
+        {/* Segunda fila: versiones "B" de Estrés, Extralaboral e Intralaboral */}
+
 {/* Pestañas de categorías del formulario B */}
 <div
   className="category-tabs category-tabs--b"
@@ -444,10 +442,20 @@ export default function Dashboard() {
     <button
       key={categoria.id}
       type="button"
-      className={categoria.id === categoriaActivaId ? "selected" : ""}
+      className={
+        categoria.id === categoriaActivaId ? "selected" : ""
+      }
       onClick={() => {
         setCategoriaActivaId(categoria.id);
-        navigate(categoria.ruta);
+
+        const destino = document.getElementById(
+          `tabla-categoria-${categoria.id}`
+        );
+
+        destino?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       }}
       aria-pressed={categoria.id === categoriaActivaId}
     >
@@ -594,9 +602,11 @@ export default function Dashboard() {
               }
             }
 
+            
             return (
               <IndicatorCard
                 key={categoria.id}
+                id={`tabla-categoria-${categoria.id}`}
                 title={categoria.nombre}
                 subtitle={`${categoria.totalPreguntas} preguntas`}
                 active={esActiva}
@@ -984,14 +994,30 @@ function DistribucionRiesgoChart({ distribucion }) {
   );
 }
 
-function IndicatorCard({ title, subtitle, values, active, onClick }) {
+
+function IndicatorCard({
+  id,
+  title,
+  subtitle,
+  values,
+  active,
+  onClick,
+}) {
   return (
-    <div className={`indicator-card ${active ? "indicator-active" : ""}`} onClick={onClick} role={onClick ? "button" : undefined}>
+    <div
+      id={id}
+      className={`indicator-card ${active ? "indicator-active" : ""}`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      style={{ scrollMarginTop: "30px" }}
+    >
       <div className="indicator-header">
         <div>
           <h3>{title}</h3>
           <p>{subtitle}</p>
         </div>
+
         {active && <span className="active-badge">Activo</span>}
       </div>
 
@@ -999,14 +1025,19 @@ function IndicatorCard({ title, subtitle, values, active, onClick }) {
         {values.map(([name, val]) => (
           <div className="indicator-row" key={name}>
             <span>{name}</span>
+
             <div className="progress">
               <div
                 className="progress-fill bajo"
                 style={{
-                  width: typeof val === "string" && val.includes("%") ? val : "60%",
+                  width:
+                    typeof val === "string" && val.includes("%")
+                      ? val
+                      : "60%",
                 }}
-              ></div>
+              />
             </div>
+
             <small>{val}</small>
           </div>
         ))}

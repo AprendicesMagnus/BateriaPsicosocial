@@ -19,6 +19,7 @@ import {
   nombrePersonaValido,
   normalizarEmail,
   passwordValida,
+  soloDigitos,
 } from "../utils/validaciones";
 
 const GOOGLE_CLIENT_ID =
@@ -60,7 +61,8 @@ export default function CreateAccount() {
     email: "",
     password: "",
     confirmPassword: "",
-    rol: ""
+    rol: "",
+    numeroResolucion: ""
   });
 
   const [tocados, setTocados] = useState({});
@@ -109,6 +111,15 @@ export default function CreateAccount() {
 
     rol: !form.rol ? "Selecciona un rol." : "",
 
+    numeroResolucion:
+      form.rol !== "EVALUADOR_SST"
+        ? ""
+        : !form.numeroResolucion
+        ? "Este campo es obligatorio."
+        : !/^\d{6}$/.test(form.numeroResolucion)
+        ? "El número de resolución debe tener exactamente 6 dígitos."
+        : "",
+
     confirmPassword: !form.confirmPassword
       ? "Este campo es obligatorio."
       : form.password !== form.confirmPassword
@@ -149,7 +160,8 @@ export default function CreateAccount() {
         apellido: apeTrim,
         email: correoNorm,
         password: form.password,
-        rol: form.rol
+        rol: form.rol,
+        ...(form.rol === "EVALUADOR_SST" ? { numeroResolucion: form.numeroResolucion } : {})
       });
 
       navigate("/Inicio", { state: { email: correoNorm } });
@@ -201,7 +213,7 @@ export default function CreateAccount() {
     }
   }
 
-  async function confirmarRolGoogle(rol) {
+  async function confirmarRolGoogle(rol, numeroResolucion) {
     if (!googlePendiente) return;
     setErrorRolGoogle("");
     setLoadingGoogle(true);
@@ -209,7 +221,8 @@ export default function CreateAccount() {
     try {
       const data = await loginConGoogle({
         credential: googlePendiente.credential,
-        rol
+        rol,
+        numeroResolucion
       });
 
       iniciarSesion(data.token, data.usuario);
@@ -387,6 +400,26 @@ export default function CreateAccount() {
             <span className="field__error">{errores.rol}</span>
           )}
         </label>
+
+        {form.rol === "EVALUADOR_SST" && (
+          <label className="field" htmlFor="resolucion-registro">
+            <span className="field__label">Número de Resolución</span>
+            <input
+              id="resolucion-registro"
+              className={`field__input ${mostrarError("numeroResolucion") ? "field__input--invalid" : ""}`.trim()}
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="Ej. 123456"
+              value={form.numeroResolucion}
+              onChange={(e) => setForm((f) => ({ ...f, numeroResolucion: soloDigitos(e.target.value, 6) }))}
+              onBlur={() => marcar("numeroResolucion")}
+              aria-invalid={mostrarError("numeroResolucion") ? "true" : "false"}
+            />
+            {mostrarError("numeroResolucion") && (
+              <span className="field__error">{errores.numeroResolucion}</span>
+            )}
+          </label>
+        )}
 
         <PasswordField
           label="Contraseña"
