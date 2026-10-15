@@ -283,7 +283,7 @@ def test_vistas_de_cuestionarios_guardan_y_finalizan(client, tipo_cargo, codigo_
             r = client.post(
                 f"/api/evaluaciones/{eval_id}/respuestas",
                 headers=headers_pac,
-                json={"preguntaId": p["id"], "valor": valor},
+                json={"pregunta_codigo": p["codigo"], "valor": valor},
             )
             assert r.status_code == 200, r.text
 
