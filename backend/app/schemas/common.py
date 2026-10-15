@@ -138,11 +138,21 @@ class RegistroRequest(BaseModel):
     email: Correo
     password: PasswordNueva
     rol: RolRegistro
+    # Obligatorio solo para el Psicologo (se valida en el servicio): 6 dígitos numéricos.
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
 
 
 class CambioPasswordPerfilRequest(BaseModel):
     passwordActual: str = Field(min_length=1, max_length=72)
     passwordNueva: PasswordNueva
+
+
+class ResolucionRequest(BaseModel):
+    numeroResolucion: str = Field(pattern=r"^\d{6}$", description="6 dígitos numéricos")
+
+
+class VerificarResolucionRequest(BaseModel):
+    verificada: bool
 
 
 class EmpresaActivaRequest(BaseModel):
@@ -160,6 +170,7 @@ class GoogleLoginRequest(BaseModel):
         description="ID token (JWT) entregado por Google Identity Services",
     )
     rol: RolRegistro | None = None
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
 
 
 class VerificarEmailRequest(BaseModel):

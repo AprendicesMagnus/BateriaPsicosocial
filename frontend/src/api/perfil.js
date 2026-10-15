@@ -65,3 +65,13 @@ export function editarResponsableEmpresa(token, id, { nombre, apellido, numeroRe
     token,
   });
 }
+
+// Psicologo: registrar su número de resolución (6 dígitos).
+export function guardarMiResolucion(token, numeroResolucion) {
+  return request("/usuarios/me/resolucion", { method: "POST", body: { numeroResolucion }, token });
+}
+
+// Super Administrador: marcar o quitar la verificación del número de resolución de un usuario.
+export function verificarResolucion(token, usuarioId, verificada) {
+  return request(`/usuarios/${usuarioId}/verificar-resolucion`, { method: "POST", body: { verificada }, token });
+}

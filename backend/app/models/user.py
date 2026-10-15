@@ -69,6 +69,8 @@ class Usuario(Base):
     cargo: Mapped[str | None] = mapped_column(String(120))
     # Número de resolución (6 dígitos) del usuario Responsable SST que se registra con la empresa.
     numero_resolucion: Mapped[str | None] = mapped_column(String(6))
+    # La marca el Super Administrador desde el Panel; si el número cambia, vuelve a False.
+    resolucion_verificada: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
     # Ruta pública de la foto de perfil (p. ej. /api/uploads/avatars/xxx.jpg).
     foto_url: Mapped[str | None] = mapped_column(String(255))
     # Fecha de la última edición de perfil (base de la regla de 1 edición cada 15 días).

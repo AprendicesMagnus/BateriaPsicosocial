@@ -170,3 +170,29 @@ def listar_directorio(db: Session, q: str | None, limite: int, desplazamiento: i
             for u in usuarios
         ],
     }
+
+
+def guardar_mi_resolucion(db: Session, usuario: Usuario, numero: str) -> Usuario:
+    """El Psicologo registra (o corrige) su número de resolución. Si ya fue verificada, queda bloqueada."""
+    if usuario.rol.codigo != "EVALUADOR_SST":
+        raise AppError(403, "Solo el Psicologo registra su número de resolución desde aquí.")
+    if usuario.resolucion_verificada:
+        raise AppError(403, "Tu número de resolución ya fue verificado y no se puede modificar.")
+    if usuario.numero_resolucion != numero:
+        usuario.numero_resolucion = numero
+        usuario.resolucion_verificada = False
+    db.commit()
+    db.refresh(usuario)
+    return usuario
+
+
+def verificar_resolucion(db: Session, usuario_id, verificada: bool) -> dict:
+    """Super Administrador: marca o quita la verificación del número de resolución de un usuario."""
+    objetivo = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if objetivo is None:
+        raise AppError(404, "Usuario no encontrado.")
+    if verificada and not objetivo.numero_resolucion:
+        raise AppError(400, "Este usuario aún no registra un número de resolución.")
+    objetivo.resolucion_verificada = verificada
+    db.commit()
+    return {"id": str(objetivo.id), "resolucionVerificada": objetivo.resolucion_verificada}

@@ -9,6 +9,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import ProfileMenu from "../components/ProfileMenu";
 import { fetchPanel } from "../api/panel";
+import { verificarResolucion } from "../api/perfil";
 import "../styles/dashboard.css";
 import "../styles/Panel.css";
 import BotonRegresar from "../components/BotonRegresar";
@@ -133,6 +134,19 @@ export default function Panel() {
   }
 
   const usuarios = datos?.usuarios ?? [];
+
+  // Super Administrador: marca o quita la verificación del número de resolución.
+  async function alternarResolucion(u) {
+    try {
+      const res = await verificarResolucion(token, u.id, !u.resolucionVerificada);
+      setDatos((d) => ({
+        ...d,
+        usuarios: d.usuarios.map((x) => (x.id === u.id ? { ...x, resolucionVerificada: res.resolucionVerificada } : x)),
+      }));
+    } catch (err) {
+      setError(err.message || "No se pudo actualizar la verificación.");
+    }
+  }
   const empresas = datos?.empresas ?? [];
   const compras = datos?.compras ?? [];
   const auditoria = datos?.auditoria ?? [];
@@ -226,6 +240,7 @@ export default function Panel() {
                     <tr>
                       <th>Nombre</th>
                       <th>Rol</th>
+                      <th>Resolución</th>
                       <th>Empresa</th>
                       <th>Registro</th>
                       <th>Estado</th>
@@ -246,6 +261,18 @@ export default function Panel() {
                             </div>
                           </td>
                           <td><span className={`adm-chip adm-chip--rol-${r.clase}`}>{r.label}</span></td>
+                          <td>
+                            {u.numeroResolucion ? (
+                              <div className="adm-celda-doble">
+                                <strong>{u.numeroResolucion}</strong>
+                                <span>{u.resolucionVerificada ? "Verificada" : "Pendiente"}</span>
+                              </div>
+                            ) : u.rol === "EVALUADOR_SST" || u.rol === "RESPONSABLE_SST" ? (
+                              <span className="adm-chip adm-chip--peligro">Sin número</span>
+                            ) : (
+                              <span className="adm-muted">—</span>
+                            )}
+                          </td>
                           <td>{u.empresa}</td>
                           <td>{u.registro}</td>
                           <td><span className={`adm-chip adm-chip--${est.clase}`}>{est.label}</span></td>
@@ -255,6 +282,15 @@ export default function Panel() {
                               <button type="button" className={`adm-accion ${claseAccionUsuario(u)}`.trim()}>
                                 {accionUsuario(u)}
                               </button>
+                              {u.numeroResolucion && (
+                                <button
+                                  type="button"
+                                  className={`adm-accion ${u.resolucionVerificada ? "" : "adm-accion--ok"}`.trim()}
+                                  onClick={() => alternarResolucion(u)}
+                                >
+                                  {u.resolucionVerificada ? "Quitar verificación" : "✓ Verificar resolución"}
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

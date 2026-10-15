@@ -59,6 +59,8 @@ def obtener_panel(db: Session) -> dict:
             "estado": u.estado,
             "emailVerificado": u.email_verificado,
             "ultimoAcceso": ultimos[u.id].isoformat() if u.id in ultimos else None,
+            "numeroResolucion": u.numero_resolucion,
+            "resolucionVerificada": u.resolucion_verificada,
         }
         for u in usuarios_db
     ]
