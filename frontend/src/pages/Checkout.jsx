@@ -142,8 +142,7 @@ export default function Checkout() {
   );
   const cantidadNumerica = cantidadValida ? Number(cantidadTexto) : 0;
 
-  // Con plan: precio fijo del plan (no se multiplica por la cantidad). Sin plan: cantidad x tarifa.
-  const subtotal = planActual ? (cantidadValida ? planActual.precioUnitario : 0) : cantidadNumerica * tarifaActual;
+  const subtotal = cantidadNumerica * tarifaActual;
   const iva = subtotal * IVA_PORCENTAJE;
   const total = subtotal + iva;
 
@@ -560,7 +559,7 @@ export default function Checkout() {
                     <option value="">Selecciona un plan</option>
                     {planes.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {`${etiquetaRango(p.cantidadMin, p.cantidadMax)} · ${formatCOP(p.precioUnitario)}`}
+                        {`${etiquetaRango(p.cantidadMin, p.cantidadMax)} · ${formatCOP(p.precioUnitario)} c/u`}
                       </option>
                     ))}
                   </select>
@@ -624,7 +623,7 @@ export default function Checkout() {
               {/* PRECIOS */}
               <div className="checkout-price-list">
                 <div className="checkout-price-row">
-                  <span>{planActual ? "Precio del plan" : "Tarifa por batería"}</span>
+                  <span>Tarifa por batería</span>
                   <strong>{formatCOP(tarifaActual)}</strong>
                 </div>
                 <div className="checkout-price-row">

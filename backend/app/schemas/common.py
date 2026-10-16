@@ -147,6 +147,14 @@ class CambioPasswordPerfilRequest(BaseModel):
     passwordNueva: PasswordNueva
 
 
+class InvitarUsuarioRequest(BaseModel):
+    nombre: NombrePersona
+    apellido: NombrePersona
+    email: Correo
+    rolCodigo: Literal["SUPER_ADMINISTRADOR", "ADMINISTRADOR", "JEFE", "EVALUADOR_SST"]
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+
+
 class ResolucionRequest(BaseModel):
     numeroResolucion: str = Field(pattern=r"^\d{6}$", description="6 dígitos numéricos")
 

@@ -9,7 +9,8 @@ import {
 import { useAuth } from "../context/AuthContext";
 import ProfileMenu from "../components/ProfileMenu";
 import { fetchPanel } from "../api/panel";
-import { verificarResolucion } from "../api/perfil";
+import { editarUsuarioAdmin, reenviarCodigoVerificacion, verificarResolucion } from "../api/perfil";
+import ModalUsuarioAdmin from "../components/ModalUsuarioAdmin";
 import "../styles/dashboard.css";
 import "../styles/Panel.css";
 import BotonRegresar from "../components/BotonRegresar";
@@ -114,6 +115,9 @@ export default function Panel() {
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [version, setVersion] = useState(0); // al cambiar, se vuelve a pedir el panel
+  const [modalUsuario, setModalUsuario] = useState(null); // {modo: "invitar" | "editar", usuario?}
+  const [aviso, setAviso] = useState(null); // {tipo: "ok" | "error", texto}
 
   useEffect(() => {
     if (!token) return;
@@ -126,7 +130,7 @@ export default function Panel() {
     return () => {
       activo = false;
     };
-  }, [token]);
+  }, [token, version]);
 
   function handleLogout() {
     cerrarSesion();
@@ -134,6 +138,25 @@ export default function Panel() {
   }
 
   const usuarios = datos?.usuarios ?? [];
+
+  // Acción principal de cada fila: reactivar, reenviar el código de verificación o editar.
+  async function accionPrincipal(u) {
+    setAviso(null);
+    try {
+      if (u.estado === "INACTIVO") {
+        await editarUsuarioAdmin(token, u.id, { estado: "ACTIVO" });
+        setAviso({ tipo: "ok", texto: `${u.nombre} fue reactivado.` });
+        setVersion((v) => v + 1);
+      } else if (!u.emailVerificado) {
+        await reenviarCodigoVerificacion(u.correo);
+        setAviso({ tipo: "ok", texto: `Se reenvió el código de verificación a ${u.correo}.` });
+      } else {
+        setModalUsuario({ modo: "editar", usuario: u });
+      }
+    } catch (err) {
+      setAviso({ tipo: "error", texto: err.message || "No se pudo completar la acción." });
+    }
+  }
 
   // Super Administrador: marca o quita la verificación del número de resolución.
   async function alternarResolucion(u) {
@@ -231,8 +254,12 @@ export default function Panel() {
                   <h2>Usuarios y roles</h2>
                   <span>Registrados con correo o Google. El Responsable SST se crea al registrar una empresa.</span>
                 </div>
-                <button type="button" className="adm-btn adm-btn--oscuro">+ Invitar usuario</button>
+                <button type="button" className="adm-btn adm-btn--oscuro" onClick={() => setModalUsuario({ modo: "invitar" })}>
+                  + Invitar usuario
+                </button>
               </div>
+
+              {aviso && <div className={`plan-mensaje plan-mensaje--${aviso.tipo}`}>{aviso.texto}</div>}
 
               <div className="adm-tabla-wrap">
                 <table className="adm-tabla adm-tabla--ancha">
@@ -279,9 +306,18 @@ export default function Panel() {
                           <td className="adm-muted">{formatoFecha(u.ultimoAcceso)}</td>
                           <td>
                             <div className="adm-acciones">
-                              <button type="button" className={`adm-accion ${claseAccionUsuario(u)}`.trim()}>
+                              <button
+                                type="button"
+                                className={`adm-accion ${claseAccionUsuario(u)}`.trim()}
+                                onClick={() => accionPrincipal(u)}
+                              >
                                 {accionUsuario(u)}
                               </button>
+                              {accionUsuario(u) !== "Editar" && (
+                                <button type="button" className="adm-accion" onClick={() => setModalUsuario({ modo: "editar", usuario: u })}>
+                                  Editar
+                                </button>
+                              )}
                               {u.numeroResolucion && (
                                 <button
                                   type="button"
@@ -473,6 +509,20 @@ export default function Panel() {
           </>
         )}
       </main>
+
+      {modalUsuario && (
+        <ModalUsuarioAdmin
+          modo={modalUsuario.modo}
+          usuario={modalUsuario.usuario}
+          token={token}
+          onCerrar={() => setModalUsuario(null)}
+          onGuardado={(texto) => {
+            setModalUsuario(null);
+            setAviso({ tipo: "ok", texto });
+            setVersion((v) => v + 1);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -53,6 +53,8 @@ def obtener_panel(db: Session) -> dict:
             "id": str(u.id),
             "nombre": _nombre(u),
             "correo": u.email,
+            "nombrePila": u.nombre,
+            "apellido": u.apellido,
             "rol": u.rol.codigo,
             "empresa": orgs[u.organizacion_id].nombre if u.organizacion_id in orgs else "—",
             "registro": "Google" if u.id in con_google else "Correo",
