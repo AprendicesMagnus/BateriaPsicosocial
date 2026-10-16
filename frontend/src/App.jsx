@@ -12,6 +12,7 @@ import Checkout from "./pages/Checkout";
 import Reportes from "./pages/Reportes";
 import Respuestas from "./pages/Respuestas";
 import Perfil from "./pages/Perfil";
+import Soporte from "./pages/Soporte";
 import VerificarNit from "./pages/VerificarNit";
 import MisEmpresas from "./pages/MisEmpresas";
 import RestriccionRolLimitado from "./components/RestriccionRolLimitado";
@@ -101,6 +102,7 @@ export default function App() {
             }
           />
           <Route path="/perfil" element={<ProtectedRoute> <Perfil /> </ProtectedRoute>} />
+          <Route path="/soporte" element={<ProtectedRoute> <Soporte /> </ProtectedRoute>} />
           <Route path="/mis-empresas" element={<ProtectedRoute> <MisEmpresas /> </ProtectedRoute>} />
           <Route path="/verificar-nit" element={<VerificarNit />} />
           <Route path="/crear-empresa" element={<CrearEmpresa />} />

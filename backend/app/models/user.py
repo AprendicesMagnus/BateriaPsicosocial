@@ -71,6 +71,9 @@ class Usuario(Base):
     numero_resolucion: Mapped[str | None] = mapped_column(String(6))
     # La marca el Super Administrador desde el Panel; si el número cambia, vuelve a False.
     resolucion_verificada: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
+    # Límite de 3 cambios de número de resolución cada 5 días (Psicólogo / Responsable SST).
+    resolucion_intentos: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    resolucion_intentos_desde: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Ruta pública de la foto de perfil (p. ej. /api/uploads/avatars/xxx.jpg).
     foto_url: Mapped[str | None] = mapped_column(String(255))
     # Fecha de la última edición de perfil (base de la regla de 1 edición cada 15 días).

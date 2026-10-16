@@ -13,7 +13,8 @@ import {
   cambiarPassword,
   fetchDirectorio,
   fetchMisEmpresas,
-  cambiarEmpresaActiva
+  cambiarEmpresaActiva,
+  guardarMiResolucion,
 } from "../api/perfil";
 
 import {
@@ -164,6 +165,33 @@ export default function Perfil() {
   const [passwordConfirmar, setPasswordConfirmar] = useState("");
   // ---- directorio (solo Super Administrador) ----
   const esSuperAdmin = usuario?.rol === "SUPER_ADMINISTRADOR";
+  // ---- número de resolución (Psicólogo / Responsable SST): 3 cambios cada 5 días ----
+  const editaResolucion = ["EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol);
+  const [numeroResolucion, setNumeroResolucion] = useState(usuario?.numeroResolucion ?? "");
+  const [guardandoResolucion, setGuardandoResolucion] = useState(false);
+  const [errorResolucion, setErrorResolucion] = useState("");
+  const [mensajeResolucion, setMensajeResolucion] = useState("");
+  const resolucionBloqueada = Boolean(usuario?.resolucionBloqueadaHasta);
+  const intentosRestantes = Math.max(0, 3 - (usuario?.resolucionIntentos ?? 0));
+
+  async function handleGuardarResolucion() {
+    setErrorResolucion("");
+    setMensajeResolucion("");
+    if (!/^\d{6}$/.test(numeroResolucion)) {
+      setErrorResolucion("El número de resolución debe tener 6 dígitos.");
+      return;
+    }
+    setGuardandoResolucion(true);
+    try {
+      const res = await guardarMiResolucion(token, numeroResolucion);
+      actualizarUsuario(res.usuario);
+      setMensajeResolucion("Número de resolución actualizado.");
+    } catch (err) {
+      setErrorResolucion(err.message || "No se pudo guardar el número de resolución.");
+    } finally {
+      setGuardandoResolucion(false);
+    }
+  }
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(0);
   const [directorio, setDirectorio] = useState({
@@ -921,6 +949,52 @@ export default function Perfil() {
                         <span className="perfil-field-value">{empresaUsuario}</span>
                       )}
                     </div>
+                    {editaResolucion && (
+                      <div className="perfil-field">
+                        <span className="perfil-field-label">Número de resolución</span>
+                        {!usuario?.resolucionVerificada ? (
+                          <span className="perfil-field-value">
+                            {usuario?.numeroResolucion ?? "—"} (pendiente de verificación, no editable)
+                          </span>
+                        ) : (
+                          <>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={6}
+                                value={numeroResolucion}
+                                disabled={resolucionBloqueada || guardandoResolucion}
+                                onChange={(e) =>
+                                  setNumeroResolucion(e.target.value.replace(/\D/g, "").slice(0, 6))
+                                }
+                                style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14, width: 120 }}
+                              />
+                              <button
+                                type="button"
+                                className="app-btn-secondary"
+                                onClick={handleGuardarResolucion}
+                                disabled={resolucionBloqueada || guardandoResolucion}
+                              >
+                                {guardandoResolucion ? "Guardando…" : "Guardar"}
+                              </button>
+                            </div>
+                            {resolucionBloqueada ? (
+                              <p className="perfil-aviso">
+                                Ya usaste tus 3 cambios. Podrás volver a intentarlo el{" "}
+                                {formatearFechaHora(usuario.resolucionBloqueadaHasta)}.
+                              </p>
+                            ) : (
+                              <p className="perfil-aviso">
+                                Te quedan {intentosRestantes} cambio(s) en los próximos 5 días.
+                              </p>
+                            )}
+                            {errorResolucion && <div className="perfil-error">{errorResolucion}</div>}
+                            {mensajeResolucion && <p className="perfil-aviso">{mensajeResolucion}</p>}
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="perfil-actions">
                     <button
