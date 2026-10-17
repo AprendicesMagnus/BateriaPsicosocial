@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileMenu from "../components/ProfileMenu";
+import Toast from "../components/Toast";
 
 import "../styles/dashboard.css";
 
 import { useAuth } from "../context/AuthContext";
-import { fetchIndicadores, fetchIndicadoresPorCategoria } from "../api/indicadores";
+import { fetchIndicadores, fetchIndicadoresPorCategoria, fetchHistoricoIndicadores } from "../api/indicadores";
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
@@ -20,6 +21,9 @@ import AnalisisGruposFicha from "../components/AnalisisGruposFicha";
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
 const ROLES_ENLACES = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
+const ROLES_DIRECCION = ["JEFE", "ADMINISTRADOR"];
+const ROLES_INFORMES = [...ROLES_ENLACES, "ADMINISTRADOR"];
+const DURACION_AVISO_MS = 5000;
 
 /* =========================================================
    CATEGORÍAS (fila principal)
@@ -131,11 +135,15 @@ export default function Dashboard() {
   const [errorPrediccion, setErrorPrediccion] = useState(null);
 
   // generarInformeAgrupado / descargarInforme
-  const [mensajeDescarga, setMensajeDescarga] = useState(null);
+  const [avisoInforme, setAvisoInforme] = useState(null);
   const [generandoInforme, setGenerandoInforme] = useState(false);
 
   // Botón "Crear enlace": enlace de un solo uso para que un paciente responda sin cuenta
   const puedeCrearEnlaces = ROLES_ENLACES.includes(usuario?.rol);
+  const puedeVerAgregados = puedeCrearEnlaces || ROLES_DIRECCION.includes(usuario?.rol);
+  const puedeDescargarInforme = ROLES_INFORMES.includes(usuario?.rol);
+  const puedeVerPrediccion = ROLES_ENLACES.includes(usuario?.rol);
+  const prediccionRealizada = prediccion !== null;
   const [enlaceCreado, setEnlaceCreado] = useState(null); // URL del último enlace creado
   const [creandoEnlace, setCreandoEnlace] = useState(false);
   const [errorEnlace, setErrorEnlace] = useState(null);
@@ -143,6 +151,12 @@ export default function Dashboard() {
   const [mostrarQr, setMostrarQr] = useState(false);
 
   const categoriaActiva = TODAS_CATEGORIAS.find((c) => c.id === categoriaActivaId);
+
+  useEffect(() => {
+    if (!avisoInforme) return undefined;
+    const temporizador = setTimeout(() => setAvisoInforme(null), DURACION_AVISO_MS);
+    return () => clearTimeout(temporizador);
+  }, [avisoInforme]);
 
   useEffect(() => {
     if (token) {
@@ -172,22 +186,47 @@ export default function Dashboard() {
     }
   }
 
-  // FIX: handler que efectivamente usa generarInformeAgrupado / descargarInforme
-  // (antes se importaban pero nunca se llamaban).
-  // Ajusta la firma según la API real de tu backend.
+  async function obtenerEvaluacionMasReciente() {
+    const respuesta = await fetchHistoricoIndicadores(token, usuario?.organizacionId);
+    const minimo = respuesta?.minimoAnonimato ?? 5;
+    const disponibles = (respuesta?.historico || []).filter((item) => !item.oculto);
+    if (disponibles.length === 0) {
+      throw new Error(`Aún no hay una evaluación con al menos ${minimo} participantes completados.`);
+    }
+    return disponibles[disponibles.length - 1].evaluacionId;
+  }
+
   async function handleDescargarInforme() {
     setGenerandoInforme(true);
-    setMensajeDescarga(null);
+    setAvisoInforme(null);
     try {
-      const informe = await generarInformeAgrupado(token, categoriaActivaId);
-      await descargarInforme(informe);
-      setMensajeDescarga("Informe generado y descargado correctamente.");
+      const evaluacionId = await obtenerEvaluacionMasReciente();
+      const informe = await generarInformeAgrupado(token, evaluacionId);
+      await descargarInforme(token, informe.id);
+      setAvisoInforme({ mensaje: "Informe generado y descargado correctamente.", tipo: "exito" });
     } catch (err) {
-      setMensajeDescarga(
-        err.message || "No se pudo generar el informe. Intenta nuevamente."
-      );
+      setAvisoInforme({
+        mensaje: err.message || "No se pudo generar el informe. Intenta nuevamente.",
+        tipo: "error",
+      });
     } finally {
       setGenerandoInforme(false);
+    }
+  }
+
+  async function handleEjecutarPrediccion() {
+    if (cargandoPrediccion || prediccionRealizada) return;
+    setCargandoPrediccion(true);
+    setErrorPrediccion(null);
+    try {
+      const evaluacionId = await obtenerEvaluacionMasReciente();
+      const resultado = await fetchAnalisisPredictivo(token, evaluacionId);
+      setPrediccion(resultado);
+    } catch (err) {
+      setPrediccion(null);
+      setErrorPrediccion(err.message || "No se pudo realizar el análisis predictivo. Intenta nuevamente.");
+    } finally {
+      setCargandoPrediccion(false);
     }
   }
 
@@ -475,11 +514,7 @@ export default function Dashboard() {
 
 
 
-{mensajeDescarga && (
-          <p className="error-text" style={{ background: "#e0f2fe", color: "#0369a1" }}>
-            {mensajeDescarga}
-          </p>
-        )}
+<Toast mensaje={avisoInforme?.mensaje} tipo={avisoInforme?.tipo} duracion={DURACION_AVISO_MS} />
 
         <section className="dashboard-grid">
           <div className="chart-card">
@@ -660,7 +695,7 @@ export default function Dashboard() {
           />
         </section>
 
-        {puedeCrearEnlaces && usuario?.organizacionId && (
+        {puedeVerAgregados && usuario?.organizacionId && (
           <section className="responders-card" style={{ marginTop: "24px" }}>
             <MapaCalorAreas token={token} organizacionId={usuario.organizacionId} />
           </section>
@@ -672,7 +707,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        {puedeCrearEnlaces && usuario?.organizacionId && (
+        {puedeVerAgregados && usuario?.organizacionId && (
           <section style={{ marginTop: "24px" }}>
             <HistoricoComparativo token={token} organizacionId={usuario.organizacionId} />
           </section>
@@ -681,114 +716,120 @@ export default function Dashboard() {
         {/* =========================================================
             SECCIÓN DE ANÁLISIS PREDICTIVO CON IA (K-MEANS)
         ========================================================= */}
-        <section className="responders-card" style={{ marginTop: "24px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "8px",
-            }}
-          >
-            <div>
-              <h3>Análisis Predictivo (K-Means Clustering IA)</h3>
-              <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>
-                Identificación de perfiles de riesgo no supervisados y alertas tempranas en tiempo real.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="modal-main-button"
-              onClick={() => handleEjecutarPrediccion(indicadores?.evaluacionId || "eval-actual")}
-              disabled={cargandoPrediccion}
+        {puedeVerPrediccion && (
+          <section className="responders-card" style={{ marginTop: "24px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
             >
-              {cargandoPrediccion ? "Analizando con IA..." : " Analizar con IA (K-Means)"}
-            </button>
-          </div>
-
-          {errorPrediccion && (
-            <p className="error-text" style={{ marginTop: "12px" }}>
-              {errorPrediccion}
-            </p>
-          )}
-
-          {prediccion && (
-            <div style={{ marginTop: "16px" }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                  gap: "12px",
-                  marginBottom: "16px",
-                }}
-              >
-                {prediccion.perfilesClusterKMeans?.map((cluster) => (
-                  <div
-                    key={cluster.clusterId}
-                    style={{
-                      padding: "14px",
-                      background: "#f8fafc",
-                      borderRadius: "8px",
-                      border: "1px solid #cbd5e1",
-                    }}
-                  >
-                    <span style={{ fontSize: "12px", fontWeight: "bold", color: "#2563eb" }}>
-                      Clúster #{cluster.clusterId} ({cluster.porcentajeGrupo}%)
-                    </span>
-                    <h4 style={{ margin: "6px 0", fontSize: "14px", color: "#1e293b" }}>
-                      {cluster.etiqueta}
-                    </h4>
-                    <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-                      {cluster.numTrabajadores} trabajador(es) · Promedio: {cluster.promedioGlobalPuntaje} pts
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {prediccion.alertasTempranas?.length > 0 && (
-                <div style={{ marginBottom: "16px" }}>
-                  <h4 style={{ fontSize: "14px", color: "#b91c1c", marginBottom: "8px" }}>
-                    ⚠️ Alertas Tempranas Identificadas ({prediccion.alertasTempranas.length})
-                  </h4>
-                  <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#475569" }}>
-                    {prediccion.alertasTempranas.map((alerta, idx) => (
-                      <li key={idx} style={{ marginBottom: "4px" }}>
-                        <strong>[{alerta.nivelAlerta}]</strong> {alerta.mensaje}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* NOTA METODOLÓGICA Y ESTRATEGIA DE ENTRENAMIENTO */}
-              <div
-                style={{
-                  padding: "16px",
-                  background: "#f0fdf4",
-                  borderRadius: "8px",
-                  border: "1px solid #bbf7d0",
-                  marginTop: "12px",
-                }}
-              >
-                <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
-                   <strong>Nota Metodológica del Modelo:</strong>
-                </p>
-                <p style={{ margin: "0 0 10px 0", fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
-                  {prediccion.notaMetodologica}
-                </p>
-
-                <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
-                   <strong>Estrategia de Entrenamiento:</strong>
-                </p>
-                <p style={{ margin: 0, fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
-                  {prediccion.estrategiaEntrenamiento}
+              <div>
+                <h3>Análisis Predictivo (K-Means Clustering IA)</h3>
+                <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>
+                  Identificación de perfiles de riesgo no supervisados y alertas tempranas en tiempo real.
                 </p>
               </div>
+
+              <button
+                type="button"
+                className="modal-main-button"
+                onClick={handleEjecutarPrediccion}
+                disabled={cargandoPrediccion || prediccionRealizada}
+              >
+                {cargandoPrediccion
+                  ? "Analizando con IA..."
+                  : prediccionRealizada
+                    ? "Análisis completado"
+                    : "Analizar con IA (K-Means)"}
+              </button>
             </div>
-          )}
-        </section>
+
+            {errorPrediccion && (
+              <p className="error-text" style={{ marginTop: "12px" }}>
+                {errorPrediccion}
+              </p>
+            )}
+
+            {prediccion && (
+              <div style={{ marginTop: "16px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: "12px",
+                    marginBottom: "16px",
+                  }}
+                >
+                  {prediccion.perfilesClusterKMeans?.map((cluster) => (
+                    <div
+                      key={cluster.clusterId}
+                      style={{
+                        padding: "14px",
+                        background: "#f8fafc",
+                        borderRadius: "8px",
+                        border: "1px solid #cbd5e1",
+                      }}
+                    >
+                      <span style={{ fontSize: "12px", fontWeight: "bold", color: "#2563eb" }}>
+                        Clúster #{cluster.clusterId} ({cluster.porcentajeGrupo}%)
+                      </span>
+                      <h4 style={{ margin: "6px 0", fontSize: "14px", color: "#1e293b" }}>
+                        {cluster.etiqueta}
+                      </h4>
+                      <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+                        {cluster.numTrabajadores} trabajador(es) · Promedio: {cluster.promedioGlobalPuntaje} pts
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {prediccion.alertasTempranas?.length > 0 && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <h4 style={{ fontSize: "14px", color: "#b91c1c", marginBottom: "8px" }}>
+                      ⚠️ Alertas Tempranas Identificadas ({prediccion.alertasTempranas.length})
+                    </h4>
+                    <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#475569" }}>
+                      {prediccion.alertasTempranas.map((alerta, idx) => (
+                        <li key={idx} style={{ marginBottom: "4px" }}>
+                          <strong>[{alerta.nivelAlerta}]</strong> {alerta.mensaje}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* NOTA METODOLÓGICA Y ESTRATEGIA DE ENTRENAMIENTO */}
+                <div
+                  style={{
+                    padding: "16px",
+                    background: "#f0fdf4",
+                    borderRadius: "8px",
+                    border: "1px solid #bbf7d0",
+                    marginTop: "12px",
+                  }}
+                >
+                  <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
+                     <strong>Nota Metodológica del Modelo:</strong>
+                  </p>
+                  <p style={{ margin: "0 0 10px 0", fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
+                    {prediccion.notaMetodologica}
+                  </p>
+
+                  <p style={{ margin: "0 0 4px 0", fontSize: "13px", color: "#166534", fontWeight: 600 }}>
+                     <strong>Estrategia de Entrenamiento:</strong>
+                  </p>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#15803d", lineHeight: "1.5" }}>
+                    {prediccion.estrategiaEntrenamiento}
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="responders-card">
           <div
@@ -802,15 +843,16 @@ export default function Dashboard() {
           >
             <h3>Participación y Resumen de Cuestionarios</h3>
 
-            {/* FIX: botón que efectivamente usa generarInformeAgrupado / descargarInforme */}
-            <button
-              type="button"
-              className="modal-main-button"
-              onClick={handleDescargarInforme}
-              disabled={generandoInforme}
-            >
-              {generandoInforme ? "Generando informe..." : "Descargar informe"}
-            </button>
+            {puedeDescargarInforme && (
+              <button
+                type="button"
+                className="modal-main-button"
+                onClick={handleDescargarInforme}
+                disabled={generandoInforme}
+              >
+                {generandoInforme ? "Generando informe..." : "Descargar informe"}
+              </button>
+            )}
           </div>
 
           <p>
@@ -874,9 +916,7 @@ export default function Dashboard() {
         </section>
       </main>
 
-      {/* FIX: se eliminó el segundo modal duplicado/mal anidado que quedaba
-          dentro de este mismo bloque y rompía el JSX. Se conserva un único
-          modal con flujo de selección (cuestionario -> tipo A/B). */}
+      {/* Modal de selección de cuestionario (cuestionario, luego tipo A/B) */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="questionnaire-modal" onClick={(e) => e.stopPropagation()}>

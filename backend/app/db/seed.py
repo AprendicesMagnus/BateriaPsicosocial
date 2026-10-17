@@ -33,11 +33,11 @@ ROLES = {
         "descripcion": "Jefe de área u organización.",
         "permisos": [],
     },
-    # Usuario limitado que crea un Jefe/Administrador desde "Crear empresa":
-    # solo entra al módulo de Reportes de su empresa.
+    # Usuario que crea un Jefe/Administrador desde "Crear empresa": mismos permisos que el Psicologo
+    # dentro de su empresa; no accede a empresas, pagos ni al panel de administración.
     "RESPONSABLE_SST": {
         "nombre": "Responsable SST",
-        "descripcion": "Usuario limitado: solo consulta los reportes de su empresa.",
+        "descripcion": "Gestiona su empresa con los mismos permisos que el Psicólogo, limitado a su empresa activa; no accede a empresas, pagos ni al panel de administración.",
         "permisos": [],
     },
     # El código interno se mantiene EVALUADOR_SST para no romper el resto del sistema;
@@ -346,10 +346,66 @@ def _sembrar_recs_dimension(db, dim: Dimension) -> None:
         )
 
 
+PREGUNTAS_FICHA = [
+    ("F1", "Nombre completo", 1, "TEXTO"),
+    ("F2", "Sexo", 2, "SELECCION"),
+    ("F3", "Año de nacimiento", 3, "ANNO"),
+    ("F4", "Estado civil", 4, "SELECCION"),
+    ("F5", "Último nivel de estudios que alcanzó", 5, "SELECCION"),
+    ("F6", "Ocupación o profesión", 6, "TEXTO"),
+    ("F7", "Lugar de residencia actual - Ciudad / Municipio", 7, "TEXTO"),
+    ("F8", "Lugar de residencia actual - Departamento", 8, "TEXTO"),
+    ("F9", "Estrato socioeconómico de la vivienda", 9, "SELECCION"),
+    ("F10", "Tipo de vivienda", 10, "SELECCION"),
+    ("F11", "Número de personas a cargo", 11, "ENTERO"),
+    ("F12", "Lugar donde trabaja actualmente - Ciudad / Municipio", 12, "TEXTO"),
+    ("F13", "Lugar donde trabaja actualmente - Departamento", 13, "TEXTO"),
+    ("F14", "Antigüedad en la empresa", 14, "TEXTO"),
+    ("F15", "Nombre del cargo", 15, "TEXTO"),
+    ("F16", "Tipo de cargo", 16, "SELECCION"),
+    ("F17", "Antigüedad en el cargo actual", 17, "TEXTO"),
+    ("F18", "Área o departamento de trabajo", 18, "TEXTO"),
+    ("F19", "Tipo de contrato laboral", 19, "SELECCION"),
+    ("F20", "Horas de trabajo diarias", 20, "ENTERO"),
+    ("F21", "Tipo de salario", 21, "SELECCION"),
+]
+
+
+def _completar_preguntas_ficha(db, version: CuestionarioVersion) -> None:
+    """Agrega a la ficha las preguntas F1..F21 que falten (idempotente)."""
+    dimension = (
+        db.query(Dimension)
+        .filter(Dimension.version_id == version.id, Dimension.codigo == "DATOS_SOCIO_LABORALES")
+        .first()
+    )
+    if dimension is None:
+        return
+    existentes = {
+        codigo
+        for (codigo,) in db.query(Pregunta.codigo).filter(Pregunta.dimension_id == dimension.id).all()
+    }
+    for codigo, enunciado, orden, tipo in PREGUNTAS_FICHA:
+        if codigo in existentes:
+            continue
+        db.add(
+            Pregunta(
+                dimension_id=dimension.id,
+                codigo=codigo,
+                enunciado=enunciado,
+                orden=orden,
+                inversa=False,
+                valor_minimo=1,
+                valor_maximo=5,
+                tipo_respuesta=tipo,
+            )
+        )
+    db.flush()
+
+
 def sembrar_todos_los_cuestionarios(db) -> dict[str, CuestionarioVersion]:
     """
     Siembra las 5 versiones de cuestionarios oficiales del sistema:
-    1. FICHA_DATOS (19 ítems mixtos)
+    1. FICHA_DATOS (21 items mixtos)
     2. ESTRES (31 ítems, Likert 1-4)
     3. EXTRALABORAL (31 ítems, Likert 1-5)
     4. INTRALABORAL_A (123 ítems, Likert 0-4 oficial)
@@ -379,43 +435,7 @@ def sembrar_todos_los_cuestionarios(db) -> dict[str, CuestionarioVersion]:
         db.add(dim_ficha)
         db.flush()
 
-        preguntas_ficha = [
-            ("F1", "Nombre completo", 1, "TEXTO"),
-            ("F2", "Sexo", 2, "SELECCION"),
-            ("F3", "Año de nacimiento", 3, "ANNO"),
-            ("F4", "Estado civil", 4, "SELECCION"),
-            ("F5", "Último nivel de estudios que alcanzó", 5, "SELECCION"),
-            ("F6", "Ocupación o profesión", 6, "TEXTO"),
-            ("F7", "Lugar de residencia actual - Ciudad / Municipio", 7, "TEXTO"),
-            ("F8", "Lugar de residencia actual - Departamento", 8, "TEXTO"),
-            ("F9", "Estrato socioeconómico de la vivienda", 9, "SELECCION"),
-            ("F10", "Tipo de vivienda", 10, "SELECCION"),
-            ("F11", "Número de personas a cargo", 11, "ENTERO"),
-            ("F12", "Lugar donde trabaja actualmente - Ciudad / Municipio", 12, "TEXTO"),
-            ("F13", "Lugar donde trabaja actualmente - Departamento", 13, "TEXTO"),
-            ("F14", "Antigüedad en la empresa", 14, "TEXTO"),
-            ("F15", "Nombre del cargo", 15, "TEXTO"),
-            ("F16", "Tipo de cargo", 16, "SELECCION"),
-            ("F17", "Antigüedad en el cargo actual", 17, "TEXTO"),
-            ("F18", "Área o departamento de trabajo", 18, "TEXTO"),
-            ("F19", "Tipo de contrato laboral", 19, "SELECCION"),
-            ("F20", "Horas de trabajo diarias", 20, "ENTERO"),
-            ("F21", "Tipo de salario", 21, "SELECCION"),
-        ]
-        for cod, enun, ord_idx, tipo in preguntas_ficha:
-            db.add(
-                Pregunta(
-                    dimension_id=dim_ficha.id,
-                    codigo=cod,
-                    enunciado=enun,
-                    orden=ord_idx,
-                    inversa=False,
-                    valor_minimo=1,
-                    valor_maximo=5,
-                    tipo_respuesta=tipo,
-                )
-            )
-        db.flush()
+    _completar_preguntas_ficha(db, v_ficha)
     versiones["FICHA_DATOS"] = v_ficha
 
     # 2. ESTRES (31 preguntas, escala 1-4)

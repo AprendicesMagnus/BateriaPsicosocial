@@ -1,10 +1,16 @@
-import httpx
 import sys
 import uuid
+from pathlib import Path
+
+import httpx
 import psycopg2
 
-BASE_URL = "http://127.0.0.1:4000/api"
-DB_PARAMS = "dbname=magnussing user=postgres password=12345 host=localhost port=5432"
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from app.core.config import get_settings  # noqa: E402
+
+BASE_URL = "http://127.0.0.1:8000/api"
+DB_PARAMS = get_settings().database_url
 
 def main():
     client = httpx.Client(base_url=BASE_URL, timeout=15.0)
