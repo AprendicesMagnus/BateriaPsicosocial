@@ -1,10 +1,12 @@
+import secrets
+
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.crypto import hash_password, password_valida
 from app.core.errors import AppError
 from app.models.organization import Area, Organizacion
 from app.models.user import Rol, Usuario
-from app.services.auth import usuario_publico
+from app.services.auth import forgot_password, usuario_publico
 
 
 def listar_usuarios(db: Session, actual: Usuario) -> list[dict]:
@@ -168,3 +170,32 @@ def cambiar_rol_usuario(db: Session, usuario_id, rol_codigo: str, actual: Usuari
     usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario.id).one()
     return {**usuario_publico(usuario), "rol_anterior": rol_anterior}
 
+
+def invitar_usuario(db: Session, data, actual: Usuario) -> dict:
+    """Crea la cuenta con una contraseña aleatoria y le envía un código para que defina la suya."""
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR":
+        raise AppError(403, "Solo el Super Administrador puede invitar usuarios.")
+    email = str(data.email).lower().strip()
+    if db.query(Usuario).filter(Usuario.email == email).first():
+        raise AppError(409, "Ya existe una cuenta registrada con este correo.")
+    if data.rolCodigo == "EVALUADOR_SST" and not data.numeroResolucion:
+        raise AppError(400, "El número de resolución del Psicólogo es obligatorio (6 dígitos).")
+    rol = db.query(Rol).filter(Rol.codigo == data.rolCodigo, Rol.activo.is_(True)).first()
+    if rol is None:
+        raise AppError(400, "El rol indicado no existe o no está activo.")
+
+    usuario = Usuario(
+        nombre=data.nombre.strip(),
+        apellido=data.apellido.strip(),
+        email=email,
+        password_hash=hash_password(secrets.token_urlsafe(24) + "aA1"),  # inutilizable: la persona crea la suya
+        rol_id=rol.id,
+        numero_resolucion=data.numeroResolucion if data.rolCodigo == "EVALUADOR_SST" else None,
+        email_verificado=True,
+        estado="ACTIVO",
+    )
+    db.add(usuario)
+    db.commit()
+    forgot_password(db, email)  # envía el código para crear la contraseña
+    usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario.id).one()
+    return usuario_publico(usuario)
