@@ -46,6 +46,11 @@ export default function ProfileMenu() {
     navigate("/panel");
   }
 
+  function handleIrASoporte() {
+    setAbierto(false);
+    navigate("/soporte");
+  }
+
   function handleCerrarSesion() {
     setAbierto(false);
     cerrarSesion?.();
@@ -83,6 +88,9 @@ export default function ProfileMenu() {
               Panel De Administrador
             </button>
           )}
+          <button type="button" onClick={handleIrASoporte}>
+            Centro de ayuda
+          </button>
           <button
             type="button"
             className="app-profile-dropdown-danger"

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.core.errors import AppError
-from app.core.roles import ROLES_EVALUADOR
+from app.core.roles import ROLES_EVALUADOR, ROLES_DIRECCION
 from app.models.user import Usuario
 from app.services import indicadores as indicadores_service
 
@@ -35,6 +35,8 @@ def obtener_historico_indicadores(
 ):
     org_target = organizacion_id or organizacionId
     dim_target = dimension_id or dimensionId
+    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR, *ROLES_DIRECCION}:
+        raise AppError(403, "No tiene permisos para consultar el histórico comparativo.")
     if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         org_target = actual.organizacion_id
 
@@ -60,7 +62,7 @@ def obtener_mapa_calor(
     db: Session = Depends(get_db),
     actual: Usuario = Depends(get_current_user),
 ):
-    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR}:
+    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR, *ROLES_DIRECCION}:
         raise AppError(403, "No tiene permisos para consultar el mapa de calor por área.")
     if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         organizacion_id = actual.organizacion_id

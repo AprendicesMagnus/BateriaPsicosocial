@@ -31,73 +31,76 @@ def test_obtener_historico_indicadores_cronologico(client, db_session, crear_pac
     assert res_area.status_code == 200, res_area.text
     area_id = res_area.json()["id"]
 
-    # 3. Crear participante (paciente; no necesita login en este test)
-    paciente_id, _ = crear_paciente(org_id, area_id=area_id)
+    dim = db_session.query(Dimension).first()
 
-    # 4. Crear y finalizar Evaluación 1 (Año 2025) con puntaje alto
+    # 3. Evaluación con 1 participante: debe quedar oculta (total < mínimo de 5)
+    paciente_id_1, _ = crear_paciente(org_id, area_id=area_id)
     res_eval1 = client.post("/api/evaluaciones", headers=headers_admin, json={
         "organizacionId": org_id,
         "nombre": "Evaluación BRP 2025",
-        "trabajadoresIds": [str(paciente_id)],
+        "trabajadoresIds": [str(paciente_id_1)],
     })
     assert res_eval1.status_code == 200, res_eval1.text
     eval1_id = res_eval1.json()["id"]
 
     p1 = db_session.query(EvaluacionParticipante).filter(
         EvaluacionParticipante.evaluacion_id == eval1_id,
-        EvaluacionParticipante.trabajador_id == paciente_id,
+        EvaluacionParticipante.trabajador_id == paciente_id_1,
     ).first()
-    assert p1 is not None, "No se creó el participante de la evaluación 1."
+    assert p1 is not None
     p1.estado = "COMPLETADA"
-
-    dim = db_session.query(Dimension).first()
-    res1 = ResultadoDimension(
+    db_session.add(ResultadoDimension(
         participante_id=p1.id,
         dimension_id=dim.id,
         puntaje_bruto=75.0,
         puntaje_transformado=75.0,
         nivel="ALTO",
-    )
-    db_session.add(res1)
+    ))
     db_session.commit()
 
-    # 5. Crear y finalizar Evaluación 2 (Año 2026) con puntaje bajo
+    # 4. Evaluación con 5 participantes: debe estar visible
+    ids_eval2 = [crear_paciente(org_id, area_id=area_id)[0] for _ in range(5)]
     res_eval2 = client.post("/api/evaluaciones", headers=headers_admin, json={
         "organizacionId": org_id,
         "nombre": "Evaluación BRP 2026",
-        "trabajadoresIds": [str(paciente_id)],
+        "trabajadoresIds": [str(uid) for uid in ids_eval2],
     })
     assert res_eval2.status_code == 200, res_eval2.text
     eval2_id = res_eval2.json()["id"]
 
-    p2 = db_session.query(EvaluacionParticipante).filter(
-        EvaluacionParticipante.evaluacion_id == eval2_id,
-        EvaluacionParticipante.trabajador_id == paciente_id,
-    ).first()
-    assert p2 is not None, "No se creó el participante de la evaluación 2."
-    p2.estado = "COMPLETADA"
-
-    res2 = ResultadoDimension(
-        participante_id=p2.id,
-        dimension_id=dim.id,
-        puntaje_bruto=25.0,
-        puntaje_transformado=25.0,
-        nivel="BAJO",
-    )
-    db_session.add(res2)
+    for uid in ids_eval2:
+        part = db_session.query(EvaluacionParticipante).filter(
+            EvaluacionParticipante.evaluacion_id == eval2_id,
+            EvaluacionParticipante.trabajador_id == uid,
+        ).first()
+        assert part is not None
+        part.estado = "COMPLETADA"
+        db_session.add(ResultadoDimension(
+            participante_id=part.id,
+            dimension_id=dim.id,
+            puntaje_bruto=25.0,
+            puntaje_transformado=25.0,
+            nivel="BAJO",
+        ))
     db_session.commit()
 
-    # 6. Consultar histórico comparativo para la organización
+    # 5. Consultar histórico comparativo para la organización
     res_hist = client.get(f"/api/indicadores/historico?organizacion_id={org_id}", headers=headers_admin)
     assert res_hist.status_code == 200, res_hist.text
     data_hist = res_hist.json()
 
     historico = data_hist["historico"]
     assert len(historico) == 2, f"Se esperaban 2 evaluaciones en el histórico, pero se obtuvieron {len(historico)}"
+    assert "minimoAnonimato" in data_hist
 
-    # Verificar orden cronológico y que el promedio cambió entre 2025 y 2026
-    assert historico[0]["nombreEvaluacion"] == "Evaluación BRP 2025"
-    assert historico[1]["nombreEvaluacion"] == "Evaluación BRP 2026"
+    # Evaluación con 1 participante (< mínimo): oculta
+    eval_2025 = next(e for e in historico if e["nombreEvaluacion"] == "Evaluación BRP 2025")
+    assert eval_2025["oculto"] is True
+    assert eval_2025["promedioPuntajeTransformado"] is None
+    assert eval_2025["distribucionNiveles"] is None
 
-    # En 2025 el puntaje fue mayor que en 2026 (mejora en nivel de riesgo)
-    assert historico[0]["promedioPuntajeTransformado"] > historico[1]["promedioPuntajeTransformado"]
+    # Evaluación con 5 participantes (>= mínimo): visible con promedio
+    eval_2026 = next(e for e in historico if e["nombreEvaluacion"] == "Evaluación BRP 2026")
+    assert eval_2026["oculto"] is False
+    assert eval_2026["promedioPuntajeTransformado"] is not None
+    assert eval_2026["distribucionNiveles"] is not None

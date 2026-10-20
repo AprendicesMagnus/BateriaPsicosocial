@@ -1,4 +1,4 @@
-import { request } from "./client";
+import { request, API_URL } from "./client";
 
 export async function listarInformes(token, { evaluacionId = null, tipo = null } = {}) {
   const params = new URLSearchParams();
@@ -25,7 +25,6 @@ export async function generarInformeAgrupado(token, evaluacionId, areaId = null,
 }
 
 export async function descargarInforme(token, informeId) {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
   const res = await fetch(`${API_URL}/informes/${informeId}/descargar`, {
     headers: { Authorization: `Bearer ${token}` },
   });

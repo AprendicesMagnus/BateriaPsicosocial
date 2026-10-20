@@ -12,10 +12,12 @@ from app.models.evaluation import (
 from app.models.organization import Area, Organizacion
 from app.models.plan import PlanBateria
 from app.models.survey import Baremo, CuestionarioVersion, Dimension, Pregunta, Recomendacion
+from app.models.ticket_soporte import TicketSoporte
 from app.models.user import CodigoVerificacion, Permiso, Rol, RolPermiso, Usuario
 
 __all__ = [
     "PlanBateria",
+    "TicketSoporte",
     "Auditoria",
     "Compra",
     "Pago",

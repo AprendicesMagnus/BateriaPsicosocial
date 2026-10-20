@@ -392,6 +392,10 @@ export default function Inicio() {
                   </button>
                 )}
 
+                <button type="button" onClick={() => { setMenuPerfilAbierto(false); navigate("/soporte"); }}>
+                  Centro de ayuda
+                </button>
+
                 <button
                   type="button"
                   className="app-profile-dropdown-danger"

@@ -200,8 +200,8 @@ def _expirar_compras_vencidas(
 
 
 def _calcular_subtotal(db: Session, cantidad: int, plan_id) -> float:
-    """Subtotal antes de IVA. Con plan elegido es el PRECIO FIJO del plan (no se multiplica por la
-    cantidad); la cantidad solo debe caber en el rango del plan. Sin plan: cantidad x tarifa por defecto."""
+    """Subtotal antes de IVA. Con plan elegido: cantidad x precio por batería del plan (la cantidad
+    debe caber en su rango). Sin plan: cantidad x tarifa por defecto."""
     if not plan_id:
         return cantidad * TARIFA_POR_BATERIA
     plan = db.query(PlanBateria).filter(PlanBateria.id == plan_id, PlanBateria.activo.is_(True)).first()
@@ -209,7 +209,7 @@ def _calcular_subtotal(db: Session, cantidad: int, plan_id) -> float:
         raise AppError(404, "El plan seleccionado ya no está disponible. Elige otro.")
     if cantidad < plan.cantidad_min or (plan.cantidad_max is not None and cantidad > plan.cantidad_max):
         raise AppError(400, "La cantidad no corresponde al plan seleccionado.")
-    return float(plan.precio_unitario)
+    return cantidad * float(plan.precio_unitario)
 
 
 def crear_compra(

@@ -128,17 +128,22 @@ def obtener_historico_indicadores(
     # Ordenar evaluaciones cronológicamente
     evals_ordenadas = sorted(evals_map.values(), key=lambda x: x["creadoEn"])
 
+    minimo = get_settings().min_grupo_anonimato
+
     historico_salida = []
     for item in evals_ordenadas:
         pts = item["puntajes"]
+        total = len(item["participantes"])
+        oculto = total < minimo
         promedio = round(sum(pts) / len(pts), 2) if pts else 0.0
         historico_salida.append({
             "evaluacionId": item["evaluacionId"],
             "nombreEvaluacion": item["nombreEvaluacion"],
             "fecha": item["fecha"],
-            "promedioPuntajeTransformado": promedio,
-            "totalParticipantes": len(item["participantes"]),
-            "distribucionNiveles": item["niveles"],
+            "promedioPuntajeTransformado": None if oculto else promedio,
+            "totalParticipantes": total,
+            "distribucionNiveles": None if oculto else item["niveles"],
+            "oculto": oculto,
         })
 
     return {
@@ -146,6 +151,7 @@ def obtener_historico_indicadores(
         "dimensionId": str(dimension_id) if dimension_id else None,
         "dimensionNombre": dim_nombre,
         "historico": historico_salida,
+        "minimoAnonimato": minimo,
     }
 
 

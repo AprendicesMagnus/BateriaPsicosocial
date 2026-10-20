@@ -75,3 +75,9 @@ export function guardarMiResolucion(token, numeroResolucion) {
 export function verificarResolucion(token, usuarioId, verificada) {
   return request(`/usuarios/${usuarioId}/verificar-resolucion`, { method: "POST", body: { verificada }, token });
 }
+
+// Panel (Super Administrador): invitar, editar y reenviar el código de verificación de un usuario.
+export const invitarUsuario = (token, body) => request("/usuarios/invitar", { method: "POST", body, token });
+export const editarUsuarioAdmin = (token, id, body) => request(`/usuarios/${id}`, { method: "PATCH", body, token });
+export const reenviarCodigoVerificacion = (email) =>
+  request("/auth/reenviar-codigo", { method: "POST", body: { email, tipo: "VERIFICACION_EMAIL" } });

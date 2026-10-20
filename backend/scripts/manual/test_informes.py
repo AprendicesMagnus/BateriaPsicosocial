@@ -1,8 +1,8 @@
-﻿import os
+import os
 import httpx
 import uuid
 
-BASE_URL = "http://127.0.0.1:4000/api"
+BASE_URL = "http://127.0.0.1:8000/api"
 
 def test_informes_flujo():
     client = httpx.Client(base_url=BASE_URL, timeout=15.0)

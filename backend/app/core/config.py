@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     database_url: str = ""
     test_database_url: str = ""
 
-    port: int = 4000
+    port: int = 8000
     frontend_url: str = "http://localhost:5173"
 
     wompi_api_url: str = "https://sandbox.wompi.co/v1"

@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 async function request(path, { method = "GET", body, token } = {}) {
   const esFormData = typeof FormData !== "undefined" && body instanceof FormData;
@@ -49,5 +49,5 @@ function urlArchivo(ruta) {
   return `${new URL(API_URL, window.location.origin).origin}${ruta}`;
 }
 
-export { request, urlArchivo };
+export { request, urlArchivo, API_URL };
 export default request;

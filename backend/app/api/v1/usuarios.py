@@ -10,6 +10,7 @@ from app.schemas.common import (
     CambioPasswordPerfilRequest,
     CambioRolRequest,
     EmpresaActivaRequest,
+    InvitarUsuarioRequest,
     ResolucionRequest,
     UsuarioCreate,
     UsuarioUpdate,
@@ -71,6 +72,20 @@ def cambiar_mi_empresa_activa(
         entidad_id=str(data.organizacionId), request=request,
     )
     return {"usuario": usuario_publico(usuario)}
+
+
+@router.post("/invitar")
+def invitar_usuario(
+    data: InvitarUsuarioRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_admin),
+):
+    usuario = usuarios_service.invitar_usuario(db, data, actual)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="INVITAR_USUARIO", entidad="Usuario", entidad_id=usuario["id"], request=request
+    )
+    return usuario
 
 
 @router.post("/me/resolucion")

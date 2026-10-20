@@ -14,7 +14,7 @@ from app.core.errors import AppError
 from app.core.security import crear_token_reset, crear_token_sesion, decodificar_token
 from app.models.user import CodigoVerificacion, Rol, Usuario
 from app.services.correo import enviar_codigo_verificacion
-from app.services.perfil import proxima_edicion
+from app.services.perfil import proxima_edicion, resolucion_bloqueada_hasta
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -51,6 +51,12 @@ def usuario_publico(usuario: Usuario) -> dict:
         "organizacionNombre": usuario.organizacion.nombre if usuario.organizacion else None,
         "numeroResolucion": usuario.numero_resolucion,
         "resolucionVerificada": usuario.resolucion_verificada,
+        "resolucionIntentos": usuario.resolucion_intentos,
+        "resolucionBloqueadaHasta": (
+            resolucion_bloqueada_hasta(usuario).isoformat()
+            if resolucion_bloqueada_hasta(usuario)
+            else None
+        ),
         "areaId": str(usuario.area_id) if usuario.area_id else None,
         "numeroIdentificacion": usuario.numero_identificacion,
         "cargo": usuario.cargo,

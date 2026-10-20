@@ -277,7 +277,7 @@ export default function Reportes() {
           {/* El selector de "Empresa activa" para Jefe/Psicólogo ahora vive en el Dashboard. */}
 
           <p className="reportes-legal-note">
-            Desglosados por área de la organización, según la Resolución 2764 de 2022 (Anonimizado mín. 5 participantes)
+            Resultados desglosados por área de la organización. Los grupos con menos de 5 participantes se ocultan para proteger el anonimato.
           </p>
 
           {/* =================================================

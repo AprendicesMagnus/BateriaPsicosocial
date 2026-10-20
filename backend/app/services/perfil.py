@@ -1,7 +1,7 @@
 """Edición de perfil del propio usuario y directorio de usuarios (solo Super Administrador).
 
 Reglas de negocio:
-- Nombres, apellidos, contraseña y foto se pueden editar UNA vez cada 15 días.
+- Nombres, apellidos, contraseña y foto se pueden editar UNA vez cada 5 días.
   La fecha de la última edición se guarda en usuarios.perfil_actualizado_en.
 - El SUPER_ADMINISTRADOR está exento de esa restricción.
 - El cambio de contraseña desde el perfil es independiente del flujo "Olvidé mi contraseña":
@@ -22,7 +22,11 @@ from app.core.errors import AppError
 from app.models.user import Rol, Usuario
 from app.schemas.common import PATRON_NOMBRE_PERSONA
 
-DIAS_ENTRE_EDICIONES = 15
+DIAS_ENTRE_EDICIONES = 5
+# Límite de cambios de número de resolución: 3 intentos cada 5 días (Psicólogo / Responsable SST).
+RESOLUCION_INTENTOS_MAX = 3
+RESOLUCION_DIAS_BLOQUEO = 5
+ROLES_EDITAN_RESOLUCION = {"EVALUADOR_SST", "RESPONSABLE_SST"}
 MAX_FOTO_BYTES = 2 * 1024 * 1024  # 2 MB
 FORMATOS_FOTO = {"JPEG", "PNG", "WEBP"}
 LADO_MAXIMO_FOTO = 512
@@ -50,8 +54,8 @@ def _asegurar_puede_editar(usuario: Usuario) -> None:
     if desbloqueo is not None:
         raise AppError(
             403,
-            "Solo puedes editar tu perfil cada 15 días. "
-            f"Podrás hacerlo de nuevo el {desbloqueo.strftime('%d/%m/%Y')}.",
+            "Solo puedes editar tu perfil cada 5 días. "
+            f"Podrás hacerlo de nuevo el {desbloqueo.strftime('%d/%m/%Y a las %I:%M %p')}.",
         )
 
 
@@ -172,15 +176,48 @@ def listar_directorio(db: Session, q: str | None, limite: int, desplazamiento: i
     }
 
 
+def resolucion_bloqueada_hasta(usuario: Usuario) -> datetime | None:
+    """Fecha desde la cual recupera los 3 intentos; None si ya puede volver a cambiar el número."""
+    if usuario.resolucion_intentos_desde is None or usuario.resolucion_intentos < RESOLUCION_INTENTOS_MAX:
+        return None
+    desbloqueo = usuario.resolucion_intentos_desde + timedelta(days=RESOLUCION_DIAS_BLOQUEO)
+    return desbloqueo if desbloqueo > utcnow() else None
+
+
 def guardar_mi_resolucion(db: Session, usuario: Usuario, numero: str) -> Usuario:
-    """El Psicologo registra (o corrige) su número de resolución. Si ya fue verificada, queda bloqueada."""
-    if usuario.rol.codigo != "EVALUADOR_SST":
-        raise AppError(403, "Solo el Psicologo registra su número de resolución desde aquí.")
-    if usuario.resolucion_verificada:
-        raise AppError(403, "Tu número de resolución ya fue verificado y no se puede modificar.")
+    """Psicólogo / Responsable SST corrigen su número de resolución, solo si el
+    Super Administrador ya lo verificó (si aún no está verificado, queda bloqueado
+    hasta que lo verifique). Además, solo se permiten 3 cambios cada 5 días; al
+    agotarlos hay que esperar a que venza ese plazo."""
+    if usuario.rol.codigo not in ROLES_EDITAN_RESOLUCION:
+        raise AppError(403, "Tu rol no puede registrar número de resolución.")
+    if not usuario.resolucion_verificada:
+        raise AppError(403, "Tu número de resolución aún no ha sido verificado por un administrador.")
+
+    # Si ya pasaron los 5 días desde el primer intento de la racha, se reinicia el contador.
+    if (
+        usuario.resolucion_intentos_desde is not None
+        and usuario.resolucion_intentos_desde + timedelta(days=RESOLUCION_DIAS_BLOQUEO) <= utcnow()
+    ):
+        usuario.resolucion_intentos = 0
+        usuario.resolucion_intentos_desde = None
+
+    bloqueo = resolucion_bloqueada_hasta(usuario)
+    if bloqueo is not None:
+        raise AppError(
+            403,
+            "Ya usaste tus 3 cambios de número de resolución. "
+            f"Podrás volver a intentarlo el {bloqueo.strftime('%d/%m/%Y a las %I:%M %p')}.",
+        )
+
     if usuario.numero_resolucion != numero:
         usuario.numero_resolucion = numero
-        usuario.resolucion_verificada = False
+        # Sigue verificado: la verificación ya no se pierde al editar, solo se
+        # cuenta el intento (regla de 3 cambios cada 5 días).
+        if usuario.resolucion_intentos_desde is None:
+            usuario.resolucion_intentos_desde = utcnow()
+        usuario.resolucion_intentos += 1
+
     db.commit()
     db.refresh(usuario)
     return usuario

@@ -683,3 +683,21 @@
   font-size: 13px;
   color: var(--adm-muted);
 }
+
+/* Ajuste: el contenido ocupa solo el espacio disponible; las tablas anchas se desplazan dentro de su tarjeta */
+.adm-main {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.adm-main > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.adm-tabla-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}

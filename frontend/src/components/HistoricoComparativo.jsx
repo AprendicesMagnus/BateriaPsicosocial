@@ -51,6 +51,7 @@ function DistribucionNiveles({ distribucion }) {
 
 export default function HistoricoComparativo({ token, organizacionId }) {
   const [historico, setHistorico] = useState([]);
+  const [minimo, setMinimo] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [finVentana, setFinVentana] = useState(0);
@@ -64,7 +65,8 @@ export default function HistoricoComparativo({ token, organizacionId }) {
       const datos = await fetchHistoricoIndicadores(token, organizacionId);
       const lista = datos?.historico || [];
       setHistorico(lista);
-      setFinVentana(lista.length);
+      setMinimo(datos?.minimoAnonimato ?? null);
+      setFinVentana(lista.filter((item) => !item.oculto).length);
       setPagina(1);
     } catch (err) {
       setError(err.message || "No se pudo cargar el histórico comparativo.");
@@ -78,24 +80,25 @@ export default function HistoricoComparativo({ token, organizacionId }) {
   }, [cargar]);
 
   const total = historico.length;
+  const visibles = useMemo(() => historico.filter((item) => !item.oculto), [historico]);
   const inicioVentana = Math.max(0, finVentana - TAMANO_VENTANA);
   const ventana = historico.slice(inicioVentana, finVentana);
 
   const resumen = useMemo(() => {
-    if (historico.length === 0) return null;
-    const ultimo = historico[historico.length - 1];
-    const anterior = historico.length > 1 ? historico[historico.length - 2] : null;
-    const menor = historico.reduce((a, b) =>
+    if (visibles.length === 0) return null;
+    const ultimo = visibles[visibles.length - 1];
+    const anterior = visibles.length > 1 ? visibles[visibles.length - 2] : null;
+    const menor = visibles.reduce((a, b) =>
       b.promedioPuntajeTransformado < a.promedioPuntajeTransformado ? b : a
     );
-    const mayor = historico.reduce((a, b) =>
+    const mayor = visibles.reduce((a, b) =>
       b.promedioPuntajeTransformado > a.promedioPuntajeTransformado ? b : a
     );
     const diferencia = anterior
       ? redondear(ultimo.promedioPuntajeTransformado - anterior.promedioPuntajeTransformado)
       : null;
     return { ultimo, menor, mayor, diferencia };
-  }, [historico]);
+  }, [visibles]);
 
   const filas = useMemo(() => {
     const termino = normalizar(busqueda.trim());
@@ -127,8 +130,9 @@ export default function HistoricoComparativo({ token, organizacionId }) {
       <div className="historico">
         <h2 className="historico__titulo">Histórico comparativo BRP</h2>
         <p className="historico__vacio">
-          Aún no existen evaluaciones finalizadas y tabuladas en esta organización para comparar la tendencia
-          histórica de riesgo.
+          {historico.length > 0
+            ? `Las evaluaciones registradas tienen menos de ${minimo} participantes; sus resultados se ocultan para proteger el anonimato.`
+            : "Aún no existen evaluaciones finalizadas y tabuladas en esta organización para comparar la tendencia histórica de riesgo."}
         </p>
       </div>
     );
@@ -280,15 +284,25 @@ export default function HistoricoComparativo({ token, organizacionId }) {
                 <td className="historico__nombre">{item.nombreEvaluacion}</td>
                 <td>{fechaCompleta(item.fecha)}</td>
                 <td>{item.totalParticipantes}</td>
-                <td className="historico__promedio">{item.promedioPuntajeTransformado} pts</td>
+                <td className="historico__promedio">
+                  {item.oculto ? "Oculto" : `${item.promedioPuntajeTransformado} pts`}
+                </td>
                 <td>
-                  <DistribucionNiveles distribucion={item.distribucionNiveles} />
+                  {item.oculto
+                    ? <span className="historico__sin-datos">Oculto por anonimato</span>
+                    : <DistribucionNiveles distribucion={item.distribucionNiveles} />}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {historico.some((item) => item.oculto) && (
+        <p className="historico__vacio">
+          Las evaluaciones con menos de {minimo} participantes no muestran resultados para proteger el anonimato.
+        </p>
+      )}
 
       {filas.length === 0 && <p className="historico__vacio">No hay evaluaciones que coincidan con la búsqueda.</p>}
 
