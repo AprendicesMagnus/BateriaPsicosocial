@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.config import get_settings
 from app.core.errors import AppError
+from app.services.correo import enviar_correo
 from app.models.ticket_soporte import TicketSoporte
 from app.models.user import Usuario
 
@@ -48,3 +50,22 @@ def marcar_resuelto(db: Session, ticket_id) -> dict:
     db.commit()
     db.refresh(ticket)
     return _publico(ticket)
+
+
+def notificar_ticket(ticket: dict, email_usuario: str) -> None:
+    """Envía el mensaje del Centro de ayuda al buzón de soporte. Se ejecuta en segundo plano:
+    si el correo falla, el ticket ya quedó guardado y el Super Administrador puede verlo igual."""
+    settings = get_settings()
+    destino = settings.soporte_email or settings.admin_email
+    if not destino:
+        return
+    asunto = f"[Soporte MAGNUS|SIG] Mensaje de {ticket.get('usuarioNombre') or 'un usuario'}"
+    contenido = (
+        "Nuevo mensaje desde el Centro de ayuda\n\n"
+        f"De: {ticket.get('usuarioNombre')} <{email_usuario}>\n"
+        f"Rol: {ticket.get('usuarioRol')}\n"
+        f"Fecha: {ticket.get('creadoEn')}\n\n"
+        f"Mensaje:\n{ticket.get('mensaje')}\n\n"
+        f"Para responder, escribe a {email_usuario}."
+    )
+    enviar_correo(destino, asunto, contenido)

@@ -43,6 +43,8 @@ export function AuthProvider({ children }) {
     localStorage.setItem(ACTIVIDAD_KEY, String(Date.now()));
     // Un inicio de sesión normal ya no es el de un paciente del enlace
     if (!nuevoUsuario?.esInvitado) localStorage.removeItem("magnussing_enlace");
+    // Marca para mostrar el saludo de bienvenida solo tras iniciar sesión (no al recargar la página)
+    if (!nuevoUsuario?.esInvitado) sessionStorage.setItem("magnussing_bienvenida", "1");
     setToken(nuevoToken);
     setUsuario(nuevoUsuario);
   }

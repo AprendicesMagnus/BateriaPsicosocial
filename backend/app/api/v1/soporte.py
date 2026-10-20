@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_admin
@@ -15,11 +15,15 @@ router = APIRouter()
 @router.post("")
 def crear_ticket(
     data: TicketSoporteCreate,
+    segundo_plano: BackgroundTasks,
     db: Session = Depends(get_db),
     actual: Usuario = Depends(get_current_user),
 ):
     """Cualquier usuario autenticado envía un mensaje desde el Centro de ayuda."""
-    return soporte_service.crear_ticket(db, actual, data.mensaje)
+    ticket = soporte_service.crear_ticket(db, actual, data.mensaje)
+    # El correo al buzón de soporte sale en segundo plano para no hacer esperar al usuario.
+    segundo_plano.add_task(soporte_service.notificar_ticket, ticket, actual.email)
+    return ticket
 
 
 @router.get("")

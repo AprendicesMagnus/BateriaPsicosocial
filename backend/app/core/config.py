@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     smtp_pass: str = ""
     smtp_from: str = "Magnus|SIG <no-reply@magnussig.local>"
 
+    # Buzón que recibe los mensajes del Centro de ayuda (si está vacío se usa ADMIN_EMAIL)
+    soporte_email: str = "aprendizmagnus@gmail.com"
+
     admin_email: str = ""
     admin_password: str = ""
     admin_nombre: str = "Administrador"

@@ -18,6 +18,7 @@ import MisEmpresas from "./pages/MisEmpresas";
 import RestriccionRolLimitado from "./components/RestriccionRolLimitado";
 import CierreInactividad from "./components/CierreInactividad";
 import CompletarResolucion from "./components/CompletarResolucion";
+import BienvenidaLogin from "./components/BienvenidaLogin";
 import CrearEmpresa from "./pages/Crearempresa";
 import Panel from "./pages/Panel";
 import Dashboard from "./pages/Dashboard";
@@ -41,6 +42,7 @@ export default function App() {
       <BrowserRouter>
         <CierreInactividad />
         <CompletarResolucion />
+        <BienvenidaLogin />
         <RestriccionRolLimitado>
         <Routes>
           <Route path="/" element={<Landing />} />
