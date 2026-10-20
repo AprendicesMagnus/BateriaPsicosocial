@@ -1,33 +1,187 @@
+/* Fondo suave para todo el Centro de ayuda (reemplaza el navy oscuro del app-shell). */
+.soporte-fondo {
+  background: linear-gradient(180deg, #f3f0ff 0%, #f6f8fd 45%, #fdf6f0 100%);
+}
+
+.soporte-fondo .app-decor {
+  opacity: 0.35;
+}
+
 .soporte-page {
-  max-width: 820px;
+  max-width: 860px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
+  position: relative;
+  z-index: 1;
+}
+
+.soporte-hero {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+
+.soporte-hero-kicker {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--gold-600, #dd8f13);
+  background: #fff3df;
+  padding: 5px 14px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.soporte-hero .app-title {
+  margin: 0 0 6px;
+  color: var(--ink-900);
+}
+
+.soporte-hero .app-subtitle {
+  max-width: 520px;
+  margin: 0 auto;
+  color: var(--ink-500);
+}
+
+/* ---------- Tarjetas base ---------- */
+.soporte-card {
+  background: #ffffff;
+  border: 1px solid #ece9f7;
+  border-radius: 20px;
+  padding: 26px 28px;
+  box-shadow: 0 16px 40px -28px rgba(22, 34, 79, 0.35);
 }
 
 .soporte-card h2 {
-  margin: 0 0 14px;
-  font-size: 18px;
+  margin: 0 0 16px;
+  font-size: 19px;
   color: var(--ink-900);
+}
+
+/* ---------- Guía por rol: tabs ---------- */
+.soporte-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.soporte-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #e4e7f0;
+  background: #f8f9fd;
+  color: var(--ink-500);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.soporte-tab:hover {
+  background: #eef0f8;
+}
+
+.soporte-tab--activo {
+  background: var(--tab-color, #2d3f82);
+  border-color: var(--tab-color, #2d3f82);
+  color: #fff;
+  box-shadow: 0 6px 16px -6px var(--tab-color, #2d3f82);
+}
+
+.soporte-tab-tu {
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 1px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.soporte-tab:not(.soporte-tab--activo) .soporte-tab-tu {
+  background: #e4e7f0;
+  color: var(--ink-700);
 }
 
 .soporte-guia {
   margin: 0;
-  padding-left: 20px;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  color: var(--ink-700);
+  gap: 14px;
 }
 
+.soporte-guia li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  color: var(--ink-700);
+  line-height: 1.5;
+}
+
+.soporte-guia-num {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--guia-color, #2d3f82);
+}
+
+/* ---------- Más recursos ---------- */
+.soporte-recursos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.soporte-recurso {
+  background: #f8f9fd;
+  border: 1px solid #eef0f8;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.soporte-recurso strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-900);
+  font-size: 14px;
+}
+
+.soporte-recurso p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+
+.soporte-error {
+  margin: -4px 0 0;
+  color: #ffb4b4;
+  font-size: 13px;
+}
+
+/* ---------- FAQ ---------- */
 .soporte-faq-lista {
   display: flex;
   flex-direction: column;
 }
 
 .soporte-faq-item {
-  border-top: 1px solid var(--line-200);
+  border-top: 1px solid #eef0f8;
 }
 
 .soporte-faq-item:first-child {
@@ -39,9 +193,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   background: none;
   border: none;
-  padding: 14px 0;
+  padding: 15px 2px;
   font: inherit;
   font-weight: 600;
   color: var(--ink-900);
@@ -49,11 +204,75 @@
   text-align: left;
 }
 
+.soporte-faq-item--abierta .soporte-faq-pregunta {
+  color: var(--navy-700, #202f66);
+}
+
+.soporte-faq-icono {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #f1f0fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: var(--navy-700, #202f66);
+}
+
 .soporte-faq-respuesta {
-  margin: 0 0 14px;
+  margin: -4px 0 16px;
   color: var(--ink-500);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
+}
+
+/* ---------- Contacto ---------- */
+.soporte-card--contacto {
+  display: flex;
+  gap: 18px;
+  background: linear-gradient(135deg, #16224f 0%, #2d3f82 100%);
+  color: #fff;
+  border: none;
+}
+
+.soporte-contacto-icono {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.soporte-contacto-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.soporte-card--contacto h2 {
+  color: #fff;
+}
+
+.soporte-card--contacto p {
+  margin: 0 0 16px;
+  color: #d8def2;
+}
+
+.soporte-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #ffd27a;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.soporte-link:hover {
+  text-decoration: underline;
 }
 
 .soporte-form {
@@ -64,24 +283,31 @@
 
 .soporte-form textarea {
   resize: vertical;
-  padding: 10px 12px;
-  border: 1px solid var(--line-200);
-  border-radius: 10px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
   font: inherit;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink-900);
 }
 
 .soporte-btn-primary {
   align-self: flex-start;
-  background: var(--navy-800, #16224f);
-  color: #fff;
+  background: var(--gold-500, #f5a623);
+  color: #16224f;
   border: none;
   border-radius: 10px;
-  padding: 10px 20px;
-  font-weight: 600;
+  padding: 10px 22px;
+  font-weight: 800;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.soporte-btn-primary:hover {
+  background: var(--gold-600, #dd8f13);
 }
 
 .soporte-exito {
-  color: var(--success-600, #1f9d55);
-  font-weight: 600;
+  color: #8df5b3;
+  font-weight: 700;
 }

@@ -17,6 +17,7 @@ from app.api.v1 import (
     prediccion,
     reportes,
     roles,
+    soporte,
     usuarios,
     wompi,
 )
@@ -40,6 +41,7 @@ router.include_router(compras.router, prefix="/compras", tags=["Compras"])
 router.include_router(pagos.router, prefix="/pagos", tags=["Pagos"])
 router.include_router(panel.router, prefix="/panel", tags=["Panel"])
 router.include_router(planes.router, prefix="/planes", tags=["Planes"])
+router.include_router(soporte.router, prefix="/soporte", tags=["Soporte"])
 
 # TODO: restaurar cuando exista el módulo:
 # router.include_router(seguimiento_recomendaciones.router, prefix="/seguimiento-recomendaciones", tags=["SeguimientoRecomendaciones"])

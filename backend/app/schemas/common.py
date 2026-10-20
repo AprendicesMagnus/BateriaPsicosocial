@@ -826,3 +826,7 @@ class PagoCreate(BaseModel):
 class PagoUpdate(BaseModel):
     estado: str
     mensajeRespuesta: str | None = None
+
+
+class TicketSoporteCreate(BaseModel):
+    mensaje: str = Field(min_length=1, max_length=2000)
