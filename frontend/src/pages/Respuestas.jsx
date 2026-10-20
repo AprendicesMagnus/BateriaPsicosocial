@@ -16,6 +16,9 @@ import {
 import "../styles/app-shell.css";
 import "../styles/Respuestas.css";
 
+
+
+
 // Pestañas en el orden en que se responde la batería
 const ORDEN_INSTRUMENTOS = ["FICHA_DATOS", "ESTRES", "EXTRALABORAL", "INTRALABORAL_A", "INTRALABORAL_B"];
 
