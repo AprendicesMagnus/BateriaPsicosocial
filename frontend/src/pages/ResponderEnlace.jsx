@@ -152,8 +152,7 @@ export default function ResponderEnlace() {
   } else if (yaEmpezo && avance) {
     contenido = (
       <section className="enlace__estado">
-        <div className="enlace__icono">↗</div>
-        <p className="enlace__eyebrow">Tu progreso</p>
+        
         <h1>Continúa tu evaluación</h1>
         <p className="enlace__texto">
           Ya comenzaste a responder. Puedes continuar desde el cuestionario

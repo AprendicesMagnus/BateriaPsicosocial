@@ -477,8 +477,9 @@ export default function Landing() {
         className="section"
         id="como-funciona"
         style={{
-          background: "var(--white)",
-        }}
+    background: "linear-gradient(135deg, #f6f7fb 100%)",
+    padding: "70px 0",
+  }}
       >
 
         <div className="container">

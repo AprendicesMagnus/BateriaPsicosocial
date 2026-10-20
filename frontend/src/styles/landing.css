@@ -343,7 +343,7 @@
 .stats-band {
   background: var(--navy-900);
 
-  border-top: 1px solid rgba(206, 17, 190, 0.08);
+  border-top: 1px solid rgba(216, 6, 199, 0.08);
 }
 
 .stats-band__inner {
@@ -514,6 +514,11 @@
 /* =====================================================
    PASOS
 ===================================================== */
+.steps-section {
+  background: #f4f6fb;
+  padding: 50px 30px;
+  border-radius: 18px;
+}
 
 .steps-grid {
   display: grid;
@@ -523,7 +528,7 @@
 
 .step-card {
   text-align: center;
-  padding: 10px;
+  padding: 20px 15px;
 }
 
 .step-card__num {
@@ -551,7 +556,6 @@
   color: var(--ink-500);
   line-height: 1.5;
 }
-
 
 /* =====================================================
    CONFIDENCIALIDAD

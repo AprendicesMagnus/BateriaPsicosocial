@@ -9,6 +9,7 @@ import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import { fetchEnlaces, crearEnlace, eliminarEnlace } from "../api/enlaces";
 import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha } from "../utils/encuestas";
 import QrEnlaceModal from "../components/QrEnlaceModal";
+import { useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
 import "../styles/Reportes.css";
 
@@ -490,7 +491,7 @@ export default function Reportes() {
                         {abierta ? "Ocultar" : "Ver detalle"}
                       </button>
                     </div>
-
+          
                     {/* Detalle: avance por instrumento y resultados calculados */}
                     {abierta && (
                       <div className="reportes-detalle">
@@ -506,47 +507,24 @@ export default function Reportes() {
                               {NOMBRES_INSTRUMENTO[inst.codigo] || inst.codigo}
                             </span>
                           ))}
-                        </div>
+                          
+                        
+                        
+                        <button
+                          type="button"
+                          className="reportes-download-btn"
+                          onClick={() => {
+                            window.location.href = `/respuestas?id=${encodeURIComponent(
+                              encuesta.participanteId
+                            )}`;
+                          }}
+                        >
+                          Ver respuestas
+                        </button>
 
-                        <h3 className="reportes-detalle-title">Resultados</h3>
-                        {encuesta.resultados.length === 0 ? (
-                          // Los resultados se calculan solo cuando el trabajador termina toda la batería
-                          <p className="reportes-detalle-vacio">
-                            Los resultados se calculan cuando el trabajador termina todos los instrumentos.
-                          </p>
-                        ) : (
-                          <table className="reportes-tabla">
-                            <thead>
-                              <tr>
-                                <th>Instrumento</th>
-                                <th>Dimensión</th>
-                                <th>Puntaje</th>
-                                <th>Nivel</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {encuesta.resultados.map((r) => {
-                                const nivel = NIVELES[r.nivel];
-                                return (
-                                  <tr key={`${r.instrumento}-${r.dimension}`}>
-                                    <td>{NOMBRES_INSTRUMENTO[r.instrumento] || r.instrumento}</td>
-                                    <td>{r.dimension}</td>
-                                    {/* Puntaje transformado 0-100 */}
-                                    <td>{r.puntajeTransformado.toFixed(1)}</td>
-                                    <td>
-                                      <span
-                                        className="reportes-nivel"
-                                        style={nivel ? { background: nivel.bg, color: nivel.text } : undefined}
-                                      >
-                                        {nivel ? nivel.label : r.nivel}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        )}
+
+
+                        </div>
                       </div>
                     )}
                   </div>
