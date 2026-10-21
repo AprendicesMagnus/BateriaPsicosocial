@@ -52,6 +52,15 @@ const TIPO_AUDITORIA = {
   Enlaces: { icono: HiOutlineLink, clase: "peligro" },
 };
 
+// Apartados del panel (sidebar)
+const SECCIONES = [
+  { id: "usuarios", label: "Usuarios y roles" },
+  { id: "empresas", label: "Empresas y compras" },
+  { id: "planes", label: "Planes de baterías" },
+  { id: "soporte", label: "Centro de ayuda" },
+  { id: "auditoria", label: "Auditoría y privacidad" },
+];
+
 // Texto legible para las acciones registradas en auditoría
 const TEXTO_ACCION = {
   LOGIN: "inició sesión",
@@ -119,6 +128,7 @@ export default function Panel() {
   const [version, setVersion] = useState(0); // al cambiar, se vuelve a pedir el panel
   const [modalUsuario, setModalUsuario] = useState(null); // {modo: "invitar" | "editar", usuario?}
   const [aviso, setAviso] = useState(null); // {tipo: "ok" | "error", texto}
+  const [seccion, setSeccion] = useState("usuarios");
 
   useEffect(() => {
     if (!token) return;
@@ -198,7 +208,7 @@ export default function Panel() {
   const porcentajeUsado = porcentaje(saldo.usadas, saldo.compradas);
 
   return (
-    <div className="dashboard">
+    <div className="dashboard panel-shell">
       <aside className="sidebar">
         <div
           className="sidebar__logo"
@@ -211,6 +221,16 @@ export default function Panel() {
         </div>
 
         <nav className="sidebar__menu">
+          {SECCIONES.map((s) => (
+            <button
+              key={s.id}
+              className={`menu-item ${seccion === s.id ? "active" : ""}`}
+              type="button"
+              onClick={() => setSeccion(s.id)}
+            >
+              {s.label}
+            </button>
+          ))}
           <button className="menu-item" type="button" onClick={handleLogout}>
             <span>✕</span>
             Cerrar sesión
@@ -249,6 +269,7 @@ export default function Panel() {
         {!cargando && !error && (
           <>
             {/* ---------- USUARIOS Y ROLES ---------- */}
+            {seccion === "usuarios" && (
             <section id="usuarios" className="adm-card">
               <div className="adm-card__head">
                 <div>
@@ -342,8 +363,11 @@ export default function Panel() {
 
               <Paginador paginacion={pagUsuarios} />
             </section>
+            )}
 
             {/* ---------- EMPRESAS ---------- */}
+            {seccion === "empresas" && (
+            <>
             <div className="adm-dos-columnas">
               <section id="empresas" className="adm-card">
                 <div className="adm-card__head">
@@ -458,12 +482,15 @@ export default function Panel() {
                 </div>
               </div>
             </section>
+            </>
+            )}
+
+            {seccion === "planes" && <PanelPlanes />}
+
+            {seccion === "soporte" && <PanelSoporte />}
 
             {/* ---------- AUDITORÍA ---------- */}
-            <PanelPlanes />
-
-            <PanelSoporte />
-
+            {seccion === "auditoria" && (
             <section id="auditoria" className="adm-card">
               <div className="adm-card__head">
                 <div>
@@ -509,6 +536,7 @@ export default function Panel() {
 
               <Paginador paginacion={pagAuditoria} />
             </section>
+            )}
           </>
         )}
       </main>

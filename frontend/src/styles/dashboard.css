@@ -71,11 +71,15 @@ body {
   font-size: 14px;
   border-radius: 7px;
 
-  border: solid;
+  border: 1px solid transparent;
   background: none;
   cursor: pointer;
   width: 100%;
   transition: .2s ease;
+}
+
+.menu-item:hover {
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .menu-item span {
