@@ -311,3 +311,88 @@
   color: #8df5b3;
   font-weight: 700;
 }
+
+/* ---------- Manual de usuario (desactivado) ---------- */
+.soporte-manual {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.soporte-manual-icono {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #f1f0fb;
+  color: #2d3f82;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.soporte-manual-texto {
+  flex: 1;
+  min-width: 200px;
+}
+
+.soporte-manual-texto h2 {
+  margin: 0 0 4px;
+}
+
+.soporte-manual-texto p {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: 14px;
+}
+
+.soporte-btn-descarga {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid #d9dcea;
+  background: #f4f5fa;
+  color: #8b93ad;
+  font: inherit;
+  font-weight: 700;
+  cursor: not-allowed;
+}
+
+.soporte-badge-pronto {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: #fff3df;
+  color: #b7791f;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* ---------- Secciones informativas ---------- */
+.soporte-info-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.soporte-info-lista {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.soporte-info-item dt {
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.soporte-info-item dd {
+  margin: 2px 0 0;
+  color: var(--ink-500);
+  font-size: 14px;
+  line-height: 1.55;
+}

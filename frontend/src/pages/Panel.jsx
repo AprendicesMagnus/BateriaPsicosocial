@@ -16,6 +16,7 @@ import "../styles/Panel.css";
 import BotonRegresar from "../components/BotonRegresar";
 import Paginador from "../components/Paginador";
 import PanelPlanes from "../components/PanelPlanes";
+import PanelSoporte from "../components/PanelSoporte";
 import "../styles/PanelAcciones.css";
 import { usePaginacion } from "../hooks/usePaginacion";
 
@@ -460,6 +461,8 @@ export default function Panel() {
 
             {/* ---------- AUDITORÍA ---------- */}
             <PanelPlanes />
+
+            <PanelSoporte />
 
             <section id="auditoria" className="adm-card">
               <div className="adm-card__head">

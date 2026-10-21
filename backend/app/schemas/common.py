@@ -830,3 +830,21 @@ class PagoUpdate(BaseModel):
 
 class TicketSoporteCreate(BaseModel):
     mensaje: str = Field(min_length=1, max_length=2000)
+
+
+SeccionSoporte = Literal["guia_SUPER_ADMINISTRADOR", "guia_JEFE", "guia_ADMINISTRADOR", "guia_EVALUADOR_SST", "guia_RESPONSABLE_SST", "faq", "glosario", "riesgo", "novedades", "atencion"]
+
+
+class SoporteItemCreate(BaseModel):
+    seccion: SeccionSoporte
+    titulo: str | None = Field(default=None, max_length=200)
+    texto: str = Field(min_length=2, max_length=2000)
+    orden: int | None = Field(default=None, ge=0, le=10000)
+    activo: bool = True
+
+
+class SoporteItemUpdate(BaseModel):
+    titulo: str | None = Field(default=None, max_length=200)
+    texto: str | None = Field(default=None, min_length=2, max_length=2000)
+    orden: int | None = Field(default=None, ge=0, le=10000)
+    activo: bool | None = None

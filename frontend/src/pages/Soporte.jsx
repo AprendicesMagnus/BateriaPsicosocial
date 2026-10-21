@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   HiOutlineShieldCheck,
   HiOutlineBriefcase,
@@ -7,9 +7,14 @@ import {
   HiOutlineAcademicCap,
   HiOutlineMail,
   HiOutlineChatAlt2,
+  HiOutlineDownload,
+  HiOutlineBookOpen,
+  HiOutlineLightBulb,
+  HiOutlineSpeakerphone,
+  HiOutlineClock,
 } from "react-icons/hi";
 import { useAuth } from "../context/AuthContext";
-import { crearTicketSoporte } from "../api/soporte";
+import { crearTicketSoporte, fetchContenidoSoporte } from "../api/soporte";
 import { etiquetaRol } from "../utils/roles";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
@@ -117,6 +122,14 @@ const FAQ = [
   },
 ];
 
+// Secciones informativas nuevas (su contenido lo edita el Super Administrador desde el Panel).
+const SECCIONES_INFO = [
+  { clave: "riesgo", titulo: "Cómo interpretar los resultados", icono: HiOutlineLightBulb },
+  { clave: "glosario", titulo: "Glosario", icono: HiOutlineBookOpen },
+  { clave: "novedades", titulo: "Novedades y avisos", icono: HiOutlineSpeakerphone },
+  { clave: "atencion", titulo: "Horarios y canales de atención", icono: HiOutlineClock },
+];
+
 function PreguntaFAQ({ item }) {
   const [abierta, setAbierta] = useState(false);
   return (
@@ -140,7 +153,20 @@ export default function Soporte() {
     ORDEN_ROLES.includes(usuario?.rol) ? usuario.rol : "SUPER_ADMINISTRADOR"
   );
 
+  // Contenido editable (si el servidor no responde, se usan las guías y preguntas por defecto de este archivo).
+  const [contenido, setContenido] = useState(null);
+  useEffect(() => {
+    if (!token) return;
+    fetchContenidoSoporte(token)
+      .then(setContenido)
+      .catch(() => {});
+  }, [token]);
+
   const guia = GUIAS_POR_ROL[rolActivo];
+  const pasos = contenido?.[`guia_${rolActivo}`]?.length ? contenido[`guia_${rolActivo}`].map((i) => i.texto) : guia.pasos;
+  const preguntas = contenido?.faq?.length
+    ? contenido.faq.map((i) => ({ pregunta: i.titulo, respuesta: i.texto }))
+    : FAQ;
 
   async function handleEnviar(e) {
     e.preventDefault();
@@ -199,7 +225,7 @@ export default function Soporte() {
             </div>
 
             <ol className="soporte-guia" style={{ "--guia-color": guia.color }}>
-              {guia.pasos.map((paso, i) => (
+              {pasos.map((paso, i) => (
                 <li key={i}>
                   <span className="soporte-guia-num">{i + 1}</span>
                   <span>{paso}</span>
@@ -226,14 +252,46 @@ export default function Soporte() {
             </div>
           </section>
 
+          <section className="soporte-card soporte-manual">
+            <div className="soporte-manual-icono">
+              <HiOutlineDownload size={24} />
+            </div>
+            <div className="soporte-manual-texto">
+              <h2>Manual de usuario</h2>
+              <p>Guía completa del sistema en PDF. Estará disponible muy pronto.</p>
+            </div>
+            <button type="button" className="soporte-btn-descarga" disabled title="Aún no hay manual disponible">
+              Descargar PDF
+              <span className="soporte-badge-pronto">Próximamente</span>
+            </button>
+          </section>
+
           <section className="soporte-card">
             <h2>Preguntas frecuentes</h2>
             <div className="soporte-faq-lista">
-              {FAQ.map((item) => (
+              {preguntas.map((item) => (
                 <PreguntaFAQ key={item.pregunta} item={item} />
               ))}
             </div>
           </section>
+
+          {SECCIONES_INFO.map(({ clave, titulo, icono: Icono }) =>
+            contenido?.[clave]?.length ? (
+              <section className="soporte-card" key={clave}>
+                <h2 className="soporte-info-titulo">
+                  <Icono size={20} /> {titulo}
+                </h2>
+                <dl className="soporte-info-lista">
+                  {contenido[clave].map((item) => (
+                    <div className="soporte-info-item" key={item.id}>
+                      <dt>{item.titulo}</dt>
+                      <dd>{item.texto}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ) : null
+          )}
 
           <section className="soporte-card soporte-card--contacto">
             <div className="soporte-contacto-icono">
