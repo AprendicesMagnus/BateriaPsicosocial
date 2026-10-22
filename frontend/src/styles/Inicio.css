@@ -706,3 +706,39 @@
 /* =====================================================
    AGREGA ESTILOS NUEVOS DEBAJO DE ESTA LÍNEA
 ===================================================== */
+
+/* Celular: la barra superior apila logos y acciones sin solaparse */
+@media (max-width: 700px) {
+  .nav__inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 12px;
+    padding: 10px 0;
+  }
+
+  .nav__logos {
+    flex: 1 1 100%;
+    justify-content: center;
+    gap: 12px !important;
+  }
+
+  .nav__logos img {
+    height: auto !important;
+    max-height: 46px;
+    max-width: 30%;
+    width: auto;
+    margin: 0 !important;
+    object-fit: contain;
+  }
+
+  .nav__logos img:first-child {
+    max-height: 56px;
+    max-width: 38%;
+  }
+
+  .nav__actions {
+    flex: 1 1 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}

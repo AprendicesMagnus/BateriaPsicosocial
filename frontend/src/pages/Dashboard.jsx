@@ -11,6 +11,7 @@ import { fetchAnalisisPredictivo } from "../api/prediccion";
 
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
 import { crearEnlace } from "../api/enlaces";
+import AppSidebar from "../components/AppSidebar";
 import BotonRegresar from "../components/BotonRegresar";
 import { esSuperAdmin, rutaInicial } from "../utils/roles";
 import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
@@ -311,62 +312,20 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
-      <aside className="sidebar">
-        <div
-          className="sidebar__logo"
-          onClick={() => navigate(rutaInicial(usuario?.rol))}
-          style={{ cursor: "pointer" }}
-          role="button"
-          aria-label="Ir al inicio"
-        >
-          <img src="/logob1.png" alt="Magnus" style={{ height: 70, marginRight: "auto" }} />
-        </div>
-
-        <nav className="sidebar__menu">
-          <button className="menu-item active" type="button" onClick={() => navigate("/dashboard")}>
-            <span>▣</span>
-            Dashboard
-          </button>
-
-          <button className="menu-item" type="button" onClick={() => navigate("/ficha-datos-generales")}>
-            <span>☑</span>
-            Cuestionario
-          </button>
-
-          {esSuperAdmin(usuario?.rol) && (
-            <button className="menu-item" type="button" onClick={() => navigate("/panel")}>
-              <span>⚙</span>
-              Panel Admin
-            </button>
-          )}
-
-          <button className="menu-item" type="button" onClick={() => navigate("/reportes")}>
-            <span>▤</span>
-            Reportes
-          </button>
-
-          {["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol) && (
-            <button className="menu-item" type="button" onClick={() => navigate("/respuestas")}>
-              <span>☰</span>
-              Respuestas
-            </button>
-          )}
-
-          <button className="menu-item" type="button" onClick={handleLogout}>
-            <span>✕</span>
-            Cerrar sesión
-          </button>
-        </nav>
-
-        <div className="sidebar__footer">
-          <div className="footer-icon">◇</div>
-          <span>
-            Tu bienestar también
-            <br />
-            es parte del trabajo
-          </span>
-        </div>
-      </aside>
+      <AppSidebar
+        mostrarPie
+        onLogoClick={() => navigate(rutaInicial(usuario?.rol))}
+        items={[
+          { key: "dash", label: "Dashboard", icono: "▣", activo: true, onClick: () => navigate("/dashboard") },
+          { key: "cuest", label: "Cuestionario", icono: "☑", onClick: () => navigate("/ficha-datos-generales") },
+          ...(esSuperAdmin(usuario?.rol) ? [{ key: "panel", label: "Panel Admin", icono: "⚙", onClick: () => navigate("/panel") }] : []),
+          { key: "rep", label: "Reportes", icono: "▤", onClick: () => navigate("/reportes") },
+          ...(["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol)
+            ? [{ key: "resp", label: "Respuestas", icono: "☰", onClick: () => navigate("/respuestas") }]
+            : []),
+          { key: "salir", label: "Cerrar sesión", icono: "✕", onClick: handleLogout },
+        ]}
+      />
 
       <main className="dashboard__main">
         <BotonRegresar tono="oscuro" />

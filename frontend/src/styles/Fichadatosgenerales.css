@@ -212,7 +212,7 @@
   object-fit: contain;
 }
 
-@media (max-width: 00px) {
+@media (max-width: 600px) {
   .ficha-logos img {
     height: 36px;
   }

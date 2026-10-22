@@ -10,6 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import ProfileMenu from "../components/ProfileMenu";
 import { fetchPanel } from "../api/panel";
 import { editarUsuarioAdmin, reenviarCodigoVerificacion, verificarResolucion } from "../api/perfil";
+import AppSidebar from "../components/AppSidebar";
 import ModalUsuarioAdmin from "../components/ModalUsuarioAdmin";
 import "../styles/dashboard.css";
 import "../styles/Panel.css";
@@ -209,34 +210,13 @@ export default function Panel() {
 
   return (
     <div className="dashboard panel-shell">
-      <aside className="sidebar">
-        <div
-          className="sidebar__logo"
-          onClick={() => navigate("/Inicio")}
-          style={{ cursor: "pointer" }}
-          role="button"
-          aria-label="Ir al inicio"
-        >
-          <img src="/logob1.png" alt="Magnus" style={{ height: 70, marginRight: "auto" }} />
-        </div>
-
-        <nav className="sidebar__menu">
-          {SECCIONES.map((s) => (
-            <button
-              key={s.id}
-              className={`menu-item ${seccion === s.id ? "active" : ""}`}
-              type="button"
-              onClick={() => setSeccion(s.id)}
-            >
-              {s.label}
-            </button>
-          ))}
-          <button className="menu-item" type="button" onClick={handleLogout}>
-            <span>✕</span>
-            Cerrar sesión
-          </button>
-        </nav>
-      </aside>
+      <AppSidebar
+        onLogoClick={() => navigate("/Inicio")}
+        items={[
+          ...SECCIONES.map((x) => ({ key: x.id, label: x.label, activo: seccion === x.id, onClick: () => setSeccion(x.id) })),
+          { key: "salir", label: "Cerrar sesión", icono: "✕", onClick: handleLogout },
+        ]}
+      />
 
       {/* =====================================================
           CONTENIDO

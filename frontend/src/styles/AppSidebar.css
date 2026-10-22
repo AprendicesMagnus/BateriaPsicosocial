@@ -1,0 +1,96 @@
+/* Sidebar compartido: barra horizontal en Panel (escritorio) y menú ☰ en celular (Dashboard y Panel). */
+.sidebar__burger {
+  display: none;
+  margin-left: auto;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  border-radius: 8px;
+  width: 40px;
+  height: 38px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* ---------- Escritorio: Panel como barra superior ---------- */
+@media (min-width: 861px) {
+  .panel-shell .sidebar {
+    width: 100%;
+    min-height: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    padding: 10px 24px;
+  }
+  .panel-shell .sidebar__logo {
+    padding: 0 18px 0 0;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .panel-shell .sidebar__menu {
+    margin-top: 0;
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-shell .menu-item {
+    width: auto;
+    margin-bottom: 0;
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 8px 16px;
+  }
+  .panel-shell .menu-item.active {
+    border-color: transparent;
+  }
+  .panel-shell .menu-item:last-child {
+    margin-left: auto;
+  }
+}
+
+/* ---------- Celular / tablet: barra superior con ☰ ---------- */
+@media (max-width: 860px) {
+  .dashboard {
+    flex-direction: column;
+  }
+  .dashboard .sidebar {
+    display: flex;
+    width: 100%;
+    min-height: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 8px 16px;
+  }
+  .dashboard .sidebar__logo {
+    padding: 0;
+    border-bottom: none;
+    border-right: none;
+  }
+  .dashboard .sidebar__logo img {
+    height: 46px !important;
+  }
+  .dashboard .sidebar__burger {
+    display: block;
+  }
+  .dashboard .sidebar__menu {
+    display: none;
+    width: 100%;
+    margin-top: 8px;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .dashboard .sidebar__menu--abierto {
+    display: flex;
+  }
+  .dashboard .sidebar .menu-item {
+    margin-bottom: 0;
+    width: 100%;
+    min-height: 42px;
+  }
+  .dashboard .sidebar__footer {
+    display: none;
+  }
+}

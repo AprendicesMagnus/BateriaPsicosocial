@@ -699,10 +699,6 @@ body {
 
 @media (max-width: 900px) {
 
-  .sidebar {
-    width: 150px;
-  }
-
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -718,17 +714,17 @@ body {
 
 @media (max-width: 650px) {
 
-  .sidebar {
-    display: none;
-  }
-
   .dashboard__main {
     padding: 15px;
   }
 
   .category-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+  }
+
+  .category-tabs button {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
   }
 }
 
@@ -950,5 +946,19 @@ body {
   .indicator-row {
     grid-template-columns: minmax(60px, 75px) minmax(35px, 1fr) 38px;
     gap: 7px;
+  }
+}
+
+/* Celular: el contenido no debe desbordar la pantalla */
+@media (max-width: 860px) {
+  .dashboard__main {
+    min-width: 0;
+    width: 100%;
+    padding: 16px 14px;
+  }
+
+  .dashboard__header {
+    flex-wrap: wrap;
+    gap: 12px;
   }
 }
