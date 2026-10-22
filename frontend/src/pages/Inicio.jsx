@@ -99,6 +99,8 @@ const CONFIANZA = [
 
 export default function Inicio() {
   const [slide, setSlide] = useState(0);
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
+  const [menuEmpresasMovilAbierto, setMenuEmpresasMovilAbierto] = useState(false);
   const [menuEmpresasAbierto, setMenuEmpresasAbierto] = useState(false);
   const [menuTiendaAbierto, setMenuTiendaAbierto] = useState(false);
   const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
@@ -193,6 +195,37 @@ export default function Inicio() {
               }}
             />
           </div>
+
+          <button
+            type="button"
+            className="mobile-menu-toggle"
+            aria-label={menuMovilAbierto ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuMovilAbierto}
+            onClick={() => setMenuMovilAbierto((abierto) => !abierto)}
+          >
+            {menuMovilAbierto ? "×" : "☰"}
+          </button>
+
+          <nav className={`mobile-nav ${menuMovilAbierto ? "mobile-nav--open" : ""}`} aria-label="Navegación móvil">
+            <a href="#como-funciona" onClick={() => setMenuMovilAbierto(false)}>Cómo funciona</a>
+            <div className="mobile-nav__group mobile-nav__group--dropdown">
+              <button
+                type="button"
+                aria-expanded={menuEmpresasMovilAbierto}
+                onClick={() => setMenuEmpresasMovilAbierto((abierto) => !abierto)}
+              >
+                Empresas <span aria-hidden="true">{menuEmpresasMovilAbierto ? "−" : "+"}</span>
+              </button>
+              {menuEmpresasMovilAbierto && (
+                <div className="mobile-nav__submenu">
+                  <Link to="/verificar-nit" onClick={() => { setMenuMovilAbierto(false); setMenuEmpresasMovilAbierto(false); }}>Crear empresa</Link>
+                  <Link to="/mis-empresas" onClick={() => { setMenuMovilAbierto(false); setMenuEmpresasMovilAbierto(false); }}>Mis empresas</Link>
+                </div>
+              )}
+            </div>
+            <button type="button" onClick={() => { setMenuMovilAbierto(false); navigate("/pago"); }}>Tienda</button>
+            <Link to="/dashboard" onClick={() => setMenuMovilAbierto(false)}>Encuestas</Link>
+          </nav>
 
           <nav className="nav__links">
             <a href="#como-funciona">Cómo funciona</a>

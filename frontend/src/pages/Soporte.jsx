@@ -187,9 +187,6 @@ export default function Soporte() {
     <div className="app-shell-page soporte-fondo">
       <AppTopbar />
       <main className="app-hero">
-        <div className="app-decor app-decor--1" />
-        <div className="app-decor app-decor--2" />
-        <div className="app-decor app-decor--3" />
 
         <div className="app-content soporte-page">
           <BotonRegresar tono="oscuro" />
@@ -202,36 +199,13 @@ export default function Soporte() {
             </p>
           </header>
 
-          <section className="soporte-card soporte-card--guia">
-            <h2>Primeros pasos</h2>
-            <div className="soporte-tabs">
-              {ORDEN_ROLES.map((rol) => {
-                const Icono = GUIAS_POR_ROL[rol].icono;
-                const activo = rol === rolActivo;
-                return (
-                  <button
-                    key={rol}
-                    type="button"
-                    className={`soporte-tab ${activo ? "soporte-tab--activo" : ""}`}
-                    style={activo ? { "--tab-color": GUIAS_POR_ROL[rol].color } : undefined}
-                    onClick={() => setRolActivo(rol)}
-                  >
-                    <Icono size={18} />
-                    {etiquetaRol(rol)}
-                    {rol === usuario?.rol && <span className="soporte-tab-tu">tú</span>}
-                  </button>
-                );
-              })}
-            </div>
-
-            <ol className="soporte-guia" style={{ "--guia-color": guia.color }}>
-              {pasos.map((paso, i) => (
-                <li key={i}>
-                  <span className="soporte-guia-num">{i + 1}</span>
-                  <span>{paso}</span>
-                </li>
+          <section className="soporte-card">
+            <h2>Preguntas frecuentes</h2>
+            <div className="soporte-faq-lista">
+              {preguntas.map((item) => (
+                <PreguntaFAQ key={item.pregunta} item={item} />
               ))}
-            </ol>
+            </div>
           </section>
 
           <section className="soporte-card">
@@ -266,13 +240,36 @@ export default function Soporte() {
             </button>
           </section>
 
-          <section className="soporte-card">
-            <h2>Preguntas frecuentes</h2>
-            <div className="soporte-faq-lista">
-              {preguntas.map((item) => (
-                <PreguntaFAQ key={item.pregunta} item={item} />
-              ))}
+          <section className="soporte-card soporte-card--guia">
+            <h2>Primeros pasos</h2>
+            <div className="soporte-tabs">
+              {ORDEN_ROLES.map((rol) => {
+                const Icono = GUIAS_POR_ROL[rol].icono;
+                const activo = rol === rolActivo;
+                return (
+                  <button
+                    key={rol}
+                    type="button"
+                    className={`soporte-tab ${activo ? "soporte-tab--activo" : ""}`}
+                    style={activo ? { "--tab-color": GUIAS_POR_ROL[rol].color } : undefined}
+                    onClick={() => setRolActivo(rol)}
+                  >
+                    <Icono size={18} />
+                    {etiquetaRol(rol)}
+                    {rol === usuario?.rol && <span className="soporte-tab-tu">tú</span>}
+                  </button>
+                );
+              })}
             </div>
+
+            <ol className="soporte-guia" style={{ "--guia-color": guia.color }}>
+              {pasos.map((paso, i) => (
+                <li key={i}>
+                  <span className="soporte-guia-num">{i + 1}</span>
+                  <span>{paso}</span>
+                </li>
+              ))}
+            </ol>
           </section>
 
           {SECCIONES_INFO.map(({ clave, titulo, icono: Icono }) =>
