@@ -109,6 +109,7 @@ const CONFIANZA = [
 
 export default function Landing() {
   const [slide, setSlide] = useState(0);
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const [planesAbierto, setPlanesAbierto] = useState(false);
 
   // Imagen anterior
@@ -146,39 +147,44 @@ export default function Landing() {
       <header className="nav">
         <div className="container nav__inner">
 
-          <div
-            className="nav__logos"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 15,
-            }}
-          >
+          <div className="nav__logos">
             <img
               src="/logo a 2_Mesa de trabajo 1.jpg"
               alt="Magnus"
-              style={{
-                height: 120,
-                marginRight: "auto",
-              }}
+              className="nav__logo nav__logo--magnus"
             />
 
             <img
               src="/logo javeriana.jpg"
               alt="Javeriana"
-              style={{
-                height: 50,
-              }}
+              className="nav__logo nav__logo--javeriana"
             />
 
             <img
               src="/ministerio.jpg"
               alt="Ministerio"
-              style={{
-                height: 110,
-              }}
+              className="nav__logo nav__logo--ministerio"
             />
           </div>
+
+          <button
+            type="button"
+            className="mobile-menu-toggle"
+            aria-label={menuMovilAbierto ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuMovilAbierto}
+            onClick={() => setMenuMovilAbierto((abierto) => !abierto)}
+          >
+            {menuMovilAbierto ? "×" : "☰"}
+          </button>
+
+          <nav className={`mobile-nav ${menuMovilAbierto ? "mobile-nav--open" : ""}`} aria-label="Navegación móvil">
+            <a href="#como-funciona" onClick={() => setMenuMovilAbierto(false)}>Cómo funciona</a>
+            <button type="button" onClick={() => { setPlanesAbierto(true); setMenuMovilAbierto(false); }}>Planes</button>
+            <a href="#beneficios" onClick={() => setMenuMovilAbierto(false)}>Beneficios</a>
+            <a href="#normativa" onClick={() => setMenuMovilAbierto(false)}>Normativa</a>
+            <Link to="/iniciar-sesion" onClick={() => setMenuMovilAbierto(false)}>Iniciar sesión</Link>
+            <Link to="/crear-cuenta" className="mobile-nav__create-account" onClick={() => setMenuMovilAbierto(false)}>Crear cuenta</Link>
+          </nav>
 
           <nav className="nav__links">
             <a href="#como-funciona">Cómo funciona</a>

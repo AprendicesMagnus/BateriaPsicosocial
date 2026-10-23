@@ -733,3 +733,95 @@ button {
     height: 32px;
   }
 }
+
+
+/* =========================================================
+   CELULAR: menú lateral pasa arriba como barra con scroll horizontal
+========================================================= */
+@media (max-width: 860px) {
+  .questionnaire-page {
+    flex-direction: column;
+  }
+
+  .questionnaire-sidebar {
+    width: 100%;
+    min-height: 0;
+    padding: 8px 12px;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .questionnaire-logo {
+    height: auto;
+    padding: 0;
+    border-bottom: none;
+  }
+
+  .questionnaire-logo img {
+    height: 44px !important;
+  }
+
+  .questionnaire-menu {
+    margin-top: 0;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .questionnaire-menu-item {
+    width: auto;
+    flex: 0 0 auto;
+    min-height: 44px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .questionnaire-sidebar-footer {
+    display: none;
+  }
+
+  .questionnaire-main {
+    padding: 16px 12px;
+  }
+}
+
+/* Celular: cada pregunta se apila (texto arriba, opciones una debajo de otra) */
+@media (max-width: 860px) {
+  .questions-card {
+    padding: 14px 10px;
+    min-height: 0;
+  }
+
+  .answers-header {
+    display: none;
+  }
+
+  .questions-list {
+    overflow-x: visible;
+  }
+
+  .question-row {
+    min-width: 0;
+    grid-template-columns: 32px 1fr;
+    row-gap: 4px;
+    padding: 10px;
+  }
+
+  .answer-option {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    height: auto;
+    min-height: 40px;
+    padding: 4px 6px;
+    border-radius: 6px;
+  }
+
+  .answer-option small {
+    font-size: 13px;
+  }
+}

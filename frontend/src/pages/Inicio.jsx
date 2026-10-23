@@ -100,12 +100,15 @@ const CONFIANZA = [
 
 export default function Inicio() {
   const [slide, setSlide] = useState(0);
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
+  const [menuEmpresasMovilAbierto, setMenuEmpresasMovilAbierto] = useState(false);
   const [menuEmpresasAbierto, setMenuEmpresasAbierto] = useState(false);
   const [menuTiendaAbierto, setMenuTiendaAbierto] = useState(false);
   const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
   const menuEmpresasRef = useRef(null);
   const menuTiendaRef = useRef(null);
   const menuPerfilRef = useRef(null);
+  const menuPerfilMovilRef = useRef(null);
 
   // Ajusta "cerrarSesion" si tu AuthContext la expone con otro nombre.
   const { usuario, cerrarSesion } = useAuth();
@@ -120,7 +123,9 @@ export default function Inicio() {
       if (menuTiendaRef.current && !menuTiendaRef.current.contains(e.target)) {
         setMenuTiendaAbierto(false);
       }
-      if (menuPerfilRef.current && !menuPerfilRef.current.contains(e.target)) {
+      const clicDentroPerfilEscritorio = menuPerfilRef.current?.contains(e.target);
+      const clicDentroPerfilMovil = menuPerfilMovilRef.current?.contains(e.target);
+      if (!clicDentroPerfilEscritorio && !clicDentroPerfilMovil) {
         setMenuPerfilAbierto(false);
       }
     }
@@ -147,8 +152,8 @@ export default function Inicio() {
 
   function handleCerrarSesion() {
     setMenuPerfilAbierto(false);
-    cerrarSesion?.();
-    navigate("/iniciar-sesion");
+    const sesionCerrada = cerrarSesion?.();
+    if (sesionCerrada) navigate("/iniciar-sesion", { replace: true });
   }
 
   return (
@@ -194,6 +199,66 @@ export default function Inicio() {
               }}
             />
           </div>
+
+          <button
+            type="button"
+            className="mobile-menu-toggle"
+            aria-label={menuMovilAbierto ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuMovilAbierto}
+            onClick={() => setMenuMovilAbierto((abierto) => !abierto)}
+          >
+            {menuMovilAbierto ? "×" : "☰"}
+          </button>
+
+          <nav className={`mobile-nav ${menuMovilAbierto ? "mobile-nav--open" : ""}`} aria-label="Navegación móvil">
+            <div className="mobile-profile-group" ref={menuPerfilMovilRef}>
+              <button
+                type="button"
+                className="mobile-profile-trigger"
+                onClick={() => setMenuPerfilAbierto((abierto) => !abierto)}
+                aria-expanded={menuPerfilAbierto}
+              >
+                {usuario?.fotoUrl ? (
+                  <img src={urlArchivo(usuario.fotoUrl)} alt={nombreUsuario} className="app-avatar app-avatar--foto" />
+                ) : (
+                  <span className="app-avatar">{iniciales}</span>
+                )}
+                <span className="app-profile-text">
+                  <span className="app-profile-name">{nombreUsuario || "Usuario"}</span>
+                  {rolUsuario && <span className="app-profile-role">{rolUsuario}</span>}
+                </span>
+                <span className="mobile-profile-chevron" aria-hidden="true">{menuPerfilAbierto ? "−" : "+"}</span>
+              </button>
+              {menuPerfilAbierto && (
+                <div className="mobile-profile-submenu">
+                  <button type="button" onClick={() => { setMenuMovilAbierto(false); handleVerPerfil(); }}>Ver perfil</button>
+                  {esSuperAdmin(usuario?.rol) && (
+                    <button type="button" onClick={() => { setMenuPerfilAbierto(false); setMenuMovilAbierto(false); navigate("/panel"); }}>Panel de Administrador</button>
+                  )}
+                  <button type="button" onClick={() => { setMenuPerfilAbierto(false); setMenuMovilAbierto(false); navigate("/soporte"); }}>Centro de ayuda</button>
+                  <button type="button" className="app-profile-dropdown-danger" onClick={() => { setMenuPerfilAbierto(false); setMenuMovilAbierto(false); handleCerrarSesion(); }}>Cerrar sesión</button>
+                </div>
+              )}
+            </div>
+            <a href="#como-funciona" onClick={() => setMenuMovilAbierto(false)}>Cómo funciona</a>
+            <div className="mobile-nav__group mobile-nav__group--dropdown">
+              <button
+                type="button"
+                aria-expanded={menuEmpresasMovilAbierto}
+                onClick={() => setMenuEmpresasMovilAbierto((abierto) => !abierto)}
+              >
+                Empresas <span aria-hidden="true">{menuEmpresasMovilAbierto ? "−" : "+"}</span>
+              </button>
+              {menuEmpresasMovilAbierto && (
+                <div className="mobile-nav__submenu">
+                  <Link to="/verificar-nit" onClick={() => { setMenuMovilAbierto(false); setMenuEmpresasMovilAbierto(false); }}>Crear empresa</Link>
+                  <Link to="/mis-empresas" onClick={() => { setMenuMovilAbierto(false); setMenuEmpresasMovilAbierto(false); }}>Mis empresas</Link>
+                </div>
+              )}
+            </div>
+            <button type="button" onClick={() => { setMenuMovilAbierto(false); navigate("/pago"); }}>Tienda</button>
+            <Link to="/dashboard" onClick={() => setMenuMovilAbierto(false)}>Encuestas</Link>
+          </nav>
 
           <nav className="nav__links">
             <a href="#como-funciona">Cómo funciona</a>
@@ -385,19 +450,19 @@ export default function Inicio() {
 
             {menuPerfilAbierto && (
               <div className="app-profile-dropdown">
-                <button type="button" onClick={handleVerPerfil}>
+                <Link to="/perfil" onClick={() => setMenuPerfilAbierto(false)}>
                   Ver perfil
-                </button>
+                </Link>
 
                 {esSuperAdmin(usuario?.rol) && (
-                  <button type="button" onClick={() => { setMenuPerfilAbierto(false); navigate("/panel"); }}>
-                    Panel De Administrador
-                  </button>
+                  <Link to="/panel" onClick={() => setMenuPerfilAbierto(false)}>
+                    Panel de Administrador
+                  </Link>
                 )}
 
-                <button type="button" onClick={() => { setMenuPerfilAbierto(false); navigate("/soporte"); }}>
+                <Link to="/soporte" onClick={() => setMenuPerfilAbierto(false)}>
                   Centro de ayuda
-                </button>
+                </Link>
 
                 <button
                   type="button"
