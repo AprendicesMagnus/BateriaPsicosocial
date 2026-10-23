@@ -60,17 +60,25 @@
   z-index: 10;
 }
 
-.app-profile-dropdown button {
+.app-profile-dropdown button,
+.app-profile-dropdown a {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
   background: none;
   border: none;
   text-align: left;
   padding: 10px 12px;
+  font-family: inherit;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-900);
+  text-decoration: none;
   border-radius: var(--radius-md);
+  cursor: pointer;
 }
-.app-profile-dropdown button:hover {
+.app-profile-dropdown button:hover,
+.app-profile-dropdown a:hover {
   background: var(--bg-100);
 }
 

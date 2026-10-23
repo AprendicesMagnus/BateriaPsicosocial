@@ -912,6 +912,20 @@
   .mobile-nav a:hover,
   .mobile-nav button:hover { background: #f3f5f9; }
 
+  /* En móvil, acceso a sesión y registro solo desde el menú desplegable. */
+  .nav__actions { display: none !important; }
+
+  .mobile-nav .mobile-nav__create-account {
+    background: var(--gold-500);
+    color: var(--navy-950);
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .mobile-nav .mobile-nav__create-account:hover {
+    background: var(--gold-600);
+  }
+
   .nav__actions {
     grid-column: 1 / -1;
     grid-row: 3;

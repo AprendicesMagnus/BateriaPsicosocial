@@ -328,11 +328,12 @@ export default function Dashboard() {
       />
 
       <main className="dashboard__main">
-        <BotonRegresar tono="oscuro" />
+        <div className="dashboard__mobile-toolbar">
+          <BotonRegresar tono="oscuro" />
+          <ProfileMenu />
+        </div>
         <header className="dashboard__header">
           <div>
-            <h1>Bienvenido, {usuario?.nombre || "Usuario"}</h1>
-            <p>Tu bienestar también es parte del trabajo</p>
             {eligeEmpresa && misEmpresas.length > 0 && (
               <label style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13 }}>
                 <span>Empresa activa:</span>
@@ -353,7 +354,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          <ProfileMenu />
         </header>
 
         <section className="welcome-card">

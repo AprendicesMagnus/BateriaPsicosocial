@@ -182,6 +182,8 @@ export default function Landing() {
             <button type="button" onClick={() => { setPlanesAbierto(true); setMenuMovilAbierto(false); }}>Planes</button>
             <a href="#beneficios" onClick={() => setMenuMovilAbierto(false)}>Beneficios</a>
             <a href="#normativa" onClick={() => setMenuMovilAbierto(false)}>Normativa</a>
+            <Link to="/iniciar-sesion" onClick={() => setMenuMovilAbierto(false)}>Iniciar sesión</Link>
+            <Link to="/crear-cuenta" className="mobile-nav__create-account" onClick={() => setMenuMovilAbierto(false)}>Crear cuenta</Link>
           </nav>
 
           <nav className="nav__links">
