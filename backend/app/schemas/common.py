@@ -832,6 +832,10 @@ class TicketSoporteCreate(BaseModel):
     mensaje: str = Field(min_length=1, max_length=2000)
 
 
+class TicketSoporteRespuesta(BaseModel):
+    respuesta: str = Field(min_length=1, max_length=2000)
+
+
 SeccionSoporte = Literal["guia_SUPER_ADMINISTRADOR", "guia_JEFE", "guia_ADMINISTRADOR", "guia_EVALUADOR_SST", "guia_RESPONSABLE_SST", "faq", "glosario", "riesgo", "novedades", "atencion"]
 
 

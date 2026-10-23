@@ -1,0 +1,66 @@
+.guia-interpretacion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guia-interpretacion__titulo {
+  margin: 0;
+  font-size: 16px;
+  color: var(--ink-900);
+}
+
+.guia-interpretacion__intro {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+
+.guia-interpretacion__bloque {
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+
+.guia-interpretacion__bloque > summary {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+  cursor: pointer;
+}
+
+.guia-interpretacion__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.guia-interpretacion__fila {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.guia-interpretacion__nivel {
+  flex-shrink: 0;
+  min-width: 120px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.guia-interpretacion__texto {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-700);
+}
+
+.guia-interpretacion__texto strong {
+  color: var(--ink-900);
+}

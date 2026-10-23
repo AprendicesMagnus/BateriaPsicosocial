@@ -8,7 +8,8 @@ import {
 } from "react-icons/hi";
 import { useAuth } from "../context/AuthContext";
 import ProfileMenu from "../components/ProfileMenu";
-import { fetchPanel } from "../api/panel";
+import CampanaNotificaciones from "../components/CampanaNotificaciones";
+import { fetchPanel, descargarExportacionPanel } from "../api/panel";
 import { editarUsuarioAdmin, reenviarCodigoVerificacion, verificarResolucion } from "../api/perfil";
 import ModalUsuarioAdmin from "../components/ModalUsuarioAdmin";
 import "../styles/dashboard.css";
@@ -17,8 +18,10 @@ import BotonRegresar from "../components/BotonRegresar";
 import Paginador from "../components/Paginador";
 import PanelPlanes from "../components/PanelPlanes";
 import PanelSoporte from "../components/PanelSoporte";
+import PanelEvolucion from "../components/PanelEvolucion";
 import "../styles/PanelAcciones.css";
 import { usePaginacion } from "../hooks/usePaginacion";
+import { normalizar } from "../utils/encuestas";
 
 /* =========================================================
    CONFIGURACIÓN DE LA VISTA
@@ -49,6 +52,10 @@ const TIPO_AUDITORIA = {
   Resultados: { icono: HiOutlineLockClosed, clase: "psicologo" },
   Consentimientos: { icono: HiOutlineCheckCircle, clase: "info" },
   Usuarios: { icono: HiOutlineUser, clase: "neutro" },
+  Accesos: { icono: HiOutlineUser, clase: "info" },
+  Evaluaciones: { icono: HiOutlineCheckCircle, clase: "psicologo" },
+  Empresas: { icono: HiOutlineUser, clase: "neutro" },
+  Planes: { icono: HiOutlineLockClosed, clase: "neutro" },
   Enlaces: { icono: HiOutlineLink, clase: "peligro" },
 };
 
@@ -56,6 +63,7 @@ const TIPO_AUDITORIA = {
 const SECCIONES = [
   { id: "usuarios", label: "Usuarios y roles" },
   { id: "empresas", label: "Empresas y compras" },
+  { id: "evolucion", label: "Evolución mensual" },
   { id: "planes", label: "Planes de baterías" },
   { id: "soporte", label: "Centro de ayuda" },
   { id: "auditoria", label: "Auditoría y privacidad" },
@@ -78,9 +86,22 @@ const TEXTO_ACCION = {
   FINALIZAR_EVALUACION: "finalizó una evaluación",
   INFORME_INDIVIDUAL_GENERADO: "consultó un resultado individual",
   INFORME_AGRUPADO_GENERADO: "descargó un informe agregado",
+  INFORME_DESCARGADO: "descargó un informe",
+  EDITAR_EMPRESA: "editó una empresa",
+  EDITAR_RESPONSABLE_EMPRESA: "editó el responsable de una empresa",
+  ELIMINAR_EMPRESA: "eliminó una empresa",
+  CAMBIAR_EMPRESA_ACTIVA: "cambió su empresa activa",
+  INVITAR_USUARIO: "invitó a un usuario",
+  GUARDAR_RESOLUCION: "guardó su resolución",
+  VERIFICAR_RESOLUCION: "verificó una resolución",
+  QUITAR_VERIFICACION_RESOLUCION: "quitó la verificación de una resolución",
+  CREAR_PLAN: "creó un plan",
+  EDITAR_PLAN: "editó un plan",
+  ELIMINAR_PLAN: "eliminó un plan",
+  EXPORTAR_PANEL: "exportó una tabla del panel",
 };
 
-const FILTROS = ["Todo", "Resultados", "Usuarios", "Enlaces"];
+const FILTROS = ["Todo", "Accesos", "Evaluaciones", "Resultados", "Usuarios", "Empresas", "Planes", "Enlaces"];
 const POR_PAGINA = 10; // registros que se muestran a la vez en cada tabla
 
 const rol = (codigo) => ROLES[codigo] ?? { label: codigo, clase: "trabajador" };
@@ -122,6 +143,7 @@ export default function Panel() {
   const { token, cerrarSesion } = useAuth();
   const [busqueda, setBusqueda] = useState("");
   const [filtroAuditoria, setFiltroAuditoria] = useState("Todo");
+  const [busquedaAuditoria, setBusquedaAuditoria] = useState("");
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -129,6 +151,19 @@ export default function Panel() {
   const [modalUsuario, setModalUsuario] = useState(null); // {modo: "invitar" | "editar", usuario?}
   const [aviso, setAviso] = useState(null); // {tipo: "ok" | "error", texto}
   const [seccion, setSeccion] = useState("usuarios");
+  const [exportando, setExportando] = useState(false);
+
+  async function handleExportar(tabla, opciones = {}) {
+    setExportando(true);
+    try {
+      await descargarExportacionPanel(token, tabla, opciones);
+      setAviso({ tipo: "ok", texto: `Exportación de ${tabla} generada con éxito.` });
+    } catch (err) {
+      setAviso({ tipo: "error", texto: err.message || `No fue posible exportar ${tabla}.` });
+    } finally {
+      setExportando(false);
+    }
+  }
 
   useEffect(() => {
     if (!token) return;
@@ -194,15 +229,22 @@ export default function Panel() {
   const usuariosFiltrados = usuarios.filter((u) => coincide(u.nombre, u.correo, u.empresa));
   const empresasFiltradas = empresas.filter((e) => coincide(e.nombre, e.nit, e.responsable));
 
-  const auditoriaFiltrada =
-    filtroAuditoria === "Todo"
-      ? auditoria
-      : auditoria.filter((a) => a.tipo === filtroAuditoria);
+  const textoBusquedaAuditoria = normalizar(busquedaAuditoria.trim());
+  const auditoriaFiltrada = auditoria
+    .filter((a) => filtroAuditoria === "Todo" || a.tipo === filtroAuditoria)
+    .filter((a) => {
+      if (!textoBusquedaAuditoria) return true;
+      const textoAccion = TEXTO_ACCION[a.accion] ?? a.accion;
+      return (
+        normalizar(a.usuario).includes(textoBusquedaAuditoria) ||
+        normalizar(textoAccion).includes(textoBusquedaAuditoria)
+      );
+    });
 
   // Paginación (10 por página). Vuelve a la página 1 al buscar o cambiar de filtro.
   const pagUsuarios = usePaginacion(usuariosFiltrados, POR_PAGINA, [texto]);
   const pagEmpresas = usePaginacion(empresasFiltradas, POR_PAGINA, [texto]);
-  const pagAuditoria = usePaginacion(auditoriaFiltrada, POR_PAGINA, [filtroAuditoria]);
+  const pagAuditoria = usePaginacion(auditoriaFiltrada, POR_PAGINA, [filtroAuditoria, busquedaAuditoria]);
 
   const disponibles = saldo.compradas - saldo.usadas;
   const porcentajeUsado = porcentaje(saldo.usadas, saldo.compradas);
@@ -226,7 +268,7 @@ export default function Panel() {
               key={s.id}
               className={`menu-item ${seccion === s.id ? "active" : ""}`}
               type="button"
-              onClick={() => setSeccion(s.id)}
+              onClick={() => { setAviso(null); setSeccion(s.id); }}
             >
               {s.label}
             </button>
@@ -259,7 +301,10 @@ export default function Panel() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
-            <ProfileMenu />
+            <div className="app-acciones-usuario">
+              <CampanaNotificaciones />
+              <ProfileMenu />
+            </div>
           </div>
         </header>
 
@@ -276,9 +321,19 @@ export default function Panel() {
                   <h2>Usuarios y roles</h2>
                   <span>Registrados con correo o Google. El Responsable SST se crea al registrar una empresa.</span>
                 </div>
-                <button type="button" className="adm-btn adm-btn--oscuro" onClick={() => setModalUsuario({ modo: "invitar" })}>
-                  + Invitar usuario
-                </button>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn--borde"
+                    disabled={exportando}
+                    onClick={() => handleExportar("usuarios", { buscar: busqueda.trim() })}
+                  >
+                    {exportando ? "Exportando..." : "Exportar a Excel"}
+                  </button>
+                  <button type="button" className="adm-btn adm-btn--oscuro" onClick={() => setModalUsuario({ modo: "invitar" })}>
+                    + Invitar usuario
+                  </button>
+                </div>
               </div>
 
               {aviso && <div className={`plan-mensaje plan-mensaje--${aviso.tipo}`}>{aviso.texto}</div>}
@@ -368,6 +423,7 @@ export default function Panel() {
             {/* ---------- EMPRESAS ---------- */}
             {seccion === "empresas" && (
             <>
+            {aviso && <div className={`plan-mensaje plan-mensaje--${aviso.tipo}`}>{aviso.texto}</div>}
             <div className="adm-dos-columnas">
               <section id="empresas" className="adm-card">
                 <div className="adm-card__head">
@@ -375,9 +431,19 @@ export default function Panel() {
                     <h2>Empresas</h2>
                     <span>Con su Responsable SST y evaluaciones usadas.</span>
                   </div>
-                  <button type="button" className="adm-btn adm-btn--borde" onClick={() => navigate("/verificar-nit")}>
-                    + Crear empresa
-                  </button>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                    <button
+                      type="button"
+                      className="adm-btn adm-btn--borde"
+                      disabled={exportando}
+                      onClick={() => handleExportar("empresas", { buscar: busqueda.trim() })}
+                    >
+                      {exportando ? "Exportando..." : "Exportar a Excel"}
+                    </button>
+                    <button type="button" className="adm-btn adm-btn--borde" onClick={() => navigate("/verificar-nit")}>
+                      + Crear empresa
+                    </button>
+                  </div>
                 </div>
 
                 <div className="adm-tabla-wrap">
@@ -430,6 +496,14 @@ export default function Panel() {
                   <h2>Compras realizadas por las empresas</h2>
                   <span>Evaluaciones compradas con Visa, Mastercard o PSE.</span>
                 </div>
+                <button
+                  type="button"
+                  className="adm-btn adm-btn--borde"
+                  disabled={exportando}
+                  onClick={() => handleExportar("compras")}
+                >
+                  {exportando ? "Exportando..." : "Exportar a Excel"}
+                </button>
               </div>
 
               <div className="adm-compras">
@@ -485,6 +559,8 @@ export default function Panel() {
             </>
             )}
 
+            {seccion === "evolucion" && <PanelEvolucion token={token} />}
+
             {seccion === "planes" && <PanelPlanes />}
 
             {seccion === "soporte" && <PanelSoporte />}
@@ -497,19 +573,48 @@ export default function Panel() {
                   <h2>Auditoría y privacidad</h2>
                   <span>Registro de accesos, consentimientos y cambios. Ley 1581 de 2012.</span>
                 </div>
-                <div className="adm-filtros">
-                  {FILTROS.map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      className={`adm-filtro ${filtroAuditoria === f ? "is-active" : ""}`}
-                      aria-pressed={filtroAuditoria === f}
-                      onClick={() => setFiltroAuditoria(f)}
-                    >
-                      {f}
-                    </button>
-                  ))}
+                <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                  <div className="adm-filtros">
+                    {FILTROS.map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        className={`adm-filtro ${filtroAuditoria === f ? "is-active" : ""}`}
+                        aria-pressed={filtroAuditoria === f}
+                        onClick={() => setFiltroAuditoria(f)}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="adm-btn adm-btn--borde"
+                    disabled={exportando}
+                    onClick={() =>
+                      handleExportar("auditoria", {
+                        filtro: filtroAuditoria,
+                        buscar: busquedaAuditoria.trim(),
+                      })
+                    }
+                  >
+                    {exportando ? "Exportando..." : "Exportar a Excel"}
+                  </button>
                 </div>
+              </div>
+
+              {aviso && <div className={`plan-mensaje plan-mensaje--${aviso.tipo}`}>{aviso.texto}</div>}
+
+              <div style={{ marginBottom: "0.75rem" }}>
+                <label htmlFor="audit-buscar" className="adm-sr-only">Buscar en auditoría</label>
+                <input
+                  id="audit-buscar"
+                  type="search"
+                  className="adm-input"
+                  placeholder="Buscar por nombre o acción"
+                  value={busquedaAuditoria}
+                  onChange={(e) => setBusquedaAuditoria(e.target.value)}
+                />
               </div>
 
               <ul className="adm-timeline">

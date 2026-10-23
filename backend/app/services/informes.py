@@ -1,7 +1,9 @@
 import hashlib
+import logging
 import os
 import secrets
 import uuid
+import xml.sax.saxutils
 from sqlalchemy.orm import Session, contains_eager, joinedload
 from reportlab.graphics.barcode.qr import QrCodeWidget
 from reportlab.graphics.shapes import Drawing
@@ -20,8 +22,18 @@ from app.models.evaluation import Evaluacion, EvaluacionParticipante, ResultadoD
 from app.models.organization import Area, Organizacion
 from app.models.survey import Dimension, Recomendacion
 from app.models.user import Usuario
+from app.services.notificaciones import notificar
+from app.services import prediccion as prediccion_service
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
+
+
+def _perfiles_visibles(prediccion: dict, minimo: int) -> tuple[list, int]:
+    perfiles = prediccion.get("perfilesClusterKMeans", []) if prediccion else []
+    visibles = [p for p in perfiles if p.get("numTrabajadores", 0) >= minimo]
+    omitidos = len(perfiles) - len(visibles)
+    return visibles, omitidos
 
 
 def _asegurar_directorio_storage() -> str:
@@ -263,6 +275,22 @@ def generar_informe_individual(
     db.add(informe_obj)
     db.commit()
     db.refresh(informe_obj)
+    evaluacion = db.get(Evaluacion, evaluacion_id)
+    if informe_obj.trabajador_id is not None:
+        trabajador = db.get(Usuario, informe_obj.trabajador_id)
+        if (
+            trabajador is not None
+            and not trabajador.es_invitado
+            and informe_obj.trabajador_id != generado_por
+        ):
+            notificar(
+                db,
+                usuario_id=informe_obj.trabajador_id,
+                tipo="INFORME_GENERADO",
+                titulo="Informe individual disponible",
+                mensaje=f"Se generó tu informe individual de la evaluación '{evaluacion.nombre}'.",
+                evaluacion_id=evaluacion_id,
+            )
     return informe_obj
 
 
@@ -322,6 +350,12 @@ def generar_informe_agrupado(
             "promedio": round(prom, 2),
             "niveles": conteo_niveles,
         })
+
+    prediccion = None
+    try:
+        prediccion = prediccion_service.analizar_riesgo_predictivo(db, evaluacion_id, area_id)
+    except Exception:
+        logger.warning("No se pudo calcular el análisis predictivo del informe agrupado", exc_info=True)
 
     dir_path = _asegurar_directorio_storage()
     formato_upper = formato.upper()
@@ -433,6 +467,61 @@ def generar_informe_agrupado(
             for col_letter in ["B", "C", "D", "E", "F"]:
                 ws_chart.column_dimensions[col_letter].width = 14
 
+            if prediccion is not None:
+                ws_pred = wb.create_sheet(title="Análisis predictivo")
+                ws_pred.append(["Análisis Predictivo (K-Means) y Alertas Tempranas"])
+                ws_pred.append([f"Evaluación: {evaluacion.nombre}"])
+                ws_pred.append([])
+
+                # Tabla de alertas
+                ws_pred.append(["Dimensión", "Nivel", "Mensaje"])
+                alertas_header_row = ws_pred.max_row
+                for cell in ws_pred[alertas_header_row]:
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+
+                alertas = prediccion.get("alertasTempranas", [])
+                if alertas:
+                    for al in alertas:
+                        ws_pred.append([al.get("dimension", ""), al.get("nivelAlerta", ""), al.get("mensaje", "")])
+                else:
+                    ws_pred.append(["No se detectaron alertas tempranas.", "", ""])
+
+                ws_pred.append([])
+
+                # Tabla de perfiles
+                ws_pred.append(["Perfil", "Trabajadores", "% del grupo", "Promedio global"])
+                perfiles_header_row = ws_pred.max_row
+                for cell in ws_pred[perfiles_header_row]:
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+
+                visibles, omitidos = _perfiles_visibles(prediccion, settings.min_grupo_anonimato)
+                for pf in visibles:
+                    pct = f"{pf.get('porcentajeGrupo', 0)}%"
+                    ws_pred.append([
+                        pf.get("etiqueta", ""),
+                        pf.get("numTrabajadores", 0),
+                        pct,
+                        pf.get("promedioGlobalPuntaje", 0.0),
+                    ])
+
+                if omitidos > 0:
+                    ws_pred.append([])
+                    ws_pred.append([f"Se omitieron {omitidos} perfil(es) con menos de {settings.min_grupo_anonimato} personas para proteger el anonimato."])
+
+                if prediccion.get("notaMetodologica"):
+                    ws_pred.append([])
+                    ws_pred.append(["Nota metodológica:"])
+                    ws_pred.append([prediccion["notaMetodologica"]])
+
+                ws_pred.column_dimensions["A"].width = 35
+                ws_pred.column_dimensions["B"].width = 18
+                ws_pred.column_dimensions["C"].width = 18
+                ws_pred.column_dimensions["D"].width = 20
+
             wb.save(file_path_tmp)
             os.replace(file_path_tmp, file_path)
         else:
@@ -490,6 +579,81 @@ def generar_informe_agrupado(
             ]))
             story.append(t)
 
+            if prediccion is not None:
+                story.append(Spacer(1, 14))
+                story.append(Paragraph("Análisis Predictivo (K-Means) y Alertas Tempranas", section_style))
+
+                alertas = prediccion.get("alertasTempranas", [])
+                if alertas:
+                    alertas_data = [[
+                        Paragraph("Dimensión", header_cell_style),
+                        Paragraph("Nivel", header_cell_style),
+                        Paragraph("Mensaje", header_cell_style),
+                    ]]
+                    for al in alertas:
+                        dim_txt = xml.sax.saxutils.escape(str(al.get("dimension", "")))
+                        nivel_txt = xml.sax.saxutils.escape(str(al.get("nivelAlerta", "")))
+                        msg_txt = xml.sax.saxutils.escape(str(al.get("mensaje", "")))
+                        alertas_data.append([
+                            Paragraph(dim_txt, cell_style),
+                            Paragraph(nivel_txt, cell_center_style),
+                            Paragraph(msg_txt, cell_style),
+                        ])
+                    t_alertas = Table(alertas_data, colWidths=[150, 60, 330])
+                    t_alertas.setStyle(TableStyle([
+                        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#F1F5F9")),
+                        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                        ('PADDING', (0,0), (-1,-1), 5),
+                    ]))
+                    story.append(t_alertas)
+                else:
+                    story.append(Paragraph("No se detectaron alertas tempranas.", cell_style))
+
+                story.append(Spacer(1, 10))
+
+                visibles, omitidos = _perfiles_visibles(prediccion, settings.min_grupo_anonimato)
+                if visibles:
+                    perfiles_data = [[
+                        Paragraph("Perfil", header_cell_style),
+                        Paragraph("Trabajadores", header_cell_style),
+                        Paragraph("% del grupo", header_cell_style),
+                        Paragraph("Promedio global", header_cell_style),
+                    ]]
+                    for pf in visibles:
+                        perfil_txt = xml.sax.saxutils.escape(str(pf.get("etiqueta", "")))
+                        trab_txt = str(pf.get("numTrabajadores", 0))
+                        pct_val = pf.get("porcentajeGrupo", 0)
+                        pct_txt = f"{pct_val}%"
+                        prom_val = pf.get("promedioGlobalPuntaje", 0.0)
+                        prom_txt = f"{prom_val:.1f}"
+                        perfiles_data.append([
+                            Paragraph(perfil_txt, cell_style),
+                            Paragraph(trab_txt, cell_center_style),
+                            Paragraph(pct_txt, cell_center_style),
+                            Paragraph(prom_txt, cell_center_style),
+                        ])
+                    t_perfiles = Table(perfiles_data, colWidths=[250, 80, 80, 100])
+                    t_perfiles.setStyle(TableStyle([
+                        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#F1F5F9")),
+                        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                        ('PADDING', (0,0), (-1,-1), 5),
+                    ]))
+                    story.append(t_perfiles)
+
+                if omitidos > 0:
+                    story.append(Spacer(1, 4))
+                    aviso_omitidos = xml.sax.saxutils.escape(
+                        f"Se omitieron {omitidos} perfil(es) con menos de {settings.min_grupo_anonimato} personas para proteger el anonimato."
+                    )
+                    story.append(Paragraph(aviso_omitidos, cell_style))
+
+                if prediccion.get("notaMetodologica"):
+                    story.append(Spacer(1, 6))
+                    nota_txt = xml.sax.saxutils.escape(str(prediccion["notaMetodologica"]))
+                    story.append(Paragraph(nota_txt, cell_style))
+
             # Recomendaciones de Intervención Colectiva
             story.append(Spacer(1, 14))
             story.append(Paragraph("Recomendaciones de Intervención Colectiva (Res. 2764 de 2022)", section_style))
@@ -545,6 +709,16 @@ def generar_informe_agrupado(
     db.add(informe_obj)
     db.commit()
     db.refresh(informe_obj)
+    evaluacion = db.get(Evaluacion, evaluacion_id)
+    if evaluacion is not None and evaluacion.evaluador_id != generado_por:
+        notificar(
+            db,
+            usuario_id=evaluacion.evaluador_id,
+            tipo="INFORME_GENERADO",
+            titulo="Informe agrupado generado",
+            mensaje=f"Se generó un informe agrupado ({formato}) de la evaluación '{evaluacion.nombre}'.",
+            evaluacion_id=evaluacion_id,
+        )
     return informe_obj
 
 

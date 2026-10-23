@@ -121,6 +121,7 @@ def verificar_informe(codigo: str, db: Session = Depends(get_db)):
 @router.get("/{informe_id}/descargar")
 def descargar_informe(
     informe_id: UUID,
+    request: Request,
     db: Session = Depends(get_db),
     actual: Usuario = Depends(get_current_user),
 ):
@@ -154,6 +155,15 @@ def descargar_informe(
 
     if not os.path.exists(informe.ruta_archivo):
         raise AppError(404, "El archivo solicitado no se encuentra en el almacenamiento.")
+
+    auditoria_service.registrar_auditoria(
+        db,
+        usuario=actual,
+        accion="INFORME_DESCARGADO",
+        entidad="Informe",
+        entidad_id=str(informe.id),
+        request=request,
+    )
 
     filename = os.path.basename(informe.ruta_archivo)
     media_type = "application/pdf" if informe.formato == "PDF" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

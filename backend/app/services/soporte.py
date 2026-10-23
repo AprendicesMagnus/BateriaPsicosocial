@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import get_settings
+from app.core.crypto import utcnow
 from app.core.errors import AppError
 from app.services.correo import enviar_correo
 from app.models.ticket_soporte import TicketSoporte
@@ -16,6 +17,8 @@ def _publico(ticket: TicketSoporte) -> dict:
         "mensaje": ticket.mensaje,
         "estado": ticket.estado,
         "creadoEn": ticket.creado_en.isoformat(),
+        "respuesta": ticket.respuesta,
+        "respondidoEn": ticket.respondido_en.isoformat() if ticket.respondido_en else None,
     }
 
 
@@ -40,6 +43,32 @@ def listar_tickets(db: Session) -> list[dict]:
         .all()
     )
     return [_publico(t) for t in tickets]
+
+
+def listar_tickets_usuario(db: Session, usuario_id) -> list[dict]:
+    tickets = (
+        db.query(TicketSoporte)
+        .options(joinedload(TicketSoporte.usuario).joinedload(Usuario.rol))
+        .filter(TicketSoporte.usuario_id == usuario_id)
+        .order_by(TicketSoporte.creado_en.desc())
+        .all()
+    )
+    return [_publico(t) for t in tickets]
+
+
+def responder_ticket(db: Session, ticket_id, respuesta: str) -> dict:
+    ticket = db.query(TicketSoporte).filter(TicketSoporte.id == ticket_id).first()
+    if ticket is None:
+        raise AppError(404, "Ticket no encontrado.")
+    respuesta = respuesta.strip()
+    if not respuesta:
+        raise AppError(400, "La respuesta no puede estar vacía.")
+    ticket.respuesta = respuesta
+    ticket.respondido_en = utcnow()
+    ticket.estado = "RESUELTO"
+    db.commit()
+    db.refresh(ticket)
+    return _publico(ticket)
 
 
 def marcar_resuelto(db: Session, ticket_id) -> dict:

@@ -12,10 +12,14 @@ import {
   HiOutlineLightBulb,
   HiOutlineSpeakerphone,
   HiOutlineClock,
+  HiOutlineSearch,
 } from "react-icons/hi";
 import { useAuth } from "../context/AuthContext";
-import { crearTicketSoporte, fetchContenidoSoporte } from "../api/soporte";
+import { crearTicketSoporte, fetchContenidoSoporte, fetchMisTicketsSoporte } from "../api/soporte";
+import Paginador from "../components/Paginador";
+import { usePaginacion } from "../hooks/usePaginacion";
 import { etiquetaRol } from "../utils/roles";
+import { normalizar } from "../utils/encuestas";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
 import "../styles/app-shell.css";
@@ -143,6 +147,17 @@ function PreguntaFAQ({ item }) {
   );
 }
 
+function formatearFechaMensaje(iso) {
+  const fecha = new Date(iso);
+  if (Number.isNaN(fecha.getTime())) return "";
+  return fecha.toLocaleString("es-CO", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function Soporte() {
   const { usuario, token } = useAuth();
   const [mensaje, setMensaje] = useState("");
@@ -155,6 +170,20 @@ export default function Soporte() {
 
   // Contenido editable (si el servidor no responde, se usan las guías y preguntas por defecto de este archivo).
   const [contenido, setContenido] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [misMensajes, setMisMensajes] = useState([]);
+
+  function cargarMisMensajes() {
+    if (!token) return;
+    fetchMisTicketsSoporte(token)
+      .then((res) => setMisMensajes(Array.isArray(res) ? res : []))
+      .catch(() => {});
+  }
+
+  useEffect(() => {
+    if (token) cargarMisMensajes();
+  }, [token]);
+
   useEffect(() => {
     if (!token) return;
     fetchContenidoSoporte(token)
@@ -168,6 +197,23 @@ export default function Soporte() {
     ? contenido.faq.map((i) => ({ pregunta: i.titulo, respuesta: i.texto }))
     : FAQ;
 
+  const consulta = normalizar(busqueda.trim());
+  const buscando = consulta.length > 0;
+  const coincide = (...campos) => campos.some((campo) => normalizar(campo).includes(consulta));
+  const preguntasVisibles = buscando
+    ? preguntas.filter((p) => coincide(p.pregunta, p.respuesta))
+    : preguntas;
+  const seccionesVisibles = SECCIONES_INFO.map((seccion) => ({
+    ...seccion,
+    items: (contenido?.[seccion.clave] || []).filter(
+      (item) => !buscando || coincide(item.titulo, item.texto)
+    ),
+  })).filter((seccion) => seccion.items.length > 0);
+  const totalResultados =
+    preguntasVisibles.length + seccionesVisibles.reduce((suma, seccion) => suma + seccion.items.length, 0);
+
+  const pagMisMensajes = usePaginacion(misMensajes, 5, []);
+
   async function handleEnviar(e) {
     e.preventDefault();
     setErrorEnvio("");
@@ -176,6 +222,7 @@ export default function Soporte() {
       await crearTicketSoporte(token, mensaje);
       setEnviado(true);
       setMensaje("");
+      cargarMisMensajes();
     } catch (err) {
       setErrorEnvio(err.message || "No se pudo enviar tu mensaje. Intenta de nuevo.");
     } finally {
@@ -201,6 +248,27 @@ export default function Soporte() {
               Guías paso a paso por rol, preguntas frecuentes y un canal directo con soporte.
             </p>
           </header>
+
+          <div className="soporte-buscador">
+            <HiOutlineSearch size={18} aria-hidden="true" />
+            <input
+              type="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar en preguntas frecuentes y guías informativas"
+              aria-label="Buscar en el Centro de ayuda"
+            />
+          </div>
+          {buscando && (
+            <p className="soporte-resultados">
+              {totalResultados === 0
+                ? "No se encontraron resultados para tu búsqueda."
+                : `${totalResultados} ${totalResultados === 1 ? "resultado" : "resultados"}`}
+            </p>
+          )}
+
+          {!buscando && (
+            <>
 
           <section className="soporte-card soporte-card--guia">
             <h2>Primeros pasos</h2>
@@ -265,33 +333,35 @@ export default function Soporte() {
               <span className="soporte-badge-pronto">Próximamente</span>
             </button>
           </section>
-
-          <section className="soporte-card">
-            <h2>Preguntas frecuentes</h2>
-            <div className="soporte-faq-lista">
-              {preguntas.map((item) => (
-                <PreguntaFAQ key={item.pregunta} item={item} />
-              ))}
-            </div>
-          </section>
-
-          {SECCIONES_INFO.map(({ clave, titulo, icono: Icono }) =>
-            contenido?.[clave]?.length ? (
-              <section className="soporte-card" key={clave}>
-                <h2 className="soporte-info-titulo">
-                  <Icono size={20} /> {titulo}
-                </h2>
-                <dl className="soporte-info-lista">
-                  {contenido[clave].map((item) => (
-                    <div className="soporte-info-item" key={item.id}>
-                      <dt>{item.titulo}</dt>
-                      <dd>{item.texto}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            ) : null
+            </>
           )}
+
+          {preguntasVisibles.length > 0 && (
+            <section className="soporte-card">
+              <h2>Preguntas frecuentes</h2>
+              <div className="soporte-faq-lista">
+                {preguntasVisibles.map((item) => (
+                  <PreguntaFAQ key={item.pregunta} item={item} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {seccionesVisibles.map(({ clave, titulo, icono: Icono, items }) => (
+            <section className="soporte-card" key={clave}>
+              <h2 className="soporte-info-titulo">
+                <Icono size={20} /> {titulo}
+              </h2>
+              <dl className="soporte-info-lista">
+                {items.map((item) => (
+                  <div className="soporte-info-item" key={item.id}>
+                    <dt>{item.titulo}</dt>
+                    <dd>{item.texto}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ))}
 
           <section className="soporte-card soporte-card--contacto">
             <div className="soporte-contacto-icono">
@@ -324,6 +394,35 @@ export default function Soporte() {
                 </form>
               )}
             </div>
+          </section>
+
+          <section className="soporte-card">
+            <h2>Mis mensajes</h2>
+            {misMensajes.length === 0 ? (
+              <p className="soporte-mensajes__vacio">Aún no has enviado mensajes al soporte.</p>
+            ) : (
+              <ul className="soporte-mensajes__lista">
+                {pagMisMensajes.items.map((m) => (
+                  <li className="soporte-mensajes__item" key={m.id}>
+                    <div className="soporte-mensajes__meta">
+                      <span className="soporte-mensajes__fecha">{formatearFechaMensaje(m.creadoEn)}</span>
+                      <span className={`soporte-mensajes__chip soporte-mensajes__chip--${m.estado === "RESUELTO" ? "resuelto" : "pendiente"}`}>
+                        {m.estado === "RESUELTO" ? "Resuelto" : "Pendiente"}
+                      </span>
+                    </div>
+                    <p className="soporte-mensajes__texto">{m.mensaje}</p>
+                    {m.respuesta && (
+                      <div className="soporte-mensajes__respuesta">
+                        <strong>Respuesta del administrador</strong>
+                        <p>{m.respuesta}</p>
+                        <span className="soporte-mensajes__fecha">{formatearFechaMensaje(m.respondidoEn)}</span>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Paginador paginacion={pagMisMensajes} />
           </section>
         </div>
       </main>

@@ -170,3 +170,16 @@ def analizar_riesgo_predictivo(
             "Se eligió entrenamiento al vuelo para adaptar los clústeres al contexto real de la empresa evaluada."
         ),
     }
+
+
+def aplicar_anonimato_perfiles(resultado: dict, minimo: int | None = None) -> dict:
+    if minimo is None:
+        minimo = settings.min_grupo_anonimato
+    res = dict(resultado)
+    perfiles = res.get("perfilesClusterKMeans", []) or []
+    visibles = [p for p in perfiles if p.get("numTrabajadores", 0) >= minimo]
+    res["perfilesClusterKMeans"] = visibles
+    res["perfilesOmitidos"] = len(perfiles) - len(visibles)
+    res["minimoAnonimato"] = minimo
+    return res
+

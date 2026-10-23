@@ -10,6 +10,7 @@ import "../styles/app-shell.css";
 import { useAuth } from "../context/AuthContext"; // <-- EN LÍNEA NUEVA: IMPORTADO "useAuth"
 import { urlArchivo } from "../api/client";
 import { esSuperAdmin } from "../utils/roles";
+import CampanaNotificaciones from "../components/CampanaNotificaciones";
 
 
 
@@ -357,7 +358,9 @@ export default function Inicio() {
           {/* =====================================================
               PERFIL DEL USUARIO (esquina derecha, ya logueado)
           ====================================================== */}
-          <div className="app-profile-menu" ref={menuPerfilRef}>
+          <div className="app-acciones-usuario">
+            <CampanaNotificaciones />
+            <div className="app-profile-menu" ref={menuPerfilRef}>
             <button
               type="button"
               className="app-profile"
@@ -405,6 +408,7 @@ export default function Inicio() {
                 </button>
               </div>
             )}
+          </div>
           </div>
 
         </div>

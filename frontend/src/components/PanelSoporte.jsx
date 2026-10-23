@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { crearContenido, editarContenido, eliminarContenido, fetchContenidoAdmin } from "../api/soporte";
+import PanelMensajesSoporte from "./PanelMensajesSoporte";
 import "../styles/Planes.css";
 import "../styles/PanelAcciones.css";
 
@@ -87,7 +88,8 @@ export default function PanelSoporte() {
   const cambiar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }));
 
   return (
-    <section id="soporte" className="adm-card">
+    <>
+      <section id="soporte" className="adm-card">
       <div className="adm-card__head">
         <div>
           <h2>Centro de ayuda</h2>
@@ -186,5 +188,7 @@ export default function PanelSoporte() {
         </table>
       </div>
     </section>
+      <PanelMensajesSoporte />
+    </>
   );
 }

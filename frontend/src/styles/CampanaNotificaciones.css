@@ -1,0 +1,134 @@
+.app-acciones-usuario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.campana {
+  position: relative;
+}
+
+.campana__boton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--ink-900);
+  cursor: pointer;
+}
+.campana__boton:hover {
+  background: var(--bg-100);
+}
+
+.campana__badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--danger-500);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.campana__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  max-height: 440px;
+  overflow-y: auto;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  z-index: 20;
+}
+
+.campana__encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--bg-100);
+  color: var(--ink-900);
+  font-size: 14px;
+}
+
+.campana__marcar-todas {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--navy-900);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.campana__marcar-todas:disabled {
+  color: var(--ink-500);
+  cursor: default;
+}
+
+.campana__mensaje {
+  margin: 0;
+  padding: 18px 14px;
+  color: var(--ink-500);
+  font-size: 13px;
+  text-align: center;
+}
+
+.campana__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.campana__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--bg-100);
+  text-align: left;
+  cursor: pointer;
+}
+.campana__item:hover {
+  background: var(--bg-100);
+}
+.campana__item--nueva {
+  background: var(--bg-100);
+}
+.campana__item--nueva .campana__titulo {
+  font-weight: 800;
+}
+
+.campana__titulo {
+  color: var(--ink-900);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.campana__texto {
+  color: var(--ink-500);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.campana__fecha {
+  color: var(--ink-500);
+  font-size: 11px;
+}

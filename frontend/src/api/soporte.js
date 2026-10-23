@@ -8,6 +8,9 @@ export const crearTicketSoporte = (token, mensaje) =>
 export const fetchTicketsSoporte = (token) => request("/soporte", { token });
 export const resolverTicketSoporte = (token, id) =>
   request(`/soporte/${id}/resolver`, { method: "POST", token });
+export const fetchMisTicketsSoporte = (token) => request("/soporte/mios", { token });
+export const responderTicketSoporte = (token, id, respuesta) =>
+  request(`/soporte/${id}/responder`, { method: "POST", body: { respuesta }, token });
 
 // Contenido editable del Centro de ayuda.
 export const fetchContenidoSoporte = (token) => request("/soporte/contenido", { token });

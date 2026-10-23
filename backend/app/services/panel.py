@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
@@ -11,12 +13,26 @@ from app.models.user import Usuario
 TIPO_POR_ACCION = {
     "INFORME_INDIVIDUAL_GENERADO": "Resultados",
     "INFORME_AGRUPADO_GENERADO": "Resultados",
+    "INFORME_DESCARGADO": "Resultados",
+    "LOGIN": "Accesos",
+    "LOGIN_GOOGLE": "Accesos",
+    "CREAR_EVALUACION": "Evaluaciones",
+    "INICIAR_EVALUACION": "Evaluaciones",
+    "FINALIZAR_EVALUACION": "Evaluaciones",
+    "EDITAR_EMPRESA": "Empresas",
+    "EDITAR_RESPONSABLE_EMPRESA": "Empresas",
+    "ELIMINAR_EMPRESA": "Empresas",
+    "CAMBIAR_EMPRESA_ACTIVA": "Empresas",
+    "CREAR_PLAN": "Planes",
+    "EDITAR_PLAN": "Planes",
+    "ELIMINAR_PLAN": "Planes",
     "CREAR_USUARIO": "Usuarios",
     "ACTUALIZAR_USUARIO": "Usuarios",
     "DESACTIVAR_USUARIO": "Usuarios",
     "CAMBIAR_ROL_USUARIO": "Usuarios",
     "CREAR_ENLACE_PACIENTES": "Enlaces",
     "ELIMINAR_ENLACE_PACIENTES": "Enlaces",
+    "EXPORTAR_PANEL": "Usuarios",
 }
 
 
@@ -148,3 +164,102 @@ def obtener_panel(db: Session) -> dict:
         "saldo": {"compradas": total_compradas, "usadas": total_usadas},
         "auditoria": auditoria,
     }
+
+
+MESES_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+
+
+def obtener_evolucion_mensual(db: Session, meses: int = 12) -> dict:
+    ahora = datetime.now(timezone.utc)
+    lista_meses = []
+    y, m = ahora.year, ahora.month
+    for _ in range(meses):
+        lista_meses.append((y, m))
+        m -= 1
+        if m == 0:
+            m = 12
+            y -= 1
+    lista_meses.reverse()
+
+    y_ini, m_ini = lista_meses[0]
+    fecha_inicio = datetime(y_ini, m_ini, 1, tzinfo=timezone.utc)
+
+    # a) usuariosNuevos: Usuario.fecha_registro, solo Usuario.es_invitado == False
+    col_mes_usr = func.date_trunc("month", Usuario.fecha_registro).label("mes")
+    res_usuarios = (
+        db.query(col_mes_usr, func.count(Usuario.id))
+        .filter(
+            Usuario.es_invitado.is_(False),
+            Usuario.fecha_registro >= fecha_inicio,
+        )
+        .group_by(col_mes_usr)
+        .all()
+    )
+
+    # b) evaluacionesCreadas: Evaluacion.creado_en
+    col_mes_eval = func.date_trunc("month", Evaluacion.creado_en).label("mes")
+    res_evaluaciones = (
+        db.query(col_mes_eval, func.count(Evaluacion.id))
+        .filter(Evaluacion.creado_en >= fecha_inicio)
+        .group_by(col_mes_eval)
+        .all()
+    )
+
+    # c) encuestasCompletadas: EvaluacionParticipante con estado == "COMPLETADA", agrupadas por fecha_fin
+    col_mes_part = func.date_trunc("month", EvaluacionParticipante.fecha_fin).label("mes")
+    res_encuestas = (
+        db.query(col_mes_part, func.count(EvaluacionParticipante.id))
+        .filter(
+            EvaluacionParticipante.estado == "COMPLETADA",
+            EvaluacionParticipante.fecha_fin.isnot(None),
+            EvaluacionParticipante.fecha_fin >= fecha_inicio,
+        )
+        .group_by(col_mes_part)
+        .all()
+    )
+
+    # d) comprasPagadas y valorComprado: Compra con estado == "PAGADA", por Compra.creado_en
+    col_mes_compra = func.date_trunc("month", Compra.creado_en).label("mes")
+    res_compras = (
+        db.query(
+            col_mes_compra,
+            func.coalesce(func.sum(Compra.cantidad), 0),
+            func.coalesce(func.sum(Compra.total), 0),
+        )
+        .filter(
+            Compra.estado == "PAGADA",
+            Compra.creado_en >= fecha_inicio,
+        )
+        .group_by(col_mes_compra)
+        .all()
+    )
+
+    def _clave_mes(dt) -> str:
+        if dt is None:
+            return ""
+        return f"{dt.year:04d}-{dt.month:02d}"
+
+    usuarios_map = {_clave_mes(r[0]): int(r[1]) for r in res_usuarios if r[0]}
+    evals_map = {_clave_mes(r[0]): int(r[1]) for r in res_evaluaciones if r[0]}
+    encuestas_map = {_clave_mes(r[0]): int(r[1]) for r in res_encuestas if r[0]}
+    compras_map = {
+        _clave_mes(r[0]): (int(r[1]), int(r[2]))
+        for r in res_compras if r[0]
+    }
+
+    puntos = []
+    for y, m in lista_meses:
+        clave = f"{y:04d}-{m:02d}"
+        etiqueta = f"{MESES_ES[m - 1]} {y}"
+        c_pagadas, v_comprado = compras_map.get(clave, (0, 0))
+        puntos.append({
+            "mes": clave,
+            "etiqueta": etiqueta,
+            "usuariosNuevos": usuarios_map.get(clave, 0),
+            "evaluacionesCreadas": evals_map.get(clave, 0),
+            "encuestasCompletadas": encuestas_map.get(clave, 0),
+            "comprasPagadas": c_pagadas,
+            "valorComprado": v_comprado,
+        })
+
+    return {"meses": puntos}

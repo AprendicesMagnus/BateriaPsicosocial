@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, require_admin
 from app.db.session import get_db
 from app.models.user import Usuario
-from app.schemas.common import SoporteItemCreate, SoporteItemUpdate, TicketSoporteCreate
+from app.schemas.common import SoporteItemCreate, SoporteItemUpdate, TicketSoporteCreate, TicketSoporteRespuesta
 from app.services import soporte as soporte_service
 from app.services import soporte_contenido as contenido_service
 
@@ -27,6 +27,12 @@ def crear_ticket(
     return ticket
 
 
+
+@router.get("/mios")
+def listar_mis_tickets(db: Session = Depends(get_db), actual: Usuario = Depends(get_current_user)):
+    return soporte_service.listar_tickets_usuario(db, actual.id)
+
+
 @router.get("")
 def listar_tickets(db: Session = Depends(get_db), _actual: Usuario = Depends(require_admin)):
     """Solo el Super Administrador ve los tickets (p. ej. desde el Panel)."""
@@ -36,6 +42,16 @@ def listar_tickets(db: Session = Depends(get_db), _actual: Usuario = Depends(req
 @router.post("/{ticket_id}/resolver")
 def marcar_resuelto(ticket_id: UUID, db: Session = Depends(get_db), _actual: Usuario = Depends(require_admin)):
     return soporte_service.marcar_resuelto(db, ticket_id)
+
+
+@router.post("/{ticket_id}/responder")
+def responder_ticket(
+    ticket_id: UUID,
+    data: TicketSoporteRespuesta,
+    db: Session = Depends(get_db),
+    _actual: Usuario = Depends(require_admin),
+):
+    return soporte_service.responder_ticket(db, ticket_id, data.respuesta)
 
 
 # --- Contenido editable del Centro de ayuda ---------------------------------------------------

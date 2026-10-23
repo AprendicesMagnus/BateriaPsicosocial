@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileMenu from "../components/ProfileMenu";
+import CampanaNotificaciones from "../components/CampanaNotificaciones";
+import GuiaInterpretacion from "../components/GuiaInterpretacion";
 import Toast from "../components/Toast";
 
 import "../styles/dashboard.css";
 
 import { useAuth } from "../context/AuthContext";
-import { fetchIndicadores, fetchIndicadoresPorCategoria, fetchHistoricoIndicadores } from "../api/indicadores";
+import { fetchIndicadores, fetchIndicadoresPorCategoria, fetchHistoricoIndicadores, fetchAreasOrganizacion } from "../api/indicadores";
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 
 import { generarInformeAgrupado, descargarInforme } from "../api/informes";
@@ -17,6 +19,7 @@ import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
 import QrEnlaceModal from "../components/QrEnlaceModal";
 import MapaCalorAreas from "../components/MapaCalorAreas";
 import HistoricoComparativo from "../components/HistoricoComparativo";
+import ComparadorEvaluaciones from "../components/ComparadorEvaluaciones";
 import AnalisisGruposFicha from "../components/AnalisisGruposFicha";
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
@@ -128,6 +131,8 @@ export default function Dashboard() {
   const [indicadoresCategoria, setIndicadoresCategoria] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [areas, setAreas] = useState([]);
+  const [areaId, setAreaId] = useState("");
 
   // fetchAnalisisPredictivo
   const [prediccion, setPrediccion] = useState(null);
@@ -159,21 +164,31 @@ export default function Dashboard() {
   }, [avisoInforme]);
 
   useEffect(() => {
+    if (!puedeVerAgregados || !usuario?.organizacionId || !token) {
+      setAreas([]);
+      return;
+    }
+    fetchAreasOrganizacion(token, usuario.organizacionId)
+      .then((res) => setAreas(Array.isArray(res) ? res : []))
+      .catch(() => setAreas([]));
+  }, [puedeVerAgregados, usuario?.organizacionId, token]);
+
+  useEffect(() => {
     if (token) {
       cargarDatosIndicadores();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, areaId]);
 
 
   async function cargarDatosIndicadores() {
     setCargando(true);
     setError(null);
     try {
-      const data = await fetchIndicadores(token);
+      const data = await fetchIndicadores(token, null, areaId || null);
       setIndicadores(data);
       try {
-        const dataCat = await fetchIndicadoresPorCategoria(token);
+        const dataCat = await fetchIndicadoresPorCategoria(token, null, areaId || null);
         setIndicadoresCategoria(dataCat?.categorias || null);
       } catch (catErr) {
         console.error("Error al cargar indicadores por categoría:", catErr);
@@ -394,7 +409,10 @@ export default function Dashboard() {
             )}
           </div>
 
-          <ProfileMenu />
+          <div className="app-acciones-usuario">
+            <CampanaNotificaciones />
+            <ProfileMenu />
+          </div>
         </header>
 
         <section className="welcome-card">
@@ -588,6 +606,33 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {areas.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+              <span>Filtrar por área:</span>
+              <select
+                value={areaId}
+                onChange={(e) => setAreaId(e.target.value)}
+                style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+              >
+                <option value="">Todas las áreas</option>
+                {[...areas]
+                  .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
+                  .map((area) => (
+                    <option key={area.id} value={area.id}>
+                      {area.nombre}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "#64748b" }}>
+              {puedeCrearEnlaces
+                ? "El filtro aplica a los indicadores y al análisis por grupos. El mapa de calor, el histórico y el análisis predictivo muestran toda la empresa."
+                : "El filtro aplica a los indicadores. El mapa de calor y el histórico muestran toda la empresa."}
+            </p>
+          </div>
+        )}
+
         <section className="indicators">
           <IndicatorCard
             title="Evaluaciones Registradas"
@@ -695,6 +740,10 @@ export default function Dashboard() {
           />
         </section>
 
+        <section className="responders-card" style={{ marginTop: "24px" }}>
+          <GuiaInterpretacion />
+        </section>
+
         {puedeVerAgregados && usuario?.organizacionId && (
           <section className="responders-card" style={{ marginTop: "24px" }}>
             <MapaCalorAreas token={token} organizacionId={usuario.organizacionId} />
@@ -703,13 +752,19 @@ export default function Dashboard() {
 
         {puedeCrearEnlaces && usuario?.organizacionId && (
           <section className="responders-card" style={{ marginTop: "24px" }}>
-            <AnalisisGruposFicha token={token} organizacionId={usuario.organizacionId} />
+            <AnalisisGruposFicha token={token} organizacionId={usuario.organizacionId} areaId={areaId || null} />
           </section>
         )}
 
         {puedeVerAgregados && usuario?.organizacionId && (
           <section style={{ marginTop: "24px" }}>
             <HistoricoComparativo token={token} organizacionId={usuario.organizacionId} />
+          </section>
+        )}
+
+        {puedeVerAgregados && usuario?.organizacionId && (
+          <section style={{ marginTop: "24px" }}>
+            <ComparadorEvaluaciones token={token} organizacionId={usuario.organizacionId} />
           </section>
         )}
 
@@ -786,6 +841,12 @@ export default function Dashboard() {
                     </div>
                   ))}
                 </div>
+
+                {prediccion.perfilesOmitidos > 0 && (
+                  <p style={{ margin: "0 0 16px 0", fontSize: "12px", color: "#64748b" }}>
+                    Se omitieron {prediccion.perfilesOmitidos} perfil(es) con menos de {prediccion.minimoAnonimato} personas para proteger el anonimato.
+                  </p>
+                )}
 
                 {prediccion.alertasTempranas?.length > 0 && (
                   <div style={{ marginBottom: "16px" }}>
