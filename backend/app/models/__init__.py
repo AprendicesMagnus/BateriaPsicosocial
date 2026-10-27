@@ -11,6 +11,8 @@ from app.models.evaluation import (
 )
 from app.models.organization import Area, Organizacion
 from app.models.plan import PlanBateria
+from app.models.product import Producto
+from app.models.product_order import PagoPedidoProducto, PedidoProducto, PedidoProductoItem
 from app.models.survey import Baremo, CuestionarioVersion, Dimension, Pregunta, Recomendacion
 from app.models.soporte_item import SoporteItem
 from app.models.ticket_soporte import TicketSoporte
@@ -18,6 +20,10 @@ from app.models.user import CodigoVerificacion, Permiso, Rol, RolPermiso, Usuari
 
 __all__ = [
     "PlanBateria",
+    "Producto",
+    "PedidoProducto",
+    "PedidoProductoItem",
+    "PagoPedidoProducto",
     "SoporteItem",
     "TicketSoporte",
     "Auditoria",

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/landing.css";
 import ModalPlanes from "../components/ModalPlanes";
+import ModalCatalogo from "../components/ModalCatalogo";
+import TiendaMenu from "../components/TiendaMenu";
 
 const SLIDES = [
   "/pasare1.jpg",
@@ -111,6 +113,8 @@ export default function Landing() {
   const [slide, setSlide] = useState(0);
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const [planesAbierto, setPlanesAbierto] = useState(false);
+  const [catalogoAbierto, setCatalogoAbierto] = useState(false);
+  const [tiendaMovilAbierta, setTiendaMovilAbierta] = useState(false);
 
   // Imagen anterior
   const prevSlide = () => {
@@ -179,7 +183,17 @@ export default function Landing() {
 
           <nav className={`mobile-nav ${menuMovilAbierto ? "mobile-nav--open" : ""}`} aria-label="Navegación móvil">
             <a href="#como-funciona" onClick={() => setMenuMovilAbierto(false)}>Cómo funciona</a>
-            <button type="button" onClick={() => { setPlanesAbierto(true); setMenuMovilAbierto(false); }}>Planes</button>
+            <div className="tienda-movil">
+              <button type="button" aria-expanded={tiendaMovilAbierta} onClick={() => setTiendaMovilAbierta((v) => !v)}>
+                Tienda {tiendaMovilAbierta ? "−" : "+"}
+              </button>
+              {tiendaMovilAbierta && (
+                <div className="tienda-movil__sub">
+                  <button type="button" onClick={() => { setPlanesAbierto(true); setMenuMovilAbierto(false); setTiendaMovilAbierta(false); }}>Planes</button>
+                  <button type="button" onClick={() => { setCatalogoAbierto(true); setMenuMovilAbierto(false); setTiendaMovilAbierta(false); }}>Catálogo de Productos</button>
+                </div>
+              )}
+            </div>
             <a href="#beneficios" onClick={() => setMenuMovilAbierto(false)}>Beneficios</a>
             <a href="#normativa" onClick={() => setMenuMovilAbierto(false)}>Normativa</a>
             <Link to="/iniciar-sesion" onClick={() => setMenuMovilAbierto(false)}>Iniciar sesión</Link>
@@ -189,13 +203,7 @@ export default function Landing() {
           <nav className="nav__links">
             <a href="#como-funciona">Cómo funciona</a>
 
-            <button
-              type="button"
-              onClick={() => setPlanesAbierto(true)}
-              style={{ background: "none", border: "none", font: "inherit", color: "inherit", cursor: "pointer", padding: 0, fontWeight: "bold" }}
-            >
-              Planes
-            </button>
+            <TiendaMenu onPlanes={() => setPlanesAbierto(true)} onCatalogo={() => setCatalogoAbierto(true)} />
 
             <a href="#beneficios">Beneficios</a>
             <a href="#normativa">Normativa</a>
@@ -220,6 +228,7 @@ export default function Landing() {
       </header>
 
       {planesAbierto && <ModalPlanes onCerrar={() => setPlanesAbierto(false)} />}
+      {catalogoAbierto && <ModalCatalogo onCerrar={() => setCatalogoAbierto(false)} />}
 
 
       {/* =====================================================

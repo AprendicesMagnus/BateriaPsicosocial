@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.services import compras as compras_service
+from app.services import pedidos_productos as pedidos_productos_service
+from app.services import pedidos_productos as pedidos_productos_service
 from app.services import wompi as wompi_service
 
 
@@ -129,6 +131,23 @@ async def recibir_evento_wompi(
         )
 
     transaction_status = transaction_status.upper()
+
+    referencia = str(transaction.get("reference") or "").strip()
+
+    if referencia.startswith("MPROD-"):
+        resultado = pedidos_productos_service.procesar_evento_wompi(
+            db=db,
+            transaction=transaction,
+        )
+        return {
+            "ok": True,
+            "evento": evento,
+            "transactionId": transaction_id,
+            "estado": transaction_status,
+            "pagoId": resultado["pagoId"],
+            "pedidoId": resultado["pedidoId"],
+            "pedidoEstado": resultado["pedidoEstado"],
+        }
 
     resultado = compras_service.procesar_evento_wompi(
         db=db,

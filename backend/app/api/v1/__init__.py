@@ -11,6 +11,8 @@ from app.api.v1 import (
     informes,
     notificaciones,
     organizaciones,
+    pedidos_productos,
+    productos,
     pagos,
     panel,
     planes,
@@ -28,6 +30,8 @@ router.include_router(auth.router, prefix="/auth", tags=["Autenticacion"])
 router.include_router(usuarios.router, prefix="/usuarios", tags=["Usuarios"])
 router.include_router(roles.router, prefix="/roles", tags=["Roles"])
 router.include_router(organizaciones.router, prefix="/organizaciones", tags=["Organizaciones"])
+router.include_router(productos.router, prefix="/productos", tags=["Productos"])
+router.include_router(pedidos_productos.router, prefix="/pedidos-productos", tags=["Pedidos de productos"])
 router.include_router(cuestionarios.router, prefix="/cuestionarios", tags=["Cuestionarios"])
 router.include_router(evaluaciones.router, prefix="/evaluaciones", tags=["Evaluaciones"])
 router.include_router(enlaces.router, prefix="/enlaces", tags=["Enlaces"])

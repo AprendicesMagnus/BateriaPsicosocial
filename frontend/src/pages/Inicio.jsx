@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom"; // <-- AGREGADO AQUÍ "useNavigate"
 import { VscBriefcase } from "react-icons/vsc";
 import { BsCart4 } from "react-icons/bs";
-import { BsCreditCard } from "react-icons/bs";
 import { BsFillClipboard2Fill } from "react-icons/bs";
 import {  HiOutlineUser,  HiOutlineDocumentText,  HiOutlineClipboardList,  HiOutlineClipboardCheck,  HiOutlineChartBar,} from "react-icons/hi";
 import "../styles/Inicio.css";
@@ -11,6 +10,7 @@ import { useAuth } from "../context/AuthContext"; // <-- EN LÍNEA NUEVA: IMPORT
 import { urlArchivo } from "../api/client";
 import { esSuperAdmin } from "../utils/roles";
 import CampanaNotificaciones from "../components/CampanaNotificaciones";
+import TiendaMenu from "../components/TiendaMenu";
 
 
 
@@ -104,6 +104,7 @@ export default function Inicio() {
   const [menuEmpresasMovilAbierto, setMenuEmpresasMovilAbierto] = useState(false);
   const [menuEmpresasAbierto, setMenuEmpresasAbierto] = useState(false);
   const [menuTiendaAbierto, setMenuTiendaAbierto] = useState(false);
+  const [tiendaMovilAbierta, setTiendaMovilAbierta] = useState(false);
   const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
   const menuEmpresasRef = useRef(null);
   const menuTiendaRef = useRef(null);
@@ -256,7 +257,17 @@ export default function Inicio() {
                 </div>
               )}
             </div>
-            <button type="button" onClick={() => { setMenuMovilAbierto(false); navigate("/pago"); }}>Tienda</button>
+            <div className="tienda-movil">
+              <button type="button" aria-expanded={tiendaMovilAbierta} onClick={() => setTiendaMovilAbierta((v) => !v)}>
+                Tienda {tiendaMovilAbierta ? "−" : "+"}
+              </button>
+              {tiendaMovilAbierta && (
+                <div className="tienda-movil__sub">
+                  <button type="button" onClick={() => { setMenuMovilAbierto(false); setTiendaMovilAbierta(false); navigate("/pago"); }}>Planes</button>
+                  <button type="button" onClick={() => { setMenuMovilAbierto(false); setTiendaMovilAbierta(false); navigate("/catalogo"); }}>Catálogo de Productos</button>
+                </div>
+              )}
+            </div>
             <Link to="/dashboard" onClick={() => setMenuMovilAbierto(false)}>Encuestas</Link>
           </nav>
 
@@ -336,77 +347,13 @@ export default function Inicio() {
               )}
             </div>
 
-            <div className="nav__dropdown" ref={menuTiendaRef} style={{ position: "relative" }}>
-              <button
-                type="button"
-                className="nav__dropdown-trigger"
-                onClick={() => setMenuTiendaAbierto((v) => !v)}
-                aria-haspopup="true"
-                aria-expanded={menuTiendaAbierto}
-                style={{
-                  background: "none",
-                  border: "none",
-                  font: "inherit",
-                  fontWeight: 600,
-                  color: "var(--ink-900, #12314b)",
-                  cursor: "pointer",
-                  padding: 0,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <BsCart4   size={18} />
-                Tienda
-              </button>
+            <TiendaMenu
+              icono={<BsCart4 size={18} />}
+              peso={600}
+              onPlanes={() => navigate("/pago")}
+              onCatalogo={() => navigate("/catalogo")}
+            />
 
-              {menuTiendaAbierto && (
-                <div
-                  className="nav__dropdown-menu"
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 12px)",
-                    left: 0,
-                    background: "var(--white)",
-                    borderRadius: "var(--radius-md, 10px)",
-                    boxShadow: "var(--shadow-card, 0 8px 24px rgba(15,26,61,0.12))",
-                    padding: 6,
-                    minWidth: 170,
-                    zIndex: 20,
-                  }}
-                >
-                  <button
-                    type="button"
-                    className="nav__dropdown-option boton-encuestas"
-                    onClick={() => {
-                      setMenuTiendaAbierto(false);
-                      navigate("/pago");
-                    }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      background: "none",
-                      border: "none",
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--ink-900, #12314b)",
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    
-                    <BsCreditCard />
-                      <Link to="/pago" className="boton-encuestas"> Comprar baterías</Link>
-                    
-                  </button>
-                </div>
-              )}
-            </div>
             <Link  to="/dashboard"  onClick={() => setMenuTiendaAbierto(false)}  style={{
               display: "flex",
               flexDirection: "row",

@@ -9,6 +9,7 @@ import VerifyCode from "./pages/VerifyCode";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Checkout from "./pages/Checkout";
+import Catalogo from "./pages/Catalogo";
 import Reportes from "./pages/Reportes";
 import Respuestas from "./pages/Respuestas";
 import Perfil from "./pages/Perfil";
@@ -86,6 +87,7 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute> <Dashboard /> </ProtectedRoute> } />
 
           <Route path="/pago"  element={<ProtectedRoute> <Checkout /> </ProtectedRoute> } />
+          <Route path="/catalogo" element={<ProtectedRoute> <Catalogo /> </ProtectedRoute> } />
           <Route
             path="/reportes"
             element={
