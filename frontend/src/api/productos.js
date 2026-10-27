@@ -6,6 +6,12 @@ export const fetchProductos = (token = null, admin = false) =>
 export const crearProducto = (token, body) =>
   request("/productos", { method: "POST", body, token });
 
+export const subirImagenProducto = (token, archivo) => {
+  const body = new FormData();
+  body.append("archivo", archivo);
+  return request("/productos/imagen", { method: "POST", body, token });
+};
+
 export const actualizarProducto = (token, id, body) =>
   request(`/productos/${id}`, { method: "PATCH", body, token });
 

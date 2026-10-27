@@ -33,20 +33,17 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
   }
   .panel-shell .menu-item {
     width: auto;
     margin-bottom: 0;
     white-space: nowrap;
     border-radius: 999px;
-    padding: 8px 16px;
+    padding: 8px 12px;
   }
   .panel-shell .menu-item.active {
     border-color: transparent;
-  }
-  .panel-shell .menu-item:last-child {
-    margin-left: auto;
   }
 }
 
@@ -94,3 +91,19 @@
     display: none;
   }
 }
+
+/* ---------- Perfil dentro de la barra azul (Panel) ---------- */
+.sidebar__acciones { display: flex; align-items: center; }
+.sidebar__acciones .app-profile:hover { background: rgba(255, 255, 255, 0.1); }
+.sidebar__acciones .app-profile-name { color: #fff; }
+.sidebar__acciones .app-profile-role { color: #b9cde4; }
+@media (max-width: 860px) {
+  .panel-shell .sidebar__acciones { order: 1; margin-left: auto; margin-right: 8px; }
+  .panel-shell .sidebar__burger { order: 2; margin-left: 0; }
+  .panel-shell .sidebar__menu { order: 3; }
+  .panel-shell .sidebar__acciones .app-profile-menu { display: block !important; margin: 0; }
+  .panel-shell .sidebar__acciones .app-profile-text { display: none; }
+}
+
+/* Letra en negrita en las pestañas del Panel */
+.panel-shell .menu-item { font-weight: 700; }

@@ -168,18 +168,18 @@ export default function Inicio() {
         <div className="container nav__inner">
 
           <div
-            className="nav__logos"
+            className="nav__logos nav__logos--inicio"
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 15,
+              gap: 12,
             }}
           >
             <img
               src="/logo a 2_Mesa de trabajo 1.jpg"
               alt="Magnus"
               style={{
-                height: 120,
+                height: 108,
                 marginRight: "auto",
               }}
             />
@@ -188,7 +188,7 @@ export default function Inicio() {
               src="/logo javeriana.jpg"
               alt="Javeriana"
               style={{
-                height: 50,
+                height: 46,
               }}
             />
 
@@ -196,7 +196,7 @@ export default function Inicio() {
               src="/ministerio.jpg"
               alt="Ministerio"
               style={{
-                height: 110,
+                height: 98,
               }}
             />
           </div>

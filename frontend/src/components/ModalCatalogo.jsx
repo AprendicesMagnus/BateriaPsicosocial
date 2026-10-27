@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { CATEGORIAS_PRODUCTO, formatearCOP, imagenDe, useProductos } from "../data/products";
+import { categoriasDe, formatearCOP, imagenDe, useProductos } from "../data/products";
 import "../styles/Planes.css";
 import "../styles/Catalogo.css";
 
@@ -48,7 +48,7 @@ export default function ModalCatalogo({ onCerrar }) {
 
         {!cargando &&
           !error &&
-          CATEGORIAS_PRODUCTO.map((categoria) => {
+          categoriasDe(productos).map((categoria) => {
             const lista = productos.filter((p) => p.categoria === categoria);
             if (!lista.length) return null;
 

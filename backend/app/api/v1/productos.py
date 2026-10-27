@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_admin
@@ -33,6 +33,16 @@ def crear_producto(
     _actual: Usuario = Depends(require_admin),
 ):
     return productos_service.crear_producto(db, data)
+
+
+@router.post("/imagen")
+async def subir_imagen_producto(
+    archivo: UploadFile = File(...),
+    _actual: Usuario = Depends(require_admin),
+):
+    """Admin: sube la foto de un producto y devuelve su URL (se guarda luego con crear/editar)."""
+    contenido = await archivo.read(productos_service.MAX_IMAGEN_BYTES + 1)
+    return productos_service.guardar_imagen(contenido)
 
 
 @router.patch("/{producto_id}")

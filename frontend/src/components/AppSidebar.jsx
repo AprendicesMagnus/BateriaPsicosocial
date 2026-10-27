@@ -6,7 +6,7 @@ import "../styles/AppSidebar.css";
  * items: [{ key, label, icono?, activo?, onClick }]
  * En pantallas <= 860px el menú se colapsa tras un botón ☰.
  */
-export default function AppSidebar({ items, onLogoClick, mostrarPie = false }) {
+export default function AppSidebar({ items, onLogoClick, mostrarPie = false, acciones = null }) {
   const [abierto, setAbierto] = useState(false);
 
   return (
@@ -47,6 +47,8 @@ export default function AppSidebar({ items, onLogoClick, mostrarPie = false }) {
           </button>
         ))}
       </nav>
+
+      {acciones && <div className="sidebar__acciones">{acciones}</div>}
 
       {mostrarPie && (
         <div className="sidebar__footer">

@@ -428,7 +428,7 @@ class CompraCreate(BaseModel):
 
 class ProductoCreate(BaseModel):
     nombre: str = Field(min_length=2, max_length=120)
-    categoria: Literal["SST", "Tecnología"]
+    categoria: str = Field(min_length=2, max_length=40)
     precio: int = Field(gt=0)
     imagen_url: str = Field(default="", max_length=500)
     activo: bool = True
@@ -436,7 +436,7 @@ class ProductoCreate(BaseModel):
 
 class ProductoUpdate(BaseModel):
     nombre: str | None = Field(default=None, min_length=2, max_length=120)
-    categoria: Literal["SST", "Tecnología"] | None = None
+    categoria: str | None = Field(default=None, min_length=2, max_length=40)
     precio: int | None = Field(default=None, gt=0)
     imagen_url: str | None = Field(default=None, max_length=500)
     activo: bool | None = None

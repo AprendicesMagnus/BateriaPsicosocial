@@ -924,3 +924,15 @@
   .mobile-profile-submenu { display: flex; flex-direction: column; padding-left: 14px; }
   .mobile-nav .mobile-profile-submenu button { padding: 10px 12px; font-weight: 600; }
 }
+
+/* Logos del navbar de Inicio: un poco más a la izquierda y sin invadir los enlaces */
+@media (min-width: 1001px) {
+  .nav__logos--inicio { margin-left: -16px; flex: 0 0 auto; }
+}
+@media (min-width: 1280px) {
+  .nav__logos--inicio { margin-left: -56px; }
+}
+@media (min-width: 1001px) {
+  .nav__logos--inicio ~ .nav__links { width: auto; flex: 1 1 auto; min-width: 0; gap: 22px; }
+  .nav__logos--inicio ~ .nav__links a, .nav__logos--inicio ~ .nav__links button { white-space: nowrap; }
+}

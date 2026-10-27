@@ -821,6 +821,13 @@
 .nav__logo--javeriana { max-width: 105px; max-height: 48px; }
 .nav__logo--ministerio { max-width: 125px; max-height: 65px; }
 
+/* Pantallas anchas: logos más grandes */
+@media (min-width: 1280px) {
+  .nav__logo--magnus { max-width: 240px; max-height: 92px; }
+  .nav__logo--javeriana { max-width: 150px; max-height: 64px; }
+  .nav__logo--ministerio { max-width: 150px; max-height: 84px; }
+}
+
 @media (max-width: 900px) {
   .nav__inner {
     gap: 14px;

@@ -7,7 +7,7 @@ import {
 } from "../api/pedidosProductos";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
-import { CATEGORIAS_PRODUCTO, formatearCOP, imagenDe, useProductos } from "../data/products";
+import { categoriasDe, formatearCOP, imagenDe, useProductos } from "../data/products";
 import "../styles/app-shell.css";
 import "../styles/Catalogo.css";
 
@@ -208,12 +208,14 @@ export default function Catalogo() {
   }
 
   return (
-    <div className="app-shell-page catalogo-fondo">
+    <div className="app-shell-page">
       <AppTopbar />
 
       <main className="app-hero">
+        <div className="app-decor app-decor--1" />
+        <div className="app-decor app-decor--2" />
         <div className="app-content catalogo-pagina">
-          <BotonRegresar tono="oscuro" />
+          <BotonRegresar />
 
           <header className="catalogo-cabecera">
             <span className="catalogo-kicker">TIENDA</span>
@@ -227,7 +229,7 @@ export default function Catalogo() {
             <div className="catalogo-layout">
               <section className="catalogo-principal">
                 <div className="catalogo-filtros">
-                  {["Todos", ...CATEGORIAS_PRODUCTO].map((categoria) => (
+                  {["Todos", ...categoriasDe(productos)].map((categoria) => (
                     <button
                       key={categoria}
                       type="button"

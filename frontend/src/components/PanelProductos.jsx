@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { CATEGORIAS_PRODUCTO, formatearCOP, imagenDe, useProductos } from "../data/products";
+import { descargarExportacionPanel } from "../api/panel";
+import { subirImagenProducto } from "../api/productos";
+import { categoriasDe, CATEGORIAS_PRODUCTO, formatearCOP, imagenDe, useProductos } from "../data/products";
 import "../styles/Planes.css";
 import "../styles/PanelAcciones.css";
 import "../styles/Catalogo.css";
@@ -21,17 +23,61 @@ export default function PanelProductos() {
 
   const [form, setForm] = useState(null);
   const [mensaje, setMensaje] = useState(null);
+  const [subiendo, setSubiendo] = useState(false);
+  const [categoriaNueva, setCategoriaNueva] = useState(false);
+  const [exportando, setExportando] = useState(false);
+
+  async function exportar() {
+    setExportando(true);
+    try {
+      await descargarExportacionPanel(token, "productos");
+      setMensaje({ tipo: "ok", texto: "Inventario de productos exportado con éxito." });
+    } catch (err) {
+      setMensaje({ tipo: "error", texto: err.message || "No fue posible exportar el inventario." });
+    } finally {
+      setExportando(false);
+    }
+  }
 
   const cambiar = (campo) => (e) =>
     setForm((actual) => ({ ...actual, [campo]: e.target.value }));
 
+  async function elegirImagen(e) {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(archivo.type)) {
+      setMensaje({ tipo: "error", texto: "Usa una imagen JPG, PNG o WEBP." });
+      return;
+    }
+    if (archivo.size > 3 * 1024 * 1024) {
+      setMensaje({ tipo: "error", texto: "La imagen no puede superar los 3 MB." });
+      return;
+    }
+    setSubiendo(true);
+    setMensaje(null);
+    try {
+      const { imagen_url } = await subirImagenProducto(token, archivo);
+      setForm((actual) => ({ ...actual, imagen_url }));
+    } catch (err) {
+      setMensaje({ tipo: "error", texto: err.message || "No se pudo subir la imagen." });
+    } finally {
+      setSubiendo(false);
+    }
+  }
+
+  const categorias = categoriasDe([...productos, ...(form?.categoria ? [{ categoria: form.categoria }] : [])]);
+  const opciones = categorias.length ? categorias : CATEGORIAS_PRODUCTO;
+
   const abrirNuevo = () => {
     setMensaje(null);
+    setCategoriaNueva(false);
     setForm({ ...VACIO });
   };
 
   const abrirEdicion = (producto) => {
     setMensaje(null);
+    setCategoriaNueva(false);
     setForm({
       id: producto.id,
       nombre: producto.nombre,
@@ -51,6 +97,12 @@ export default function PanelProductos() {
       return;
     }
 
+    const categoria = form.categoria.trim().replace(/\s+/g, " ");
+    if (categoria.length < 2 || categoria.length > 40) {
+      setMensaje({ tipo: "error", texto: "La categoría debe tener entre 2 y 40 caracteres." });
+      return;
+    }
+
     if (!Number.isInteger(precio) || precio <= 0) {
       setMensaje({ tipo: "error", texto: "El precio debe ser un número entero en pesos." });
       return;
@@ -58,7 +110,7 @@ export default function PanelProductos() {
 
     const datos = {
       nombre: form.nombre.trim(),
-      categoria: form.categoria,
+      categoria,
       precio,
       imagen_url: form.imagen_url.trim(),
     };
@@ -97,9 +149,14 @@ export default function PanelProductos() {
           <h2>Gestión de Productos</h2>
           <span>Los productos se guardan en la base de datos y aparecen en el catálogo.</span>
         </div>
-        <button type="button" className="adm-btn adm-btn--oscuro" onClick={abrirNuevo}>
-          + Agregar producto
-        </button>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          <button type="button" className="adm-btn adm-btn--borde" disabled={exportando} onClick={exportar}>
+            {exportando ? "Exportando..." : "Exportar a Excel"}
+          </button>
+          <button type="button" className="adm-btn adm-btn--oscuro" onClick={abrirNuevo}>
+            + Agregar producto
+          </button>
+        </div>
       </div>
 
       {mensaje && (
@@ -124,13 +181,47 @@ export default function PanelProductos() {
 
           <label>
             Categoría
-            <select value={form.categoria} onChange={cambiar("categoria")}>
-              {CATEGORIAS_PRODUCTO.map((categoria) => (
-                <option key={categoria} value={categoria}>
-                  {categoria}
-                </option>
-              ))}
-            </select>
+            {categoriaNueva ? (
+              <>
+                <input
+                  type="text"
+                  maxLength={40}
+                  placeholder="Nombre de la nueva categoría"
+                  value={form.categoria}
+                  onChange={cambiar("categoria")}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  className="adm-accion"
+                  onClick={() => {
+                    setCategoriaNueva(false);
+                    setForm((a) => ({ ...a, categoria: opciones[0] }));
+                  }}
+                >
+                  ← Usar una existente
+                </button>
+              </>
+            ) : (
+              <select
+                value={form.categoria}
+                onChange={(e) => {
+                  if (e.target.value === "__nueva__") {
+                    setCategoriaNueva(true);
+                    setForm((a) => ({ ...a, categoria: "" }));
+                  } else {
+                    cambiar("categoria")(e);
+                  }
+                }}
+              >
+                {opciones.map((categoria) => (
+                  <option key={categoria} value={categoria}>
+                    {categoria}
+                  </option>
+                ))}
+                <option value="__nueva__">➕ Nueva categoría…</option>
+              </select>
+            )}
           </label>
 
           <label>
@@ -143,19 +234,37 @@ export default function PanelProductos() {
             />
           </label>
 
-          <label>
-            URL de la imagen (opcional)
-            <input
-              type="url"
-              placeholder="https://..."
-              maxLength={500}
-              value={form.imagen_url}
-              onChange={cambiar("imagen_url")}
-            />
-          </label>
+          <div className="producto-imagen">
+            <img className="producto-imagen__vista" src={imagenDe({ imagen_url: form.imagen_url })} alt="Vista previa" />
+            <div className="producto-imagen__campos">
+              <span>Imagen del producto</span>
+              <div className="producto-imagen__botones">
+                <label className="adm-btn adm-btn--borde producto-imagen__subir">
+                  {subiendo ? "Subiendo…" : form.imagen_url ? "Cambiar imagen" : "Cargar imagen"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={elegirImagen}
+                    disabled={subiendo}
+                    hidden
+                  />
+                </label>
+                {form.imagen_url && (
+                  <button
+                    type="button"
+                    className="adm-accion adm-accion--peligro"
+                    onClick={() => setForm((a) => ({ ...a, imagen_url: "" }))}
+                  >
+                    ✕ Quitar
+                  </button>
+                )}
+              </div>
+              <small>JPG, PNG o WEBP, máximo 3 MB.</small>
+            </div>
+          </div>
 
           <div className="plan-form__acciones">
-            <button type="submit" className="adm-btn adm-btn--dorado">
+            <button type="submit" className="adm-btn adm-btn--dorado" disabled={subiendo}>
               Guardar
             </button>
             <button

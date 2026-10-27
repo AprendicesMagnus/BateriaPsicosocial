@@ -1,10 +1,26 @@
+import io
+import uuid
+
+from PIL import Image, ImageOps, UnidentifiedImageError
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
 from app.models.product import Producto
+from app.services.perfil import UPLOADS_DIR
+
+MAX_IMAGEN_BYTES = 3 * 1024 * 1024  # 3 MB
+FORMATOS_IMAGEN = {"JPEG", "PNG", "WEBP"}
+LADO_MAXIMO_IMAGEN = 900
+PRODUCTOS_DIR = UPLOADS_DIR / "productos"
+URL_PRODUCTOS = "/api/uploads/productos"
 
 
-CATEGORIAS = {"SST", "Tecnología"}
+
+def _categoria(valor: str) -> str:
+    limpia = " ".join(valor.split())
+    if len(limpia) < 2 or len(limpia) > 40:
+        raise AppError(400, "La categoría debe tener entre 2 y 40 caracteres.")
+    return limpia
 
 
 def _publico(producto: Producto) -> dict:
@@ -42,7 +58,7 @@ def crear_producto(db: Session, data) -> dict:
 
     producto = Producto(
         nombre=nombre,
-        categoria=data.categoria,
+        categoria=_categoria(data.categoria),
         precio=data.precio,
         imagen_url=imagen_url,
         activo=data.activo,
@@ -64,7 +80,7 @@ def actualizar_producto(db: Session, producto_id, data) -> dict:
         producto.nombre = nombre
 
     if "categoria" in cambios and cambios["categoria"] is not None:
-        producto.categoria = cambios["categoria"]
+        producto.categoria = _categoria(cambios["categoria"])
 
     if "precio" in cambios and cambios["precio"] is not None:
         producto.precio = cambios["precio"]
@@ -85,3 +101,35 @@ def eliminar_producto(db: Session, producto_id) -> dict:
     db.delete(producto)
     db.commit()
     return {"message": "Producto eliminado correctamente."}
+
+
+def guardar_imagen(contenido: bytes) -> dict:
+    """Valida y optimiza la imagen de un producto; devuelve su URL pública."""
+    if not contenido:
+        raise AppError(400, "Selecciona una imagen.")
+    if len(contenido) > MAX_IMAGEN_BYTES:
+        raise AppError(400, "La imagen no puede superar los 3 MB.")
+    try:
+        with Image.open(io.BytesIO(contenido)) as img:
+            if img.format not in FORMATOS_IMAGEN:
+                raise AppError(400, "Formato no permitido. Usa JPG, PNG o WEBP.")
+            img = ImageOps.exif_transpose(img)
+            if img.mode in ("RGBA", "LA", "P"):
+                img = img.convert("RGBA")
+                fondo = Image.new("RGB", img.size, (255, 255, 255))
+                fondo.paste(img, mask=img.split()[-1])
+                img = fondo
+            else:
+                img = img.convert("RGB")
+            img.thumbnail((LADO_MAXIMO_IMAGEN, LADO_MAXIMO_IMAGEN), Image.Resampling.LANCZOS)
+            salida = io.BytesIO()
+            img.save(salida, format="JPEG", quality=85)
+    except AppError:
+        raise
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+        raise AppError(400, "El archivo no es una imagen válida.")
+
+    PRODUCTOS_DIR.mkdir(parents=True, exist_ok=True)
+    nombre = f"{uuid.uuid4().hex}.jpg"
+    (PRODUCTOS_DIR / nombre).write_bytes(salida.getvalue())
+    return {"imagen_url": f"{URL_PRODUCTOS}/{nombre}"}

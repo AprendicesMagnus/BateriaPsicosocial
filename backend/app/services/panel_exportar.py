@@ -12,11 +12,12 @@ from app.core.errors import AppError
 from app.models.audit import Auditoria
 from app.models.commercial import Compra
 from app.models.organization import Organizacion
+from app.models.product import Producto
 from app.models.user import Usuario
 from app.services import panel as panel_service
 from app.services.panel import TIPO_POR_ACCION
 
-TABLAS_VALIDAS = {"usuarios", "empresas", "compras", "auditoria"}
+TABLAS_VALIDAS = {"usuarios", "empresas", "compras", "auditoria", "productos"}
 
 TEXTO_ACCION = {
     "LOGIN": "inició sesión",
@@ -196,6 +197,24 @@ def exportar_tabla_excel(
                 c.estado,
             ])
             ws.cell(row=ws.max_row, column=5).number_format = '"$"#,##0'
+
+    elif tabla == "productos":
+        ws.title = "Inventario de productos"
+        ws.append(["Producto", "Categoría", "Precio (COP)", "Estado", "Imagen", "Creado", "Actualizado"])
+        productos = db.query(Producto).order_by(Producto.categoria.asc(), Producto.nombre.asc()).all()
+        for pr in productos:
+            if b_norm and b_norm not in _normalizar(pr.nombre) and b_norm not in _normalizar(pr.categoria):
+                continue
+            ws.append([
+                pr.nombre,
+                pr.categoria,
+                pr.precio,
+                "Activo" if pr.activo else "Inactivo",
+                "Sí" if pr.imagen_url else "No",
+                _formato_fecha(pr.creado_en),
+                _formato_fecha(pr.actualizado_en),
+            ])
+            ws.cell(row=ws.max_row, column=3).number_format = '"$"#,##0'
 
     elif tabla == "auditoria":
         cabeceras = [

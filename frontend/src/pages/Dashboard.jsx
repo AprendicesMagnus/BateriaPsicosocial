@@ -345,7 +345,10 @@ export default function Dashboard() {
       <main className="dashboard__main">
         <div className="dashboard__mobile-toolbar">
           <BotonRegresar tono="oscuro" />
-          <ProfileMenu />
+          <div className="app-acciones-usuario">
+            <CampanaNotificaciones />
+            <ProfileMenu />
+          </div>
         </div>
         <header className="dashboard__header">
           <div>
@@ -367,11 +370,6 @@ export default function Dashboard() {
                 </select>
               </label>
             )}
-          </div>
-
-          <div className="app-acciones-usuario">
-            <CampanaNotificaciones />
-            <ProfileMenu />
           </div>
 
         </header>

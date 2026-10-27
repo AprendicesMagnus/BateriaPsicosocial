@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { urlArchivo } from "../api/client";
 import {
   actualizarProducto,
   crearProducto,
@@ -7,6 +8,14 @@ import {
 } from "../api/productos";
 
 export const CATEGORIAS_PRODUCTO = ["SST", "Tecnología"];
+
+// Categorías en uso: las base primero y luego las nuevas, en orden alfabético.
+export const categoriasDe = (productos = []) => {
+  const enUso = new Set(productos.map((p) => p.categoria).filter(Boolean));
+  const base = CATEGORIAS_PRODUCTO.filter((c) => enUso.has(c));
+  const extra = [...enUso].filter((c) => !CATEGORIAS_PRODUCTO.includes(c)).sort((a, b) => a.localeCompare(b, "es"));
+  return [...base, ...extra];
+};
 
 export const formatearCOP = (valor) =>
   new Intl.NumberFormat("es-CO", {
@@ -23,7 +32,7 @@ function ilustracion() {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-export const imagenDe = (producto) => producto?.imagen_url || ilustracion();
+export const imagenDe = (producto) => urlArchivo(producto?.imagen_url) || ilustracion();
 
 export function useProductos({ token = null, admin = false } = {}) {
   const [productos, setProductos] = useState([]);

@@ -17,9 +17,8 @@ import "../styles/dashboard.css";
 import "../styles/Panel.css";
 import BotonRegresar from "../components/BotonRegresar";
 import Paginador from "../components/Paginador";
-import PanelPlanes from "../components/PanelPlanes";
 import PanelSoporte from "../components/PanelSoporte";
-import PanelProductos from "../components/PanelProductos";
+import PanelTienda from "../components/PanelTienda";
 import PanelEvolucion from "../components/PanelEvolucion";
 import "../styles/PanelAcciones.css";
 import { usePaginacion } from "../hooks/usePaginacion";
@@ -66,8 +65,7 @@ const SECCIONES = [
   { id: "usuarios", label: "Usuarios y roles" },
   { id: "empresas", label: "Empresas y compras" },
   { id: "evolucion", label: "Evolución mensual" },
-  { id: "planes", label: "Planes de baterías" },
-  { id: "productos", label: "Gestión de Productos" },
+  { id: "tienda", label: "Gestión de tienda" },
   { id: "soporte", label: "Centro de ayuda" },
   { id: "auditoria", label: "Auditoría y privacidad" },
 ];
@@ -143,7 +141,7 @@ const porcentaje = (parte, total) => (total ? Math.round((parte / total) * 100) 
 
 export default function Panel() {
   const navigate = useNavigate();
-  const { token, cerrarSesion } = useAuth();
+  const { token } = useAuth();
   const [busqueda, setBusqueda] = useState("");
   const [filtroAuditoria, setFiltroAuditoria] = useState("Todo");
   const [busquedaAuditoria, setBusquedaAuditoria] = useState("");
@@ -180,11 +178,6 @@ export default function Panel() {
       activo = false;
     };
   }, [token, version]);
-
-  function handleLogout() {
-    cerrarSesion();
-    navigate("/");
-  }
 
   const usuarios = datos?.usuarios ?? [];
 
@@ -256,9 +249,9 @@ export default function Panel() {
     <div className="dashboard panel-shell">
       <AppSidebar
         onLogoClick={() => navigate("/Inicio")}
+        acciones={<ProfileMenu />}
         items={[
           ...SECCIONES.map((x) => ({ key: x.id, label: x.label, activo: seccion === x.id, onClick: () => setSeccion(x.id) })),
-          { key: "salir", label: "Cerrar sesión", icono: "✕", onClick: handleLogout },
         ]}
       />
 
@@ -286,7 +279,6 @@ export default function Panel() {
             />
             <div className="app-acciones-usuario">
               <CampanaNotificaciones />
-              <ProfileMenu />
             </div>
           </div>
         </header>
@@ -544,9 +536,7 @@ export default function Panel() {
 
             {seccion === "evolucion" && <PanelEvolucion token={token} />}
 
-            {seccion === "planes" && <PanelPlanes />}
-
-            {seccion === "productos" && <PanelProductos />}
+            {seccion === "tienda" && <PanelTienda />}
 
             {seccion === "soporte" && <PanelSoporte />}
 
