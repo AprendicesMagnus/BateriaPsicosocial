@@ -736,7 +736,7 @@ export default function Perfil() {
             </span>
           </div>
         )}
-        <div className="app-content">
+        <div className="app-content perfil-page">
           <BotonRegresar />
           <h1 className="app-title">Mi Perfil</h1>
           <p className="app-subtitle">Consulta y administra la información de tu cuenta.</p>
@@ -1234,7 +1234,7 @@ export default function Perfil() {
               )}
             </div>
             <div className="app-card compras-card">
-              <h2 className="compras-titulo">Mis pedidos</h2>
+              <h2 className="compras-titulo">Historial de pedidos</h2>
               <p className="compras-subtitulo">Productos del catálogo comprados</p>
               {loadingPedidos && (
                 <p style={{ fontSize: "14px", color: "#64748b" }}>Cargando pedidos...</p>
