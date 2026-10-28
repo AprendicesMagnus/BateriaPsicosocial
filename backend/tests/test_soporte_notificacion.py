@@ -1,5 +1,4 @@
 import uuid
-import pytest
 
 from app.core.nit_utils import calcular_digito_verificador_nit
 
@@ -230,3 +229,47 @@ def test_admin_responde_dos_veces_mismo_ticket(client):
     assert res_mios.status_code == 200, res_mios.text
     ticket_en_mios = next(t for t in res_mios.json() if t["id"] == ticket_id)
     assert ticket_en_mios["respuesta"] == "Segunda respuesta definitiva y corregida."
+
+
+def test_respuesta_solo_espacios_responde_400_y_no_notifica(client):
+    headers_admin = _encabezados(client, "admin@magnussig.com", "Admin1234")
+    org_id = _crear_organizacion(client, headers_admin, "Org Soporte Notif 7")
+    _, email_user = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_id, PASSWORD_USUARIO)
+    headers_user = _encabezados(client, email_user, PASSWORD_USUARIO)
+
+    res_ticket = client.post(
+        "/api/soporte",
+        headers=headers_user,
+        json={"mensaje": "Mensaje para validar respuesta con solo espacios."},
+    )
+    assert res_ticket.status_code == 200, res_ticket.text
+    ticket_id = res_ticket.json()["id"]
+
+    notis_antes = len(_obtener_notificaciones_soporte(client, headers_user))
+
+    # Solo espacios debe responder 400
+    res_espacios = client.post(
+        f"/api/soporte/{ticket_id}/responder",
+        headers=headers_admin,
+        json={"respuesta": "   "},
+    )
+    assert res_espacios.status_code == 400, f"Se esperaba 400, fue {res_espacios.status_code}"
+
+    # Solo saltos de linea y tabulaciones tambien debe responder 400
+    res_tabs = client.post(
+        f"/api/soporte/{ticket_id}/responder",
+        headers=headers_admin,
+        json={"respuesta": "\n\t "},
+    )
+    assert res_tabs.status_code == 400, f"Se esperaba 400, fue {res_tabs.status_code}"
+
+    # No se debe haber creado ninguna notificacion SOPORTE_RESPONDIDO
+    notis_despues = len(_obtener_notificaciones_soporte(client, headers_user))
+    assert notis_despues == notis_antes, "Respuesta con solo espacios no debe generar notificacion"
+
+    # El ticket no debe haber quedado con respuesta ni en estado RESUELTO
+    res_mios = client.get("/api/soporte/mios", headers=headers_user)
+    assert res_mios.status_code == 200, res_mios.text
+    ticket_en_mios = next(t for t in res_mios.json() if t["id"] == ticket_id)
+    assert ticket_en_mios["respuesta"] is None, "El ticket no debe tener respuesta tras rechazar solo espacios"
+    assert ticket_en_mios["estado"] != "RESUELTO", "El ticket no debe quedar RESUELTO tras rechazar solo espacios"
