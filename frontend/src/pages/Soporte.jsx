@@ -264,83 +264,20 @@ export default function Soporte() {
             </p>
           )}
 
-          {!buscando && (
-            <>
-              <section className="soporte-card soporte-card--guia">
-                <h2>Primeros pasos</h2>
-                <div className="soporte-tabs">
-                  {ORDEN_ROLES.map((rol) => {
-                    const Icono = GUIAS_POR_ROL[rol].icono;
-                    const activo = rol === rolActivo;
-                    return (
-                      <button
-                        key={rol}
-                        type="button"
-                        className={`soporte-tab ${activo ? "soporte-tab--activo" : ""}`}
-                        style={activo ? { "--tab-color": GUIAS_POR_ROL[rol].color } : undefined}
-                        onClick={() => setRolActivo(rol)}
-                      >
-                        <Icono size={18} />
-                        {etiquetaRol(rol)}
-                        {rol === usuario?.rol && <span className="soporte-tab-tu">tú</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <ol className="soporte-guia" style={{ "--guia-color": guia.color }}>
-                  {pasos.map((paso, i) => (
-                    <li key={i}>
-                      <span className="soporte-guia-num">{i + 1}</span>
-                      <span>{paso}</span>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-            </>
+          {/* Preguntas frecuentes (primero) */}
+          {preguntasVisibles.length > 0 && (
+            <section className="soporte-card">
+              <h2>Preguntas frecuentes</h2>
+              <div className="soporte-faq-lista">
+                {preguntasVisibles.map((item) => (
+                  <PreguntaFAQ key={item.pregunta} item={item} />
+                ))}
+              </div>
+            </section>
           )}
 
-          <section className="soporte-card">
-            <h2>Preguntas frecuentes</h2>
-            <div className="soporte-faq-lista">
-              {preguntas.map((item) => (
-                <PreguntaFAQ key={item.pregunta} item={item} />
-              ))}
-            </div>
-          </section>
-
-
-          <section className="soporte-card">
-            <h2>Más recursos</h2>
-            <div className="soporte-recursos">
-              <div className="soporte-recurso">
-                <strong>Glosario</strong>
-                <p>Qué significa "resolución verificada", "empresa activa", "batería" y otros términos de la plataforma.</p>
-              </div>
-              <div className="soporte-recurso">
-                <strong>Buenas prácticas de seguridad</strong>
-                <p>Usa contraseñas únicas, no compartas tu enlace de empresa y verifica siempre el remitente del correo.</p>
-              </div>
-              <div className="soporte-recurso">
-                <strong>Novedades de la plataforma</strong>
-                <p>Últimos cambios: límite de 3 cambios de resolución cada 5 días, planes conectados al pago, Centro de ayuda.</p>
-              </div>
-            </div>
-          </section>
-
-          <section className="soporte-card soporte-manual">
-            <div className="soporte-manual-icono">
-              <HiOutlineDownload size={24} />
-            </div>
-            <div className="soporte-manual-texto">
-              <h2>Manual de usuario</h2>
-              <p>Guía completa del sistema en PDF. Estará disponible muy pronto.</p>
-            </div>
-            <button type="button" className="soporte-btn-descarga" disabled title="Aún no hay manual disponible">
-              Descargar PDF
-              <span className="soporte-badge-pronto">Próximamente</span>
-            </button>
-          </section>
+          {/* Primeros pasos (solo sin búsqueda) */}
+          {!buscando && (
           <section className="soporte-card soporte-card--guia">
             <h2>Primeros pasos</h2>
             <div className="soporte-tabs">
@@ -372,37 +309,9 @@ export default function Soporte() {
               ))}
             </ol>
           </section>
-
-          {SECCIONES_INFO.map(({ clave, titulo, icono: Icono }) =>
-            contenido?.[clave]?.length ? (
-              <section className="soporte-card" key={clave}>
-                <h2 className="soporte-info-titulo">
-                  <Icono size={20} /> {titulo}
-                </h2>
-                <dl className="soporte-info-lista">
-                  {contenido[clave].map((item) => (
-                    <div className="soporte-info-item" key={item.id}>
-                      <dt>{item.titulo}</dt>
-                      <dd>{item.texto}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            ) : null
           )}
 
-
-          {preguntasVisibles.length > 0 && (
-            <section className="soporte-card">
-              <h2>Preguntas frecuentes</h2>
-              <div className="soporte-faq-lista">
-                {preguntasVisibles.map((item) => (
-                  <PreguntaFAQ key={item.pregunta} item={item} />
-                ))}
-              </div>
-            </section>
-          )}
-
+          {/* Secciones informativas editables: cada una aparece una sola vez */}
           {seccionesVisibles.map(({ clave, titulo, icono: Icono, items }) => (
             <section className="soporte-card" key={clave}>
               <h2 className="soporte-info-titulo">
@@ -418,6 +327,44 @@ export default function Soporte() {
               </dl>
             </section>
           ))}
+
+          {/* Recursos fijos: solo si el administrador aún no cargó secciones propias */}
+          {!buscando && seccionesVisibles.length === 0 && (
+          <section className="soporte-card">
+            <h2>Más recursos</h2>
+            <div className="soporte-recursos">
+              <div className="soporte-recurso">
+                <strong>Glosario</strong>
+                <p>Qué significa "resolución verificada", "empresa activa", "batería" y otros términos de la plataforma.</p>
+              </div>
+              <div className="soporte-recurso">
+                <strong>Buenas prácticas de seguridad</strong>
+                <p>Usa contraseñas únicas, no compartas tu enlace de empresa y verifica siempre el remitente del correo.</p>
+              </div>
+              <div className="soporte-recurso">
+                <strong>Novedades de la plataforma</strong>
+                <p>Últimos cambios: límite de 3 cambios de resolución cada 5 días, planes conectados al pago, Centro de ayuda.</p>
+              </div>
+            </div>
+          </section>
+
+          )}
+
+          {!buscando && (
+          <section className="soporte-card soporte-manual">
+            <div className="soporte-manual-icono">
+              <HiOutlineDownload size={24} />
+            </div>
+            <div className="soporte-manual-texto">
+              <h2>Manual de usuario</h2>
+              <p>Guía completa del sistema en PDF. Estará disponible muy pronto.</p>
+            </div>
+            <button type="button" className="soporte-btn-descarga" disabled title="Aún no hay manual disponible">
+              Descargar PDF
+              <span className="soporte-badge-pronto">Próximamente</span>
+            </button>
+          </section>
+          )}
 
           <section className="soporte-card soporte-card--contacto">
             <div className="soporte-contacto-icono">

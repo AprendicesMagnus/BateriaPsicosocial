@@ -87,11 +87,11 @@ def require_gestor(usuario: Usuario = Depends(get_current_user)) -> Usuario:
 #                       incluidos resultados individuales (encuestas realizadas).
 # RESPONSABLE_SST     : su empresa; mismos permisos que el Psicologo dentro de ella (ROLES_EVALUADOR).
 # ADMINISTRADOR       : las empresas que él creó; reportes por área y generar/descargar informes agrupados.
-# JEFE                : las empresas que él creó; solo CONSULTA de reportes por área (no descarga informes).
+# JEFE                : las empresas que él creó; reportes por área e informes agrupados (generar y descargar), igual que el ADMINISTRADOR.
 # Los resultados individuales (encuestas realizadas) son confidenciales: solo SUPER_ADMINISTRADOR y quienes gestionan la empresa.
 ROLES_POR_CREADOR = {"JEFE", "ADMINISTRADOR"}  # su alcance son las empresas que crearon
 ROLES_LECTORES_REPORTES = {"SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST", "JEFE", "ADMINISTRADOR"}
-ROLES_GENERADORES_INFORMES = ROLES_LECTORES_REPORTES - {"JEFE"}
+ROLES_GENERADORES_INFORMES = ROLES_LECTORES_REPORTES
 
 
 def require_lector_reportes(usuario: Usuario = Depends(get_current_user)) -> Usuario:
@@ -102,9 +102,9 @@ def require_lector_reportes(usuario: Usuario = Depends(get_current_user)) -> Usu
 
 
 def require_generador_informes(usuario: Usuario = Depends(get_current_user)) -> Usuario:
-    """Generar y descargar informes agrupados (el Jefe solo consulta)."""
+    """Generar y descargar informes agrupados."""
     if usuario.rol.codigo not in ROLES_GENERADORES_INFORMES:
-        raise AppError(403, "Tu rol solo puede consultar los reportes; no puede generar ni descargar informes.")
+        raise AppError(403, "Tu rol no puede generar ni descargar informes.")
     return usuario
 
 

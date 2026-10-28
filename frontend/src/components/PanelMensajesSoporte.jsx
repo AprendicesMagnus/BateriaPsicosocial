@@ -20,7 +20,7 @@ function formatearFecha(iso) {
   return f.toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
 }
 
-export default function PanelMensajesSoporte() {
+export default function PanelMensajesSoporte({ selector = null }) {
   const { token } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [filtroEstado, setFiltroEstado] = useState("TODOS");
@@ -89,6 +89,7 @@ export default function PanelMensajesSoporte() {
           <span>Mensajes enviados por los usuarios desde el Centro de ayuda.</span>
         </div>
         <div className="plan-form__acciones">
+          {selector}
           <select
             className="adm-input"
             value={filtroEstado}

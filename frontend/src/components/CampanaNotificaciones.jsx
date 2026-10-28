@@ -11,6 +11,8 @@ const MAX_VISIBLES = 20;
 // Ruta a la que lleva cada tipo de notificación. Los tipos que no aparecen aquí solo se marcan como leídos.
 const DESTINOS_POR_TIPO = {
   RIESGO_ALTO: "/dashboard",
+  SOPORTE_RESPUESTA: "/soporte",
+  SOPORTE_MENSAJE: { ruta: "/panel", state: { seccion: "soporte", vista: "mensajes" } },
 };
 
 function formatearFecha(iso) {
@@ -104,7 +106,8 @@ export default function CampanaNotificaciones() {
     const destino = DESTINOS_POR_TIPO[notificacion.tipo];
     if (destino) {
       setAbierta(false);
-      navigate(destino);
+      if (typeof destino === "string") navigate(destino);
+      else navigate(destino.ruta, { state: destino.state });
     }
   }
 

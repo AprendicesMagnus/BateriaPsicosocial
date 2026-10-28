@@ -8,7 +8,7 @@ import "../styles/Inicio.css";
 import "../styles/app-shell.css";
 import { useAuth } from "../context/AuthContext"; // <-- EN LÍNEA NUEVA: IMPORTADO "useAuth"
 import { urlArchivo } from "../api/client";
-import { esSuperAdmin } from "../utils/roles";
+import { esSuperAdmin, etiquetaRol } from "../utils/roles";
 import CampanaNotificaciones from "../components/CampanaNotificaciones";
 import TiendaMenu from "../components/TiendaMenu";
 
@@ -137,7 +137,7 @@ export default function Inicio() {
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
     : "";
-  const rolUsuario = usuario?.rol ?? "";
+  const rolUsuario = etiquetaRol(usuario?.rol);
   const iniciales =
     nombreUsuario
       .split(" ")

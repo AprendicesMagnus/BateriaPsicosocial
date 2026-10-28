@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   HiOutlineLink,
   HiOutlineLockClosed,
@@ -141,6 +141,7 @@ const porcentaje = (parte, total) => (total ? Math.round((parte / total) * 100) 
 
 export default function Panel() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { token } = useAuth();
   const [busqueda, setBusqueda] = useState("");
   const [filtroAuditoria, setFiltroAuditoria] = useState("Todo");
@@ -151,7 +152,7 @@ export default function Panel() {
   const [version, setVersion] = useState(0); // al cambiar, se vuelve a pedir el panel
   const [modalUsuario, setModalUsuario] = useState(null); // {modo: "invitar" | "editar", usuario?}
   const [aviso, setAviso] = useState(null); // {tipo: "ok" | "error", texto}
-  const [seccion, setSeccion] = useState("usuarios");
+  const [seccion, setSeccion] = useState(location.state?.seccion ?? "usuarios");
   const [exportando, setExportando] = useState(false);
 
   async function handleExportar(tabla, opciones = {}) {

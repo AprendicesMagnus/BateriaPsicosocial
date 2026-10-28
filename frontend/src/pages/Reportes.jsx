@@ -56,7 +56,7 @@ function IconoDescargar() {
 const ROLES_ENLACES = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
 // Resultados individuales (confidenciales): solo quienes gestionan la empresa y el Super Administrador.
 const ROLES_ENCUESTAS = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
-// Jefe y Administrador ven las empresas que crearon; el Jefe solo consulta (no descarga informes).
+// Jefe y Administrador ven las empresas que crearon y pueden descargar sus informes agrupados.
 const ROLES_POR_CREADOR = ["JEFE", "ADMINISTRADOR"];
 
 // URL completa que el psicólogo comparte con el paciente
@@ -130,7 +130,6 @@ export default function Reportes() {
       setCambiandoEmpresa(false);
     }
   }
-  const puedeDescargar = usuario?.rol !== "JEFE";
   const [enlaces, setEnlaces] = useState([]);
   const [nombreEnlace, setNombreEnlace] = useState("");
   const [creandoEnlace, setCreandoEnlace] = useState(false);
@@ -422,18 +421,16 @@ export default function Reportes() {
                     {reporte.estado === "listo" ? "Listo" : "Acceso restringido"}
                   </span>
 
-                  {puedeDescargar && (
-                    <button
-                      type="button"
-                      className={`reportes-download-btn ${
-                        reporte.estado === "restringido" || descargandoId === reporte.id ? "reportes-download-btn--disabled" : ""
-                      }`}
-                      onClick={() => handleDescargar(reporte)}
-                      disabled={reporte.estado === "restringido" || descargandoId === reporte.id}
-                    >
-                      <IconoDescargar /> {descargandoId === reporte.id ? "Generando..." : "Descargar"}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={`reportes-download-btn ${
+                      reporte.estado === "restringido" || descargandoId === reporte.id ? "reportes-download-btn--disabled" : ""
+                    }`}
+                    onClick={() => handleDescargar(reporte)}
+                    disabled={reporte.estado === "restringido" || descargandoId === reporte.id}
+                  >
+                    <IconoDescargar /> {descargandoId === reporte.id ? "Generando..." : "Descargar"}
+                  </button>
                 </div>
               ))
             )}
