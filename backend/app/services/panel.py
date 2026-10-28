@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.audit import Auditoria
 from app.models.commercial import Compra
+from app.models.product_order import PedidoProducto
 from app.models.evaluation import Evaluacion, EvaluacionParticipante
 from app.models.organization import Organizacion
 from app.models.user import Usuario
@@ -164,6 +165,62 @@ def obtener_panel(db: Session) -> dict:
         "saldo": {"compradas": total_compradas, "usadas": total_usadas},
         "auditoria": auditoria,
     }
+
+
+def obtener_historial_compras_tienda(db: Session) -> list[dict]:
+    """Historial unificado de compras de planes/baterías y productos."""
+    usuarios = {
+        u.id: u
+        for u in db.query(Usuario).all()
+    }
+    orgs = {o.id: o for o in db.query(Organizacion).all()}
+
+    historial = []
+
+    compras = (
+        db.query(Compra)
+        .order_by(Compra.creado_en.desc())
+        .all()
+    )
+    for compra in compras:
+        usuario = usuarios.get(compra.usuario_id)
+        historial.append({
+            "id": str(compra.id),
+            "tipo": "Plan de baterías",
+            "detalle": compra.bateria_nombre,
+            "fecha": compra.creado_en.isoformat(),
+            "nombre": _nombre(usuario),
+            "empresa": orgs[compra.organizacion_id].nombre if compra.organizacion_id in orgs else "—",
+            "total": compra.total,
+            "estado": compra.estado,
+        })
+
+    pedidos = (
+        db.query(PedidoProducto)
+        .options(joinedload(PedidoProducto.items))
+        .order_by(PedidoProducto.creado_en.desc())
+        .all()
+    )
+    for pedido in pedidos:
+        usuario = usuarios.get(pedido.usuario_id)
+        detalle = ", ".join(
+            f"{item.nombre_producto} x{item.cantidad}"
+            for item in pedido.items
+        ) or "Productos"
+        historial.append({
+            "id": str(pedido.id),
+            "tipo": "Producto",
+            "detalle": detalle,
+            "fecha": pedido.creado_en.isoformat(),
+            "nombre": _nombre(usuario),
+            "empresa": orgs[usuario.organizacion_id].nombre
+            if usuario and usuario.organizacion_id in orgs else "—",
+            "total": pedido.total,
+            "estado": pedido.estado,
+        })
+
+    historial.sort(key=lambda x: x["fecha"], reverse=True)
+    return historial
 
 
 MESES_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]

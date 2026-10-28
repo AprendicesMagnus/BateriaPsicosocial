@@ -1,11 +1,13 @@
 import { useState } from "react";
 import PanelPlanes from "./PanelPlanes";
 import PanelProductos from "./PanelProductos";
+import PanelHistorialCompras from "./PanelHistorialCompras";
 import "../styles/PanelTienda.css";
 
 const VISTAS = [
   { id: "planes", label: "Planes de baterías" },
   { id: "productos", label: "Productos" },
+  { id: "historial", label: "Historial de compras" },
 ];
 
 // Gestión de tienda: un solo apartado con selector entre Planes y Productos.
@@ -30,7 +32,7 @@ export default function PanelTienda() {
         ))}
       </div>
 
-      {vista === "planes" ? <PanelPlanes /> : <PanelProductos />}
+      {vista === "planes" ? <PanelPlanes /> : vista === "productos" ? <PanelProductos /> : <PanelHistorialCompras />}
     </>
   );
 }
