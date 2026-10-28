@@ -16,6 +16,7 @@ import {
   cambiarEmpresaActiva,
   guardarMiResolucion,
 } from "../api/perfil";
+import { listarPedidosUsuarioProductos } from "../api/pedidosProductos";
 
 import {
   TEXTO_AYUDA_PASSWORD,
@@ -125,6 +126,22 @@ function estiloEstadoCompra(estado) {
     }),
   };
 }
+function etiquetaEstadoPedido(estado) {
+  const estados = {
+    PAGADA: "Pagado",
+    PENDIENTE: "Pendiente de pago",
+    RECHAZADO: "Pago rechazado",
+    EXPIRADA: "Pedido expirado",
+    CANCELADA: "Pedido cancelado",
+    ERROR: "Error de pago",
+  };
+  return estados[estado] || "Estado no disponible";
+}
+function resumenItemsPedido(items) {
+  return (items || [])
+    .map((item) => `${item.cantidad} x ${item.nombre}`)
+    .join(", ");
+}
 function tipoMensajeToast(mensaje) {
   const texto = String(mensaje || "").toLowerCase();
   if (
@@ -151,6 +168,9 @@ export default function Perfil() {
   const [loadingCompras, setLoadingCompras] = useState(false);
   const [errorCompras, setErrorCompras] = useState(null);
   const [cancelandoCompraId, setCancelandoCompraId] = useState(null);
+  const [pedidos, setPedidos] = useState([]);
+  const [loadingPedidos, setLoadingPedidos] = useState(false);
+  const [errorPedidos, setErrorPedidos] = useState(null);
   // ---- edición de perfil / contraseña ----
   const [modo, setModo] = useState(null);
   const [guardando, setGuardando] = useState(false);
@@ -273,6 +293,44 @@ export default function Perfil() {
     }
     const intervalo = setInterval(
       actualizarCompras,
+      INTERVALO_ACTUALIZACION_COMPRAS
+    );
+    return () => {
+      activo = false;
+      clearInterval(intervalo);
+    };
+  }, [usuario?.id, token]);
+  // ---- cargar y actualizar pedidos de productos ----
+  useEffect(() => {
+    if (!usuario?.id || !token) {
+      return undefined;
+    }
+    let activo = true;
+    async function cargarPedidos(inicial) {
+      if (inicial) {
+        setLoadingPedidos(true);
+        setErrorPedidos(null);
+      }
+      try {
+        const data = await listarPedidosUsuarioProductos(token, usuario.id);
+        if (!activo) {
+          return;
+        }
+        setPedidos(data);
+        setErrorPedidos(null);
+      } catch (err) {
+        if (activo && inicial) {
+          setErrorPedidos(err.message);
+        }
+      } finally {
+        if (activo && inicial) {
+          setLoadingPedidos(false);
+        }
+      }
+    }
+    cargarPedidos(true);
+    const intervalo = setInterval(
+      () => cargarPedidos(false),
       INTERVALO_ACTUALIZACION_COMPRAS
     );
     return () => {
@@ -1173,6 +1231,44 @@ export default function Perfil() {
                     </p>
                   </div>
                 )
+              )}
+            </div>
+            <div className="app-card compras-card">
+              <h2 className="compras-titulo">Mis pedidos</h2>
+              <p className="compras-subtitulo">Productos del catálogo comprados</p>
+              {loadingPedidos && (
+                <p style={{ fontSize: "14px", color: "#64748b" }}>Cargando pedidos...</p>
+              )}
+              {errorPedidos && (
+                <p style={{ fontSize: "14px", color: "#b91c1c" }}>{errorPedidos}</p>
+              )}
+              {!loadingPedidos && pedidos.length > 0 && (
+                <div className="compras-list">
+                  {pedidos.map((pedido) => (
+                    <div className="compras-row" key={pedido.id}>
+                      <span className="compras-row-icon"><ReceiptIcon /></span>
+                      <div className="compras-row-main">
+                        <span className="compras-row-qty">{pedido.numero}</span>
+                        <span className="compras-row-date">{resumenItemsPedido(pedido.items)}</span>
+                        <span style={estiloEstadoCompra(pedido.estado)}>{etiquetaEstadoPedido(pedido.estado)}</span>
+                        <span className="compras-row-date">{formatearFechaHora(pedido.creadoEn || pedido.fecha)}</span>
+                        <span className="compras-row-total">
+                          Total:{" "}
+                          {Number(pedido.total || 0).toLocaleString("es-CO", {
+                            style: "currency",
+                            currency: "COP",
+                            maximumFractionDigits: 0,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!loadingPedidos && !errorPedidos && pedidos.length === 0 && (
+                <div className="compras-empty">
+                  <p>Aun no has realizado pedidos de productos.</p>
+                </div>
               )}
             </div>
           </div>

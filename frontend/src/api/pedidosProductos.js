@@ -28,3 +28,6 @@ export const cancelarPedidoProductos = (token, id) =>
     method: "POST",
     token,
   });
+
+export const listarPedidosUsuarioProductos = (token, usuarioId) =>
+  request(`/pedidos-productos/usuario/${usuarioId}`, { token });
