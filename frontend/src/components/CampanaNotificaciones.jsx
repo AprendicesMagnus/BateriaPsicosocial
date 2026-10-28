@@ -11,6 +11,7 @@ const MAX_VISIBLES = 20;
 // Ruta a la que lleva cada tipo de notificación. Los tipos que no aparecen aquí solo se marcan como leídos.
 const DESTINOS_POR_TIPO = {
   RIESGO_ALTO: "/dashboard",
+  SOPORTE_RESPONDIDO: "/soporte",
 };
 
 function formatearFecha(iso) {

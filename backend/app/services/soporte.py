@@ -4,6 +4,7 @@ from app.core.config import get_settings
 from app.core.crypto import utcnow
 from app.core.errors import AppError
 from app.services.correo import enviar_correo
+from app.services.notificaciones import notificar
 from app.models.ticket_soporte import TicketSoporte
 from app.models.user import Usuario
 
@@ -56,7 +57,7 @@ def listar_tickets_usuario(db: Session, usuario_id) -> list[dict]:
     return [_publico(t) for t in tickets]
 
 
-def responder_ticket(db: Session, ticket_id, respuesta: str) -> dict:
+def responder_ticket(db: Session, ticket_id, respuesta: str, respondido_por=None) -> dict:
     ticket = db.query(TicketSoporte).filter(TicketSoporte.id == ticket_id).first()
     if ticket is None:
         raise AppError(404, "Ticket no encontrado.")
@@ -66,6 +67,15 @@ def responder_ticket(db: Session, ticket_id, respuesta: str) -> dict:
     ticket.respuesta = respuesta
     ticket.respondido_en = utcnow()
     ticket.estado = "RESUELTO"
+    if respondido_por is None or (respondido_por != ticket.usuario_id and str(respondido_por) != str(ticket.usuario_id)):
+        notificar(
+            db,
+            usuario_id=ticket.usuario_id,
+            tipo="SOPORTE_RESPONDIDO",
+            titulo="Respuesta a tu mensaje de soporte",
+            mensaje="El equipo de soporte respondió tu mensaje. Puedes verlo en el Centro de ayuda, en la sección Mis mensajes.",
+            commit=False,
+        )
     db.commit()
     db.refresh(ticket)
     return _publico(ticket)
