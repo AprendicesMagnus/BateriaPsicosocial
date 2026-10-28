@@ -1267,7 +1267,7 @@ export default function Perfil() {
               )}
               {!loadingPedidos && !errorPedidos && pedidos.length === 0 && (
                 <div className="compras-empty">
-                  <p>Aun no has realizado pedidos de productos.</p>
+                  <p>Aún no has realizado pedidos de productos.</p>
                 </div>
               )}
             </div>

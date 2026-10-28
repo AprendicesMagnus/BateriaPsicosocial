@@ -12,6 +12,8 @@ const MAX_VISIBLES = 20;
 const DESTINOS_POR_TIPO = {
   RIESGO_ALTO: "/dashboard",
   SOPORTE_RESPONDIDO: "/soporte",
+  COMPRA_APROBADA: "/perfil",
+  INFORME_GENERADO: "/reportes",
 };
 
 function formatearFecha(iso) {

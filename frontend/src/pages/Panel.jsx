@@ -104,6 +104,7 @@ const TEXTO_ACCION = {
 
 const FILTROS = ["Todo", "Accesos", "Evaluaciones", "Resultados", "Usuarios", "Empresas", "Planes", "Enlaces"];
 const POR_PAGINA = 10; // registros que se muestran a la vez en cada tabla
+const LIMITE_AUDITORIA_PANEL = 100; // el backend envia como maximo los ultimos 100 eventos (el Excel incluye todos)
 
 const rol = (codigo) => ROLES[codigo] ?? { label: codigo, clase: "trabajador" };
 const estado = (codigo) => ESTADOS[codigo] ?? { label: codigo, clase: "neutro" };
@@ -591,6 +592,12 @@ export default function Panel() {
                   onChange={(e) => setBusquedaAuditoria(e.target.value)}
                 />
               </div>
+
+              {auditoria.length >= LIMITE_AUDITORIA_PANEL && (
+                <p className="adm-muted adm-pequeno" style={{ marginBottom: "0.75rem" }}>
+                  Mostrando los últimos 100; el Excel incluye todos.
+                </p>
+              )}
 
               <ul className="adm-timeline">
                 {pagAuditoria.items.map((a) => {
