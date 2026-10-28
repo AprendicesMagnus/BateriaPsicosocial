@@ -62,12 +62,12 @@ const TIPO_AUDITORIA = {
 
 // Apartados del panel (sidebar)
 const SECCIONES = [
-  { id: "usuarios", label: "Usuarios y roles" },
-  { id: "empresas", label: "Empresas y compras" },
+  { id: "usuarios", label: "Usuarios" },
+  { id: "empresas", label: "Empresas" },
   { id: "evolucion", label: "Evolución mensual" },
   { id: "tienda", label: "Gestión de tienda" },
   { id: "soporte", label: "Centro de ayuda" },
-  { id: "auditoria", label: "Auditoría y privacidad" },
+  { id: "auditoria", label: "Auditoría" },
 ];
 
 // Texto legible para las acciones registradas en auditoría
