@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.services import compras as compras_service
 from app.services import pedidos_productos as pedidos_productos_service
-from app.services import pedidos_productos as pedidos_productos_service
 from app.services import wompi as wompi_service
 
 
