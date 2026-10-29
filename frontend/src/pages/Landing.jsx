@@ -196,7 +196,7 @@ export default function Landing() {
             </div>
             <a href="#beneficios" onClick={() => setMenuMovilAbierto(false)}>Beneficios</a>
             <a href="#normativa" onClick={() => setMenuMovilAbierto(false)}>Normativa</a>
-            <Link to="/iniciar-sesion" onClick={() => setMenuMovilAbierto(false)}>Iniciar sesión</Link>
+            <Link to="/iniciar-sesion" className="mobile-nav__login" onClick={() => setMenuMovilAbierto(false)}>Iniciar sesión</Link>
             <Link to="/crear-cuenta" className="mobile-nav__create-account" onClick={() => setMenuMovilAbierto(false)}>Crear cuenta</Link>
           </nav>
 

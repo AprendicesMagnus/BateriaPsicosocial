@@ -133,6 +133,7 @@ def _crear_producto(client, headers_admin, nombre_sufijo="", precio=100000):
             "precio": precio,
             "imagen_url": "",
             "activo": True,
+            "stock": 100,
         },
     )
     assert res.status_code in (200, 201), res.text

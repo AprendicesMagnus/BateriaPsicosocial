@@ -432,6 +432,7 @@ class ProductoCreate(BaseModel):
     precio: int = Field(gt=0)
     imagen_url: str = Field(default="", max_length=500)
     activo: bool = True
+    stock: int = Field(default=0, ge=0)
 
 
 class ProductoUpdate(BaseModel):
@@ -440,6 +441,7 @@ class ProductoUpdate(BaseModel):
     precio: int | None = Field(default=None, gt=0)
     imagen_url: str | None = Field(default=None, max_length=500)
     activo: bool | None = None
+    stock: int | None = Field(default=None, ge=0)
 
 
 class PedidoProductoItemCreate(BaseModel):
@@ -449,6 +451,10 @@ class PedidoProductoItemCreate(BaseModel):
 
 class PedidoProductoCreate(BaseModel):
     items: list[PedidoProductoItemCreate] = Field(min_length=1, max_length=100)
+
+
+class PedidoProductoEstadoUpdate(BaseModel):
+    estado: str = Field(min_length=3, max_length=30)
 
 
 class RespuestaEnvio(BaseModel):

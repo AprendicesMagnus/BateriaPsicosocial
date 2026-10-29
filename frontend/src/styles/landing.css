@@ -929,6 +929,20 @@
     font-weight: 700;
   }
 
+  /* Solo en el menú móvil: mismo dorado de Crear cuenta, en un tono más claro. */
+  .mobile-nav a.mobile-nav__login,
+  .mobile-nav a[href="/iniciar-sesion"] {
+    background: #ffd080 !important;
+    color: var(--navy-950, #12314b) !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+  }
+
+  .mobile-nav a.mobile-nav__login:hover,
+  .mobile-nav a[href="/iniciar-sesion"]:hover {
+    background: #ffc15a !important;
+  }
+
   .mobile-nav .mobile-nav__create-account:hover {
     background: var(--gold-600);
   }

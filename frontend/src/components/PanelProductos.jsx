@@ -305,7 +305,7 @@ export default function PanelProductos() {
                       className={`adm-chip ${
                         producto.categoria === "SST"
                           ? "adm-chip--info"
-                          : "adm-chip--neutro"
+                          : `adm-chip--categoria-${Math.max(0, categorias.indexOf(producto.categoria) - (categorias.includes("SST") ? 1 : 0)) % 7 + 1}`
                       }`}
                     >
                       {producto.categoria}

@@ -16,7 +16,11 @@ import {
   cambiarEmpresaActiva,
   guardarMiResolucion,
 } from "../api/perfil";
-import { listarPedidosUsuarioProductos } from "../api/pedidosProductos";
+import {
+  listarPedidosUsuarioProductos,
+  prepararCheckoutPedidoProductos,
+  confirmarPagoPedidoProductos,
+} from "../api/pedidosProductos";
 
 import {
   TEXTO_AYUDA_PASSWORD,
@@ -129,6 +133,8 @@ function estiloEstadoCompra(estado) {
 function etiquetaEstadoPedido(estado) {
   const estados = {
     PAGADA: "Pagado",
+    ENVIADO: "Pedido enviado",
+    ENTREGADO: "Pedido entregado",
     PENDIENTE: "Pendiente de pago",
     RECHAZADO: "Pago rechazado",
     EXPIRADA: "Pedido expirado",
@@ -160,6 +166,24 @@ function tipoMensajeToast(mensaje) {
   }
   return "ok";
 }
+function cargarWidgetWompiPerfil() {
+  return new Promise((resolve, reject) => {
+    if (window.WidgetCheckout) return resolve();
+    const existente = document.querySelector('script[src="https://checkout.wompi.co/widget.js"]');
+    if (existente) {
+      existente.addEventListener("load", resolve, { once: true });
+      existente.addEventListener("error", () => reject(new Error("No se pudo cargar el Widget de Wompi.")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.wompi.co/widget.js";
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("No se pudo cargar el Widget de Wompi."));
+    document.body.appendChild(script);
+  });
+}
+
 export default function Perfil() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -171,6 +195,7 @@ export default function Perfil() {
   const [pedidos, setPedidos] = useState([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const [errorPedidos, setErrorPedidos] = useState(null);
+  const [reintentandoPedidoId, setReintentandoPedidoId] = useState(null);
   // ---- edición de perfil / contraseña ----
   const [modo, setModo] = useState(null);
   const [guardando, setGuardando] = useState(false);
@@ -700,6 +725,35 @@ export default function Perfil() {
       );
     }
   }
+  async function reintentarPagoPedido(pedido) {
+    if (!pedido?.id || reintentandoPedidoId) return;
+    setReintentandoPedidoId(pedido.id);
+    setErrorPedidos(null);
+    try {
+      const checkout = await prepararCheckoutPedidoProductos(token, pedido.id);
+      await cargarWidgetWompiPerfil();
+      if (!window.WidgetCheckout) throw new Error("El Widget de Wompi no está disponible.");
+      const widget = new window.WidgetCheckout({
+        currency: checkout.currency, amountInCents: checkout.amountInCents,
+        reference: checkout.reference, publicKey: checkout.publicKey,
+        signature: { integrity: checkout.signature },
+      });
+      widget.open(async (resultado) => {
+        try {
+          const transaction = resultado?.transaction;
+          if (!transaction?.id) return;
+          await confirmarPagoPedidoProductos(token, pedido.id, transaction.id);
+          const actualizados = await listarPedidosUsuarioProductos(token, usuario.id);
+          setPedidos(actualizados);
+        } catch (err) { setErrorPedidos(err.message || "No fue posible confirmar el pago."); }
+        finally { setReintentandoPedidoId(null); }
+      });
+    } catch (err) {
+      setErrorPedidos(err.message || "No fue posible reintentar el pago.");
+      setReintentandoPedidoId(null);
+    }
+  }
+
   const totalPaginas = Math.max(
     1,
     Math.ceil(
@@ -1260,6 +1314,11 @@ export default function Perfil() {
                             maximumFractionDigits: 0,
                           })}
                         </span>
+                        {["PENDIENTE", "RECHAZADO", "ERROR"].includes(pedido.estado) && (
+                          <button type="button" className="adm-btn adm-btn--borde" style={{ marginTop: "8px" }} disabled={reintentandoPedidoId === pedido.id} onClick={() => reintentarPagoPedido(pedido)}>
+                            {reintentandoPedidoId === pedido.id ? "Abriendo pago…" : "Reintentar pago"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}

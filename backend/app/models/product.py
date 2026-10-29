@@ -22,5 +22,6 @@ class Producto(Base):
     precio: Mapped[int] = mapped_column(Integer, nullable=False)
     imagen_url: Mapped[str] = mapped_column(String(500), nullable=False, default="")
     activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     actualizado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)

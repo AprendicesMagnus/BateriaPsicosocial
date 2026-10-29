@@ -10,6 +10,7 @@ from app.models.product import Producto
 from app.models.product_order import PagoPedidoProducto, PedidoProducto, PedidoProductoItem
 from app.models.user import Usuario
 from app.services import wompi as wompi_service
+from app.services.productos import _alertar_stock_bajo
 from app.services.notificaciones import notificar
 
 
@@ -101,6 +102,7 @@ def _expirar_pedidos_vencidos(db: Session, usuario_id=None) -> None:
         _reconciliar_pagos_pendientes(db, pedido)
         if pedido.estado == "PENDIENTE" and not _tiene_pago_en_curso(db, pedido):
             pedido.estado = "EXPIRADA"
+            _reintegrar_stock(db, pedido)
             db.commit()
 
     if pedidos:
@@ -150,6 +152,19 @@ def _reconciliar_pagos_pendientes(db: Session, pedido: PedidoProducto) -> None:
     db.refresh(pedido)
 
 
+def _reintegrar_stock(db: Session, pedido: PedidoProducto) -> None:
+    """Devuelve al inventario las unidades reservadas, una sola vez por pedido."""
+    if pedido.stock_reintegrado:
+        return
+    for item in pedido.items:
+        if item.producto_id is None:
+            continue
+        producto = db.query(Producto).filter(Producto.id == item.producto_id).with_for_update().first()
+        if producto is not None:
+            producto.stock += item.cantidad
+    pedido.stock_reintegrado = True
+
+
 def crear_pedido(db: Session, data, actual: Usuario) -> dict:
     _expirar_pedidos_vencidos(db, usuario_id=actual.id)
 
@@ -166,6 +181,7 @@ def crear_pedido(db: Session, data, actual: Usuario) -> dict:
             Producto.id.in_(list(cantidades.keys())),
             Producto.activo.is_(True),
         )
+        .with_for_update()
         .all()
     )
     productos_por_id = {producto.id: producto for producto in productos}
@@ -179,6 +195,8 @@ def crear_pedido(db: Session, data, actual: Usuario) -> dict:
 
     for producto_id, cantidad in cantidades.items():
         producto = productos_por_id[producto_id]
+        if producto.stock < cantidad:
+            raise AppError(409, f"Stock insuficiente para {producto.nombre}. Disponibles: {producto.stock}.")
         linea_subtotal = producto.precio * cantidad
         subtotal += linea_subtotal
         lineas.append(
@@ -196,6 +214,13 @@ def crear_pedido(db: Session, data, actual: Usuario) -> dict:
 
     if total > VALOR_MAXIMO_PEDIDO:
         raise AppError(400, "El valor del pedido supera el máximo permitido.")
+
+    for producto_id, cantidad in cantidades.items():
+        producto = productos_por_id[producto_id]
+        stock_anterior = producto.stock
+        producto.stock -= cantidad
+        if stock_anterior > 5 and producto.stock <= 5:
+            _alertar_stock_bajo(db, producto)
 
     pedido = PedidoProducto(
         usuario_id=actual.id,
@@ -239,6 +264,7 @@ def obtener_pedido(db: Session, pedido_id, actual: Usuario) -> dict:
         limite = pedido.creado_en + timedelta(minutes=TIEMPO_EXPIRACION_PEDIDO_MINUTOS)
         if utcnow() >= limite and not _tiene_pago_en_curso(db, pedido):
             pedido.estado = "EXPIRADA"
+            _reintegrar_stock(db, pedido)
             db.commit()
             db.refresh(pedido)
 
@@ -446,6 +472,27 @@ def procesar_evento_wompi(db: Session, transaction: dict) -> dict:
     }
 
 
+def actualizar_estado_envio(db: Session, pedido_id, estado: str, actual: Usuario) -> dict:
+    estados_permitidos = {"ENVIADO", "ENTREGADO"}
+    estado = (estado or "").strip().upper()
+    if estado not in estados_permitidos:
+        raise AppError(400, "Estado no válido para seguimiento del pedido.")
+    pedido = _obtener_pedido(db, pedido_id, actual)
+    if estado in {"ENVIADO", "ENTREGADO"} and pedido.estado not in {"PAGADA", "ENVIADO", "ENTREGADO"}:
+        raise AppError(400, "Solo se puede enviar un pedido que ya fue pagado.")
+    anterior = pedido.estado
+    pedido.estado = estado
+    notificar(
+        db, usuario_id=pedido.usuario_id, tipo="ESTADO_PEDIDO_PRODUCTOS",
+        titulo="Actualización de tu pedido",
+        mensaje=f"El pedido PED-{pedido.id.hex[:10].upper()} cambió de {anterior} a {estado}.",
+        commit=False,
+    )
+    db.commit()
+    db.refresh(pedido)
+    return _pedido_publico(pedido, incluir_pagos=True)
+
+
 def cancelar_pedido(db: Session, pedido_id, actual: Usuario) -> dict:
     pedido = _obtener_pedido(db, pedido_id, actual)
 
@@ -461,6 +508,7 @@ def cancelar_pedido(db: Session, pedido_id, actual: Usuario) -> dict:
         raise AppError(400, "Este pedido no puede cancelarse en su estado actual.")
 
     pedido.estado = "CANCELADA"
+    _reintegrar_stock(db, pedido)
     db.commit()
     db.refresh(pedido)
     return _pedido_publico(pedido, incluir_pagos=True)

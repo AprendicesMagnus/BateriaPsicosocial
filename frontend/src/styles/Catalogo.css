@@ -176,3 +176,5 @@
 .producto-imagen__botones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .producto-imagen__subir { cursor: pointer; display: inline-flex; align-items: center; }
 .producto-imagen__subir { justify-content: center; min-height: 40px; box-sizing: border-box; }
+
+.producto-stock{display:inline-block;margin-top:6px;font-size:12px;color:#15803d;font-weight:600}.producto-stock--bajo{color:#b45309}.producto-stock--agotado{color:#b91c1c}

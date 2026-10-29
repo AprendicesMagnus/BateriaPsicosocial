@@ -11,6 +11,8 @@ from app.db.session import get_db
 from app.models.user import Usuario
 from app.services import panel as panel_service
 from app.services import panel_exportar as panel_exportar_service
+from app.models.product_order import PedidoProducto, PedidoProductoItem
+from sqlalchemy import func
 from app.services.auditoria import registrar_auditoria
 
 router = APIRouter()
@@ -32,6 +34,62 @@ def obtener_historial_compras_tienda(
 ):
     """Historial unificado de compras de planes y productos. Solo Super Administrador."""
     return panel_service.obtener_historial_compras_tienda(db)
+
+
+@router.get("/ventas-productos")
+def obtener_ventas_productos(
+    db: Session = Depends(get_db),
+    _actual: Usuario = Depends(require_admin),
+):
+    """Resumen de ventas de productos y pedidos por estado."""
+    estados = dict(
+        db.query(PedidoProducto.estado, func.count(PedidoProducto.id))
+        .group_by(PedidoProducto.estado).all()
+    )
+    ingresos = (
+        db.query(func.coalesce(func.sum(PedidoProducto.total), 0))
+        .filter(PedidoProducto.estado.in_(["PAGADA", "ENVIADO", "ENTREGADO"]))
+        .scalar() or 0
+    )
+    ventas_mes = (
+        db.query(func.coalesce(func.sum(PedidoProducto.total), 0))
+        .filter(
+            PedidoProducto.estado.in_(["PAGADA", "ENVIADO", "ENTREGADO"]),
+            func.date_trunc("month", PedidoProducto.creado_en) == func.date_trunc("month", func.now()),
+        ).scalar() or 0
+    )
+    ingresos_por_mes = (
+        db.query(
+            func.to_char(func.date_trunc("month", PedidoProducto.creado_en), "YYYY-MM").label("mes"),
+            func.coalesce(func.sum(PedidoProducto.total), 0).label("ingresos"),
+        )
+        .filter(PedidoProducto.estado.in_(["PAGADA", "ENVIADO", "ENTREGADO"]))
+        .group_by(func.date_trunc("month", PedidoProducto.creado_en))
+        .order_by(func.date_trunc("month", PedidoProducto.creado_en).desc())
+        .limit(12).all()
+    )
+    mas_vendidos = (
+        db.query(
+            PedidoProductoItem.nombre_producto,
+            func.coalesce(func.sum(PedidoProductoItem.cantidad), 0).label("unidades"),
+            func.coalesce(func.sum(PedidoProductoItem.subtotal), 0).label("total"),
+        )
+        .join(PedidoProducto, PedidoProducto.id == PedidoProductoItem.pedido_id)
+        .filter(PedidoProducto.estado.in_(["PAGADA", "ENVIADO", "ENTREGADO"]))
+        .group_by(PedidoProductoItem.nombre_producto)
+        .order_by(func.sum(PedidoProductoItem.cantidad).desc())
+        .limit(10).all()
+    )
+    return {
+        "ingresosTotales": int(ingresos),
+        "ingresosMes": int(ventas_mes),
+        "ingresosPorMes": [{"mes": mes, "ingresos": int(valor)} for mes, valor in reversed(ingresos_por_mes)],
+        "pedidosPorEstado": estados,
+        "productosMasVendidos": [
+            {"producto": nombre, "unidades": int(unidades), "total": int(total)}
+            for nombre, unidades, total in mas_vendidos
+        ],
+    }
 
 
 @router.get("/evolucion")

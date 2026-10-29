@@ -67,6 +67,9 @@ export default function ModalCatalogo({ onCerrar }) {
                       <div className="producto-card__cuerpo">
                         <h4>{producto.nombre}</h4>
                         <strong>{formatearCOP(producto.precio)}</strong>
+                        <span className={`producto-stock ${producto.stock <= 0 ? "producto-stock--agotado" : producto.stock <= 5 ? "producto-stock--bajo" : ""}`}>
+                          {producto.stock <= 0 ? "Agotado" : producto.stock <= 5 ? `Últimas ${producto.stock} unidades` : "Disponible"}
+                        </span>
                       </div>
                     </article>
                   ))}

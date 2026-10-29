@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
 from app.models.product import Producto
+from app.models.user import Rol, Usuario
+from app.services.notificaciones import notificar
 from app.services.perfil import UPLOADS_DIR
 
 MAX_IMAGEN_BYTES = 3 * 1024 * 1024  # 3 MB
@@ -23,6 +25,25 @@ def _categoria(valor: str) -> str:
     return limpia
 
 
+def _alertar_stock_bajo(db: Session, producto: Producto) -> None:
+    if producto.stock > 5:
+        return
+    administradores = (
+        db.query(Usuario)
+        .join(Rol, Usuario.rol_id == Rol.id)
+        .filter(Rol.codigo == "SUPER_ADMINISTRADOR", Usuario.estado == "ACTIVO")
+        .all()
+    )
+    estado = "agotado" if producto.stock == 0 else f"con solo {producto.stock} unidades disponibles"
+    for administrador in administradores:
+        notificar(
+            db, usuario_id=administrador.id, tipo="STOCK_BAJO",
+            titulo="Alerta de inventario",
+            mensaje=f"El producto {producto.nombre} está {estado}. Revisa Gestión de tienda.",
+            commit=False,
+        )
+
+
 def _publico(producto: Producto) -> dict:
     return {
         "id": str(producto.id),
@@ -31,6 +52,9 @@ def _publico(producto: Producto) -> dict:
         "precio": producto.precio,
         "imagen_url": producto.imagen_url,
         "activo": producto.activo,
+        "stock": producto.stock,
+        "agotado": producto.stock <= 0,
+        "stock_bajo": 0 < producto.stock <= 5,
     }
 
 
@@ -62,8 +86,11 @@ def crear_producto(db: Session, data) -> dict:
         precio=data.precio,
         imagen_url=imagen_url,
         activo=data.activo,
+        stock=data.stock,
     )
     db.add(producto)
+    db.flush()
+    _alertar_stock_bajo(db, producto)
     db.commit()
     db.refresh(producto)
     return _publico(producto)
@@ -71,6 +98,7 @@ def crear_producto(db: Session, data) -> dict:
 
 def actualizar_producto(db: Session, producto_id, data) -> dict:
     producto = _obtener(db, producto_id)
+    stock_anterior = producto.stock
     cambios = data.model_dump(exclude_unset=True)
 
     if "nombre" in cambios and cambios["nombre"] is not None:
@@ -91,6 +119,11 @@ def actualizar_producto(db: Session, producto_id, data) -> dict:
     if "activo" in cambios and cambios["activo"] is not None:
         producto.activo = cambios["activo"]
 
+    if "stock" in cambios and cambios["stock"] is not None:
+        producto.stock = cambios["stock"]
+
+    if stock_anterior > 5 and producto.stock <= 5:
+        _alertar_stock_bajo(db, producto)
     db.commit()
     db.refresh(producto)
     return _publico(producto)
