@@ -13,6 +13,9 @@ const DESTINOS_POR_TIPO = {
   RIESGO_ALTO: "/dashboard",
   SOPORTE_RESPUESTA: "/soporte",
   SOPORTE_MENSAJE: { ruta: "/panel", state: { seccion: "soporte", vista: "mensajes" } },
+  COMPRA_APROBADA: "/perfil",
+  INFORME_GENERADO: "/reportes",
+
 };
 
 function formatearFecha(iso) {

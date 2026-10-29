@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 IVA_PORCENTAJE = 0.19
 TIEMPO_EXPIRACION_PEDIDO_MINUTOS = 30
 ESTADOS_FINALES_WOMPI = {"APPROVED", "DECLINED", "VOIDED", "ERROR"}
+VALOR_MAXIMO_PEDIDO = 1_000_000_000
 
 
 def _pedido_publico(pedido: PedidoProducto, incluir_pagos: bool = False) -> dict:
@@ -156,6 +157,9 @@ def crear_pedido(db: Session, data, actual: Usuario) -> dict:
     for item in data.items:
         cantidades[item.producto_id] = cantidades.get(item.producto_id, 0) + item.cantidad
 
+    if any(cantidad > 99 for cantidad in cantidades.values()):
+        raise AppError(400, "La cantidad máxima por producto es 99.")
+
     productos = (
         db.query(Producto)
         .filter(
@@ -189,6 +193,9 @@ def crear_pedido(db: Session, data, actual: Usuario) -> dict:
 
     iva = int(round(subtotal * IVA_PORCENTAJE))
     total = subtotal + iva
+
+    if total > VALOR_MAXIMO_PEDIDO:
+        raise AppError(400, "El valor del pedido supera el máximo permitido.")
 
     pedido = PedidoProducto(
         usuario_id=actual.id,
@@ -359,7 +366,7 @@ def procesar_evento_wompi(db: Session, transaction: dict) -> dict:
     if pago is None:
         raise AppError(404, "No se encontró un pago asociado a la referencia de Wompi.")
 
-    pedido = db.query(PedidoProducto).filter(PedidoProducto.id == pago.pedido_id).first()
+    pedido = db.query(PedidoProducto).filter(PedidoProducto.id == pago.pedido_id).with_for_update().first()
     if pedido is None:
         raise AppError(404, "No se encontró el pedido asociado al pago.")
 
@@ -401,7 +408,7 @@ def procesar_evento_wompi(db: Session, transaction: dict) -> dict:
                 usuario_id=pedido.usuario_id,
                 tipo="COMPRA_APROBADA",
                 titulo="Compra de productos aprobada",
-                mensaje=f"Tu pedido {pedido.id.hex[:10].upper()} fue pagado correctamente.",
+                mensaje=f"Tu pedido PED-{pedido.id.hex[:10].upper()} fue pagado correctamente.",
                 commit=False,
             )
     elif status == "DECLINED":
@@ -441,6 +448,14 @@ def procesar_evento_wompi(db: Session, transaction: dict) -> dict:
 
 def cancelar_pedido(db: Session, pedido_id, actual: Usuario) -> dict:
     pedido = _obtener_pedido(db, pedido_id, actual)
+
+    if pedido.estado != "PENDIENTE":
+        raise AppError(400, "Este pedido no puede cancelarse en su estado actual.")
+
+    _reconciliar_pagos_pendientes(db, pedido)
+
+    if pedido.estado == "PENDIENTE" and _tiene_pago_en_curso(db, pedido):
+        raise AppError(400, "Este pedido tiene un pago en proceso. Espera la confirmación de Wompi.")
 
     if pedido.estado != "PENDIENTE":
         raise AppError(400, "Este pedido no puede cancelarse en su estado actual.")

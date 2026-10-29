@@ -215,3 +215,120 @@ def test_evolucion_registro_antiguo_aparece_en_24_no_en_12(client, db_session):
 
     assert suma_12_despues == suma_12_antes, "El registro de hace 14 meses NO debe aparecer en ventana de 12 meses"
     assert suma_24_despues == suma_24_antes + 7, f"El registro de hace 14 meses SÍ debe sumar +7 en ventana de 24 meses (fue {suma_24_despues - suma_24_antes})"
+
+
+def test_evolucion_encuestas_no_completada_con_fecha_fin_no_cuenta(client, db_session, crear_paciente):
+    # Estado no-COMPLETADA con fecha_fin NO debe contar; cambiar a COMPLETADA si debe contar (+1)
+    headers = _login_admin(client)
+
+    nit_base = f"9{str(uuid.uuid4().int)[:8]}"
+    nit_rnd = f"{nit_base}-{calcular_digito_verificador_nit(nit_base)}"
+    org = Organizacion(id=uuid.uuid4(), nombre="Empresa Ev Estado Parcial SAS", nit=nit_rnd)
+    db_session.add(org)
+    db_session.commit()
+
+    res_cuest = client.get("/api/cuestionarios", headers=headers)
+    assert res_cuest.status_code == 200
+    version_id = res_cuest.json()[0]["id"]
+
+    p1, _ = crear_paciente(org.id, password="PacienteE1!")
+    p2, _ = crear_paciente(org.id, password="PacienteE2!")
+
+    res_eval = client.post(
+        "/api/evaluaciones",
+        headers=headers,
+        json={
+            "organizacionId": str(org.id),
+            "nombre": f"Evaluacion Estado Parcial {uuid.uuid4().hex[:6]}",
+            "versionId": version_id,
+            "trabajadoresIds": [str(p1), str(p2)],
+        },
+    )
+    assert res_eval.status_code == 200, res_eval.text
+    eval_id = uuid.UUID(res_eval.json()["id"])
+
+    parts = db_session.query(EvaluacionParticipante).filter(EvaluacionParticipante.evaluacion_id == eval_id).all()
+    assert len(parts) == 2
+
+    antes = _obtener_punto_mes_actual(client, headers)["encuestasCompletadas"]
+    ahora = datetime.now(timezone.utc)
+
+    # Estado PENDIENTE con fecha_fin asignada NO debe contar
+    parts[0].estado = "PENDIENTE"
+    parts[0].fecha_fin = ahora
+    db_session.commit()
+
+    tras_pendiente = _obtener_punto_mes_actual(client, headers)["encuestasCompletadas"]
+    assert tras_pendiente == antes, "Estado PENDIENTE con fecha_fin no debe contar como encuesta completada"
+
+    # Estado EN_PROGRESO con fecha_fin asignada NO debe contar
+    parts[0].estado = "EN_PROGRESO"
+    db_session.commit()
+
+    tras_en_progreso = _obtener_punto_mes_actual(client, headers)["encuestasCompletadas"]
+    assert tras_en_progreso == antes, "Estado EN_PROGRESO con fecha_fin no debe contar como encuesta completada"
+
+    # Cambiar ese mismo participante a COMPLETADA (conservando fecha_fin): ahora si debe contar +1
+    parts[0].estado = "COMPLETADA"
+    db_session.commit()
+
+    despues = _obtener_punto_mes_actual(client, headers)["encuestasCompletadas"]
+    assert despues - antes == 1, f"Se esperaba diferencia +1 al poner COMPLETADA, fue {despues - antes}"
+
+
+def test_evolucion_compra_no_pagada_no_cuenta(client, db_session):
+    # Compras en estados no pagados NO deben sumarse; solo PAGADA suma
+    headers = _login_admin(client)
+    admin_user = db_session.query(Usuario).filter(Usuario.email == "admin@magnussig.com").first()
+    assert admin_user is not None
+
+    nit_base = f"9{str(uuid.uuid4().int)[:8]}"
+    nit_rnd = f"{nit_base}-{calcular_digito_verificador_nit(nit_base)}"
+    org = Organizacion(id=uuid.uuid4(), nombre="Empresa Ev Compras NoPagadas SAS", nit=nit_rnd)
+    db_session.add(org)
+    db_session.commit()
+
+    punto_antes = _obtener_punto_mes_actual(client, headers)
+    compras_antes = punto_antes["comprasPagadas"]
+    valor_antes = punto_antes["valorComprado"]
+
+    ahora = datetime.now(timezone.utc)
+    for estado in ("PENDIENTE", "RECHAZADO", "EXPIRADA", "CANCELADA"):
+        db_session.add(Compra(
+            id=uuid.uuid4(),
+            usuario_id=admin_user.id,
+            organizacion_id=org.id,
+            cantidad=7,
+            subtotal=70000.0,
+            iva=13300.0,
+            total=83300.0,
+            estado=estado,
+            creado_en=ahora,
+        ))
+    db_session.commit()
+
+    punto_intermedio = _obtener_punto_mes_actual(client, headers)
+    assert punto_intermedio["comprasPagadas"] == compras_antes, "Compras no pagadas NO deben sumar a comprasPagadas"
+    assert punto_intermedio["valorComprado"] == valor_antes, "Compras no pagadas NO deben sumar a valorComprado"
+
+    # Agregar una compra PAGADA: debe sumar exactamente +3 y +35700
+    db_session.add(Compra(
+        id=uuid.uuid4(),
+        usuario_id=admin_user.id,
+        organizacion_id=org.id,
+        cantidad=3,
+        subtotal=30000.0,
+        iva=5700.0,
+        total=35700.0,
+        estado="PAGADA",
+        creado_en=ahora,
+    ))
+    db_session.commit()
+
+    punto_despues = _obtener_punto_mes_actual(client, headers)
+    assert punto_despues["comprasPagadas"] - compras_antes == 3, (
+        f"Se esperaba +3 en comprasPagadas, fue {punto_despues['comprasPagadas'] - compras_antes}"
+    )
+    assert punto_despues["valorComprado"] - valor_antes == 35700, (
+        f"Se esperaba +35700 en valorComprado, fue {punto_despues['valorComprado'] - valor_antes}"
+    )

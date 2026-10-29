@@ -49,9 +49,9 @@ def responder_ticket(
     ticket_id: UUID,
     data: TicketSoporteRespuesta,
     db: Session = Depends(get_db),
-    _actual: Usuario = Depends(require_admin),
+    actual: Usuario = Depends(require_admin),
 ):
-    return soporte_service.responder_ticket(db, ticket_id, data.respuesta)
+    return soporte_service.responder_ticket(db, ticket_id, data.respuesta, respondido_por=actual.id)
 
 
 # --- Contenido editable del Centro de ayuda ---------------------------------------------------
