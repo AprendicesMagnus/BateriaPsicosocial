@@ -27,6 +27,7 @@ export const RUTAS_BLOQUEADAS_RESPONSABLE = [
   "/crear-empresa",
   "/verificar-nit",
   "/pago",
+  "/catalogo",
   "/panel",
 ];
 

@@ -75,6 +75,13 @@ def require_admin(usuario: Usuario = Depends(get_current_user)) -> Usuario:
     return usuario
 
 
+def require_comprador(usuario: Usuario = Depends(get_current_user)) -> Usuario:
+    """Iniciar compras o pagos (baterías y productos). El Responsable SST no compra: lo hace quien creó la empresa."""
+    if usuario.rol.codigo == "RESPONSABLE_SST":
+        raise AppError(403, "Tu rol no puede realizar compras ni pagos.")
+    return usuario
+
+
 def require_gestor(usuario: Usuario = Depends(get_current_user)) -> Usuario:
     if usuario.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR}:
         raise AppError(403, "Esta acción requiere permisos de administrador o evaluador SST.")
