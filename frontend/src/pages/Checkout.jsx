@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchPlanes } from "../api/planes";
 import { etiquetaRango } from "../utils/planes";
@@ -514,8 +514,8 @@ export default function Checkout() {
               </div>
 
               <p className="checkout-terms">
-                Al continuar aceptas los términos del servicio y la política de
-                privacidad.
+                Al continuar aceptas los términos del servicio y la{" "}
+                <Link to="/politica-de-datos" target="_blank" rel="noopener noreferrer" className="politica-enlace-checkout">política de privacidad</Link>.
               </p>
             </section>
 

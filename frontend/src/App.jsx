@@ -34,6 +34,7 @@ import FichaDatosGenerales from "./pages/Fichadatosgenerales";
 import Inicio from "./pages/Inicio";
 import ResponderEnlace from "./pages/ResponderEnlace";
 import VerificarInforme from "./pages/VerificarInforme";
+import PoliticaDatos from "./pages/PoliticaDatos";
 
 
 
@@ -71,6 +72,7 @@ export default function App() {
           {/* Enlace público que el psicólogo comparte con sus pacientes (responden sin cuenta) */}
           <Route path="/responder/:token" element={<ResponderEnlace />} />
           <Route path="/verificar-informe/:codigo" element={<VerificarInforme />} />
+          <Route path="/politica-de-datos" element={<PoliticaDatos />} />
 
            {/* apartado inicial tras iniciar sesion (protegido) */}
           <Route

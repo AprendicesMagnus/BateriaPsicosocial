@@ -770,7 +770,7 @@ export default function Landing() {
               Todos los derechos reservados.
             </span>
 
-            <span></span>
+            <Link to="/politica-de-datos" className="politica-enlace-pie">Política de tratamiento de datos</Link>
 
           </div>
 
