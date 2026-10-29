@@ -237,6 +237,33 @@
   text-decoration: underline;
 }
 
+.politica-aceptacion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.politica-aceptacion__label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-700);
+  cursor: pointer;
+}
+.politica-aceptacion__input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--navy-800);
+  cursor: pointer;
+}
+.politica-aceptacion__input--invalid {
+  outline: 2px solid var(--danger-500);
+  outline-offset: 2px;
+}
+
 .divider {
   display: flex;
   align-items: center;

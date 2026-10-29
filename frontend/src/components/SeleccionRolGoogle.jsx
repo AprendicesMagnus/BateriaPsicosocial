@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { PrimaryButton, SecondaryButton, FormMessage } from "./FormControls";
 import { ROLES_REGISTRO } from "../utils/roles";
 import { soloDigitos } from "../utils/validaciones";
@@ -9,13 +10,14 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
   const [rol, setRol] = useState("");
   const [numero, setNumero] = useState("");
   const [intento, setIntento] = useState(false);
+  const [acepta, setAcepta] = useState(false);
   const pideResolucion = rol === "EVALUADOR_SST";
   const resolucionInvalida = pideResolucion && !/^\d{6}$/.test(numero);
 
   function confirmar() {
     setIntento(true);
-    if (!rol || resolucionInvalida) return;
-    onConfirmar(rol, pideResolucion ? numero : undefined);
+    if (!rol || resolucionInvalida || !acepta) return;
+    onConfirmar(rol, pideResolucion ? numero : undefined, true);
   }
 
   return (
@@ -88,6 +90,32 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
             )}
           </label>
         )}
+
+        <div className="politica-aceptacion" style={{ marginTop: "16px" }}>
+          <label className="politica-aceptacion__label" htmlFor="acepta-politica-google">
+            <input
+              id="acepta-politica-google"
+              type="checkbox"
+              className={`politica-aceptacion__input ${intento && !acepta ? "politica-aceptacion__input--invalid" : ""}`.trim()}
+              checked={acepta}
+              onChange={(e) => setAcepta(e.target.checked)}
+              aria-invalid={intento && !acepta ? "true" : "false"}
+              aria-describedby={intento && !acepta ? "acepta-politica-google-error" : undefined}
+            />
+            <span>
+              He leído y acepto la{" "}
+              <Link to="/politica-de-datos" target="_blank" rel="noopener noreferrer" className="link-accent">
+                política de tratamiento de datos
+              </Link>
+              .
+            </span>
+          </label>
+          {intento && !acepta && (
+            <span className="field__error" id="acepta-politica-google-error">
+              Debes aceptar la política de tratamiento de datos para crear tu cuenta.
+            </span>
+          )}
+        </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
           <PrimaryButton type="button" loading={loading} onClick={confirmar}>

@@ -62,7 +62,8 @@ export default function CreateAccount() {
     password: "",
     confirmPassword: "",
     rol: "",
-    numeroResolucion: ""
+    numeroResolucion: "",
+    aceptaPolitica: false
   });
 
   const [tocados, setTocados] = useState({});
@@ -111,6 +112,10 @@ export default function CreateAccount() {
 
     rol: !form.rol ? "Selecciona un rol." : "",
 
+    aceptaPolitica: form.aceptaPolitica
+      ? ""
+      : "Debes aceptar la política de tratamiento de datos para crear tu cuenta.",
+
     numeroResolucion:
       form.rol !== "EVALUADOR_SST"
         ? ""
@@ -142,7 +147,7 @@ export default function CreateAccount() {
 
     if (hayErrores) {
       setTimeout(() => {
-        document.querySelector(".field__input--invalid")?.focus();
+        document.querySelector(".field__input--invalid, .politica-aceptacion__input--invalid")?.focus();
       }, 0);
 
       return;
@@ -161,6 +166,7 @@ export default function CreateAccount() {
         email: correoNorm,
         password: form.password,
         rol: form.rol,
+        aceptaPolitica: true,
         ...(form.rol === "EVALUADOR_SST" ? { numeroResolucion: form.numeroResolucion } : {})
       });
 
@@ -213,7 +219,7 @@ export default function CreateAccount() {
     }
   }
 
-  async function confirmarRolGoogle(rol, numeroResolucion) {
+  async function confirmarRolGoogle(rol, numeroResolucion, aceptaPolitica) {
     if (!googlePendiente) return;
     setErrorRolGoogle("");
     setLoadingGoogle(true);
@@ -221,6 +227,7 @@ export default function CreateAccount() {
     try {
       const data = await loginConGoogle({
         credential: googlePendiente.credential,
+        aceptaPolitica,
         rol,
         numeroResolucion
       });
@@ -458,6 +465,33 @@ export default function CreateAccount() {
           }
           placeholder="••••••••"
         />
+
+        <div className="politica-aceptacion">
+          <label className="politica-aceptacion__label" htmlFor="acepta-politica">
+            <input
+              id="acepta-politica"
+              type="checkbox"
+              className={`politica-aceptacion__input ${mostrarError("aceptaPolitica") ? "politica-aceptacion__input--invalid" : ""}`.trim()}
+              checked={form.aceptaPolitica}
+              onChange={(e) => setForm((f) => ({ ...f, aceptaPolitica: e.target.checked }))}
+              onBlur={() => marcar("aceptaPolitica")}
+              aria-invalid={mostrarError("aceptaPolitica") ? "true" : "false"}
+              aria-describedby={mostrarError("aceptaPolitica") ? "acepta-politica-error" : undefined}
+            />
+            <span>
+              He leído y acepto la{" "}
+              <Link to="/politica-de-datos" target="_blank" rel="noopener noreferrer" className="link-accent">
+                política de tratamiento de datos
+              </Link>
+              .
+            </span>
+          </label>
+          {mostrarError("aceptaPolitica") && (
+            <span className="field__error" id="acepta-politica-error">
+              {errores.aceptaPolitica}
+            </span>
+          )}
+        </div>
 
         <div className="auth-links">
           <span>
