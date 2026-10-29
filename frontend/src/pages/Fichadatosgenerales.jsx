@@ -7,6 +7,7 @@ import {
   fetchEvaluaciones,
   registrarConsentimiento,
 } from "../api/evaluaciones";
+import { rutaEnlaceGuardado } from "../api/enlaces";
 import "../styles/cuestionario-estres.css";
 import "../styles/Fichadatosgenerales.css";
 import BotonRegresar from "../components/BotonRegresar";
@@ -57,7 +58,6 @@ const OPCIONES_ESTRATO = ["1", "2", "3", "4", "5", "6", "Finca", "No sé"];
 const OPCIONES_VIVIENDA = ["Propia", "En arriendo", "Familiar"];
 
 const OPCIONES_TIPO_CARGO = [
-  "Jefatura - tiene personal a cargo",
   "Profesional, analista, técnico, tecnólogo",
   "Auxiliar, asistente administrativo, asistente técnico",
   "Operario, operador, ayudante, servicios generales",
@@ -102,6 +102,7 @@ const CAMPOS_REQUERIDOS = [
   "tipoContrato",
   "horasDiarias",
   "tipoSalario",
+  "tienePersonalACargo",
 ];
 
 
@@ -152,6 +153,7 @@ export default function FichaDatosGenerales() {
     tipoContrato: "",
     horasDiarias: "",
     tipoSalario: "",
+    tienePersonalACargo: null,
   });
 
   const [intentoGuardar, setIntentoGuardar] = useState(false);
@@ -304,6 +306,11 @@ export default function FichaDatosGenerales() {
       errs.tipoSalario = "Selecciona una opción.";
     }
 
+    // 20. Cuenta con personal a cargo
+    if (datos.tienePersonalACargo !== true && datos.tienePersonalACargo !== false) {
+      errs.tienePersonalACargo = "Selecciona una opción.";
+    }
+
     return errs;
   }, [datos]);
 
@@ -311,7 +318,7 @@ export default function FichaDatosGenerales() {
     return !!(errores[campo] && (intentoGuardar || tocados[campo]));
   };
 
-  const { token } = useAuth();
+  const { token, usuario } = useAuth();
   const [evaluacionId, setEvaluacionId] = useState(location.state?.evaluacionId || null);
   const [guardando, setGuardando] = useState(false);
   const [errorBackend, setErrorBackend] = useState(null);
@@ -379,13 +386,19 @@ export default function FichaDatosGenerales() {
 
       if (pendientes.length > 0) {
         const proximo = pendientes[0].codigo;
-        let ruta = "/cuestionario-estres";
-        if (proximo === "ESTRES") ruta = "/cuestionario-estres";
-        else if (proximo === "EXTRALABORAL") ruta = "/cuestionario-extralaboral";
-        else if (proximo === "INTRALABORAL_A") ruta = "/cuestionario-intralaboral";
-        else if (proximo === "INTRALABORAL_B") ruta = "/cuestionario-intralaboralB";
+        // Se usa el RUTAS ya resuelto según la Ficha actual (A o B), para que la encuesta
+        // siguiente quede en la misma forma que se eligió al crear el enlace.
+        let ruta = RUTAS.estres;
+        if (proximo === "ESTRES") ruta = RUTAS.estres;
+        else if (proximo === "EXTRALABORAL") ruta = RUTAS.extralaboral;
+        else if (proximo === "INTRALABORAL_A" || proximo === "INTRALABORAL_B") ruta = RUTAS.intralaboral;
 
         navigate(ruta, { state: { evaluacionId } });
+      } else if (usuario?.esInvitado) {
+        // Enlace de un solo cuestionario (solo la Ficha): no hay más páginas internas que
+        // mostrarle al paciente invitado, así que vuelve a la pantalla de "Gracias por participar"
+        alert(res.message || "Los datos generales han sido guardados correctamente.");
+        navigate(rutaEnlaceGuardado());
       } else {
         alert(res.message || "Los datos generales han sido guardados correctamente.");
         navigate("/dashboard");
@@ -436,7 +449,7 @@ return (
 
           <div>
             <strong>Datos generales</strong>
-            <small>19 preguntas</small>
+            <small>20 preguntas</small>
           </div>
         </button>
       </nav>
@@ -482,7 +495,7 @@ return (
             onClick={() => navigate(RUTAS.fichaGeneral)}
           >
             <strong>Datos generales</strong>
-            <span>19</span>
+            <span>20</span>
           </button>
 
           <div className="general-progress">
@@ -991,6 +1004,42 @@ return (
               {esCampoInvalido("tipoSalario") && (
                 <span className="field__error" id="tipoSalario-error">
                   {errores.tipoSalario}
+                </span>
+              )}
+            </div>
+
+            {/* 20. Cuenta con personal a cargo */}
+            <div className={`ficha-field ${esCampoInvalido("tienePersonalACargo") ? "ficha-field-error" : ""}`}>
+              <label>20. ¿Cuenta con personal a cargo?</label>
+              <div className="ficha-opciones">
+                <label className="ficha-opcion">
+                  <input
+                    type="radio"
+                    name="tienePersonalACargo"
+                    checked={datos.tienePersonalACargo === true}
+                    onChange={() => {
+                      actualizarCampo("tienePersonalACargo", true);
+                      marcarTocado("tienePersonalACargo");
+                    }}
+                  />
+                  <span>Sí</span>
+                </label>
+                <label className="ficha-opcion">
+                  <input
+                    type="radio"
+                    name="tienePersonalACargo"
+                    checked={datos.tienePersonalACargo === false}
+                    onChange={() => {
+                      actualizarCampo("tienePersonalACargo", false);
+                      marcarTocado("tienePersonalACargo");
+                    }}
+                  />
+                  <span>No</span>
+                </label>
+              </div>
+              {esCampoInvalido("tienePersonalACargo") && (
+                <span className="field__error" id="tienePersonalACargo-error">
+                  {errores.tienePersonalACargo}
                 </span>
               )}
             </div>

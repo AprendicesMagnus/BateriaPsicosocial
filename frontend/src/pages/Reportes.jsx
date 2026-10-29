@@ -5,7 +5,7 @@ import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
 import { fetchReportes, fetchEncuestasRealizadas } from "../api/reportes";
 import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
-import { generarInformeAgrupado, descargarInforme } from "../api/informes";
+import { descargarInformeAgrupadoZip } from "../api/informes";
 import { fetchEnlaces, crearEnlace, eliminarEnlace } from "../api/enlaces";
 import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha } from "../utils/encuestas";
 import QrEnlaceModal from "../components/QrEnlaceModal";
@@ -236,13 +236,7 @@ export default function Reportes() {
       if (!reporte.evaluacionId) {
         throw new Error("No hay una evaluación registrada para esta área.");
       }
-      const resInforme = await generarInformeAgrupado(
-        token,
-        reporte.evaluacionId,
-        reporte.areaId,
-        "PDF"
-      );
-      await descargarInforme(token, resInforme.id);
+      await descargarInformeAgrupadoZip(token, reporte.evaluacionId, reporte.areaId);
     } catch (err) {
       setError(`Error al descargar informe de ${reporte.areaNombre}: ${err.message}`);
     } finally {
@@ -320,7 +314,14 @@ export default function Reportes() {
                 {enlaces.map((enlace) => (
                   <div className="reportes-item reportes-enlace" key={enlace.token}>
                     <div className="reportes-item-info">
-                      <span className="reportes-item-title">{enlace.nombre}</span>
+                      <span className="reportes-item-title">
+                        {enlace.nombre}
+                        {enlace.soloInstrumento && (
+                          <span className="reportes-enlace-solo-badge">
+                            {" "}· Solo {NOMBRES_INSTRUMENTO[enlace.soloInstrumento] || enlace.soloInstrumento}
+                          </span>
+                        )}
+                      </span>
                       <span className="reportes-item-desc reportes-enlace-url">{urlEnlace(enlace.token)}</span>
                       <span className="reportes-item-desc">
                         {/* Paciente que usó el enlace: su nombre sale de la Ficha de datos */}

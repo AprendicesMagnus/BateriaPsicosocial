@@ -36,6 +36,7 @@ FICHA = {
     "tipoContrato": "Indefinido",
     "horasDiarias": 8,
     "tipoSalario": "Fijo",
+    "tienePersonalACargo": False,
 }
 
 
@@ -243,20 +244,24 @@ VISTAS = {
 
 
 @pytest.mark.parametrize(
-    "tipo_cargo, codigo_intra, filtros",
+    "tipo_cargo, tiene_personal_a_cargo, codigo_intra, filtros",
     [
-        ("Profesional, analista, técnico, tecnólogo", "INTRALABORAL_A", {"CLIENTES": False, "JEFE": False}),
-        ("Jefatura - tiene personal a cargo", "INTRALABORAL_A", {"CLIENTES": True, "JEFE": True}),
-        ("Auxiliar, asistente administrativo, asistente técnico", "INTRALABORAL_B", {"CLIENTES": False}),
-        ("Operario, operador, ayudante, servicios generales", "INTRALABORAL_B", {"CLIENTES": True}),
+        ("Profesional, analista, técnico, tecnólogo", True, "INTRALABORAL_A", {"CLIENTES": False, "JEFE": False}),
+        ("Jefatura - tiene personal a cargo", True, "INTRALABORAL_A", {"CLIENTES": True, "JEFE": True}),
+        ("Auxiliar, asistente administrativo, asistente técnico", False, "INTRALABORAL_B", {"CLIENTES": False}),
+        ("Operario, operador, ayudante, servicios generales", False, "INTRALABORAL_B", {"CLIENTES": True}),
     ],
 )
-def test_vistas_de_cuestionarios_guardan_y_finalizan(client, tipo_cargo, codigo_intra, filtros):
+def test_vistas_de_cuestionarios_guardan_y_finalizan(client, tipo_cargo, tiene_personal_a_cargo, codigo_intra, filtros):
     """Recorre la batería como lo hacen las vistas: código "<prefijo><n>", valores de la escala de la
     página y, en el intralaboral, solo las preguntas visibles según los filtros (Sí/No)."""
     headers_psico = _psicologo(client)
     _, eval_id, headers_pac = _iniciar_paciente(client, headers_psico)
-    res = client.post(f"/api/evaluaciones/{eval_id}/ficha", headers=headers_pac, json={**FICHA, "tipoCargo": tipo_cargo})
+    res = client.post(
+        f"/api/evaluaciones/{eval_id}/ficha",
+        headers=headers_pac,
+        json={**FICHA, "tipoCargo": tipo_cargo, "tienePersonalACargo": tiene_personal_a_cargo},
+    )
     assert res.status_code == 200, res.text
     assert res.json()["intralaboralAsignado"] == codigo_intra
 

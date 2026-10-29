@@ -368,11 +368,12 @@ PREGUNTAS_FICHA = [
     ("F19", "Tipo de contrato laboral", 19, "SELECCION"),
     ("F20", "Horas de trabajo diarias", 20, "ENTERO"),
     ("F21", "Tipo de salario", 21, "SELECCION"),
+    ("F22", "¿Cuenta con personal a cargo?", 22, "SELECCION"),
 ]
 
 
 def _completar_preguntas_ficha(db, version: CuestionarioVersion) -> None:
-    """Agrega a la ficha las preguntas F1..F21 que falten (idempotente)."""
+    """Agrega a la ficha las preguntas F1..F22 que falten (idempotente)."""
     dimension = (
         db.query(Dimension)
         .filter(Dimension.version_id == version.id, Dimension.codigo == "DATOS_SOCIO_LABORALES")
@@ -405,7 +406,7 @@ def _completar_preguntas_ficha(db, version: CuestionarioVersion) -> None:
 def sembrar_todos_los_cuestionarios(db) -> dict[str, CuestionarioVersion]:
     """
     Siembra las 5 versiones de cuestionarios oficiales del sistema:
-    1. FICHA_DATOS (21 items mixtos)
+    1. FICHA_DATOS (22 items mixtos)
     2. ESTRES (31 ítems, Likert 1-4)
     3. EXTRALABORAL (31 ítems, Likert 1-5)
     4. INTRALABORAL_A (123 ítems, Likert 0-4 oficial)

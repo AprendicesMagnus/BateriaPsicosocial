@@ -33,7 +33,7 @@ def test_obtener_historico_indicadores_cronologico(client, db_session, crear_pac
 
     dim = db_session.query(Dimension).first()
 
-    # 3. Evaluación con 1 participante: debe quedar oculta (total < mínimo de 5)
+    # 3. Evaluación con 1 participante: con el mínimo de anonimato en 1, ya es visible
     paciente_id_1, _ = crear_paciente(org_id, area_id=area_id)
     res_eval1 = client.post("/api/evaluaciones", headers=headers_admin, json={
         "organizacionId": org_id,
@@ -58,7 +58,7 @@ def test_obtener_historico_indicadores_cronologico(client, db_session, crear_pac
     ))
     db_session.commit()
 
-    # 4. Evaluación con 5 participantes: debe estar visible
+    # 4. Evaluación con 5 participantes: también visible
     ids_eval2 = [crear_paciente(org_id, area_id=area_id)[0] for _ in range(5)]
     res_eval2 = client.post("/api/evaluaciones", headers=headers_admin, json={
         "organizacionId": org_id,
@@ -93,13 +93,13 @@ def test_obtener_historico_indicadores_cronologico(client, db_session, crear_pac
     assert len(historico) == 2, f"Se esperaban 2 evaluaciones en el histórico, pero se obtuvieron {len(historico)}"
     assert "minimoAnonimato" in data_hist
 
-    # Evaluación con 1 participante (< mínimo): oculta
+    # Evaluación con 1 participante (>= mínimo de 1): visible con promedio
     eval_2025 = next(e for e in historico if e["nombreEvaluacion"] == "Evaluación BRP 2025")
-    assert eval_2025["oculto"] is True
-    assert eval_2025["promedioPuntajeTransformado"] is None
-    assert eval_2025["distribucionNiveles"] is None
+    assert eval_2025["oculto"] is False
+    assert eval_2025["promedioPuntajeTransformado"] is not None
+    assert eval_2025["distribucionNiveles"] is not None
 
-    # Evaluación con 5 participantes (>= mínimo): visible con promedio
+    # Evaluación con 5 participantes (>= mínimo): también visible con promedio
     eval_2026 = next(e for e in historico if e["nombreEvaluacion"] == "Evaluación BRP 2026")
     assert eval_2026["oculto"] is False
     assert eval_2026["promedioPuntajeTransformado"] is not None

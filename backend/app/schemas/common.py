@@ -658,6 +658,12 @@ class FichaDatosRequest(BaseModel):
             "areaODepartamento",
         ),
     )
+    tiene_personal_a_cargo: bool = Field(
+        validation_alias=AliasChoices(
+            "tiene_personal_a_cargo",
+            "tienePersonalACargo",
+        ),
+    )
 
     @field_validator("sexo", mode="before")
     @classmethod

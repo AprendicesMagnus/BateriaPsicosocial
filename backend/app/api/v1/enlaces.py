@@ -16,6 +16,11 @@ router = APIRouter()
 
 class EnlaceCreate(BaseModel):
     nombre: str = Field(min_length=2, max_length=150)
+    # Si se envía, el enlace queda restringido a ese único cuestionario
+    # (FICHA_DATOS, ESTRES, EXTRALABORAL, INTRALABORAL_A o INTRALABORAL_B)
+    instrumento: str | None = Field(default=None, max_length=20)
+    # Ruta del frontend (Forma A o B) a la que se redirige al paciente al empezar
+    ruta: str | None = Field(default=None, max_length=60)
 
 
 class IniciarEnlaceRequest(BaseModel):
@@ -38,7 +43,7 @@ def crear_enlace(
     db: Session = Depends(get_db),
     actual: Usuario = Depends(require_gestor),
 ):
-    resultado = enlaces_service.crear_enlace(db, data.nombre, actual)
+    resultado = enlaces_service.crear_enlace(db, data.nombre, actual, data.instrumento, data.ruta)
     auditoria_service.registrar_auditoria(
         db,
         usuario=actual,

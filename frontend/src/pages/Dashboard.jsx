@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import { fetchIndicadores, fetchIndicadoresPorCategoria, fetchHistoricoIndicadores } from "../api/indicadores";
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 
-import { generarInformeAgrupado, descargarInforme } from "../api/informes";
+import { descargarInformesEmpresaZip } from "../api/informes";
 import { crearEnlace } from "../api/enlaces";
 import BotonRegresar from "../components/BotonRegresar";
 import { esSuperAdmin, rutaInicial } from "../utils/roles";
@@ -59,11 +59,22 @@ const TODAS_CATEGORIAS = [...CATEGORIAS, ...CATEGORIAS_B];
 
 const CUESTIONARIOS_MODAL = [
   {
+    clave: "ficha",
+    titulo: "Ficha de Datos Generales",
+    descripcion: "Datos personales y sociodemográficos del trabajador.",
+    rutaA: "/ficha-datos-generales",
+    rutaB: "/ficha-datos-generalesB",
+    codigoA: "FICHA_DATOS",
+    codigoB: "FICHA_DATOS",
+  },
+  {
     clave: "estres",
     titulo: "Cuestionario de Estrés",
     descripcion: "Evaluación de síntomas relacionados con estrés.",
     rutaA: "/cuestionario-estres",
     rutaB: "/cuestionario-estresB",
+    codigoA: "ESTRES",
+    codigoB: "ESTRES",
   },
   {
     clave: "extralaboral",
@@ -71,6 +82,8 @@ const CUESTIONARIOS_MODAL = [
     descripcion: "Evaluación de factores externos al trabajo.",
     rutaA: "/cuestionario-extralaboral",
     rutaB: "/cuestionario-extralaboralB",
+    codigoA: "EXTRALABORAL",
+    codigoB: "EXTRALABORAL",
   },
   {
     clave: "intralaboral",
@@ -78,6 +91,8 @@ const CUESTIONARIOS_MODAL = [
     descripcion: "Evaluación de las condiciones dentro del entorno laboral.",
     rutaA: "/cuestionario-intralaboral",
     rutaB: "/cuestionario-intralaboralB",
+    codigoA: "INTRALABORAL_A",
+    codigoB: "INTRALABORAL_B",
   },
 ];
 
@@ -122,6 +137,9 @@ export default function Dashboard() {
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [cuestionarioSeleccionado, setCuestionarioSeleccionado] = useState(null);
+  // Enlace restringido a un solo cuestionario: { titulo, ruta, codigo } del que se eligió
+  const [enlaceSoloObjetivo, setEnlaceSoloObjetivo] = useState(null);
+  const [nombreEnlaceSolo, setNombreEnlaceSolo] = useState("");
   const [categoriaActivaId, setCategoriaActivaId] = useState(2);
 
   const [indicadores, setIndicadores] = useState(null);
@@ -134,7 +152,7 @@ export default function Dashboard() {
   const [cargandoPrediccion, setCargandoPrediccion] = useState(false);
   const [errorPrediccion, setErrorPrediccion] = useState(null);
 
-  // generarInformeAgrupado / descargarInforme
+  // Descarga del ZIP con los informes Excel de la empresa
   const [avisoInforme, setAvisoInforme] = useState(null);
   const [generandoInforme, setGenerandoInforme] = useState(false);
 
@@ -186,9 +204,10 @@ export default function Dashboard() {
     }
   }
 
+
   async function obtenerEvaluacionMasReciente() {
     const respuesta = await fetchHistoricoIndicadores(token, usuario?.organizacionId);
-    const minimo = respuesta?.minimoAnonimato ?? 5;
+    const minimo = respuesta?.minimoAnonimato ?? 1;
     const disponibles = (respuesta?.historico || []).filter((item) => !item.oculto);
     if (disponibles.length === 0) {
       throw new Error(`Aún no hay una evaluación con al menos ${minimo} participantes completados.`);
@@ -196,17 +215,20 @@ export default function Dashboard() {
     return disponibles[disponibles.length - 1].evaluacionId;
   }
 
+  // Descarga el ZIP con las plantillas Excel llenas con todos los cuestionarios de la empresa
   async function handleDescargarInforme() {
+    if (!usuario?.organizacionId) {
+      setAvisoInforme({ mensaje: "Selecciona una empresa para descargar los informes.", tipo: "error" });
+      return;
+    }
     setGenerandoInforme(true);
     setAvisoInforme(null);
     try {
-      const evaluacionId = await obtenerEvaluacionMasReciente();
-      const informe = await generarInformeAgrupado(token, evaluacionId);
-      await descargarInforme(token, informe.id);
-      setAvisoInforme({ mensaje: "Informe generado y descargado correctamente.", tipo: "exito" });
+      await descargarInformesEmpresaZip(token, usuario.organizacionId);
+      setAvisoInforme({ mensaje: "Informes generados y descargados correctamente.", tipo: "exito" });
     } catch (err) {
       setAvisoInforme({
-        mensaje: err.message || "No se pudo generar el informe. Intenta nuevamente.",
+        mensaje: err.message || "No se pudieron generar los informes. Intenta nuevamente.",
         tipo: "error",
       });
     } finally {
@@ -302,12 +324,36 @@ export default function Dashboard() {
   const cerrarModal = () => {
     setMostrarModal(false);
     setCuestionarioSeleccionado(null);
+    setEnlaceSoloObjetivo(null);
+    setNombreEnlaceSolo("");
   };
 
   const elegirTipo = (ruta) => {
     cerrarModal();
     navigate(ruta);
   };
+
+  // Crea un enlace que solo deja responder el cuestionario elegido en el modal (ruta/codigo
+  // de enlaceSoloObjetivo), con el nombre que el psicólogo le dé en la sub-ventana.
+  async function handleCrearEnlaceSolo() {
+    const nombre = nombreEnlaceSolo.trim();
+    if (!enlaceSoloObjetivo || !nombre) return;
+    setCreandoEnlace(true);
+    setErrorEnlace(null);
+    setEnlaceCopiado(false);
+    try {
+      const enlace = await crearEnlace(token, nombre, {
+        instrumento: enlaceSoloObjetivo.codigo,
+        ruta: enlaceSoloObjetivo.ruta,
+      });
+      setEnlaceCreado(`${window.location.origin}/responder/${enlace.token}`);
+      cerrarModal();
+    } catch (err) {
+      setErrorEnlace(err.message || "No se pudo crear el enlace.");
+    } finally {
+      setCreandoEnlace(false);
+    }
+  }
 
   return (
     <div className="dashboard">
@@ -327,12 +373,12 @@ export default function Dashboard() {
             <span>▣</span>
             Dashboard
           </button>
-
+{/* 
           <button className="menu-item" type="button" onClick={() => navigate("/ficha-datos-generales")}>
             <span>☑</span>
             Cuestionario
           </button>
-
+  */}
           {esSuperAdmin(usuario?.rol) && (
             <button className="menu-item" type="button" onClick={() => navigate("/panel")}>
               <span>⚙</span>
@@ -849,8 +895,9 @@ export default function Dashboard() {
                 className="modal-main-button"
                 onClick={handleDescargarInforme}
                 disabled={generandoInforme}
+                title="Sociodemográfica, Resultados, Consolidado, Resumen estadístico y respuestas por grupo"
               >
-                {generandoInforme ? "Generando informe..." : "Descargar informe"}
+                {generandoInforme ? "Generando informes..." : "Descargar informes (Excel)"}
               </button>
             )}
           </div>
@@ -924,7 +971,48 @@ export default function Dashboard() {
               ×
             </button>
 
-            {!cuestionarioSeleccionado ? (
+            {enlaceSoloObjetivo ? (
+              <>
+                <h2>Enlace para un solo cuestionario</h2>
+                <p>
+                  Quien abra este enlace solo podrá responder{" "}
+                  <strong>{enlaceSoloObjetivo.titulo}</strong>; no verá el resto de la batería.
+                  Ponle un nombre para reconocerlo luego en Reportes.
+                </p>
+
+                <input
+                  type="text"
+                  className="enlace-solo__input"
+                  placeholder="Ej: Juan Pérez - Estrés"
+                  value={nombreEnlaceSolo}
+                  onChange={(e) => setNombreEnlaceSolo(e.target.value)}
+                  autoFocus
+                  disabled={creandoEnlace}
+                />
+
+                {errorEnlace && <p className="enlace-creado__error">{errorEnlace}</p>}
+
+                <div className="modal-type-buttons">
+                  <button
+                    type="button"
+                    className="modal-type-btn"
+                    onClick={() => setEnlaceSoloObjetivo(null)}
+                    disabled={creandoEnlace}
+                  >
+                    Atrás
+                  </button>
+                </div>
+
+                <button
+                  className="modal-main-button"
+                  type="button"
+                  onClick={handleCrearEnlaceSolo}
+                  disabled={creandoEnlace || !nombreEnlaceSolo.trim()}
+                >
+                  {creandoEnlace ? "Creando enlace..." : "Crear enlace"}
+                </button>
+              </>
+            ) : !cuestionarioSeleccionado ? (
               <>
                 <div className="modal-icon">
                   <img
@@ -955,25 +1043,39 @@ export default function Dashboard() {
                 <h2>{cuestionarioSeleccionado.titulo}</h2>
                 <p>Selecciona la modalidad según el tipo de trabajador:</p>
 
-                <div className="modal-type-buttons">
-                  <button
-                    type="button"
-                    className="modal-type-btn"
-                    onClick={() => elegirTipo(cuestionarioSeleccionado.rutaA)}
-                  >
-                    <strong>Forma A</strong>
-                    <span>Para cargos de jefatura, profesionales o técnicos</span>
-                  </button>
+                {puedeCrearEnlaces && (
+                  <div className="modal-enlace-solo">
+                    <div className="modal-type-buttons">
+                      <button
+                        type="button"
+                        className="modal-type-btn modal-type-btn--enlace"
+                        onClick={() =>
+                          setEnlaceSoloObjetivo({
+                            titulo: `${cuestionarioSeleccionado.titulo} (Forma A)`,
+                            ruta: cuestionarioSeleccionado.rutaA,
+                            codigo: cuestionarioSeleccionado.codigoA,
+                          })
+                        }
+                      >
+                        🔗 Enlace solo Forma A
+                      </button>
 
-                  <button
-                    type="button"
-                    className="modal-type-btn"
-                    onClick={() => elegirTipo(cuestionarioSeleccionado.rutaB)}
-                  >
-                    <strong>Forma B</strong>
-                    <span>Para cargos de auxiliares u operarios</span>
-                  </button>
-                </div>
+                      <button
+                        type="button"
+                        className="modal-type-btn modal-type-btn--enlace"
+                        onClick={() =>
+                          setEnlaceSoloObjetivo({
+                            titulo: `${cuestionarioSeleccionado.titulo} (Forma B)`,
+                            ruta: cuestionarioSeleccionado.rutaB,
+                            codigo: cuestionarioSeleccionado.codigoB,
+                          })
+                        }
+                      >
+                        🔗 Enlace solo Forma B
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

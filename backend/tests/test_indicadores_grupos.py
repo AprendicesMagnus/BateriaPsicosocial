@@ -105,7 +105,7 @@ def test_analisis_grupos_ficha_datos(client, db_session, crear_paciente):
     data = res.json()
 
     assert data["variable"] == "sexo"
-    assert data["minimoAnonimato"] == 5
+    assert data["minimoAnonimato"] == 1
 
     # 1. Grupo "Femenino" presente con 5 participantes y 80.0% alto/muy alto
     grupos_por_nombre = {g["nombre"]: g for g in data["grupos"]}
@@ -114,9 +114,12 @@ def test_analisis_grupos_ficha_datos(client, db_session, crear_paciente):
     assert g_fem["participantes"] == 5
     assert g_fem["porcentajeAltoMuyAlto"] == 80.0
 
-    # 2. 3 participantes MASCULINO no aparecen y gruposOcultos es 1
-    assert "Masculino" not in grupos_por_nombre
-    assert data["gruposOcultos"] == 1
+    # 2. Con el mínimo de anonimato en 1, el grupo MASCULINO (3 participantes) ya se muestra
+    assert "Masculino" in grupos_por_nombre
+    g_masc = grupos_por_nombre["Masculino"]
+    assert g_masc["participantes"] == 3
+    assert g_masc["porcentajeAltoMuyAlto"] == 0.0
+    assert data["gruposOcultos"] == 0
 
     # 3. Variable inválida responde 400
     res_invalida = client.get(f"/api/indicadores/grupos?organizacion_id={org_id}&variable=inexistente", headers=headers_admin)

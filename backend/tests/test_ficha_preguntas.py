@@ -11,7 +11,7 @@ def setup_seed(db_session):
     db_session.commit()
 
 
-def test_ficha_tiene_21_preguntas(db_session):
+def test_ficha_tiene_22_preguntas(db_session):
     v_ficha = (
         db_session.query(CuestionarioVersion)
         .filter(CuestionarioVersion.codigo == "FICHA_DATOS", CuestionarioVersion.vigente.is_(True))
@@ -29,9 +29,9 @@ def test_ficha_tiene_21_preguntas(db_session):
     preguntas = db_session.query(Pregunta).filter(Pregunta.dimension_id == dimension.id).all()
     codigos = {p.codigo for p in preguntas}
 
-    esperados = {f"F{i}" for i in range(1, 22)}
+    esperados = {f"F{i}" for i in range(1, 23)}
     assert codigos == esperados, f"Se esperaban códigos {esperados}, pero se encontraron {codigos}"
-    assert len(preguntas) == 21, f"Se esperaban 21 preguntas, se encontraron {len(preguntas)}"
+    assert len(preguntas) == 22, f"Se esperaban 22 preguntas, se encontraron {len(preguntas)}"
 
     pregunta_f20 = next(p for p in preguntas if p.codigo == "F20")
     pregunta_f21 = next(p for p in preguntas if p.codigo == "F21")

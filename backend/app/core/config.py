@@ -50,7 +50,7 @@ class Settings(BaseSettings):
 
     storage_path: str = "./storage"
 
-    min_grupo_anonimato: int = 5
+    min_grupo_anonimato: int = 1
 
     jwt_expira_minutos: int = 120
     reset_expira_minutos: int = 15

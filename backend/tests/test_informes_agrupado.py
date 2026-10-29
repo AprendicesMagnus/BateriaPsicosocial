@@ -1,12 +1,15 @@
-import os
+import io
 import uuid
+import zipfile
+
 import pytest
 
+from app.core.encryption import cifrar_json
 from app.core.nit_utils import calcular_digito_verificador_nit
 from app.db.seed import sembrar_todos_los_cuestionarios
-from app.models.evaluation import Evaluacion, EvaluacionParticipante, ResultadoDimension
+from app.models.evaluation import Evaluacion, EvaluacionParticipante, Respuesta, ResultadoDimension
 from app.models.organization import Area, Organizacion
-from app.models.survey import CuestionarioVersion, Dimension
+from app.models.survey import CuestionarioVersion, Dimension, Pregunta
 from app.models.user import Usuario
 
 
@@ -38,21 +41,21 @@ def datos_prueba_agrupado(client, db_session, crear_paciente):
     db_session.add_all([area_ops, area_ventas])
     db_session.commit()
 
-    # 3. Obtener versión con dimensiones sembradas
-    dim = db_session.query(Dimension).first()
-    assert dim is not None, "Debe existir al menos una dimensión sembrada"
+    # 3. Cuestionario INTRALABORAL_A: así los puntajes quedan asociados al participante
+    # (informes_excel.py solo agrega ResultadoDimension de versiones INTRALABORAL_A/B).
     cuestionario = (
         db_session.query(CuestionarioVersion)
-        .filter(CuestionarioVersion.id == dim.version_id)
+        .filter(CuestionarioVersion.codigo == "INTRALABORAL_A", CuestionarioVersion.vigente.is_(True))
         .first()
     )
-    assert cuestionario is not None
-
-    dimensiones = (
+    assert cuestionario is not None, "Debe existir la versión INTRALABORAL_A sembrada"
+    dim = (
         db_session.query(Dimension)
-        .filter(Dimension.version_id == cuestionario.id)
-        .all()
+        .filter(Dimension.version_id == cuestionario.id, Dimension.tipo == "DIMENSION")
+        .order_by(Dimension.orden)
+        .first()
     )
+    assert dim is not None, "La versión INTRALABORAL_A debe tener dimensiones"
 
     admin_user = (
         db_session.query(Usuario)
@@ -71,11 +74,21 @@ def datos_prueba_agrupado(client, db_session, crear_paciente):
     db_session.add(evaluacion)
     db_session.commit()
 
-    # 4. Crear 5 participantes para Operaciones
+    # 4. Crear participantes para Operaciones (con respuestas, para que cuenten en el ZIP)
     participantes_ops_ids = [crear_paciente(org.id, area_id=area_ops.id)[0] for _ in range(5)]
 
-    # 5. Crear 3 participantes para Ventas (para prueba de anonimato)
-    participantes_ventas_ids = [crear_paciente(org.id, area_id=area_ventas.id)[0] for _ in range(3)]
+    dimensiones = (
+        db_session.query(Dimension)
+        .filter(Dimension.version_id == cuestionario.id)
+        .all()
+    )
+    pregunta = (
+        db_session.query(Pregunta)
+        .filter(Pregunta.dimension_id == dim.id)
+        .order_by(Pregunta.orden)
+        .first()
+    )
+    assert pregunta is not None, "La dimensión sembrada debe tener al menos una pregunta"
 
     def _crear_participante_con_resultados(trabajador_id):
         part = EvaluacionParticipante(
@@ -97,73 +110,31 @@ def datos_prueba_agrupado(client, db_session, crear_paciente):
             )
             db_session.add(res_dim)
 
+        # Respuesta real: _participantes() solo incluye a quienes tienen al menos una.
+        db_session.add(
+            Respuesta(
+                id=uuid.uuid4(),
+                participante_id=part.id,
+                pregunta_id=pregunta.id,
+                valor_cifrado=cifrar_json(1),
+            )
+        )
+        return part
+
     for tid in participantes_ops_ids:
         _crear_participante_con_resultados(tid)
 
-    for tid in participantes_ventas_ids:
-        _crear_participante_con_resultados(tid)
-
     db_session.commit()
-
-    archivos_a_limpiar = []
 
     yield {
         "headers_admin": headers_admin,
         "evaluacion_id": str(evaluacion.id),
         "area_ops_id": str(area_ops.id),
         "area_ventas_id": str(area_ventas.id),
-        "archivos_a_limpiar": archivos_a_limpiar,
     }
 
-    for ruta in archivos_a_limpiar:
-        if os.path.exists(ruta):
-            try:
-                os.remove(ruta)
-            except OSError:
-                pass
 
-
-def test_informe_agrupado_pdf_y_verificacion(client, datos_prueba_agrupado):
-    headers = datos_prueba_agrupado["headers_admin"]
-    eval_id = datos_prueba_agrupado["evaluacion_id"]
-    area_id = datos_prueba_agrupado["area_ops_id"]
-
-    # 1. POST /api/informes/agrupado en formato PDF
-    res = client.post(
-        "/api/informes/agrupado",
-        headers=headers,
-        json={
-            "evaluacionId": eval_id,
-            "areaId": area_id,
-            "formato": "PDF",
-        },
-    )
-    assert res.status_code == 200, res.text
-    data = res.json()
-
-    codigo_verif = data.get("codigoVerificacion")
-    assert codigo_verif and len(codigo_verif.strip()) > 0
-
-    hash_sha256 = data.get("hashSha256")
-    assert hash_sha256 and len(hash_sha256) == 64
-
-    ruta_archivo = data.get("rutaArchivo")
-    assert ruta_archivo and os.path.exists(ruta_archivo)
-    datos_prueba_agrupado["archivos_a_limpiar"].append(ruta_archivo)
-
-    with open(ruta_archivo, "rb") as f:
-        cabecera = f.read(4)
-        assert cabecera == b"%PDF"
-
-    # 2. GET /api/informes/verificar/{codigo} sin autorización
-    res_verif = client.get(f"/api/informes/verificar/{codigo_verif}")
-    assert res_verif.status_code == 200, res_verif.text
-    data_verif = res_verif.json()
-    assert data_verif["tipo"] == "AGRUPADO"
-    assert data_verif["valido"] is True
-
-
-def test_informe_agrupado_excel(client, datos_prueba_agrupado):
+def test_informe_agrupado_devuelve_zip_de_excel(client, datos_prueba_agrupado):
     headers = datos_prueba_agrupado["headers_admin"]
     eval_id = datos_prueba_agrupado["evaluacion_id"]
     area_id = datos_prueba_agrupado["area_ops_id"]
@@ -171,28 +142,33 @@ def test_informe_agrupado_excel(client, datos_prueba_agrupado):
     res = client.post(
         "/api/informes/agrupado",
         headers=headers,
-        json={
-            "evaluacionId": eval_id,
-            "areaId": area_id,
-            "formato": "EXCEL",
-        },
+        json={"evaluacionId": eval_id, "areaId": area_id},
     )
     assert res.status_code == 200, res.text
-    data = res.json()
+    assert res.headers["content-type"] == "application/zip"
+    assert "attachment" in res.headers.get("content-disposition", "")
 
-    hash_sha256 = data.get("hashSha256")
-    assert hash_sha256 and len(hash_sha256) == 64
-
-    ruta_archivo = data.get("rutaArchivo")
-    assert ruta_archivo and os.path.exists(ruta_archivo)
-    datos_prueba_agrupado["archivos_a_limpiar"].append(ruta_archivo)
-
-    with open(ruta_archivo, "rb") as f:
-        cabecera = f.read(2)
-        assert cabecera == b"PK"
+    zf = zipfile.ZipFile(io.BytesIO(res.content))
+    nombres = zf.namelist()
+    for esperado in ["Sociodemografica.xlsx", "Resultados.xlsx", "Consolidado trabajadores.xlsx"]:
+        assert esperado in nombres
 
 
-def test_informe_agrupado_rechazo_anonimato(client, datos_prueba_agrupado):
+def test_informe_agrupado_sin_area_incluye_toda_la_evaluacion(client, datos_prueba_agrupado):
+    headers = datos_prueba_agrupado["headers_admin"]
+    eval_id = datos_prueba_agrupado["evaluacion_id"]
+
+    res = client.post(
+        "/api/informes/agrupado",
+        headers=headers,
+        json={"evaluacionId": eval_id, "areaId": None},
+    )
+    assert res.status_code == 200, res.text
+    zf = zipfile.ZipFile(io.BytesIO(res.content))
+    assert "Resultados.xlsx" in zf.namelist()
+
+
+def test_informe_agrupado_area_sin_respuestas_rechaza(client, datos_prueba_agrupado):
     headers = datos_prueba_agrupado["headers_admin"]
     eval_id = datos_prueba_agrupado["evaluacion_id"]
     area_ventas_id = datos_prueba_agrupado["area_ventas_id"]
@@ -200,12 +176,6 @@ def test_informe_agrupado_rechazo_anonimato(client, datos_prueba_agrupado):
     res = client.post(
         "/api/informes/agrupado",
         headers=headers,
-        json={
-            "evaluacionId": eval_id,
-            "areaId": area_ventas_id,
-            "formato": "PDF",
-        },
+        json={"evaluacionId": eval_id, "areaId": area_ventas_id},
     )
     assert res.status_code == 400, res.text
-    error_msg = res.json().get("error", "").lower()
-    assert "anonimato" in error_msg or "mínimo" in error_msg

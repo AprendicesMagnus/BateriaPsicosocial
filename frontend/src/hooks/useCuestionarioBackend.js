@@ -23,6 +23,7 @@ import {
   finalizarCuestionario,
   fetchInstrumentosParticipante,
 } from "../api/evaluaciones";
+import { rutaEnlaceGuardado } from "../api/enlaces";
 
 // Prefijo del código de cada pregunta en la BD. El id numérico de la página + el prefijo
 // forman el código: la pregunta 12 de Estrés es "EST_12" (ver seed.py e intralaboral_oficial.py,
@@ -73,7 +74,7 @@ function guardarFiltro(evaluacionId, codigo, idFiltro, texto) {
 }
 
 export function useCuestionarioBackend(codigoEsperado, mapa) {
-  const { token } = useAuth();
+  const { token, usuario } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -169,8 +170,8 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
         setError((prev) => prev || "No hay una evaluación activa; esta respuesta no se guardó.");
         return;
       }
-      const uuid = uuidPorCodigo[`${prefijo}${preguntaId}`];
-      if (!uuid) {
+      const codigo = `${prefijo}${preguntaId}`;
+      if (!(codigo in uuidPorCodigo)) {
         // Sin preguntas cargadas la carga falló (p. ej. "restringido al trabajador asignado"):
         // se conserva ese mensaje, que es el que explica el problema, en vez de taparlo
         if (Object.keys(uuidPorCodigo).length === 0) {
@@ -188,7 +189,8 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
         return;
       }
       try {
-        await guardarRespuesta(token, evaluacionId, uuid, valor);
+        // El backend identifica la pregunta por su código (p. ej. "EST_12"), no por su UUID
+        await guardarRespuesta(token, evaluacionId, codigo, valor);
         // Si antes falló un guardado y este funcionó, se quita el aviso de error
         setError(null);
       } catch (e) {
@@ -243,7 +245,13 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
       const res = await finalizarCuestionario(token, evaluacionId, filtros);
       // completadoTotal = true cuando era el último instrumento de la batería
       if (res.completadoTotal) {
-        // Aviso flotante en la misma página; se oculta solo a los 6 segundos
+        if (usuario?.esInvitado) {
+          // Paciente de un enlace: se cierra la evaluación y se manda a la pantalla de
+          // "Evaluación finalizada" en vez de dejarlo en el cuestionario ya respondido
+          navigate(rutaEnlaceGuardado(), { replace: true });
+          return;
+        }
+        // Trabajador con cuenta propia: aviso flotante en la misma página, se oculta a los 6 segundos
         setMensajeFinal("¡Terminaste todas las encuestas! Gracias por tu participación.");
         setTimeout(() => setMensajeFinal(null), 6000);
         return;
@@ -258,7 +266,7 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
       // Sube al inicio para que el trabajador vea el aviso
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [respuestas, token, evaluacionId, navigate]);
+  }, [respuestas, token, evaluacionId, navigate, usuario]);
 
   return { respuestas, seleccionarRespuesta, finalizarYNavegar, cargando, error, mensajeFinal };
 }

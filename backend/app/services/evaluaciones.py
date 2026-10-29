@@ -236,6 +236,7 @@ def guardar_ficha_datos(db: Session, evaluacion_id, data, actual: Usuario) -> di
             "tipo_contrato": "F19",
             "horas_diarias": "F20",
             "salario_rango": "F21",
+            "tiene_personal_a_cargo": "F22",
         }
         for campo, val in data.model_dump().items():
             if val is None:
@@ -276,65 +277,59 @@ def guardar_ficha_datos(db: Session, evaluacion_id, data, actual: Usuario) -> di
         inst_ficha.fecha_fin = utcnow()
 
     # 3. LÓGICA DE ASIGNACIÓN AUTOMÁTICA DE INTRALABORAL FORMA A vs FORMA B
-    # Criterio de asignación conforme a la Resolución 2764 de 2022 del Ministerio de Trabajo:
-    # (Este criterio no proviene de la documentación propia del proyecto, sino que fue adoptado explícitamente conforme al manual del instrumento en Colombia)
-    # Forma A: "Jefatura - tiene personal a cargo", "Profesional, analista, técnico, tecnólogo"
-    # Forma B: "Auxiliar, asistente administrativo, asistente técnico", "Operario, operador, ayudante, servicios generales"
-    cargos_forma_a = {
-        "Jefatura - tiene personal a cargo",
-        "Profesional, analista, técnico, tecnólogo",
-    }
-    es_forma_a = data.cargo_tipo in cargos_forma_a
-    codigo_target = "INTRALABORAL_A" if es_forma_a else "INTRALABORAL_B"
-    codigo_opuesto = "INTRALABORAL_B" if es_forma_a else "INTRALABORAL_A"
+    # Criterio de asignación: la respuesta del trabajador a la pregunta "¿Cuenta con personal
+    # a cargo?" de la Ficha. Sí -> Forma A, No -> Forma B.
+    codigo_target = None
+    # Los enlaces restringidos a un solo cuestionario (p. ej. solo la Ficha) no reciben el
+    # Intralaboral automático: el paciente solo debe responder lo que el psicólogo eligió.
+    if participante.evaluacion.enlace_instrumento is None:
+        es_forma_a = bool(data.tiene_personal_a_cargo)
+        codigo_target = "INTRALABORAL_A" if es_forma_a else "INTRALABORAL_B"
+        codigo_opuesto = "INTRALABORAL_B" if es_forma_a else "INTRALABORAL_A"
 
-    # Garantizar que el trabajador NO tenga ambas formas del Intralaboral asignadas a la vez
-    for pi in list(participante.instrumentos_asignados):
-        if pi.instrumento.version.codigo == codigo_opuesto:
-            db.delete(pi)
-            db.flush()
+        # Garantizar que el trabajador NO tenga ambas formas del Intralaboral asignadas a la vez
+        for pi in list(participante.instrumentos_asignados):
+            if pi.instrumento.version.codigo == codigo_opuesto:
+                db.delete(pi)
+                db.flush()
 
-    # Asignar el instrumento intralaboral correspondiente si no está asignado aún
-    version_target = db.query(CuestionarioVersion).filter(CuestionarioVersion.codigo == codigo_target).first()
-    if version_target:
-        eval_inst_target = (
-            db.query(EvaluacionInstrumento)
-            .filter(
-                EvaluacionInstrumento.evaluacion_id == participante.evaluacion_id,
-                EvaluacionInstrumento.version_id == version_target.id,
-            )
-            .first()
-        )
-        if not eval_inst_target:
-            eval_inst_target = EvaluacionInstrumento(
-                evaluacion_id=participante.evaluacion_id,
-                version_id=version_target.id,
-                orden=4,
-                obligatorio=True,
-            )
-            db.add(eval_inst_target)
-            db.flush()
-
-        pi_target = (
-            db.query(ParticipanteInstrumento)
-            .filter(
-                ParticipanteInstrumento.participante_id == participante.id,
-                ParticipanteInstrumento.instrumento_id == eval_inst_target.id,
-            )
-            .first()
-        )
-        if not pi_target:
-            db.add(
-                ParticipanteInstrumento(
-                    participante_id=participante.id,
-                    instrumento_id=eval_inst_target.id,
-                    estado="PENDIENTE",
+        # Asignar el instrumento intralaboral correspondiente si no está asignado aún
+        version_target = db.query(CuestionarioVersion).filter(CuestionarioVersion.codigo == codigo_target).first()
+        if version_target:
+            eval_inst_target = (
+                db.query(EvaluacionInstrumento)
+                .filter(
+                    EvaluacionInstrumento.evaluacion_id == participante.evaluacion_id,
+                    EvaluacionInstrumento.version_id == version_target.id,
                 )
+                .first()
             )
+            if not eval_inst_target:
+                eval_inst_target = EvaluacionInstrumento(
+                    evaluacion_id=participante.evaluacion_id,
+                    version_id=version_target.id,
+                    orden=4,
+                    obligatorio=True,
+                )
+                db.add(eval_inst_target)
+                db.flush()
 
-    if participante.estado == "PENDIENTE":
-        participante.estado = "EN_PROGRESO"
-        participante.fecha_inicio = utcnow()
+            pi_target = (
+                db.query(ParticipanteInstrumento)
+                .filter(
+                    ParticipanteInstrumento.participante_id == participante.id,
+                    ParticipanteInstrumento.instrumento_id == eval_inst_target.id,
+                )
+                .first()
+            )
+            if not pi_target:
+                db.add(
+                    ParticipanteInstrumento(
+                        participante_id=participante.id,
+                        instrumento_id=eval_inst_target.id,
+                        estado="PENDIENTE",
+                    )
+                )
 
     # El paciente del enlace no tiene cuenta: su nombre sale de la Ficha para que el
     # psicólogo sepa quién respondió en "Encuestas realizadas"
@@ -342,10 +337,32 @@ def guardar_ficha_datos(db: Session, evaluacion_id, data, actual: Usuario) -> di
         actual.nombre = data.nombre_completo.strip()[:120]
         actual.apellido = ""
 
+    ahora = utcnow()
+    completado_total = False
+    # Enlace restringido solo a la Ficha: al guardarla no queda ningún instrumento pendiente
+    if participante.instrumentos_asignados and all(
+        pi.estado == "COMPLETADA" for pi in participante.instrumentos_asignados
+    ):
+        db.flush()
+        participante.estado = "COMPLETADA"
+        participante.fecha_fin = ahora
+        resultados = tabular_participante(db, participante)
+        _alertar_riesgo(db, participante, resultados)
+        evaluacion = participante.evaluacion
+        if evaluacion.enlace_token and actual.es_invitado:
+            evaluacion.estado = "FINALIZADA"
+            evaluacion.fecha_fin = ahora
+            evaluacion.justificacion_cierre = "Enlace cerrado automáticamente: el paciente terminó la batería."
+        completado_total = True
+    elif participante.estado == "PENDIENTE":
+        participante.estado = "EN_PROGRESO"
+        participante.fecha_inicio = ahora
+
     db.commit()
     return {
         "message": "Ficha de datos generales guardada correctamente.",
         "intralaboralAsignado": codigo_target,
+        "completadoTotal": completado_total,
     }
 
 

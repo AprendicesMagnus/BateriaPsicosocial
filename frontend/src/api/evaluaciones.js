@@ -19,11 +19,11 @@ export async function fetchCuestionario(token, evaluacionId) {
   return request(`/evaluaciones/${evaluacionId}/cuestionario`, { token });
 }
 
-export async function guardarRespuesta(token, evaluacionId, preguntaId, valor) {
+export async function guardarRespuesta(token, evaluacionId, preguntaCodigo, valor) {
   return request(`/evaluaciones/${evaluacionId}/respuestas`, {
     method: "POST",
     token,
-    body: { preguntaId, valor },
+    body: { pregunta_codigo: preguntaCodigo, valor },
   });
 }
 

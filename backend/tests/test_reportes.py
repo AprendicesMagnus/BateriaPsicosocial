@@ -148,12 +148,32 @@ def test_area_con_5_o_mas_completados_es_listo(client, escenario_reportes):
     assert item_a["participantesCompletados"] >= 5
 
 
-def test_area_menos_de_5_completados_es_restringido(client, escenario_reportes):
+def test_area_con_al_menos_un_completado_es_listo(client, escenario_reportes):
+    # Con el mínimo de anonimato en 1, un área con 2 completados ya no está restringida.
     res = client.get("/api/reportes", headers=escenario_reportes["headers_evaluador_b"])
     assert res.status_code == 200
     item_b = next(item for item in res.json() if item["id"] == escenario_reportes["area_b_id"])
-    assert item_b["estado"] == "restringido"
-    assert item_b["participantesCompletados"] < 5
+    assert item_b["estado"] == "listo"
+    assert item_b["participantesCompletados"] == 2
+
+
+def test_area_sin_completados_es_restringido(client, db_session):
+    # Un área sin ningún participante completado (0 < mínimo de 1) sigue restringida.
+    res_login = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
+    assert res_login.status_code == 200
+    headers_admin = {"Authorization": f"Bearer {res_login.json()['token']}"}
+
+    org_id = _crear_organizacion(client, headers_admin, "Org Area Vacia Reportes")
+    area = Area(organizacion_id=uuid.UUID(org_id), nombre=f"Area Vacia {uuid.uuid4().hex[:4]}")
+    db_session.add(area)
+    db_session.commit()
+    db_session.refresh(area)
+
+    res = client.get("/api/reportes", headers=headers_admin)
+    assert res.status_code == 200
+    item = next(r for r in res.json() if r["areaId"] == str(area.id))
+    assert item["participantesCompletados"] == 0
+    assert item["estado"] == "restringido"
 
 
 def test_reportes_requiere_autenticacion(client):
@@ -210,10 +230,10 @@ def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session, crear_pac
     assert res_rep.status_code == 200
     item = next(r for r in res_rep.json() if r["areaId"] == str(area.id))
 
-    # El conteo debe ser 2 (solo la reciente), NO 5 (sumando la antigua), por lo que estado debe ser 'restringido' (<5)
+    # El conteo debe ser 2 (solo la reciente), NO 5 (sumando la antigua).
     assert item["evaluacionId"] == str(ev2_id)
     assert item["participantesCompletados"] == 2
-    assert item["estado"] == "restringido"
+    assert item["estado"] == "listo"
 
 
 

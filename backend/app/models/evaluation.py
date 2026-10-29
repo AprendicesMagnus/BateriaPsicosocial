@@ -30,6 +30,12 @@ class Evaluacion(Base):
     enlace_token: Mapped[str | None] = mapped_column(String(64), unique=True)
     # Cuándo se quitó el enlace de la lista (Eliminar o limpieza cada 4 horas); la evaluación se conserva
     enlace_oculto_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Si el enlace se creó para un solo cuestionario, código del instrumento al que queda
+    # restringido el paciente invitado (FICHA_DATOS, ESTRES, EXTRALABORAL, INTRALABORAL_A/B).
+    # Null = enlace de la batería completa (comportamiento de siempre).
+    enlace_instrumento: Mapped[str | None] = mapped_column(String(20))
+    # Ruta del frontend (Forma A o B) a la que se redirige al paciente al empezar ese enlace
+    enlace_ruta: Mapped[str | None] = mapped_column(String(60))
 
     organizacion: Mapped["Organizacion"] = relationship(back_populates="evaluaciones")
     evaluador: Mapped["Usuario"] = relationship(foreign_keys=[evaluador_id])
