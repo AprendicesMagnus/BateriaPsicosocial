@@ -2,6 +2,7 @@ import os
 import tempfile
 import unicodedata
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -17,7 +18,7 @@ from app.models.user import Usuario
 from app.services import panel as panel_service
 from app.services.panel import TIPO_POR_ACCION
 
-TABLAS_VALIDAS = {"usuarios", "empresas", "compras", "auditoria", "productos"}
+TABLAS_VALIDAS = {"usuarios", "empresas", "compras", "auditoria", "productos", "historial_compras"}
 
 TEXTO_ACCION = {
     "LOGIN": "inició sesión",
@@ -197,6 +198,50 @@ def exportar_tabla_excel(
                 c.estado,
             ])
             ws.cell(row=ws.max_row, column=5).number_format = '"$"#,##0'
+
+    elif tabla == "historial_compras":
+        ws.title = "Historial de compras"
+        ws.append([
+            "Fecha",
+            "Hora",
+            "Nombre del comprador",
+            "Empresa",
+            "Tipo de compra",
+            "Detalle",
+            "Valor (COP)",
+            "Estado",
+        ])
+        historial = panel_service.obtener_historial_compras_tienda(db)
+        for compra in historial:
+            fecha_iso = compra.get("fecha")
+            try:
+                dt = datetime.fromisoformat(fecha_iso) if fecha_iso else None
+                if dt is not None and dt.tzinfo is not None:
+                    dt = dt.astimezone(ZoneInfo("America/Bogota"))
+            except (TypeError, ValueError):
+                dt = None
+            fecha = dt.strftime("%d/%m/%Y") if dt else "—"
+            hora = dt.strftime("%H:%M:%S") if dt else "—"
+            if b_norm:
+                texto = " ".join([
+                    str(compra.get("nombre", "")),
+                    str(compra.get("empresa", "")),
+                    str(compra.get("tipo", "")),
+                    str(compra.get("detalle", "")),
+                ])
+                if b_norm not in _normalizar(texto):
+                    continue
+            ws.append([
+                fecha,
+                hora,
+                compra.get("nombre", "—"),
+                compra.get("empresa", "—"),
+                compra.get("tipo", "—"),
+                compra.get("detalle", "—"),
+                compra.get("total", 0),
+                compra.get("estado", "—"),
+            ])
+            ws.cell(row=ws.max_row, column=7).number_format = '"$"#,##0'
 
     elif tabla == "productos":
         ws.title = "Inventario de productos"

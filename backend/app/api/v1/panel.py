@@ -25,6 +25,15 @@ def obtener_panel(
     return panel_service.obtener_panel(db)
 
 
+@router.get("/historial-compras")
+def obtener_historial_compras_tienda(
+    db: Session = Depends(get_db),
+    _actual: Usuario = Depends(require_admin),
+):
+    """Historial unificado de compras de planes y productos. Solo Super Administrador."""
+    return panel_service.obtener_historial_compras_tienda(db)
+
+
 @router.get("/evolucion")
 def obtener_evolucion(
     meses: int = Query(12, ge=3, le=24),

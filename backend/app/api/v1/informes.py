@@ -146,7 +146,7 @@ def descargar_informe(
             raise AppError(403, "No tiene permisos para descargar este informe individual.")
     elif informe.tipo == "AGRUPADO":
         es_responsable = actual.rol.codigo == "RESPONSABLE_SST"
-        es_admin_empresa = actual.rol.codigo == "ADMINISTRADOR"  # solo de las empresas que creó
+        es_admin_empresa = actual.rol.codigo in {"ADMINISTRADOR", "JEFE"}  # solo de las empresas que creó
         es_gestor_autorizado = (es_admin or es_evaluador or es_responsable or es_admin_empresa) and misma_org
         if not es_gestor_autorizado:
             raise AppError(403, "No tiene permisos para descargar este informe agrupado.")

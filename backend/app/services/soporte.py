@@ -6,7 +6,8 @@ from app.core.errors import AppError
 from app.services.correo import enviar_correo
 from app.services.notificaciones import notificar
 from app.models.ticket_soporte import TicketSoporte
-from app.models.user import Usuario
+from app.models.user import Rol, Usuario
+from app.services.notificaciones import notificar
 
 
 def _publico(ticket: TicketSoporte) -> dict:
@@ -29,6 +30,24 @@ def crear_ticket(db: Session, usuario: Usuario, mensaje: str) -> dict:
         raise AppError(400, "El mensaje no puede estar vacío ni superar los 2000 caracteres.")
     ticket = TicketSoporte(usuario_id=usuario.id, mensaje=mensaje)
     db.add(ticket)
+
+    # Avisa a los Super Administradores en la campanita (el correo se envía aparte).
+    remitente = f"{usuario.nombre} {usuario.apellido}".strip() or "Un usuario"
+    admins = (
+        db.query(Usuario)
+        .join(Rol, Usuario.rol_id == Rol.id)
+        .filter(Rol.codigo == "SUPER_ADMINISTRADOR", Usuario.estado == "ACTIVO", Usuario.id != usuario.id)
+        .all()
+    )
+    for admin in admins:
+        notificar(
+            db,
+            usuario_id=admin.id,
+            tipo="SOPORTE_MENSAJE",
+            titulo="Nuevo mensaje en el Centro de ayuda",
+            mensaje=f"{remitente}: {mensaje[:140]}{'…' if len(mensaje) > 140 else ''}",
+            commit=False,
+        )
     db.commit()
     db.refresh(ticket)
     ticket.usuario = usuario
@@ -68,14 +87,16 @@ def responder_ticket(db: Session, ticket_id, respuesta: str, respondido_por=None
     ticket.respondido_en = utcnow()
     ticket.estado = "RESUELTO"
     if respondido_por is None or (respondido_por != ticket.usuario_id and str(respondido_por) != str(ticket.usuario_id)):
+        # Avisa al usuario que escribió: su respuesta aparece en la campanita.
         notificar(
             db,
             usuario_id=ticket.usuario_id,
-            tipo="SOPORTE_RESPONDIDO",
-            titulo="Respuesta a tu mensaje de soporte",
-            mensaje="El equipo de soporte respondió tu mensaje. Puedes verlo en el Centro de ayuda, en la sección Mis mensajes.",
+            tipo="SOPORTE_RESPUESTA",
+            titulo="Respondieron tu mensaje del Centro de ayuda",
+            mensaje=f"Respuesta: {respuesta[:140]}{'…' if len(respuesta) > 140 else ''}",
             commit=False,
         )
+
     db.commit()
     db.refresh(ticket)
     return _publico(ticket)

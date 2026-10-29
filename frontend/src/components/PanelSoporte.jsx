@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { crearContenido, editarContenido, eliminarContenido, fetchContenidoAdmin } from "../api/soporte";
 import PanelMensajesSoporte from "./PanelMensajesSoporte";
@@ -16,13 +17,15 @@ const SECCIONES = [
   { clave: "glosario", label: "Glosario", conTitulo: true },
   { clave: "novedades", label: "Novedades y avisos", conTitulo: true },
   { clave: "atencion", label: "Horarios y canales de atención", conTitulo: true },
+  { clave: "mensajes", label: "Mensajes de soporte (usuarios)" },
 ];
 
 // Administración del contenido del Centro de ayuda (solo Super Administrador, dentro del Panel).
 export default function PanelSoporte() {
   const { token } = useAuth();
   const [items, setItems] = useState([]);
-  const [seccion, setSeccion] = useState("faq");
+  const location = useLocation();
+  const [seccion, setSeccion] = useState(location.state?.vista === "mensajes" ? "mensajes" : "faq");
   const [form, setForm] = useState(null); // {id?, titulo, texto, orden, activo}
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
@@ -87,6 +90,19 @@ export default function PanelSoporte() {
 
   const cambiar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }));
 
+  // Mismo selector para el contenido editable y para los mensajes de los usuarios.
+  const selectorSeccion = (
+    <select className="adm-input" value={seccion} onChange={(e) => { setSeccion(e.target.value); setForm(null); setMensaje(null); }}>
+      {SECCIONES.map((s) => (
+        <option key={s.clave} value={s.clave}>
+          {s.label}
+        </option>
+      ))}
+    </select>
+  );
+
+  if (seccion === "mensajes") return <PanelMensajesSoporte selector={selectorSeccion} />;
+
   return (
     <>
       <section id="soporte" className="adm-card">
@@ -96,13 +112,7 @@ export default function PanelSoporte() {
           <span>Edita lo que ven los usuarios en la página de soporte.</span>
         </div>
         <div className="plan-form__acciones">
-          <select className="adm-input" value={seccion} onChange={(e) => { setSeccion(e.target.value); setForm(null); }}>
-            {SECCIONES.map((s) => (
-              <option key={s.clave} value={s.clave}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+          {selectorSeccion}
           <button type="button" className="adm-btn adm-btn--oscuro" onClick={() => setForm({ titulo: "", texto: "", orden: "", activo: true })}>
             + Agregar
           </button>
@@ -188,7 +198,6 @@ export default function PanelSoporte() {
         </table>
       </div>
     </section>
-      <PanelMensajesSoporte />
     </>
   );
 }

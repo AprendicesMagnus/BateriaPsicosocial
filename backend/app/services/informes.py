@@ -763,7 +763,7 @@ def listar_informes(
         pass
     elif rol in ROLES_EVALUADOR:
         query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
-    elif rol == "ADMINISTRADOR":
+    elif rol in {"ADMINISTRADOR", "JEFE"}:
         # Informes agrupados de las empresas que creó.
         query = query.filter(
             Evaluacion.organizacion_id.in_(

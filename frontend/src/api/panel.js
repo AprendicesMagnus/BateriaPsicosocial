@@ -30,3 +30,8 @@ export async function descargarExportacionPanel(token, tabla, { filtro, buscar }
   a.click();
   a.remove();
 }
+
+
+export async function fetchHistorialComprasTienda(token) {
+  return request("/panel/historial-compras", { token });
+}

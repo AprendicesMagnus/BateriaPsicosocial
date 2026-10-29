@@ -1,0 +1,4 @@
+
+.historial-compras .adm-tabla-wrap { overflow-x: auto; }
+.historial-compras .adm-tabla { min-width: 980px; }
+.historial-compras__error { margin: 0 0 14px; color: #b42318; font-size: 14px; }

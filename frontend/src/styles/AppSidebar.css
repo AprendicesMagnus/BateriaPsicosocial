@@ -105,5 +105,8 @@
   .panel-shell .sidebar__acciones .app-profile-text { display: none; }
 }
 
-/* Letra en negrita en las pestañas del Panel */
-.panel-shell .menu-item { font-weight: 700; }
+/* Pestañas del Panel: siempre con la letra blanca y en negrita, como cuando están seleccionadas */
+.panel-shell .menu-item {
+  color: #ffffff;
+  font-weight: 700;
+}
