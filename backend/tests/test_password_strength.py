@@ -32,6 +32,7 @@ def test_registro_password_valida(client):
         "apellido": "Gómez",
         "email": "pedro3@test.com",
         "password": "Password123",
+        "aceptaPolitica": True,
         "rol": "JEFE",
     })
     assert res.status_code == 200, res.text

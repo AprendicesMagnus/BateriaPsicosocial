@@ -81,6 +81,11 @@ class Usuario(Base):
     # Paciente que responde por un enlace público: no tiene contraseña conocida ni puede iniciar sesión
     es_invitado: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
 
+    # Politica de tratamiento de datos aceptada al crear la cuenta (version y fecha).
+    # Quedan en NULL en las cuentas anteriores a esta funcion y en las creadas por invitacion.
+    politica_version: Mapped[str | None] = mapped_column(String(20))
+    politica_aceptada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     rol: Mapped[Rol] = relationship(back_populates="usuarios")
     organizacion: Mapped["Organizacion | None"] = relationship(
         back_populates="usuarios", foreign_keys=[organizacion_id]

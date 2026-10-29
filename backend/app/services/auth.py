@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from random import randint
 from uuid import UUID
 
+from fastapi import Request
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 from sqlalchemy.orm import Session, joinedload
@@ -13,6 +14,7 @@ from app.core.crypto import email_valido, hash_password, password_valida, utcnow
 from app.core.errors import AppError
 from app.core.security import crear_token_reset, crear_token_sesion, decodificar_token
 from app.models.user import CodigoVerificacion, Rol, Usuario
+from app.services import auditoria as auditoria_service
 from app.services.correo import enviar_codigo_verificacion
 from app.services.perfil import proxima_edicion, resolucion_bloqueada_hasta
 
@@ -26,6 +28,16 @@ GOOGLE_CLIENT_ID = "615740449491-340ojlb2h90f13j4ut7u0rhtm2k90589.apps.googleuse
 # Roles que una persona puede elegir al registrarse (tradicional o con Google).
 # SUPER_ADMINISTRADOR nunca se puede asignar desde el registro.
 ROLES_AUTOREGISTRO = {"JEFE", "ADMINISTRADOR", "EVALUADOR_SST"}
+
+# Version de la politica de tratamiento de datos que se acepta al crear la cuenta.
+# Debe coincidir con POLITICA_DATOS.version de frontend/src/utils/responsableDatos.js.
+POLITICA_DATOS_VERSION = "1.0"
+
+
+def _exigir_aceptacion_politica(acepta: bool) -> None:
+    """Quien crea una cuenta debe aceptar la politica de tratamiento de datos."""
+    if acepta is not True:
+        raise AppError(400, "Debes aceptar la política de tratamiento de datos para crear tu cuenta.")
 
 
 def _exigir_resolucion_psicologo(rol: str, numero: str | None) -> str | None:
@@ -94,7 +106,7 @@ def crear_y_enviar_codigo(db: Session, usuario: Usuario, tipo: str) -> None:
     enviar_codigo_verificacion(usuario.email, usuario.nombre, codigo, tipo)
 
 
-def registrar(db: Session, data) -> dict:
+def registrar(db: Session, data, request: Request | None = None) -> dict:
     if not data.nombre or not data.apellido or not data.email or not data.password:
         raise AppError(400, "Todos los campos son obligatorios.")
     if not email_valido(str(data.email)):
@@ -107,6 +119,7 @@ def registrar(db: Session, data) -> dict:
     if data.rol not in ROLES_AUTOREGISTRO:
         raise AppError(400, "El rol seleccionado no es válido.")
     numero_resolucion = _exigir_resolucion_psicologo(data.rol, getattr(data, "numeroResolucion", None))
+    _exigir_aceptacion_politica(getattr(data, "aceptaPolitica", False))
     if db.query(Usuario).filter(Usuario.email == str(data.email).lower()).first():
         raise AppError(409, "Ya existe una cuenta registrada con este correo.")
 
@@ -118,12 +131,23 @@ def registrar(db: Session, data) -> dict:
         rol_id=_obtener_rol(db, data.rol).id,
         numero_resolucion=numero_resolucion,
         email_verificado=False,
+        politica_version=POLITICA_DATOS_VERSION,
+        politica_aceptada_en=utcnow(),
         estado="ACTIVO",
     )
     db.add(usuario)
     db.commit()
     db.refresh(usuario)
     usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario.id).one()
+    auditoria_service.registrar_auditoria(
+        db,
+        usuario=usuario,
+        accion="POLITICA_ACEPTADA",
+        entidad="Usuario",
+        entidad_id=str(usuario.id),
+        request=request,
+        nota=f"Versión {POLITICA_DATOS_VERSION}",
+    )
     crear_y_enviar_codigo(db, usuario, "VERIFICACION_EMAIL")
     return {
         "message": "Cuenta creada. Revisa tu correo para verificar tu cuenta.",
@@ -222,7 +246,7 @@ def login(db: Session, email: str, password: str) -> dict:
     return {"token": token, "usuario": usuario_publico(usuario)}
 
 
-def login_con_google(db: Session, credential: str, rol: str | None = None, numero_resolucion: str | None = None) -> dict:
+def login_con_google(db: Session, credential: str, rol: str | None = None, numero_resolucion: str | None = None, acepta_politica: bool = False, request: Request | None = None) -> dict:
     # Verifica con los servidores de Google que el token es real y no fue
     # falsificado, y que efectivamente fue emitido para nuestro Client ID.
     try:
@@ -265,6 +289,7 @@ def login_con_google(db: Session, credential: str, rol: str | None = None, numer
         if rol not in ROLES_AUTOREGISTRO:
             raise AppError(400, "El rol seleccionado no es válido.")
         numero_resolucion = _exigir_resolucion_psicologo(rol, numero_resolucion)
+        _exigir_aceptacion_politica(acepta_politica)
 
         # Se le pone una contraseña aleatoria e inutilizable porque nunca la
         # va a necesitar (siempre entrará por Google).
@@ -276,11 +301,22 @@ def login_con_google(db: Session, credential: str, rol: str | None = None, numer
             rol_id=_obtener_rol(db, rol).id,
             numero_resolucion=numero_resolucion,
             email_verificado=True,
+            politica_version=POLITICA_DATOS_VERSION,
+            politica_aceptada_en=utcnow(),
             estado="ACTIVO",
         )
         db.add(usuario)
         db.commit()
         db.refresh(usuario)
+        auditoria_service.registrar_auditoria(
+            db,
+            usuario=usuario,
+            accion="POLITICA_ACEPTADA",
+            entidad="Usuario",
+            entidad_id=str(usuario.id),
+            request=request,
+            nota=f"Versión {POLITICA_DATOS_VERSION}",
+        )
         usuario = (
             db.query(Usuario)
             .options(joinedload(Usuario.rol))

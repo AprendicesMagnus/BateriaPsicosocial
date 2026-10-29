@@ -23,8 +23,8 @@ router = APIRouter()
 
 
 @router.post("/register")
-def registrar(data: RegistroRequest, db: Session = Depends(get_db)):
-    return auth_service.registrar(db, data)
+def registrar(data: RegistroRequest, request: Request, db: Session = Depends(get_db)):
+    return auth_service.registrar(db, data, request)
 
 
 @router.post("/verify-email")
@@ -76,7 +76,7 @@ def login_google(data: GoogleLoginRequest, request: Request, db: Session = Depen
     # Si la cuenta no existe y no llegó el rol, el servicio responde requiereRol=True
     # (no crea nada). El frontend muestra la pantalla de selección de rol y vuelve a
     # llamar a este mismo endpoint con {credential, rol}.
-    resultado = auth_service.login_con_google(db, data.credential, data.rol, data.numeroResolucion)
+    resultado = auth_service.login_con_google(db, data.credential, data.rol, data.numeroResolucion, data.aceptaPolitica, request)
     if resultado.get("requiereRol"):
         return resultado
 

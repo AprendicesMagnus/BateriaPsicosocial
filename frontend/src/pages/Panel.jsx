@@ -100,6 +100,7 @@ const TEXTO_ACCION = {
   EDITAR_PLAN: "editó un plan",
   ELIMINAR_PLAN: "eliminó un plan",
   EXPORTAR_PANEL: "exportó una tabla del panel",
+  POLITICA_ACEPTADA: "aceptó la política de tratamiento de datos",
 };
 
 const FILTROS = ["Todo", "Accesos", "Evaluaciones", "Resultados", "Usuarios", "Empresas", "Planes", "Enlaces"];

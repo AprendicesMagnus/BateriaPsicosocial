@@ -66,6 +66,7 @@ def test_nombre_persona_validations(client):
 
     res_ok = client.post("/api/auth/register", json={
         "nombre": "  Ana   María ",
+        "aceptaPolitica": True,
         "apellido": "Núñez",
         "email": f"test_{uuid.uuid4().hex[:6]}@test.com",
         "password": "Password123",
