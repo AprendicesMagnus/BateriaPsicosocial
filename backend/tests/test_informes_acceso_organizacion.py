@@ -4,6 +4,7 @@ import pytest
 
 from app.core.nit_utils import calcular_digito_verificador_nit
 from app.models.evaluation import Informe
+from app.models.organization import Organizacion
 
 PASSWORD_EVALUADOR = "Evaluador1234"
 PASSWORD_PACIENTE = "Paciente1234"
@@ -183,6 +184,70 @@ def test_evaluador_no_puede_descargar_informe_de_otra_organizacion(client, escen
         headers=escenario["headers_evaluador_b"],
     )
     assert res.status_code == 403, res.text
+
+
+PASSWORD_JEFE = "Jefe1234"
+
+
+def _preparar_jefe(client, db_session, escenario, es_creador):
+    informe = db_session.query(Informe).filter(Informe.id == uuid.UUID(escenario["informe_agrupado_id"])).first()
+    org_id = informe.evaluacion.organizacion_id
+    jefe_id, email = _crear_usuario(client, escenario["headers_admin"], "JEFE", str(org_id), PASSWORD_JEFE)
+    if es_creador:
+        org = db_session.query(Organizacion).filter(Organizacion.id == org_id).first()
+        org.creada_por_id = jefe_id
+        db_session.commit()
+    return _encabezados(client, email, PASSWORD_JEFE)
+
+
+def test_jefe_creador_lista_solo_informes_agrupados_de_su_empresa(client, db_session, escenario):
+    headers = _preparar_jefe(client, db_session, escenario, es_creador=True)
+    ids = _ids(client.get("/api/informes", headers=headers))
+    assert escenario["informe_agrupado_id"] in ids
+    assert escenario["informe_individual_id"] not in ids
+
+
+def test_jefe_creador_supera_la_autorizacion_de_descarga_de_informe_agrupado(client, db_session, escenario):
+    headers = _preparar_jefe(client, db_session, escenario, es_creador=True)
+    # El archivo no existe en el almacenamiento de pruebas: 404 (y no 403) indica que la autorizacion paso.
+    res = client.get(f"/api/informes/{escenario['informe_agrupado_id']}/descargar", headers=headers)
+    assert res.status_code == 404, res.text
+
+
+def test_jefe_creador_no_puede_descargar_informe_individual(client, db_session, escenario):
+    headers = _preparar_jefe(client, db_session, escenario, es_creador=True)
+    res = client.get(f"/api/informes/{escenario['informe_individual_id']}/descargar", headers=headers)
+    assert res.status_code == 403, res.text
+
+
+def test_jefe_creador_pasa_la_validacion_de_rol_al_generar_informe_agrupado(client, db_session, escenario):
+    headers = _preparar_jefe(client, db_session, escenario, es_creador=True)
+    res = client.post(
+        "/api/informes/agrupado",
+        headers=headers,
+        json={"evaluacionId": escenario["evaluacion_a_id"]},
+    )
+    # Llega al servicio: con menos del minimo de participantes responde 400 por anonimato, no 403 por rol.
+    assert res.status_code == 400, res.text
+    error_msg = res.json().get("error", "").lower()
+    assert "anonimato" in error_msg or "mínimo" in error_msg
+
+
+def test_jefe_que_no_creo_la_empresa_no_lista_descarga_ni_genera_informes(client, db_session, escenario):
+    headers = _preparar_jefe(client, db_session, escenario, es_creador=False)
+
+    ids = _ids(client.get("/api/informes", headers=headers))
+    assert escenario["informe_agrupado_id"] not in ids
+
+    res_descarga = client.get(f"/api/informes/{escenario['informe_agrupado_id']}/descargar", headers=headers)
+    assert res_descarga.status_code == 403, res_descarga.text
+
+    res_genera = client.post(
+        "/api/informes/agrupado",
+        headers=headers,
+        json={"evaluacionId": escenario["evaluacion_a_id"]},
+    )
+    assert res_genera.status_code == 403, res_genera.text
 
 
 def test_evaluador_de_la_organizacion_supera_la_autorizacion_de_descarga(client, escenario):

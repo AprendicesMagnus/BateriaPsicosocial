@@ -40,7 +40,7 @@ def _crear_usuario(client, headers_admin, rol_codigo, organizacion_id, password)
 def _obtener_notificaciones_soporte(client, headers):
     res = client.get("/api/notificaciones", headers=headers)
     assert res.status_code == 200, res.text
-    return [n for n in res.json() if n["tipo"] == "SOPORTE_RESPONDIDO"]
+    return [n for n in res.json() if n["tipo"] == "SOPORTE_RESPUESTA"]
 
 
 def test_admin_responde_ticket_notifica_autor(client):
@@ -71,10 +71,10 @@ def test_admin_responde_ticket_notifica_autor(client):
     assert len(notis) == 1
     noti = notis[0]
     assert noti["leida"] is False
-    assert noti["titulo"] == "Respuesta a tu mensaje de soporte"
+    assert noti["titulo"] == "Respondieron tu mensaje del Centro de ayuda"
     assert noti["mensaje"] == (
-        "El equipo de soporte respondió tu mensaje. "
-        "Puedes verlo en el Centro de ayuda, en la sección Mis mensajes."
+        "Respuesta: El informe ya esta disponible "
+        "para descarga."
     )
     assert noti["evaluacionId"] is None
 
@@ -263,7 +263,7 @@ def test_respuesta_solo_espacios_responde_400_y_no_notifica(client):
     )
     assert res_tabs.status_code == 400, f"Se esperaba 400, fue {res_tabs.status_code}"
 
-    # No se debe haber creado ninguna notificacion SOPORTE_RESPONDIDO
+    # No se debe haber creado ninguna notificacion SOPORTE_RESPUESTA
     notis_despues = len(_obtener_notificaciones_soporte(client, headers_user))
     assert notis_despues == notis_antes, "Respuesta con solo espacios no debe generar notificacion"
 
@@ -273,3 +273,80 @@ def test_respuesta_solo_espacios_responde_400_y_no_notifica(client):
     ticket_en_mios = next(t for t in res_mios.json() if t["id"] == ticket_id)
     assert ticket_en_mios["respuesta"] is None, "El ticket no debe tener respuesta tras rechazar solo espacios"
     assert ticket_en_mios["estado"] != "RESUELTO", "El ticket no debe quedar RESUELTO tras rechazar solo espacios"
+
+
+def _obtener_notificaciones_por_tipo(client, headers, tipo):
+    res = client.get("/api/notificaciones", headers=headers)
+    assert res.status_code == 200, res.text
+    return [n for n in res.json() if n["tipo"] == tipo]
+
+
+def test_usuario_crea_ticket_notifica_a_super_administrador(client):
+    headers_admin = _encabezados(client, "admin@magnussig.com", "Admin1234")
+    org_id = _crear_organizacion(client, headers_admin, "Org Soporte Mensaje 1")
+    _, email_user = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_id, PASSWORD_USUARIO)
+    headers_user = _encabezados(client, email_user, PASSWORD_USUARIO)
+    texto = "Consulta sobre informe de bateria para el aviso al administrador."
+    esperado = f"Prueba Soporte: {texto}"
+
+    antes = [n for n in _obtener_notificaciones_por_tipo(client, headers_admin, "SOPORTE_MENSAJE") if n["mensaje"] == esperado]
+    assert len(antes) == 0
+
+    res_ticket = client.post("/api/soporte", headers=headers_user, json={"mensaje": texto})
+    assert res_ticket.status_code == 200, res_ticket.text
+
+    despues = [n for n in _obtener_notificaciones_por_tipo(client, headers_admin, "SOPORTE_MENSAJE") if n["mensaje"] == esperado]
+    assert len(despues) == 1
+    assert despues[0]["titulo"] == "Nuevo mensaje en el Centro de ayuda"
+    assert despues[0]["leida"] is False
+
+
+def test_super_admin_crea_ticket_propio_no_se_avisa_a_si_mismo(client):
+    headers_admin = _encabezados(client, "admin@magnussig.com", "Admin1234")
+    antes = len(_obtener_notificaciones_por_tipo(client, headers_admin, "SOPORTE_MENSAJE"))
+
+    res_ticket = client.post(
+        "/api/soporte",
+        headers=headers_admin,
+        json={"mensaje": "Mensaje propio del super administrador sin aviso a si mismo."},
+    )
+    assert res_ticket.status_code == 200, res_ticket.text
+
+    despues = len(_obtener_notificaciones_por_tipo(client, headers_admin, "SOPORTE_MENSAJE"))
+    assert despues == antes
+
+
+def test_mensaje_largo_se_recorta_a_140_caracteres_en_el_aviso(client):
+    headers_admin = _encabezados(client, "admin@magnussig.com", "Admin1234")
+    org_id = _crear_organizacion(client, headers_admin, "Org Soporte Mensaje 3")
+    _, email_user = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_id, PASSWORD_USUARIO)
+    headers_user = _encabezados(client, email_user, PASSWORD_USUARIO)
+    esperado = "Prueba Soporte: " + "A" * 140 + "…"
+
+    res_ticket = client.post("/api/soporte", headers=headers_user, json={"mensaje": "A" * 200})
+    assert res_ticket.status_code == 200, res_ticket.text
+
+    coinciden = [n for n in _obtener_notificaciones_por_tipo(client, headers_admin, "SOPORTE_MENSAJE") if n["mensaje"] == esperado]
+    assert len(coinciden) == 1
+
+
+def test_respuesta_larga_se_recorta_a_140_caracteres_en_el_aviso(client):
+    headers_admin = _encabezados(client, "admin@magnussig.com", "Admin1234")
+    org_id = _crear_organizacion(client, headers_admin, "Org Soporte Respuesta 4")
+    _, email_user = _crear_usuario(client, headers_admin, "EVALUADOR_SST", org_id, PASSWORD_USUARIO)
+    headers_user = _encabezados(client, email_user, PASSWORD_USUARIO)
+
+    res_ticket = client.post("/api/soporte", headers=headers_user, json={"mensaje": "Consulta para respuesta larga."})
+    assert res_ticket.status_code == 200, res_ticket.text
+    ticket_id = res_ticket.json()["id"]
+
+    res_resp = client.post(
+        f"/api/soporte/{ticket_id}/responder",
+        headers=headers_admin,
+        json={"respuesta": "B" * 200},
+    )
+    assert res_resp.status_code == 200, res_resp.text
+
+    notis = _obtener_notificaciones_soporte(client, headers_user)
+    assert len(notis) == 1
+    assert notis[0]["mensaje"] == "Respuesta: " + "B" * 140 + "…"
