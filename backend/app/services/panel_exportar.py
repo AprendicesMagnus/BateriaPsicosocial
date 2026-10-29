@@ -50,6 +50,8 @@ TEXTO_ACCION = {
     "ELIMINAR_PLAN": "eliminó un plan",
     "EXPORTAR_PANEL": "exportó una tabla del panel",
     "POLITICA_ACEPTADA": "aceptó la política de tratamiento de datos",
+    "DATOS_DESCARGADOS": "descargó sus datos personales",
+    "ELIMINACION_SOLICITADA": "solicitó la eliminación de su cuenta",
 }
 
 

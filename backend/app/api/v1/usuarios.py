@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Query, Request, UploadFile
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_admin, require_gestor
@@ -12,13 +13,16 @@ from app.schemas.common import (
     EmpresaActivaRequest,
     InvitarUsuarioRequest,
     ResolucionRequest,
+    SolicitudEliminacionRequest,
     UsuarioCreate,
     UsuarioUpdate,
     VerificarResolucionRequest,
 )
 from app.services import auditoria as auditoria_service
+from app.services import derechos_titular as derechos_service
 from app.services import organizaciones as organizaciones_service
 from app.services import perfil as perfil_service
+from app.services import soporte as soporte_service
 from app.services import usuarios as usuarios_service
 from app.services.auth import usuario_publico
 
@@ -86,6 +90,36 @@ def invitar_usuario(
         db, usuario=actual, accion="INVITAR_USUARIO", entidad="Usuario", entidad_id=usuario["id"], request=request
     )
     return usuario
+
+
+@router.get("/me/datos")
+def descargar_mis_datos(
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    datos = derechos_service.exportar_datos(db, actual)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="DATOS_DESCARGADOS", entidad="Usuario", entidad_id=str(actual.id), request=request
+    )
+    nombre = derechos_service.nombre_archivo_datos()
+    return JSONResponse(content=datos, headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
+
+
+@router.post("/me/solicitar-eliminacion")
+def solicitar_eliminacion_cuenta(
+    data: SolicitudEliminacionRequest,
+    request: Request,
+    segundo_plano: BackgroundTasks,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    ticket = derechos_service.solicitar_eliminacion(db, actual, data.motivo)
+    auditoria_service.registrar_auditoria(
+        db, usuario=actual, accion="ELIMINACION_SOLICITADA", entidad="Usuario", entidad_id=str(actual.id), request=request
+    )
+    segundo_plano.add_task(soporte_service.notificar_ticket, ticket, actual.email)
+    return {"message": "Tu solicitud de eliminación fue enviada. Te responderemos por el Centro de ayuda.", "ticket": ticket}
 
 
 @router.post("/me/resolucion")

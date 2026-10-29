@@ -35,6 +35,8 @@ TIPO_POR_ACCION = {
     "ELIMINAR_ENLACE_PACIENTES": "Enlaces",
     "EXPORTAR_PANEL": "Usuarios",
     "POLITICA_ACEPTADA": "Usuarios",
+    "DATOS_DESCARGADOS": "Usuarios",
+    "ELIMINACION_SOLICITADA": "Usuarios",
 }
 
 
