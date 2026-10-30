@@ -7,7 +7,9 @@ import { fetchReportes, fetchEncuestasRealizadas } from "../api/reportes";
 import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
 import { descargarInformeAgrupadoZip } from "../api/informes";
 import { fetchEnlaces, crearEnlace, eliminarEnlace } from "../api/enlaces";
-import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha } from "../utils/encuestas";
+import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha, normalizar } from "../utils/encuestas";
+import Paginador from "../components/Paginador";
+import { usePaginacion } from "../hooks/usePaginacion";
 import QrEnlaceModal from "../components/QrEnlaceModal";
 import { useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
@@ -54,7 +56,7 @@ function IconoDescargar() {
 const ROLES_ENLACES = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
 // Resultados individuales (confidenciales): solo quienes gestionan la empresa y el Super Administrador.
 const ROLES_ENCUESTAS = ["EVALUADOR_SST", "RESPONSABLE_SST", "SUPER_ADMINISTRADOR"];
-// Jefe y Administrador ven las empresas que crearon; el Jefe solo consulta (no descarga informes).
+// Jefe y Administrador ven las empresas que crearon y pueden descargar sus informes agrupados.
 const ROLES_POR_CREADOR = ["JEFE", "ADMINISTRADOR"];
 
 // URL completa que el psicólogo comparte con el paciente
@@ -78,6 +80,28 @@ export default function Reportes() {
   const [errorEncuestas, setErrorEncuestas] = useState(null);
   // participanteId de la encuesta con el detalle abierto (solo una a la vez)
   const [encuestaAbierta, setEncuestaAbierta] = useState(null);
+
+  const [textoEncuestas, setTextoEncuestas] = useState("");
+  const [estadoEncuestas, setEstadoEncuestas] = useState("");
+  const [evaluacionEncuestas, setEvaluacionEncuestas] = useState("");
+
+  const evaluacionesDisponibles = [
+    ...new Set(encuestas.map((e) => e.evaluacionNombre).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b, "es"));
+  const consultaEncuestas = normalizar(textoEncuestas.trim());
+  const encuestasFiltradas = encuestas.filter((e) => {
+    if (estadoEncuestas && e.estado !== estadoEncuestas) return false;
+    if (evaluacionEncuestas && e.evaluacionNombre !== evaluacionEncuestas) return false;
+    if (!consultaEncuestas) return true;
+    return [e.trabajadorNombre, e.trabajadorEmail, e.evaluacionNombre, e.organizacionNombre].some((campo) =>
+      normalizar(campo).includes(consultaEncuestas)
+    );
+  });
+  const pagEncuestas = usePaginacion(encuestasFiltradas, 10, [
+    textoEncuestas,
+    estadoEncuestas,
+    evaluacionEncuestas,
+  ]);
 
   // Sección "Enlaces para pacientes" (solo psicólogo / super administrador)
   const puedeCrearEnlaces = ROLES_ENLACES.includes(usuario?.rol);
@@ -106,7 +130,6 @@ export default function Reportes() {
       setCambiandoEmpresa(false);
     }
   }
-  const puedeDescargar = usuario?.rol !== "JEFE";
   const [enlaces, setEnlaces] = useState([]);
   const [nombreEnlace, setNombreEnlace] = useState("");
   const [creandoEnlace, setCreandoEnlace] = useState(false);
@@ -399,18 +422,16 @@ export default function Reportes() {
                     {reporte.estado === "listo" ? "Listo" : "Acceso restringido"}
                   </span>
 
-                  {puedeDescargar && (
-                    <button
-                      type="button"
-                      className={`reportes-download-btn ${
-                        reporte.estado === "restringido" || descargandoId === reporte.id ? "reportes-download-btn--disabled" : ""
-                      }`}
-                      onClick={() => handleDescargar(reporte)}
-                      disabled={reporte.estado === "restringido" || descargandoId === reporte.id}
-                    >
-                      <IconoDescargar /> {descargandoId === reporte.id ? "Generando..." : "Descargar"}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={`reportes-download-btn ${
+                      reporte.estado === "restringido" || descargandoId === reporte.id ? "reportes-download-btn--disabled" : ""
+                    }`}
+                    onClick={() => handleDescargar(reporte)}
+                    disabled={reporte.estado === "restringido" || descargandoId === reporte.id}
+                  >
+                    <IconoDescargar /> {descargandoId === reporte.id ? "Generando..." : "Descargar"}
+                  </button>
                 </div>
               ))
             )}
@@ -440,6 +461,45 @@ export default function Reportes() {
           )}
 
           <div className="app-card reportes-card">
+            {encuestas.length > 0 && (
+              <div className="reportes-filtros">
+                <input
+                  type="search"
+                  className="reportes-filtros__buscar"
+                  placeholder="Buscar por nombre, correo, evaluación o empresa"
+                  value={textoEncuestas}
+                  onChange={(e) => setTextoEncuestas(e.target.value)}
+                  aria-label="Buscar encuestas realizadas"
+                />
+                <select
+                  className="reportes-filtros__select"
+                  value={estadoEncuestas}
+                  onChange={(e) => setEstadoEncuestas(e.target.value)}
+                  aria-label="Filtrar por estado"
+                >
+                  <option value="">Todos los estados</option>
+                  {Object.entries(ESTADOS_ENCUESTA).map(([clave, estado]) => (
+                    <option key={clave} value={clave}>
+                      {estado.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="reportes-filtros__select"
+                  value={evaluacionEncuestas}
+                  onChange={(e) => setEvaluacionEncuestas(e.target.value)}
+                  aria-label="Filtrar por evaluación"
+                >
+                  <option value="">Todas las evaluaciones</option>
+                  {evaluacionesDisponibles.map((nombre) => (
+                    <option key={nombre} value={nombre}>
+                      {nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {cargandoEncuestas && encuestas.length === 0 ? (
               <div style={{ padding: "32px", textAlign: "center", color: "#64748B" }}>
                 Cargando encuestas realizadas...
@@ -453,8 +513,12 @@ export default function Reportes() {
                   Aparecerán aquí cuando un trabajador asignado a una evaluación empiece a responder.
                 </p>
               </div>
+            ) : encuestasFiltradas.length === 0 ? (
+              <div className="reportes-vacio-filtros">
+                Ninguna encuesta coincide con la búsqueda o los filtros.
+              </div>
             ) : (
-              encuestas.map((encuesta) => {
+              pagEncuestas.items.map((encuesta) => {
                 const estado = ESTADOS_ENCUESTA[encuesta.estado] || ESTADOS_ENCUESTA.PENDIENTE;
                 const abierta = encuestaAbierta === encuesta.participanteId;
                 return (
@@ -531,6 +595,11 @@ export default function Reportes() {
                   </div>
                 );
               })
+            )}
+            {encuestasFiltradas.length > 0 && (
+              <div className="reportes-paginacion">
+                <Paginador paginacion={pagEncuestas} />
+              </div>
             )}
           </div>
           </>

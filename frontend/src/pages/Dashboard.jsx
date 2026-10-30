@@ -1,22 +1,26 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileMenu from "../components/ProfileMenu";
+import CampanaNotificaciones from "../components/CampanaNotificaciones";
+import GuiaInterpretacion from "../components/GuiaInterpretacion";
 import Toast from "../components/Toast";
 
 import "../styles/dashboard.css";
 
 import { useAuth } from "../context/AuthContext";
-import { fetchIndicadores, fetchIndicadoresPorCategoria, fetchHistoricoIndicadores } from "../api/indicadores";
+import { fetchIndicadores, fetchIndicadoresPorCategoria, fetchHistoricoIndicadores, fetchAreasOrganizacion } from "../api/indicadores";
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 
 import { descargarInformesEmpresaZip } from "../api/informes";
 import { crearEnlace } from "../api/enlaces";
+import AppSidebar from "../components/AppSidebar";
 import BotonRegresar from "../components/BotonRegresar";
 import { esSuperAdmin, rutaInicial } from "../utils/roles";
 import { cambiarEmpresaActiva, fetchMisEmpresas } from "../api/perfil";
 import QrEnlaceModal from "../components/QrEnlaceModal";
 import MapaCalorAreas from "../components/MapaCalorAreas";
 import HistoricoComparativo from "../components/HistoricoComparativo";
+import ComparadorEvaluaciones from "../components/ComparadorEvaluaciones";
 import AnalisisGruposFicha from "../components/AnalisisGruposFicha";
 
 // Roles que pueden crear enlaces para pacientes (EVALUADOR_SST se muestra como "Psicólogo")
@@ -146,6 +150,8 @@ export default function Dashboard() {
   const [indicadoresCategoria, setIndicadoresCategoria] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [areas, setAreas] = useState([]);
+  const [areaId, setAreaId] = useState("");
 
   // fetchAnalisisPredictivo
   const [prediccion, setPrediccion] = useState(null);
@@ -177,21 +183,31 @@ export default function Dashboard() {
   }, [avisoInforme]);
 
   useEffect(() => {
+    if (!puedeVerAgregados || !usuario?.organizacionId || !token) {
+      setAreas([]);
+      return;
+    }
+    fetchAreasOrganizacion(token, usuario.organizacionId)
+      .then((res) => setAreas(Array.isArray(res) ? res : []))
+      .catch(() => setAreas([]));
+  }, [puedeVerAgregados, usuario?.organizacionId, token]);
+
+  useEffect(() => {
     if (token) {
       cargarDatosIndicadores();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, areaId]);
 
 
   async function cargarDatosIndicadores() {
     setCargando(true);
     setError(null);
     try {
-      const data = await fetchIndicadores(token);
+      const data = await fetchIndicadores(token, null, areaId || null);
       setIndicadores(data);
       try {
-        const dataCat = await fetchIndicadoresPorCategoria(token);
+        const dataCat = await fetchIndicadoresPorCategoria(token, null, areaId || null);
         setIndicadoresCategoria(dataCat?.categorias || null);
       } catch (catErr) {
         console.error("Error al cargar indicadores por categoría:", catErr);
@@ -357,69 +373,31 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
-      <aside className="sidebar">
-        <div
-          className="sidebar__logo"
-          onClick={() => navigate(rutaInicial(usuario?.rol))}
-          style={{ cursor: "pointer" }}
-          role="button"
-          aria-label="Ir al inicio"
-        >
-          <img src="/logob1.png" alt="Magnus" style={{ height: 70, marginRight: "auto" }} />
-        </div>
-
-        <nav className="sidebar__menu">
-          <button className="menu-item active" type="button" onClick={() => navigate("/dashboard")}>
-            <span>▣</span>
-            Dashboard
-          </button>
-{/* 
-          <button className="menu-item" type="button" onClick={() => navigate("/ficha-datos-generales")}>
-            <span>☑</span>
-            Cuestionario
-          </button>
-  */}
-          {esSuperAdmin(usuario?.rol) && (
-            <button className="menu-item" type="button" onClick={() => navigate("/panel")}>
-              <span>⚙</span>
-              Panel Admin
-            </button>
-          )}
-
-          <button className="menu-item" type="button" onClick={() => navigate("/reportes")}>
-            <span>▤</span>
-            Reportes
-          </button>
-
-          {["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol) && (
-            <button className="menu-item" type="button" onClick={() => navigate("/respuestas")}>
-              <span>☰</span>
-              Respuestas
-            </button>
-          )}
-
-          <button className="menu-item" type="button" onClick={handleLogout}>
-            <span>✕</span>
-            Cerrar sesión
-          </button>
-        </nav>
-
-        <div className="sidebar__footer">
-          <div className="footer-icon">◇</div>
-          <span>
-            Tu bienestar también
-            <br />
-            es parte del trabajo
-          </span>
-        </div>
-      </aside>
+      <AppSidebar
+        mostrarPie
+        onLogoClick={() => navigate(rutaInicial(usuario?.rol))}
+        items={[
+          { key: "dash", label: "Dashboard", icono: "▣", activo: true, onClick: () => navigate("/dashboard") },
+          { key: "cuest", label: "Cuestionario", icono: "☑", onClick: () => navigate("/ficha-datos-generales") },
+          ...(esSuperAdmin(usuario?.rol) ? [{ key: "panel", label: "Panel Admin", icono: "⚙", onClick: () => navigate("/panel") }] : []),
+          { key: "rep", label: "Reportes", icono: "▤", onClick: () => navigate("/reportes") },
+          ...(["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol)
+            ? [{ key: "resp", label: "Respuestas", icono: "☰", onClick: () => navigate("/respuestas") }]
+            : []),
+          { key: "salir", label: "Cerrar sesión", icono: "✕", onClick: handleLogout },
+        ]}
+      />
 
       <main className="dashboard__main">
-        <BotonRegresar tono="oscuro" />
+        <div className="dashboard__mobile-toolbar">
+          <BotonRegresar tono="oscuro" />
+          <div className="app-acciones-usuario">
+            <CampanaNotificaciones />
+            <ProfileMenu />
+          </div>
+        </div>
         <header className="dashboard__header">
           <div>
-            <h1>Bienvenido, {usuario?.nombre || "Usuario"}</h1>
-            <p>Tu bienestar también es parte del trabajo</p>
             {eligeEmpresa && misEmpresas.length > 0 && (
               <label style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13 }}>
                 <span>Empresa activa:</span>
@@ -440,7 +418,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          <ProfileMenu />
         </header>
 
         <section className="welcome-card">
@@ -634,6 +611,33 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {areas.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+              <span>Filtrar por área:</span>
+              <select
+                value={areaId}
+                onChange={(e) => setAreaId(e.target.value)}
+                style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
+              >
+                <option value="">Todas las áreas</option>
+                {[...areas]
+                  .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
+                  .map((area) => (
+                    <option key={area.id} value={area.id}>
+                      {area.nombre}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <p style={{ margin: "6px 0 0", fontSize: 12, color: "#64748b" }}>
+              {puedeCrearEnlaces
+                ? "El filtro aplica a los indicadores y al análisis por grupos. El mapa de calor, el histórico y el análisis predictivo muestran toda la empresa."
+                : "El filtro aplica a los indicadores. El mapa de calor y el histórico muestran toda la empresa."}
+            </p>
+          </div>
+        )}
+
         <section className="indicators">
           <IndicatorCard
             title="Evaluaciones Registradas"
@@ -741,6 +745,10 @@ export default function Dashboard() {
           />
         </section>
 
+        <section className="responders-card" style={{ marginTop: "24px" }}>
+          <GuiaInterpretacion />
+        </section>
+
         {puedeVerAgregados && usuario?.organizacionId && (
           <section className="responders-card" style={{ marginTop: "24px" }}>
             <MapaCalorAreas token={token} organizacionId={usuario.organizacionId} />
@@ -749,13 +757,19 @@ export default function Dashboard() {
 
         {puedeCrearEnlaces && usuario?.organizacionId && (
           <section className="responders-card" style={{ marginTop: "24px" }}>
-            <AnalisisGruposFicha token={token} organizacionId={usuario.organizacionId} />
+            <AnalisisGruposFicha token={token} organizacionId={usuario.organizacionId} areaId={areaId || null} />
           </section>
         )}
 
         {puedeVerAgregados && usuario?.organizacionId && (
           <section style={{ marginTop: "24px" }}>
             <HistoricoComparativo token={token} organizacionId={usuario.organizacionId} />
+          </section>
+        )}
+
+        {puedeVerAgregados && usuario?.organizacionId && (
+          <section style={{ marginTop: "24px" }}>
+            <ComparadorEvaluaciones token={token} organizacionId={usuario.organizacionId} />
           </section>
         )}
 
@@ -832,6 +846,12 @@ export default function Dashboard() {
                     </div>
                   ))}
                 </div>
+
+                {prediccion.perfilesOmitidos > 0 && (
+                  <p style={{ margin: "0 0 16px 0", fontSize: "12px", color: "#64748b" }}>
+                    Se omitieron {prediccion.perfilesOmitidos} perfil(es) con menos de {prediccion.minimoAnonimato} personas para proteger el anonimato.
+                  </p>
+                )}
 
                 {prediccion.alertasTempranas?.length > 0 && (
                   <div style={{ marginBottom: "16px" }}>

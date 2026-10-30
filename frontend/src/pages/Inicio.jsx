@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom"; // <-- AGREGADO AQUÍ "useNavigate"
 import { VscBriefcase } from "react-icons/vsc";
 import { BsCart4 } from "react-icons/bs";
-import { BsCreditCard } from "react-icons/bs";
 import { BsFillClipboard2Fill } from "react-icons/bs";
 import {  HiOutlineUser,  HiOutlineDocumentText,  HiOutlineClipboardList,  HiOutlineClipboardCheck,  HiOutlineChartBar,} from "react-icons/hi";
 import "../styles/Inicio.css";
 import "../styles/app-shell.css";
 import { useAuth } from "../context/AuthContext"; // <-- EN LÍNEA NUEVA: IMPORTADO "useAuth"
 import { urlArchivo } from "../api/client";
-import { esSuperAdmin } from "../utils/roles";
+import { esSuperAdmin, etiquetaRol } from "../utils/roles";
+import CampanaNotificaciones from "../components/CampanaNotificaciones";
+import TiendaMenu from "../components/TiendaMenu";
 
 
 
@@ -99,12 +100,16 @@ const CONFIANZA = [
 
 export default function Inicio() {
   const [slide, setSlide] = useState(0);
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
+  const [menuEmpresasMovilAbierto, setMenuEmpresasMovilAbierto] = useState(false);
   const [menuEmpresasAbierto, setMenuEmpresasAbierto] = useState(false);
   const [menuTiendaAbierto, setMenuTiendaAbierto] = useState(false);
+  const [tiendaMovilAbierta, setTiendaMovilAbierta] = useState(false);
   const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
   const menuEmpresasRef = useRef(null);
   const menuTiendaRef = useRef(null);
   const menuPerfilRef = useRef(null);
+  const menuPerfilMovilRef = useRef(null);
 
   // Ajusta "cerrarSesion" si tu AuthContext la expone con otro nombre.
   const { usuario, cerrarSesion } = useAuth();
@@ -119,7 +124,9 @@ export default function Inicio() {
       if (menuTiendaRef.current && !menuTiendaRef.current.contains(e.target)) {
         setMenuTiendaAbierto(false);
       }
-      if (menuPerfilRef.current && !menuPerfilRef.current.contains(e.target)) {
+      const clicDentroPerfilEscritorio = menuPerfilRef.current?.contains(e.target);
+      const clicDentroPerfilMovil = menuPerfilMovilRef.current?.contains(e.target);
+      if (!clicDentroPerfilEscritorio && !clicDentroPerfilMovil) {
         setMenuPerfilAbierto(false);
       }
     }
@@ -130,7 +137,7 @@ export default function Inicio() {
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
     : "";
-  const rolUsuario = usuario?.rol ?? "";
+  const rolUsuario = etiquetaRol(usuario?.rol);
   const iniciales =
     nombreUsuario
       .split(" ")
@@ -146,8 +153,8 @@ export default function Inicio() {
 
   function handleCerrarSesion() {
     setMenuPerfilAbierto(false);
-    cerrarSesion?.();
-    navigate("/iniciar-sesion");
+    const sesionCerrada = cerrarSesion?.();
+    if (sesionCerrada) navigate("/iniciar-sesion", { replace: true });
   }
 
   return (
@@ -161,18 +168,18 @@ export default function Inicio() {
         <div className="container nav__inner">
 
           <div
-            className="nav__logos"
+            className="nav__logos nav__logos--inicio"
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 15,
+              gap: 12,
             }}
           >
             <img
               src="/logo a 2_Mesa de trabajo 1.jpg"
               alt="Magnus"
               style={{
-                height: 120,
+                height: 108,
                 marginRight: "auto",
               }}
             />
@@ -181,7 +188,7 @@ export default function Inicio() {
               src="/logo javeriana.jpg"
               alt="Javeriana"
               style={{
-                height: 50,
+                height: 46,
               }}
             />
 
@@ -189,10 +196,80 @@ export default function Inicio() {
               src="/ministerio.jpg"
               alt="Ministerio"
               style={{
-                height: 110,
+                height: 98,
               }}
             />
           </div>
+
+          <button
+            type="button"
+            className="mobile-menu-toggle"
+            aria-label={menuMovilAbierto ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuMovilAbierto}
+            onClick={() => setMenuMovilAbierto((abierto) => !abierto)}
+          >
+            {menuMovilAbierto ? "×" : "☰"}
+          </button>
+
+          <nav className={`mobile-nav ${menuMovilAbierto ? "mobile-nav--open" : ""}`} aria-label="Navegación móvil">
+            <div className="mobile-profile-group" ref={menuPerfilMovilRef}>
+              <button
+                type="button"
+                className="mobile-profile-trigger"
+                onClick={() => setMenuPerfilAbierto((abierto) => !abierto)}
+                aria-expanded={menuPerfilAbierto}
+              >
+                {usuario?.fotoUrl ? (
+                  <img src={urlArchivo(usuario.fotoUrl)} alt={nombreUsuario} className="app-avatar app-avatar--foto" />
+                ) : (
+                  <span className="app-avatar">{iniciales}</span>
+                )}
+                <span className="app-profile-text">
+                  <span className="app-profile-name">{nombreUsuario || "Usuario"}</span>
+                  {rolUsuario && <span className="app-profile-role">{rolUsuario}</span>}
+                </span>
+                <span className="mobile-profile-chevron" aria-hidden="true">{menuPerfilAbierto ? "−" : "+"}</span>
+              </button>
+              {menuPerfilAbierto && (
+                <div className="mobile-profile-submenu">
+                  <button type="button" onClick={() => { setMenuMovilAbierto(false); handleVerPerfil(); }}>Ver perfil</button>
+                  {esSuperAdmin(usuario?.rol) && (
+                    <button type="button" onClick={() => { setMenuPerfilAbierto(false); setMenuMovilAbierto(false); navigate("/panel"); }}>Panel de Administrador</button>
+                  )}
+                  <button type="button" onClick={() => { setMenuPerfilAbierto(false); setMenuMovilAbierto(false); navigate("/soporte"); }}>Centro de ayuda</button>
+                  <button type="button" className="app-profile-dropdown-danger" onClick={() => { setMenuPerfilAbierto(false); setMenuMovilAbierto(false); handleCerrarSesion(); }}>Cerrar sesión</button>
+                </div>
+              )}
+            </div>
+            <a href="#como-funciona" onClick={() => setMenuMovilAbierto(false)}>Cómo funciona</a>
+            <div className="mobile-nav__group mobile-nav__group--dropdown">
+              <button
+                type="button"
+                aria-expanded={menuEmpresasMovilAbierto}
+                onClick={() => setMenuEmpresasMovilAbierto((abierto) => !abierto)}
+              >
+                Empresas <span aria-hidden="true">{menuEmpresasMovilAbierto ? "−" : "+"}</span>
+              </button>
+              {menuEmpresasMovilAbierto && (
+                <div className="mobile-nav__submenu">
+                  <Link to="/verificar-nit" onClick={() => { setMenuMovilAbierto(false); setMenuEmpresasMovilAbierto(false); }}>Crear empresa</Link>
+                  <Link to="/mis-empresas" onClick={() => { setMenuMovilAbierto(false); setMenuEmpresasMovilAbierto(false); }}>Mis empresas</Link>
+                </div>
+              )}
+            </div>
+            <div className="tienda-movil">
+              <button type="button" aria-expanded={tiendaMovilAbierta} onClick={() => setTiendaMovilAbierta((v) => !v)}>
+                Tienda {tiendaMovilAbierta ? "−" : "+"}
+              </button>
+              {tiendaMovilAbierta && (
+                <div className="tienda-movil__sub">
+                  <button type="button" onClick={() => { setMenuMovilAbierto(false); setTiendaMovilAbierta(false); navigate("/pago"); }}>Planes</button>
+                  <button type="button" onClick={() => { setMenuMovilAbierto(false); setTiendaMovilAbierta(false); navigate("/catalogo"); }}>Catálogo de Productos</button>
+                </div>
+              )}
+            </div>
+            <Link to="/dashboard" onClick={() => setMenuMovilAbierto(false)}>Encuestas</Link>
+          </nav>
 
           <nav className="nav__links">
             <a href="#como-funciona">Cómo funciona</a>
@@ -270,77 +347,13 @@ export default function Inicio() {
               )}
             </div>
 
-            <div className="nav__dropdown" ref={menuTiendaRef} style={{ position: "relative" }}>
-              <button
-                type="button"
-                className="nav__dropdown-trigger"
-                onClick={() => setMenuTiendaAbierto((v) => !v)}
-                aria-haspopup="true"
-                aria-expanded={menuTiendaAbierto}
-                style={{
-                  background: "none",
-                  border: "none",
-                  font: "inherit",
-                  fontWeight: 600,
-                  color: "var(--ink-900, #12314b)",
-                  cursor: "pointer",
-                  padding: 0,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <BsCart4   size={18} />
-                Tienda
-              </button>
+            <TiendaMenu
+              icono={<BsCart4 size={18} />}
+              peso={600}
+              onPlanes={() => navigate("/pago")}
+              onCatalogo={() => navigate("/catalogo")}
+            />
 
-              {menuTiendaAbierto && (
-                <div
-                  className="nav__dropdown-menu"
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 12px)",
-                    left: 0,
-                    background: "var(--white)",
-                    borderRadius: "var(--radius-md, 10px)",
-                    boxShadow: "var(--shadow-card, 0 8px 24px rgba(15,26,61,0.12))",
-                    padding: 6,
-                    minWidth: 170,
-                    zIndex: 20,
-                  }}
-                >
-                  <button
-                    type="button"
-                    className="nav__dropdown-option boton-encuestas"
-                    onClick={() => {
-                      setMenuTiendaAbierto(false);
-                      navigate("/pago");
-                    }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      background: "none",
-                      border: "none",
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--ink-900, #12314b)",
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    
-                    <BsCreditCard />
-                      <Link to="/pago" className="boton-encuestas"> Comprar baterías</Link>
-                    
-                  </button>
-                </div>
-              )}
-            </div>
             <Link  to="/dashboard"  onClick={() => setMenuTiendaAbierto(false)}  style={{
               display: "flex",
               flexDirection: "row",
@@ -357,7 +370,9 @@ export default function Inicio() {
           {/* =====================================================
               PERFIL DEL USUARIO (esquina derecha, ya logueado)
           ====================================================== */}
-          <div className="app-profile-menu" ref={menuPerfilRef}>
+          <div className="app-acciones-usuario">
+            <CampanaNotificaciones />
+            <div className="app-profile-menu" ref={menuPerfilRef}>
             <button
               type="button"
               className="app-profile"
@@ -382,19 +397,19 @@ export default function Inicio() {
 
             {menuPerfilAbierto && (
               <div className="app-profile-dropdown">
-                <button type="button" onClick={handleVerPerfil}>
+                <Link to="/perfil" onClick={() => setMenuPerfilAbierto(false)}>
                   Ver perfil
-                </button>
+                </Link>
 
                 {esSuperAdmin(usuario?.rol) && (
-                  <button type="button" onClick={() => { setMenuPerfilAbierto(false); navigate("/panel"); }}>
-                    Panel De Administrador
-                  </button>
+                  <Link to="/panel" onClick={() => setMenuPerfilAbierto(false)}>
+                    Panel de Administrador
+                  </Link>
                 )}
 
-                <button type="button" onClick={() => { setMenuPerfilAbierto(false); navigate("/soporte"); }}>
+                <Link to="/soporte" onClick={() => setMenuPerfilAbierto(false)}>
                   Centro de ayuda
-                </button>
+                </Link>
 
                 <button
                   type="button"
@@ -405,6 +420,7 @@ export default function Inicio() {
                 </button>
               </div>
             )}
+          </div>
           </div>
 
         </div>

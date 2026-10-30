@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { rutaInicial } from "../utils/roles";
 import ProfileMenu from "./ProfileMenu";
+import CampanaNotificaciones from "./CampanaNotificaciones";
 
 export default function AppTopbar() {
   const { usuario } = useAuth();
@@ -11,7 +12,10 @@ export default function AppTopbar() {
         <img src="/logo oscu.png" alt="Magnus SIG" className="app-topbar-logo" style={{ cursor: "pointer" }} />
       </Link>
 
-      <ProfileMenu />
+      <div className="app-acciones-usuario">
+        <CampanaNotificaciones />
+        <ProfileMenu />
+      </div>
     </header>
   );
 }

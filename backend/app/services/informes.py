@@ -1,7 +1,9 @@
 import hashlib
+import logging
 import os
 import secrets
 import uuid
+import xml.sax.saxutils
 from sqlalchemy.orm import Session, contains_eager, joinedload
 from reportlab.graphics.barcode.qr import QrCodeWidget
 from reportlab.graphics.shapes import Drawing
@@ -19,8 +21,18 @@ from app.models.evaluation import Evaluacion, EvaluacionParticipante, ResultadoD
 from app.models.organization import Organizacion
 from app.models.survey import Recomendacion
 from app.models.user import Usuario
+from app.services.notificaciones import notificar
+from app.services import prediccion as prediccion_service
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
+
+
+def _perfiles_visibles(prediccion: dict, minimo: int) -> tuple[list, int]:
+    perfiles = prediccion.get("perfilesClusterKMeans", []) if prediccion else []
+    visibles = [p for p in perfiles if p.get("numTrabajadores", 0) >= minimo]
+    omitidos = len(perfiles) - len(visibles)
+    return visibles, omitidos
 
 
 def _asegurar_directorio_storage() -> str:
@@ -262,6 +274,450 @@ def generar_informe_individual(
     db.add(informe_obj)
     db.commit()
     db.refresh(informe_obj)
+    evaluacion = db.get(Evaluacion, evaluacion_id)
+    if informe_obj.trabajador_id is not None:
+        trabajador = db.get(Usuario, informe_obj.trabajador_id)
+        if (
+            trabajador is not None
+            and not trabajador.es_invitado
+            and informe_obj.trabajador_id != generado_por
+        ):
+            notificar(
+                db,
+                usuario_id=informe_obj.trabajador_id,
+                tipo="INFORME_GENERADO",
+                titulo="Informe individual disponible",
+                mensaje=f"Se generó tu informe individual de la evaluación '{evaluacion.nombre}'.",
+                evaluacion_id=evaluacion_id,
+            )
+    return informe_obj
+
+
+def generar_informe_agrupado(
+    db: Session,
+    evaluacion_id: uuid.UUID,
+    area_id: uuid.UUID | None,
+    generado_por: uuid.UUID,
+    formato: str = "PDF",
+) -> Informe:
+    evaluacion = db.query(Evaluacion).filter(Evaluacion.id == evaluacion_id).first()
+    if evaluacion is None:
+        raise AppError(404, "Evaluación no encontrada.")
+
+    query = (
+        db.query(EvaluacionParticipante)
+        .options(
+            joinedload(EvaluacionParticipante.trabajador),
+            joinedload(EvaluacionParticipante.resultados).joinedload(ResultadoDimension.dimension),
+        )
+        .filter(
+            EvaluacionParticipante.evaluacion_id == evaluacion_id,
+            EvaluacionParticipante.estado == "COMPLETADA",
+        )
+    )
+
+    if area_id:
+        query = query.join(Usuario, Usuario.id == EvaluacionParticipante.trabajador_id).filter(Usuario.area_id == area_id)
+
+    participantes = query.all()
+    num_participantes = len(participantes)
+
+    if num_participantes < settings.min_grupo_anonimato:
+        raise AppError(
+            400,
+            f"No se puede generar el informe agrupado. El grupo tiene {num_participantes} participantes completados, "
+            f"lo cual es inferior al mínimo requerido de anonimato ({settings.min_grupo_anonimato} personas).",
+        )
+
+    dimensiones = db.query(Dimension).filter(Dimension.version_id == evaluacion.version_id).order_by(Dimension.orden).all()
+    
+    agregados = []
+    for dim in dimensiones:
+        puntajes = []
+        conteo_niveles = {"SIN_RIESGO": 0, "BAJO": 0, "MEDIO": 0, "ALTO": 0, "MUY_ALTO": 0}
+        for p in participantes:
+            res_dim = next((r for r in p.resultados if r.dimension_id == dim.id), None)
+            if res_dim:
+                puntajes.append(res_dim.puntaje_transformado)
+                if res_dim.nivel in conteo_niveles:
+                    conteo_niveles[res_dim.nivel] += 1
+        prom = sum(puntajes) / len(puntajes) if puntajes else 0.0
+        agregados.append({
+            "dimensionId": dim.id,
+            "dimension": dim.nombre,
+            "dominio": dim.dominio,
+            "promedio": round(prom, 2),
+            "niveles": conteo_niveles,
+        })
+
+    prediccion = None
+    try:
+        prediccion = prediccion_service.analizar_riesgo_predictivo(db, evaluacion_id, area_id)
+    except Exception:
+        logger.warning("No se pudo calcular el análisis predictivo del informe agrupado", exc_info=True)
+
+    dir_path = _asegurar_directorio_storage()
+    formato_upper = formato.upper()
+    extension = "xlsx" if formato_upper == "EXCEL" else "pdf"
+    filename = f"informe_agrupado_{evaluacion_id}_{uuid.uuid4().hex[:6]}.{extension}"
+    file_path = os.path.join(dir_path, filename)
+    codigo_verificacion = secrets.token_urlsafe(16)
+    file_path_tmp = file_path + ".tmp"
+
+    try:
+        if formato_upper == "EXCEL":
+            from openpyxl.chart import BarChart, Reference
+            from openpyxl.worksheet.table import Table as TablaExcel, TableStyleInfo
+            from openpyxl.styles import Font, PatternFill, Alignment
+
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Resumen Agrupado"
+
+            ws.append(["Informe Agrupado de Riesgo Psicosocial"])
+            ws.append([f"Evaluaci\u00f3n: {evaluacion.nombre}"])
+            ws.append([f"Total Participantes: {num_participantes}"])
+            ws.append([])
+
+            cabeceras = ["Dimensi\u00f3n", "Dominio", "Promedio Transformado (0-100)", "Sin Riesgo", "Bajo", "Medio", "Alto", "Muy Alto"]
+            ws.append(cabeceras)
+            header_row = ws.max_row
+            header_fill = PatternFill(start_color="1E3A8A", end_color="1E3A8A", fill_type="solid")
+            header_font = Font(bold=True, color="FFFFFF")
+            for cell in ws[header_row]:
+                cell.fill = header_fill
+                cell.font = header_font
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+
+            data_start_row = header_row + 1
+            for agg in agregados:
+                n = agg["niveles"]
+                ws.append([
+                    agg["dimension"],
+                    agg["dominio"],
+                    agg["promedio"],
+                    n["SIN_RIESGO"],
+                    n["BAJO"],
+                    n["MEDIO"],
+                    n["ALTO"],
+                    n["MUY_ALTO"],
+                ])
+            data_end_row = ws.max_row
+
+            ws.column_dimensions["A"].width = 40
+            ws.column_dimensions["B"].width = 30
+            for col_letter in ["C", "D", "E", "F", "G", "H"]:
+                ws.column_dimensions[col_letter].width = 18
+
+            if data_end_row >= data_start_row:
+                tabla_ref = f"A{header_row}:H{data_end_row}"
+                tabla = TablaExcel(displayName="TablaDimensiones", ref=tabla_ref)
+                estilo_tabla = TableStyleInfo(
+                    name="TableStyleMedium2",
+                    showFirstColumn=False,
+                    showLastColumn=False,
+                    showRowStripes=True,
+                    showColumnStripes=False,
+                )
+                tabla.tableStyleInfo = estilo_tabla
+                ws.add_table(tabla)
+
+            # Hoja de grafico de barras con distribucion de niveles
+            ws_chart = wb.create_sheet(title="Resumen gr\u00e1fico")
+
+            ws_chart.append(["Dimensi\u00f3n", "Sin Riesgo", "Bajo", "Medio", "Alto", "Muy Alto"])
+            for cell in ws_chart[1]:
+                cell.font = Font(bold=True)
+
+            for agg in agregados:
+                n = agg["niveles"]
+                ws_chart.append([
+                    agg["dimension"],
+                    n["SIN_RIESGO"],
+                    n["BAJO"],
+                    n["MEDIO"],
+                    n["ALTO"],
+                    n["MUY_ALTO"],
+                ])
+
+            chart_data_end = ws_chart.max_row
+            chart = BarChart()
+            chart.type = "col"
+            chart.grouping = "clustered"
+            chart.title = "Distribuci\u00f3n de Niveles de Riesgo por Dimensi\u00f3n"
+            chart.y_axis.title = "Cantidad"
+            chart.x_axis.title = "Dimensi\u00f3n"
+            chart.style = 10
+            chart.width = 30
+            chart.height = 18
+
+            data_ref = Reference(ws_chart, min_col=2, max_col=6, min_row=1, max_row=chart_data_end)
+            cats = Reference(ws_chart, min_col=1, min_row=2, max_row=chart_data_end)
+            chart.add_data(data_ref, titles_from_data=True)
+            chart.set_categories(cats)
+
+            colores_nivel = ["059669", "1D4ED8", "B45309", "C2410C", "B91C1C"]
+            for idx_c, color in enumerate(colores_nivel):
+                if idx_c < len(chart.series):
+                    chart.series[idx_c].graphicalProperties.solidFill = color
+
+            ws_chart.add_chart(chart, "A" + str(chart_data_end + 3))
+            ws_chart.column_dimensions["A"].width = 40
+            for col_letter in ["B", "C", "D", "E", "F"]:
+                ws_chart.column_dimensions[col_letter].width = 14
+
+            if prediccion is not None:
+                ws_pred = wb.create_sheet(title="Análisis predictivo")
+                ws_pred.append(["Análisis Predictivo (K-Means) y Alertas Tempranas"])
+                ws_pred.append([f"Evaluación: {evaluacion.nombre}"])
+                ws_pred.append([])
+
+                # Tabla de alertas
+                ws_pred.append(["Dimensión", "Nivel", "Mensaje"])
+                alertas_header_row = ws_pred.max_row
+                for cell in ws_pred[alertas_header_row]:
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+
+                alertas = prediccion.get("alertasTempranas", [])
+                if alertas:
+                    for al in alertas:
+                        ws_pred.append([al.get("dimension", ""), al.get("nivelAlerta", ""), al.get("mensaje", "")])
+                else:
+                    ws_pred.append(["No se detectaron alertas tempranas.", "", ""])
+
+                ws_pred.append([])
+
+                # Tabla de perfiles
+                ws_pred.append(["Perfil", "Trabajadores", "% del grupo", "Promedio global"])
+                perfiles_header_row = ws_pred.max_row
+                for cell in ws_pred[perfiles_header_row]:
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+
+                visibles, omitidos = _perfiles_visibles(prediccion, settings.min_grupo_anonimato)
+                for pf in visibles:
+                    pct = f"{pf.get('porcentajeGrupo', 0)}%"
+                    ws_pred.append([
+                        pf.get("etiqueta", ""),
+                        pf.get("numTrabajadores", 0),
+                        pct,
+                        pf.get("promedioGlobalPuntaje", 0.0),
+                    ])
+
+                if omitidos > 0:
+                    ws_pred.append([])
+                    ws_pred.append([f"Se omitieron {omitidos} perfil(es) con menos de {settings.min_grupo_anonimato} personas para proteger el anonimato."])
+
+                if prediccion.get("notaMetodologica"):
+                    ws_pred.append([])
+                    ws_pred.append(["Nota metodológica:"])
+                    ws_pred.append([prediccion["notaMetodologica"]])
+
+                ws_pred.column_dimensions["A"].width = 35
+                ws_pred.column_dimensions["B"].width = 18
+                ws_pred.column_dimensions["C"].width = 18
+                ws_pred.column_dimensions["D"].width = 20
+
+            wb.save(file_path_tmp)
+            os.replace(file_path_tmp, file_path)
+        else:
+            doc = SimpleDocTemplate(file_path_tmp, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
+            styles = getSampleStyleSheet()
+
+            title_style = ParagraphStyle("DocTitle", parent=styles["Heading1"], fontSize=18, leading=22, textColor=colors.HexColor("#1E3A8A"), alignment=1)
+            subtitle_style = ParagraphStyle("DocSubtitle", parent=styles["Normal"], fontSize=11, leading=14, textColor=colors.HexColor("#475569"), alignment=1)
+            section_style = ParagraphStyle("SectionHeading", parent=styles["Heading2"], fontSize=13, leading=16, textColor=colors.HexColor("#1E293B"), spaceBefore=12, spaceAfter=6)
+            normal_style = styles["Normal"]
+            cell_style = ParagraphStyle("TableCellAgr", parent=normal_style, fontSize=8.5, leading=11)
+            cell_center_style = ParagraphStyle("TableCellCenterAgr", parent=cell_style, alignment=1)
+            header_cell_style = ParagraphStyle("HeaderCellAgr", parent=normal_style, fontSize=8.5, leading=11, textColor=colors.HexColor("#1E3A8A"), fontName="Helvetica-Bold", alignment=1)
+
+            story = [
+                Paragraph("INFORME AGRUPADO DE RIESGO PSICOSOCIAL", title_style),
+                Spacer(1, 4),
+                Paragraph(f"<b>Evaluación:</b> {evaluacion.nombre} &nbsp;|&nbsp; <b>Total Participantes:</b> {num_participantes} (Anonimizado)", subtitle_style),
+                Spacer(1, 10),
+                HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1E3A8A")),
+                Spacer(1, 12),
+                Paragraph("Distribución de Riesgo y Promedios por Dimensión", section_style),
+            ]
+
+            table_data = [[
+                Paragraph("Dimensión", header_cell_style),
+                Paragraph("Dominio", header_cell_style),
+                Paragraph("Prom. Transf.", header_cell_style),
+                Paragraph("Sin Riesgo", header_cell_style),
+                Paragraph("Bajo", header_cell_style),
+                Paragraph("Medio", header_cell_style),
+                Paragraph("Alto", header_cell_style),
+                Paragraph("Muy Alto", header_cell_style),
+            ]]
+
+            for agg in agregados:
+                n = agg["niveles"]
+                table_data.append([
+                    Paragraph(agg["dimension"], cell_style),
+                    Paragraph(agg["dominio"], cell_style),
+                    Paragraph(f"{agg['promedio']:.1f}", cell_center_style),
+                    Paragraph(str(n["SIN_RIESGO"]), cell_center_style),
+                    Paragraph(str(n["BAJO"]), cell_center_style),
+                    Paragraph(str(n["MEDIO"]), cell_center_style),
+                    Paragraph(str(n["ALTO"]), cell_center_style),
+                    Paragraph(str(n["MUY_ALTO"]), cell_center_style),
+                ])
+
+            t = Table(table_data, colWidths=[145, 135, 50, 42, 42, 42, 42, 42])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#F1F5F9")),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('PADDING', (0,0), (-1,-1), 5),
+            ]))
+            story.append(t)
+
+            if prediccion is not None:
+                story.append(Spacer(1, 14))
+                story.append(Paragraph("Análisis Predictivo (K-Means) y Alertas Tempranas", section_style))
+
+                alertas = prediccion.get("alertasTempranas", [])
+                if alertas:
+                    alertas_data = [[
+                        Paragraph("Dimensión", header_cell_style),
+                        Paragraph("Nivel", header_cell_style),
+                        Paragraph("Mensaje", header_cell_style),
+                    ]]
+                    for al in alertas:
+                        dim_txt = xml.sax.saxutils.escape(str(al.get("dimension", "")))
+                        nivel_txt = xml.sax.saxutils.escape(str(al.get("nivelAlerta", "")))
+                        msg_txt = xml.sax.saxutils.escape(str(al.get("mensaje", "")))
+                        alertas_data.append([
+                            Paragraph(dim_txt, cell_style),
+                            Paragraph(nivel_txt, cell_center_style),
+                            Paragraph(msg_txt, cell_style),
+                        ])
+                    t_alertas = Table(alertas_data, colWidths=[150, 60, 330])
+                    t_alertas.setStyle(TableStyle([
+                        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#F1F5F9")),
+                        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                        ('PADDING', (0,0), (-1,-1), 5),
+                    ]))
+                    story.append(t_alertas)
+                else:
+                    story.append(Paragraph("No se detectaron alertas tempranas.", cell_style))
+
+                story.append(Spacer(1, 10))
+
+                visibles, omitidos = _perfiles_visibles(prediccion, settings.min_grupo_anonimato)
+                if visibles:
+                    perfiles_data = [[
+                        Paragraph("Perfil", header_cell_style),
+                        Paragraph("Trabajadores", header_cell_style),
+                        Paragraph("% del grupo", header_cell_style),
+                        Paragraph("Promedio global", header_cell_style),
+                    ]]
+                    for pf in visibles:
+                        perfil_txt = xml.sax.saxutils.escape(str(pf.get("etiqueta", "")))
+                        trab_txt = str(pf.get("numTrabajadores", 0))
+                        pct_val = pf.get("porcentajeGrupo", 0)
+                        pct_txt = f"{pct_val}%"
+                        prom_val = pf.get("promedioGlobalPuntaje", 0.0)
+                        prom_txt = f"{prom_val:.1f}"
+                        perfiles_data.append([
+                            Paragraph(perfil_txt, cell_style),
+                            Paragraph(trab_txt, cell_center_style),
+                            Paragraph(pct_txt, cell_center_style),
+                            Paragraph(prom_txt, cell_center_style),
+                        ])
+                    t_perfiles = Table(perfiles_data, colWidths=[250, 80, 80, 100])
+                    t_perfiles.setStyle(TableStyle([
+                        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#F1F5F9")),
+                        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                        ('PADDING', (0,0), (-1,-1), 5),
+                    ]))
+                    story.append(t_perfiles)
+
+                if omitidos > 0:
+                    story.append(Spacer(1, 4))
+                    aviso_omitidos = xml.sax.saxutils.escape(
+                        f"Se omitieron {omitidos} perfil(es) con menos de {settings.min_grupo_anonimato} personas para proteger el anonimato."
+                    )
+                    story.append(Paragraph(aviso_omitidos, cell_style))
+
+                if prediccion.get("notaMetodologica"):
+                    story.append(Spacer(1, 6))
+                    nota_txt = xml.sax.saxutils.escape(str(prediccion["notaMetodologica"]))
+                    story.append(Paragraph(nota_txt, cell_style))
+
+            # Recomendaciones de Intervención Colectiva
+            story.append(Spacer(1, 14))
+            story.append(Paragraph("Recomendaciones de Intervención Colectiva (Res. 2764 de 2022)", section_style))
+
+            has_recs = False
+            for agg in agregados:
+                n = agg["niveles"]
+                # Determinar el nivel predominante o crítico de la dimensión
+                if n["ALTO"] + n["MUY_ALTO"] > 0 or agg["promedio"] >= 50.0:
+                    nivel_prioridad = "MUY_ALTO" if n["MUY_ALTO"] > 0 else "ALTO"
+                elif n["MEDIO"] > 0:
+                    nivel_prioridad = "MEDIO"
+                else:
+                    nivel_prioridad = "BAJO"
+
+                recs = (
+                    db.query(Recomendacion)
+                    .filter(Recomendacion.dimension_id == agg["dimensionId"], Recomendacion.nivel == nivel_prioridad)
+                    .order_by(Recomendacion.prioridad.asc())
+                    .all()
+                )
+                for rec in recs:
+                    has_recs = True
+                    story.append(Paragraph(f"• <b>[{agg['dimension']} — Enfoque {nivel_prioridad.replace('_', ' ')}]</b> <b>{rec.titulo}:</b> {rec.descripcion}", cell_style))
+                    story.append(Spacer(1, 4))
+
+            if not has_recs:
+                story.append(Paragraph("No se requieren recomendaciones de intervención colectiva urgente.", cell_style))
+
+            story.extend(_bloque_verificacion(codigo_verificacion, cell_style))
+            doc.build(story)
+            os.replace(file_path_tmp, file_path)
+    finally:
+        if os.path.exists(file_path_tmp):
+            try:
+                os.remove(file_path_tmp)
+            except OSError:
+                pass
+
+    hash_archivo = _calcular_sha256(file_path)
+    informe_obj = Informe(
+        evaluacion_id=evaluacion_id,
+        tipo="AGRUPADO",
+        formato=formato_upper,
+        area_id=area_id,
+        ruta_archivo=file_path,
+        generado_por=generado_por,
+        generado_en=utcnow(),
+        anonimizado=True,
+        codigo_verificacion=codigo_verificacion,
+        hash_sha256=hash_archivo,
+    )
+    db.add(informe_obj)
+    db.commit()
+    db.refresh(informe_obj)
+    evaluacion = db.get(Evaluacion, evaluacion_id)
+    if evaluacion is not None and evaluacion.evaluador_id != generado_por:
+        notificar(
+            db,
+            usuario_id=evaluacion.evaluador_id,
+            tipo="INFORME_GENERADO",
+            titulo="Informe agrupado generado",
+            mensaje=f"Se generó un informe agrupado ({formato}) de la evaluación '{evaluacion.nombre}'.",
+            evaluacion_id=evaluacion_id,
+        )
     return informe_obj
 
 
@@ -306,7 +762,7 @@ def listar_informes(
         pass
     elif rol in ROLES_EVALUADOR:
         query = query.filter(Evaluacion.organizacion_id == actual.organizacion_id)
-    elif rol == "ADMINISTRADOR":
+    elif rol in {"ADMINISTRADOR", "JEFE"}:
         # Informes agrupados de las empresas que creó.
         query = query.filter(
             Evaluacion.organizacion_id.in_(

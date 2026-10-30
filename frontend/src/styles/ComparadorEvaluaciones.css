@@ -1,0 +1,204 @@
+.comparador {
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1e293b;
+}
+
+.comparador__encabezado {
+  margin-bottom: 20px;
+}
+
+.comparador__titulo {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.comparador__subtitulo {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.comparador__selectores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.comparador__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.comparador__campo-etiqueta {
+  font-size: 13px;
+  font-weight: 400;
+  color: #64748b;
+}
+
+.comparador__select {
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 13px;
+}
+
+.comparador__tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.comparador__tarjeta {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comparador__tarjeta-letra {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1e3a8a;
+}
+
+.comparador__tarjeta-nombre {
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.comparador__tarjeta-fecha {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.comparador__tarjeta-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 13px;
+}
+
+.comparador__tarjeta-etiqueta {
+  color: #64748b;
+  margin-right: 6px;
+}
+
+.comparador__tarjeta-valor {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.comparador__tabla-contenedor {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.comparador__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.comparador__tabla th {
+  padding: 10px 12px;
+  border-bottom: 2px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
+}
+
+.comparador__tabla td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.comparador__nombre {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.comparador__dominio {
+  color: #64748b;
+}
+
+.comparador__promedio {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.comparador__diferencia {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.comparador__diferencia--mejora {
+  color: #047857;
+}
+
+.comparador__diferencia--empeora {
+  color: #b91c1c;
+}
+
+.comparador__diferencia--neutro {
+  color: #64748b;
+}
+
+.comparador__diferencia--oculto {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.comparador__ayuda {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.comparador__vacio,
+.comparador__error,
+.comparador__aviso {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.comparador__vacio {
+  color: #64748b;
+}
+
+.comparador__aviso {
+  color: #d97706;
+  background: #fffbeb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.comparador__error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}

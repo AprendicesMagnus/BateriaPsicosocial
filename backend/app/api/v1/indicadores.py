@@ -14,6 +14,7 @@ router = APIRouter()
 @router.get("")
 def obtener_indicadores(
     organizacion_id: UUID | None = None,
+    area_id: UUID | None = None,
     db: Session = Depends(get_db),
     actual: Usuario = Depends(get_current_user),
 ):
@@ -21,7 +22,7 @@ def obtener_indicadores(
     if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         organizacion_id = actual.organizacion_id
 
-    return indicadores_service.obtener_resumen_indicadores(db, organizacion_id)
+    return indicadores_service.obtener_resumen_indicadores(db, organizacion_id, area_id)
 
 
 @router.get("/historico")
@@ -46,13 +47,14 @@ def obtener_historico_indicadores(
 @router.get("/por-categoria")
 def obtener_indicadores_por_categoria(
     organizacion_id: UUID | None = None,
+    area_id: UUID | None = None,
     db: Session = Depends(get_db),
     actual: Usuario = Depends(get_current_user),
 ):
     if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         organizacion_id = actual.organizacion_id
 
-    return indicadores_service.obtener_distribucion_por_categoria(db, organizacion_id)
+    return indicadores_service.obtener_distribucion_por_categoria(db, organizacion_id, area_id)
 
 
 @router.get("/mapa-calor")
@@ -75,6 +77,7 @@ def obtener_analisis_grupos(
     organizacion_id: UUID | None = None,
     codigo: str | None = None,
     variable: str = "sexo",
+    area_id: UUID | None = None,
     db: Session = Depends(get_db),
     actual: Usuario = Depends(get_current_user),
 ):
@@ -83,7 +86,23 @@ def obtener_analisis_grupos(
     if actual.rol.codigo != "SUPER_ADMINISTRADOR":
         organizacion_id = actual.organizacion_id
 
-    return indicadores_service.obtener_analisis_grupos(db, organizacion_id, codigo, variable)
+    return indicadores_service.obtener_analisis_grupos(db, organizacion_id, codigo, variable, area_id)
 
+@router.get("/comparar")
+def comparar_evaluaciones(
+    evaluacion_a: UUID,
+    evaluacion_b: UUID,
+    organizacion_id: UUID | None = None,
+    codigo: str | None = None,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    if actual.rol.codigo not in {"SUPER_ADMINISTRADOR", *ROLES_EVALUADOR, *ROLES_DIRECCION}:
+        raise AppError(403, "No tiene permisos para comparar evaluaciones.")
+    org_target = organizacion_id
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR":
+        org_target = actual.organizacion_id
 
-
+    return indicadores_service.comparar_evaluaciones(
+        db, evaluacion_a, evaluacion_b, org_target, codigo
+    )

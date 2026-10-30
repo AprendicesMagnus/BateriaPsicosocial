@@ -22,5 +22,6 @@ def obtener_analisis_predictivo(
     if evaluacion is None:
         raise AppError(404, "Evaluación no encontrada.")
     asegurar_acceso_organizacion(actual, evaluacion.organizacion_id)
-    return prediccion_service.analizar_riesgo_predictivo(db, evaluacion_id, area_id)
+    resultado = prediccion_service.analizar_riesgo_predictivo(db, evaluacion_id, area_id)
+    return prediccion_service.aplicar_anonimato_perfiles(resultado)
 

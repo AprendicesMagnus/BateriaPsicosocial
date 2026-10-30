@@ -317,6 +317,28 @@
   }
   .auth-form-panel {
     padding: 36px 24px;
+    overflow: visible;
+  }
+  /* Celular: la página completa se desplaza (antes el formulario quedaba atrapado dentro de una tarjeta de alto fijo) */
+  .auth-shell {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    align-items: flex-start;
+    padding: 12px;
+    overflow: visible;
+  }
+  .auth-card {
+    height: auto;
+    max-height: none;
+    grid-template-rows: auto;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-form-panel {
+    padding: 28px 18px;
   }
 }
 

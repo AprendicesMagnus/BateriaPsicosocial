@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/landing.css";
 import ModalPlanes from "../components/ModalPlanes";
+import ModalCatalogo from "../components/ModalCatalogo";
+import TiendaMenu from "../components/TiendaMenu";
 
 const SLIDES = [
   "/pasare1.jpg",
@@ -109,7 +111,10 @@ const CONFIANZA = [
 
 export default function Landing() {
   const [slide, setSlide] = useState(0);
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const [planesAbierto, setPlanesAbierto] = useState(false);
+  const [catalogoAbierto, setCatalogoAbierto] = useState(false);
+  const [tiendaMovilAbierta, setTiendaMovilAbierta] = useState(false);
 
   // Imagen anterior
   const prevSlide = () => {
@@ -146,50 +151,59 @@ export default function Landing() {
       <header className="nav">
         <div className="container nav__inner">
 
-          <div
-            className="nav__logos"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 15,
-            }}
-          >
+          <div className="nav__logos">
             <img
               src="/logo a 2_Mesa de trabajo 1.jpg"
               alt="Magnus"
-              style={{
-                height: 120,
-                marginRight: "auto",
-              }}
+              className="nav__logo nav__logo--magnus"
             />
 
             <img
               src="/logo javeriana.jpg"
               alt="Javeriana"
-              style={{
-                height: 50,
-              }}
+              className="nav__logo nav__logo--javeriana"
             />
 
             <img
               src="/ministerio.jpg"
               alt="Ministerio"
-              style={{
-                height: 110,
-              }}
+              className="nav__logo nav__logo--ministerio"
             />
           </div>
+
+          <button
+            type="button"
+            className="mobile-menu-toggle"
+            aria-label={menuMovilAbierto ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuMovilAbierto}
+            onClick={() => setMenuMovilAbierto((abierto) => !abierto)}
+          >
+            {menuMovilAbierto ? "×" : "☰"}
+          </button>
+
+          <nav className={`mobile-nav ${menuMovilAbierto ? "mobile-nav--open" : ""}`} aria-label="Navegación móvil">
+            <a href="#como-funciona" onClick={() => setMenuMovilAbierto(false)}>Cómo funciona</a>
+            <div className="tienda-movil">
+              <button type="button" aria-expanded={tiendaMovilAbierta} onClick={() => setTiendaMovilAbierta((v) => !v)}>
+                Tienda {tiendaMovilAbierta ? "−" : "+"}
+              </button>
+              {tiendaMovilAbierta && (
+                <div className="tienda-movil__sub">
+                  <button type="button" onClick={() => { setPlanesAbierto(true); setMenuMovilAbierto(false); setTiendaMovilAbierta(false); }}>Planes</button>
+                  <button type="button" onClick={() => { setCatalogoAbierto(true); setMenuMovilAbierto(false); setTiendaMovilAbierta(false); }}>Catálogo de Productos</button>
+                </div>
+              )}
+            </div>
+            <a href="#beneficios" onClick={() => setMenuMovilAbierto(false)}>Beneficios</a>
+            <a href="#normativa" onClick={() => setMenuMovilAbierto(false)}>Normativa</a>
+            <Link to="/iniciar-sesion" className="mobile-nav__login" onClick={() => setMenuMovilAbierto(false)}>Iniciar sesión</Link>
+            <Link to="/crear-cuenta" className="mobile-nav__create-account" onClick={() => setMenuMovilAbierto(false)}>Crear cuenta</Link>
+          </nav>
 
           <nav className="nav__links">
             <a href="#como-funciona">Cómo funciona</a>
 
-            <button
-              type="button"
-              onClick={() => setPlanesAbierto(true)}
-              style={{ background: "none", border: "none", font: "inherit", color: "inherit", cursor: "pointer", padding: 0, fontWeight: "bold" }}
-            >
-              Planes
-            </button>
+            <TiendaMenu onPlanes={() => setPlanesAbierto(true)} onCatalogo={() => setCatalogoAbierto(true)} />
 
             <a href="#beneficios">Beneficios</a>
             <a href="#normativa">Normativa</a>
@@ -214,6 +228,7 @@ export default function Landing() {
       </header>
 
       {planesAbierto && <ModalPlanes onCerrar={() => setPlanesAbierto(false)} />}
+      {catalogoAbierto && <ModalCatalogo onCerrar={() => setCatalogoAbierto(false)} />}
 
 
       {/* =====================================================

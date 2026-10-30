@@ -163,6 +163,17 @@ def finalizar_evaluacion(db: Session, evaluacion_id, data, actual: Usuario) -> d
     evaluacion.estado = "FINALIZADA"
     evaluacion.fecha_fin = utcnow()
     evaluacion.justificacion_cierre = data.justificacion if data else None
+    for p in evaluacion.participantes:
+        if p.trabajador and p.trabajador.es_invitado is False:
+            notificar(
+                db,
+                usuario_id=p.trabajador_id,
+                tipo="EVALUACION_FINALIZADA",
+                titulo="Evaluación finalizada",
+                mensaje=f"La evaluación '{evaluacion.nombre}' fue finalizada.",
+                evaluacion_id=evaluacion.id,
+                commit=False,
+            )
     db.commit()
     return obtener_evaluacion(db, evaluacion.id, actual)
 

@@ -98,7 +98,10 @@ def test_analisis_predictivo_kmeans(client, crear_paciente):
     data_pred = res_pred.json()
 
     assert data_pred["totalParticipantesAnalizados"] == 6
-    assert len(data_pred["perfilesClusterKMeans"]) == 3
+    assert data_pred["perfilesClusterKMeans"] == []
+    assert data_pred["perfilesOmitidos"] == 3
+    assert data_pred["minimoAnonimato"] == 5
     assert len(data_pred["incidenciaRiesgoPorDimension"]) == 3
     assert "notaMetodologica" in data_pred
     assert "estrategiaEntrenamiento" in data_pred
+    assert "alertasTempranas" in data_pred

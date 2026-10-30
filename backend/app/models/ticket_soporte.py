@@ -19,5 +19,7 @@ class TicketSoporte(Base):
     mensaje: Mapped[str] = mapped_column(Text, nullable=False)
     estado: Mapped[str] = mapped_column(String(20), default="PENDIENTE", nullable=False)  # PENDIENTE | RESUELTO
     creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    respuesta: Mapped[str | None] = mapped_column(Text, nullable=True)
+    respondido_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     usuario: Mapped["Usuario"] = relationship()

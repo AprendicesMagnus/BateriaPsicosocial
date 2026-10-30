@@ -15,6 +15,7 @@ def registrar_auditoria(
     entidad_id: str | None = None,
     request: Request | None = None,
     detalle: dict | None = None,
+    nota: str | None = None,
 ) -> None:
     ip = None
     if request is not None:
@@ -29,6 +30,7 @@ def registrar_auditoria(
         entidad_id=entidad_id,
         ip_origen=ip,
         detalle=detalle,
+        nota=nota,
         registrado_en=utcnow(),
     )
     db.add(registro)

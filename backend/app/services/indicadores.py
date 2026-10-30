@@ -13,7 +13,7 @@ from app.models.user import Usuario
 
 settings = get_settings()
 
-def obtener_resumen_indicadores(db: Session, organizacion_id: UUID | None = None) -> dict:
+def obtener_resumen_indicadores(db: Session, organizacion_id: UUID | None = None, area_id: UUID | None = None) -> dict:
     # 1. Conteo de organizaciones
     query_orgs = db.query(Organizacion)
     if organizacion_id:
@@ -39,6 +39,8 @@ def obtener_resumen_indicadores(db: Session, organizacion_id: UUID | None = None
     query_parts = db.query(EvaluacionParticipante).join(Evaluacion, Evaluacion.id == EvaluacionParticipante.evaluacion_id)
     if organizacion_id:
         query_parts = query_parts.filter(Evaluacion.organizacion_id == organizacion_id)
+    if area_id:
+        query_parts = query_parts.join(Usuario, Usuario.id == EvaluacionParticipante.trabajador_id).filter(Usuario.area_id == area_id)
     
     participantes = query_parts.all()
     total_asignados = len(participantes)
@@ -56,6 +58,8 @@ def obtener_resumen_indicadores(db: Session, organizacion_id: UUID | None = None
         query_res = db.query(ResultadoDimension).join(EvaluacionParticipante).join(Evaluacion)
         if organizacion_id:
             query_res = query_res.filter(Evaluacion.organizacion_id == organizacion_id)
+        if area_id:
+            query_res = query_res.join(Usuario, Usuario.id == EvaluacionParticipante.trabajador_id).filter(Usuario.area_id == area_id)
         
         resultados = query_res.all()
         for r in resultados:
@@ -156,7 +160,7 @@ def obtener_historico_indicadores(
 
 
 def obtener_distribucion_por_categoria(
-    db, organizacion_id=None
+    db, organizacion_id=None, area_id=None
 ):
     """Devuelve la distribucion de niveles de riesgo por categoria (codigo de cuestionario).
 
@@ -187,10 +191,33 @@ def obtener_distribucion_por_categoria(
 
     if organizacion_id:
         query = query.filter(Evaluacion.organizacion_id == organizacion_id)
+    if area_id:
+        query = query.join(Usuario, Usuario.id == EvaluacionParticipante.trabajador_id).filter(Usuario.area_id == area_id)
 
     filas = query.group_by(
         CuestionarioVersion.codigo, CuestionarioVersion.nombre, ResultadoDimension.nivel
     ).all()
+
+    query_personas = (
+        db.query(
+            CuestionarioVersion.codigo,
+            _func.count(_func.distinct(EvaluacionParticipante.id)),
+        )
+        .select_from(ResultadoDimension)
+        .join(EvaluacionParticipante, ResultadoDimension.participante_id == EvaluacionParticipante.id)
+        .join(Evaluacion, EvaluacionParticipante.evaluacion_id == Evaluacion.id)
+        .join(Dimension, ResultadoDimension.dimension_id == Dimension.id)
+        .join(CuestionarioVersion, Dimension.version_id == CuestionarioVersion.id)
+        .filter(EvaluacionParticipante.estado == "COMPLETADA")
+    )
+
+    if organizacion_id:
+        query_personas = query_personas.filter(Evaluacion.organizacion_id == organizacion_id)
+    if area_id:
+        query_personas = query_personas.join(Usuario, Usuario.id == EvaluacionParticipante.trabajador_id).filter(Usuario.area_id == area_id)
+
+    filas_personas = query_personas.group_by(CuestionarioVersion.codigo).all()
+    personas_por_codigo = {codigo: total for codigo, total in filas_personas}
 
     # Agrupar por categoria acumulando niveles
     categorias = {}
@@ -209,7 +236,7 @@ def obtener_distribucion_por_categoria(
     # Aplicar regla de anonimato por categoria
     resultado = {}
     for codigo, cat in categorias.items():
-        if cat["totalParticipantes"] < _settings.min_grupo_anonimato:
+        if personas_por_codigo.get(codigo, 0) < _settings.min_grupo_anonimato:
             resultado[codigo] = {
                 "codigo": codigo,
                 "nombre": cat["nombre"],
@@ -419,6 +446,7 @@ def obtener_analisis_grupos(
     organizacion_id: UUID | None = None,
     codigo: str | None = None,
     variable: str = "sexo",
+    area_id: UUID | None = None,
 ) -> dict:
     """Riesgo por grupos de la ficha de datos generales para un cuestionario.
 
@@ -450,6 +478,8 @@ def obtener_analisis_grupos(
     )
     if organizacion_id:
         consulta = consulta.filter(Evaluacion.organizacion_id == organizacion_id)
+    if area_id:
+        consulta = consulta.join(Usuario, Usuario.id == EvaluacionParticipante.trabajador_id).filter(Usuario.area_id == area_id)
 
     filas = consulta.group_by(
         CuestionarioVersion.codigo,
@@ -540,5 +570,219 @@ def obtener_analisis_grupos(
         "minimoAnonimato": minimo,
     }
 
+def comparar_evaluaciones(
+    db: Session,
+    evaluacion_a_id: UUID,
+    evaluacion_b_id: UUID,
+    organizacion_id: UUID | None = None,
+    codigo: str | None = None,
+) -> dict:
+    if evaluacion_a_id == evaluacion_b_id:
+        raise AppError(400, "Selecciona dos evaluaciones distintas.")
 
+    eval_a = db.get(Evaluacion, evaluacion_a_id)
+    eval_b = db.get(Evaluacion, evaluacion_b_id)
 
+    if not eval_a or not eval_b or (
+        organizacion_id is not None
+        and (eval_a.organizacion_id != organizacion_id or eval_b.organizacion_id != organizacion_id)
+    ):
+        raise AppError(404, "Evaluación no encontrada.")
+
+    if eval_a.organizacion_id != eval_b.organizacion_id:
+        raise AppError(400, "Solo se pueden comparar evaluaciones de la misma empresa.")
+
+    minimo = get_settings().min_grupo_anonimato
+
+    consulta_dims = (
+        db.query(
+            CuestionarioVersion.codigo,
+            CuestionarioVersion.nombre,
+            Dimension.codigo,
+            Dimension.nombre,
+            Dimension.dominio,
+            Dimension.orden,
+            Evaluacion.id,
+            func.count(ResultadoDimension.id),
+            func.avg(ResultadoDimension.puntaje_transformado),
+            func.sum(case((ResultadoDimension.nivel.in_(NIVELES_PRIORIZABLES), 1), else_=0)),
+        )
+        .select_from(ResultadoDimension)
+        .join(EvaluacionParticipante, ResultadoDimension.participante_id == EvaluacionParticipante.id)
+        .join(Evaluacion, EvaluacionParticipante.evaluacion_id == Evaluacion.id)
+        .join(Dimension, ResultadoDimension.dimension_id == Dimension.id)
+        .join(CuestionarioVersion, Dimension.version_id == CuestionarioVersion.id)
+        .filter(
+            EvaluacionParticipante.estado == "COMPLETADA",
+            Evaluacion.id.in_([evaluacion_a_id, evaluacion_b_id]),
+        )
+        .group_by(
+            CuestionarioVersion.codigo,
+            CuestionarioVersion.nombre,
+            Dimension.codigo,
+            Dimension.nombre,
+            Dimension.dominio,
+            Dimension.orden,
+            Evaluacion.id,
+        )
+        .all()
+    )
+
+    consulta_personas = (
+        db.query(
+            CuestionarioVersion.codigo,
+            Evaluacion.id,
+            func.count(func.distinct(EvaluacionParticipante.id)),
+        )
+        .select_from(ResultadoDimension)
+        .join(EvaluacionParticipante, ResultadoDimension.participante_id == EvaluacionParticipante.id)
+        .join(Evaluacion, EvaluacionParticipante.evaluacion_id == Evaluacion.id)
+        .join(Dimension, ResultadoDimension.dimension_id == Dimension.id)
+        .join(CuestionarioVersion, Dimension.version_id == CuestionarioVersion.id)
+        .filter(
+            EvaluacionParticipante.estado == "COMPLETADA",
+            Evaluacion.id.in_([evaluacion_a_id, evaluacion_b_id]),
+        )
+        .group_by(CuestionarioVersion.codigo, Evaluacion.id)
+        .all()
+    )
+
+    personas_map = {(cod, e_id): count for cod, e_id, count in consulta_personas}
+
+    nombres_cuestionarios = {}
+    evals_por_codigo = {}
+    for cod_cuest, nom_cuest, _dim_cod, _dim_nom, _dom, _ord, e_id, _cnt, _avg, _altos in consulta_dims:
+        nombres_cuestionarios[cod_cuest] = nom_cuest
+        if cod_cuest not in evals_por_codigo:
+            evals_por_codigo[cod_cuest] = set()
+        evals_por_codigo[cod_cuest].add(e_id)
+
+    comparables = {
+        cod: nombres_cuestionarios[cod]
+        for cod, ev_set in evals_por_codigo.items()
+        if evaluacion_a_id in ev_set and evaluacion_b_id in ev_set
+    }
+
+    fecha_a = (eval_a.fecha_fin or eval_a.creado_en).isoformat() if (eval_a.fecha_fin or eval_a.creado_en) else None
+    fecha_b = (eval_b.fecha_fin or eval_b.creado_en).isoformat() if (eval_b.fecha_fin or eval_b.creado_en) else None
+
+    if not comparables:
+        return {
+            "categorias": [],
+            "codigo": None,
+            "evaluaciones": [
+                {
+                    "id": str(eval_a.id),
+                    "nombre": eval_a.nombre,
+                    "fecha": fecha_a,
+                    "participantes": 0,
+                    "oculto": True,
+                    "porcentajeAltoMuyAlto": None,
+                },
+                {
+                    "id": str(eval_b.id),
+                    "nombre": eval_b.nombre,
+                    "fecha": fecha_b,
+                    "participantes": 0,
+                    "oculto": True,
+                    "porcentajeAltoMuyAlto": None,
+                },
+            ],
+            "dimensiones": [],
+            "minimoAnonimato": minimo,
+        }
+
+    seleccionado = codigo if codigo in comparables else sorted(comparables.keys())[0]
+
+    participantes_a = personas_map.get((seleccionado, evaluacion_a_id), 0)
+    oculto_a = participantes_a < minimo
+
+    participantes_b = personas_map.get((seleccionado, evaluacion_b_id), 0)
+    oculto_b = participantes_b < minimo
+
+    total_res_a = 0
+    altos_a = 0
+    total_res_b = 0
+    altos_b = 0
+
+    dims_data = {}
+
+    for cod_cuest, _nom_cuest, dim_cod, dim_nom, dim_dom, dim_ord, e_id, cnt, avg_val, sum_altos in consulta_dims:
+        if cod_cuest != seleccionado:
+            continue
+        if dim_cod not in dims_data:
+            dims_data[dim_cod] = {
+                "codigo": dim_cod,
+                "nombre": dim_nom,
+                "dominio": dim_dom,
+                "orden": dim_ord,
+                "cnt_a": 0,
+                "avg_a": None,
+                "cnt_b": 0,
+                "avg_b": None,
+            }
+        if e_id == evaluacion_a_id:
+            total_res_a += cnt
+            altos_a += (sum_altos or 0)
+            dims_data[dim_cod]["cnt_a"] = cnt
+            dims_data[dim_cod]["avg_a"] = avg_val
+        elif e_id == evaluacion_b_id:
+            total_res_b += cnt
+            altos_b += (sum_altos or 0)
+            dims_data[dim_cod]["cnt_b"] = cnt
+            dims_data[dim_cod]["avg_b"] = avg_val
+
+    pct_a = None if oculto_a else (round(altos_a * 100.0 / total_res_a, 1) if total_res_a > 0 else 0.0)
+    pct_b = None if oculto_b else (round(altos_b * 100.0 / total_res_b, 1) if total_res_b > 0 else 0.0)
+
+    dimensiones_salida = []
+    for dim_cod, d in sorted(dims_data.items(), key=lambda item: item[1]["orden"]):
+        if oculto_a or d["cnt_a"] < minimo or d["avg_a"] is None:
+            promedio_a = None
+        else:
+            promedio_a = round(float(d["avg_a"]), 2)
+
+        if oculto_b or d["cnt_b"] < minimo or d["avg_b"] is None:
+            promedio_b = None
+        else:
+            promedio_b = round(float(d["avg_b"]), 2)
+
+        if promedio_a is None or promedio_b is None:
+            diferencia = None
+        else:
+            diferencia = round(promedio_b - promedio_a, 2)
+
+        dimensiones_salida.append({
+            "codigo": d["codigo"],
+            "nombre": d["nombre"],
+            "dominio": d["dominio"],
+            "orden": d["orden"],
+            "promedioA": promedio_a,
+            "promedioB": promedio_b,
+            "diferencia": diferencia,
+        })
+
+    return {
+        "categorias": [{"codigo": c, "nombre": n} for c, n in sorted(comparables.items())],
+        "codigo": seleccionado,
+        "evaluaciones": [
+            {
+                "id": str(eval_a.id),
+                "nombre": eval_a.nombre,
+                "fecha": fecha_a,
+                "participantes": participantes_a,
+                "oculto": oculto_a,
+                "porcentajeAltoMuyAlto": pct_a,
+            },
+            {
+                "id": str(eval_b.id),
+                "nombre": eval_b.nombre,
+                "fecha": fecha_b,
+                "participantes": participantes_b,
+                "oculto": oculto_b,
+                "porcentajeAltoMuyAlto": pct_b,
+            },
+        ],
+        "dimensiones": dimensiones_salida,
+        "minimoAnonimato": minimo,
+    }

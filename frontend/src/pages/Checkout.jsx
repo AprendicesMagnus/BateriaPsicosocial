@@ -9,6 +9,7 @@ import {
   limpiarPagoPendiente,
 } from "../utils/pagoPendiente";
 import AppTopbar from "../components/AppTopbar";
+import BotonRegresar from "../components/BotonRegresar";
 import "../styles/app-shell.css";
 import "../styles/Checkout.css";
 import { request } from "../api/client";
@@ -428,13 +429,7 @@ export default function Checkout() {
 
         <div className="app-content checkout-page">
           {/* VOLVER */}
-          <button
-            type="button"
-            className="checkout-back-btn"
-            onClick={() => navigate("/Inicio")}
-          >
-            ← Volver al inicio
-          </button>
+          <BotonRegresar to="/Inicio" />
 
           {/* ENCABEZADO */}
           <div className="checkout-heading">

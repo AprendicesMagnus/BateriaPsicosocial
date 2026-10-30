@@ -426,6 +426,37 @@ class CompraCreate(BaseModel):
     planId: UUID | None = None
 
 
+class ProductoCreate(BaseModel):
+    nombre: str = Field(min_length=2, max_length=120)
+    categoria: str = Field(min_length=2, max_length=40)
+    precio: int = Field(gt=0)
+    imagen_url: str = Field(default="", max_length=500)
+    activo: bool = True
+    stock: int = Field(default=0, ge=0)
+
+
+class ProductoUpdate(BaseModel):
+    nombre: str | None = Field(default=None, min_length=2, max_length=120)
+    categoria: str | None = Field(default=None, min_length=2, max_length=40)
+    precio: int | None = Field(default=None, gt=0)
+    imagen_url: str | None = Field(default=None, max_length=500)
+    activo: bool | None = None
+    stock: int | None = Field(default=None, ge=0)
+
+
+class PedidoProductoItemCreate(BaseModel):
+    producto_id: UUID
+    cantidad: int = Field(ge=1, le=99)
+
+
+class PedidoProductoCreate(BaseModel):
+    items: list[PedidoProductoItemCreate] = Field(min_length=1, max_length=100)
+
+
+class PedidoProductoEstadoUpdate(BaseModel):
+    estado: str = Field(min_length=3, max_length=30)
+
+
 class RespuestaEnvio(BaseModel):
     preguntaCodigo: str = Field(
         min_length=2,
@@ -829,6 +860,11 @@ class PagoCreate(BaseModel):
     banco: str | None = None
 
 
+class PagoPedidoProductoCreate(BaseModel):
+    pedido_id: UUID
+    wompi_transaction_id: str = Field(min_length=1, max_length=100)
+
+
 class PagoUpdate(BaseModel):
     estado: str
     mensajeRespuesta: str | None = None
@@ -836,3 +872,25 @@ class PagoUpdate(BaseModel):
 
 class TicketSoporteCreate(BaseModel):
     mensaje: str = Field(min_length=1, max_length=2000)
+
+
+class TicketSoporteRespuesta(BaseModel):
+    respuesta: str = Field(min_length=1, max_length=2000)
+
+
+SeccionSoporte = Literal["guia_SUPER_ADMINISTRADOR", "guia_JEFE", "guia_ADMINISTRADOR", "guia_EVALUADOR_SST", "guia_RESPONSABLE_SST", "faq", "glosario", "riesgo", "novedades", "atencion"]
+
+
+class SoporteItemCreate(BaseModel):
+    seccion: SeccionSoporte
+    titulo: str | None = Field(default=None, max_length=200)
+    texto: str = Field(min_length=2, max_length=2000)
+    orden: int | None = Field(default=None, ge=0, le=10000)
+    activo: bool = True
+
+
+class SoporteItemUpdate(BaseModel):
+    titulo: str | None = Field(default=None, max_length=200)
+    texto: str | None = Field(default=None, min_length=2, max_length=2000)
+    orden: int | None = Field(default=None, ge=0, le=10000)
+    activo: bool | None = None

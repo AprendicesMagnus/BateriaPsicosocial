@@ -1,0 +1,2 @@
+
+.ventas-resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0 26px}.ventas-resumen article{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.ventas-resumen article span{font-size:13px;color:#64748b}.ventas-resumen article strong{font-size:22px;color:#172033}.adm-card h3{margin:22px 0 12px}

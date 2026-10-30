@@ -10,6 +10,7 @@ from app.models.commercial import Compra, Pago
 from app.models.plan import PlanBateria
 from app.models.user import Usuario
 from app.services import wompi as wompi_service
+from app.services.notificaciones import notificar
 
 
 logger = logging.getLogger(__name__)
@@ -739,7 +740,17 @@ def procesar_pago(
             "Pago aprobado y validado con Wompi."
         )
 
+        ya_pagada = (compra.estado == "PAGADA")
         compra.estado = "PAGADA"
+        if not ya_pagada:
+            notificar(
+                db,
+                usuario_id=compra.usuario_id,
+                tipo="COMPRA_APROBADA",
+                titulo="Compra aprobada",
+                mensaje=f"Tu pago fue aprobado y tu compra de {compra.cantidad} batería(s) quedó pagada.",
+                commit=False,
+            )
 
     elif estado_wompi == "DECLINED":
         pago.estado = "RECHAZADO"
@@ -955,7 +966,17 @@ def procesar_evento_wompi(
         pago.mensaje_respuesta = (
             "Pago aprobado y confirmado mediante webhook de Wompi."
         )
+        ya_pagada = (compra.estado == "PAGADA")
         compra.estado = "PAGADA"
+        if not ya_pagada:
+            notificar(
+                db,
+                usuario_id=compra.usuario_id,
+                tipo="COMPRA_APROBADA",
+                titulo="Compra aprobada",
+                mensaje=f"Tu pago fue aprobado y tu compra de {compra.cantidad} batería(s) quedó pagada.",
+                commit=False,
+            )
 
     elif transaction_status == "DECLINED":
         pago.estado = "RECHAZADO"

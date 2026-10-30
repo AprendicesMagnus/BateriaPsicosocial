@@ -16,6 +16,11 @@ import {
   cambiarEmpresaActiva,
   guardarMiResolucion,
 } from "../api/perfil";
+import {
+  listarPedidosUsuarioProductos,
+  prepararCheckoutPedidoProductos,
+  confirmarPagoPedidoProductos,
+} from "../api/pedidosProductos";
 
 import {
   TEXTO_AYUDA_PASSWORD,
@@ -125,6 +130,24 @@ function estiloEstadoCompra(estado) {
     }),
   };
 }
+function etiquetaEstadoPedido(estado) {
+  const estados = {
+    PAGADA: "Pagado",
+    ENVIADO: "Pedido enviado",
+    ENTREGADO: "Pedido entregado",
+    PENDIENTE: "Pendiente de pago",
+    RECHAZADO: "Pago rechazado",
+    EXPIRADA: "Pedido expirado",
+    CANCELADA: "Pedido cancelado",
+    ERROR: "Error de pago",
+  };
+  return estados[estado] || "Estado no disponible";
+}
+function resumenItemsPedido(items) {
+  return (items || [])
+    .map((item) => `${item.cantidad} x ${item.nombre}`)
+    .join(", ");
+}
 function tipoMensajeToast(mensaje) {
   const texto = String(mensaje || "").toLowerCase();
   if (
@@ -143,6 +166,24 @@ function tipoMensajeToast(mensaje) {
   }
   return "ok";
 }
+function cargarWidgetWompiPerfil() {
+  return new Promise((resolve, reject) => {
+    if (window.WidgetCheckout) return resolve();
+    const existente = document.querySelector('script[src="https://checkout.wompi.co/widget.js"]');
+    if (existente) {
+      existente.addEventListener("load", resolve, { once: true });
+      existente.addEventListener("error", () => reject(new Error("No se pudo cargar el Widget de Wompi.")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.wompi.co/widget.js";
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("No se pudo cargar el Widget de Wompi."));
+    document.body.appendChild(script);
+  });
+}
+
 export default function Perfil() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -151,6 +192,10 @@ export default function Perfil() {
   const [loadingCompras, setLoadingCompras] = useState(false);
   const [errorCompras, setErrorCompras] = useState(null);
   const [cancelandoCompraId, setCancelandoCompraId] = useState(null);
+  const [pedidos, setPedidos] = useState([]);
+  const [loadingPedidos, setLoadingPedidos] = useState(false);
+  const [errorPedidos, setErrorPedidos] = useState(null);
+  const [reintentandoPedidoId, setReintentandoPedidoId] = useState(null);
   // ---- edición de perfil / contraseña ----
   const [modo, setModo] = useState(null);
   const [guardando, setGuardando] = useState(false);
@@ -273,6 +318,44 @@ export default function Perfil() {
     }
     const intervalo = setInterval(
       actualizarCompras,
+      INTERVALO_ACTUALIZACION_COMPRAS
+    );
+    return () => {
+      activo = false;
+      clearInterval(intervalo);
+    };
+  }, [usuario?.id, token]);
+  // ---- cargar y actualizar pedidos de productos ----
+  useEffect(() => {
+    if (!usuario?.id || !token) {
+      return undefined;
+    }
+    let activo = true;
+    async function cargarPedidos(inicial) {
+      if (inicial) {
+        setLoadingPedidos(true);
+        setErrorPedidos(null);
+      }
+      try {
+        const data = await listarPedidosUsuarioProductos(token, usuario.id);
+        if (!activo) {
+          return;
+        }
+        setPedidos(data);
+        setErrorPedidos(null);
+      } catch (err) {
+        if (activo && inicial) {
+          setErrorPedidos(err.message);
+        }
+      } finally {
+        if (activo && inicial) {
+          setLoadingPedidos(false);
+        }
+      }
+    }
+    cargarPedidos(true);
+    const intervalo = setInterval(
+      () => cargarPedidos(false),
       INTERVALO_ACTUALIZACION_COMPRAS
     );
     return () => {
@@ -642,6 +725,35 @@ export default function Perfil() {
       );
     }
   }
+  async function reintentarPagoPedido(pedido) {
+    if (!pedido?.id || reintentandoPedidoId) return;
+    setReintentandoPedidoId(pedido.id);
+    setErrorPedidos(null);
+    try {
+      const checkout = await prepararCheckoutPedidoProductos(token, pedido.id);
+      await cargarWidgetWompiPerfil();
+      if (!window.WidgetCheckout) throw new Error("El Widget de Wompi no está disponible.");
+      const widget = new window.WidgetCheckout({
+        currency: checkout.currency, amountInCents: checkout.amountInCents,
+        reference: checkout.reference, publicKey: checkout.publicKey,
+        signature: { integrity: checkout.signature },
+      });
+      widget.open(async (resultado) => {
+        try {
+          const transaction = resultado?.transaction;
+          if (!transaction?.id) return;
+          await confirmarPagoPedidoProductos(token, pedido.id, transaction.id);
+          const actualizados = await listarPedidosUsuarioProductos(token, usuario.id);
+          setPedidos(actualizados);
+        } catch (err) { setErrorPedidos(err.message || "No fue posible confirmar el pago."); }
+        finally { setReintentandoPedidoId(null); }
+      });
+    } catch (err) {
+      setErrorPedidos(err.message || "No fue posible reintentar el pago.");
+      setReintentandoPedidoId(null);
+    }
+  }
+
   const totalPaginas = Math.max(
     1,
     Math.ceil(
@@ -678,7 +790,7 @@ export default function Perfil() {
             </span>
           </div>
         )}
-        <div className="app-content">
+        <div className="app-content perfil-page">
           <BotonRegresar />
           <h1 className="app-title">Mi Perfil</h1>
           <p className="app-subtitle">Consulta y administra la información de tu cuenta.</p>
@@ -1173,6 +1285,49 @@ export default function Perfil() {
                     </p>
                   </div>
                 )
+              )}
+            </div>
+            <div className="app-card compras-card">
+              <h2 className="compras-titulo">Historial de pedidos</h2>
+              <p className="compras-subtitulo">Productos del catálogo comprados</p>
+              {loadingPedidos && (
+                <p style={{ fontSize: "14px", color: "#64748b" }}>Cargando pedidos...</p>
+              )}
+              {errorPedidos && (
+                <p style={{ fontSize: "14px", color: "#b91c1c" }}>{errorPedidos}</p>
+              )}
+              {!loadingPedidos && pedidos.length > 0 && (
+                <div className="compras-list">
+                  {pedidos.map((pedido) => (
+                    <div className="compras-row" key={pedido.id}>
+                      <span className="compras-row-icon"><ReceiptIcon /></span>
+                      <div className="compras-row-main">
+                        <span className="compras-row-qty">{pedido.numero}</span>
+                        <span className="compras-row-date">{resumenItemsPedido(pedido.items)}</span>
+                        <span style={estiloEstadoCompra(pedido.estado)}>{etiquetaEstadoPedido(pedido.estado)}</span>
+                        <span className="compras-row-date">{formatearFechaHora(pedido.creadoEn || pedido.fecha)}</span>
+                        <span className="compras-row-total">
+                          Total:{" "}
+                          {Number(pedido.total || 0).toLocaleString("es-CO", {
+                            style: "currency",
+                            currency: "COP",
+                            maximumFractionDigits: 0,
+                          })}
+                        </span>
+                        {["PENDIENTE", "RECHAZADO", "ERROR"].includes(pedido.estado) && (
+                          <button type="button" className="adm-btn adm-btn--borde" style={{ marginTop: "8px" }} disabled={reintentandoPedidoId === pedido.id} onClick={() => reintentarPagoPedido(pedido)}>
+                            {reintentandoPedidoId === pedido.id ? "Abriendo pago…" : "Reintentar pago"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!loadingPedidos && !errorPedidos && pedidos.length === 0 && (
+                <div className="compras-empty">
+                  <p>Aún no has realizado pedidos de productos.</p>
+                </div>
               )}
             </div>
           </div>

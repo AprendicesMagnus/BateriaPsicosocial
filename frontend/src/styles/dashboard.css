@@ -71,11 +71,15 @@ body {
   font-size: 14px;
   border-radius: 7px;
 
-  border: solid;
+  border: 1px solid transparent;
   background: none;
   cursor: pointer;
   width: 100%;
   transition: .2s ease;
+}
+
+.menu-item:hover {
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .menu-item span {
@@ -695,10 +699,6 @@ body {
 
 @media (max-width: 900px) {
 
-  .sidebar {
-    width: 150px;
-  }
-
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -714,17 +714,17 @@ body {
 
 @media (max-width: 650px) {
 
-  .sidebar {
-    display: none;
-  }
-
   .dashboard__main {
     padding: 15px;
   }
 
   .category-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+  }
+
+  .category-tabs button {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
   }
 }
 
@@ -1037,5 +1037,76 @@ body {
   .indicator-row {
     grid-template-columns: minmax(60px, 75px) minmax(35px, 1fr) 38px;
     gap: 7px;
+  }
+}
+
+/* Celular: el contenido no debe desbordar la pantalla */
+@media (max-width: 860px) {
+  .dashboard__main {
+    min-width: 0;
+    width: 100%;
+    padding: 16px 14px;
+  }
+
+  .dashboard__header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+
+/* Barra superior del Dashboard: regresar y perfil visibles en móvil */
+.dashboard__mobile-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 20;
+}
+.dashboard__mobile-toolbar .app-profile-menu {
+  display: block !important;
+  flex-shrink: 0;
+  position: relative;
+}
+.dashboard__mobile-toolbar .app-profile {
+  display: flex !important;
+  max-width: 100%;
+}
+.dashboard__mobile-toolbar .app-profile-text {
+  display: flex !important;
+}
+.dashboard__mobile-toolbar .app-profile-dropdown {
+  z-index: 1000;
+}
+@media (min-width: 651px) {
+  .dashboard__mobile-toolbar {
+    margin-bottom: 14px;
+  }
+}
+@media (max-width: 650px) {
+  .dashboard__main {
+    padding: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+  .dashboard__mobile-toolbar {
+    min-height: 44px;
+  }
+  .dashboard__mobile-toolbar .app-profile-name,
+  .dashboard__mobile-toolbar .app-profile-role {
+    display: block !important;
+    white-space: nowrap;
+  }
+  .dashboard__mobile-toolbar .app-profile-name {
+    max-width: 145px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dashboard__mobile-toolbar .app-profile {
+    gap: 7px;
+    padding: 4px;
   }
 }

@@ -1,0 +1,5 @@
+.tienda-selector { display: inline-flex; align-items: center; gap: 6px; padding: 5px; margin-bottom: 16px; background: #fff; border: 1px solid #dfe6ef; border-radius: 999px; flex-wrap: wrap; }
+.tienda-selector__titulo { padding: 0 10px 0 12px; font-size: 13px; font-weight: 700; color: #5e6a85; }
+.tienda-selector__op { border: none; background: transparent; padding: 8px 18px; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 700; color: #17233d; cursor: pointer; transition: background .15s, color .15s; }
+.tienda-selector__op:hover { background: #eef3fa; }
+.tienda-selector__op.activo { background: #12375e; color: #fff; }

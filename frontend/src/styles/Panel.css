@@ -381,6 +381,15 @@
 .adm-chip--peligro   { background: #fde8e8; color: #9b1c1c; }
 .adm-chip--psicologo { background: #f1e8fd; color: #6b21a8; }
 
+/* Colores diferenciados para las categorías de productos */
+.adm-chip--categoria-1 { background: #f1e8fd; color: #6b21a8; }
+.adm-chip--categoria-2 { background: #dcfce7; color: #166534; }
+.adm-chip--categoria-3 { background: #ffedd5; color: #9a3412; }
+.adm-chip--categoria-4 { background: #fce7f3; color: #9d174d; }
+.adm-chip--categoria-5 { background: #ccfbf1; color: #115e59; }
+.adm-chip--categoria-6 { background: #fef3c7; color: #92400e; }
+.adm-chip--categoria-7 { background: #e0e7ff; color: #3730a3; }
+
 .adm-roles {
   display: flex;
   flex-wrap: wrap;
@@ -697,7 +706,12 @@
   max-width: 100%;
 }
 
-.adm-tabla-wrap {
-  max-width: 100%;
-  overflow-x: auto;
+/* La barra superior (sidebar) vive en AppSidebar.css */
+.panel-shell {
+  flex-direction: column;
+}
+
+.panel-shell .adm-main {
+  width: 100%;
+  flex: 1 1 auto;
 }

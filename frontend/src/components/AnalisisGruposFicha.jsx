@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchAnalisisGrupos } from "../api/indicadores";
 import "../styles/AnalisisGruposFicha.css";
 
-export default function AnalisisGruposFicha({ token, organizacionId }) {
+export default function AnalisisGruposFicha({ token, organizacionId, areaId }) {
   const [datos, setDatos] = useState(null);
   const [codigo, setCodigo] = useState(null);
   const [variable, setVariable] = useState(null);
@@ -13,7 +13,7 @@ export default function AnalisisGruposFicha({ token, organizacionId }) {
     let activo = true;
     setCargando(true);
     setError(null);
-    fetchAnalisisGrupos(token, organizacionId, { codigo, variable })
+    fetchAnalisisGrupos(token, organizacionId, { codigo, variable, areaId: areaId || null })
       .then((respuesta) => {
         if (activo) setDatos(respuesta);
       })
@@ -26,7 +26,7 @@ export default function AnalisisGruposFicha({ token, organizacionId }) {
     return () => {
       activo = false;
     };
-  }, [token, organizacionId, codigo, variable]);
+  }, [token, organizacionId, codigo, variable, areaId]);
 
   const categorias = datos?.categorias || [];
   const variables = datos?.variables || [];
