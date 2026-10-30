@@ -174,6 +174,25 @@ def _tarea_reaplicacion_diaria() -> None:
         db.close()
 
 
+def _tarea_resumen_mensual() -> None:
+    """Envía el resumen mensual de la batería (primeros días del mes, una sola vez por persona)."""
+    from app.db.session import SessionLocal
+    from app.services.resumen_mensual import enviar_resumenes_mensuales
+
+    db = SessionLocal()
+    try:
+        resultado = enviar_resumenes_mensuales(db)
+        logger.info(
+            "Scheduler resumen mensual: usuarios=%s, resumenes=%s",
+            resultado["usuariosRevisados"],
+            resultado["resumenesEnviados"],
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Error en scheduler de resumen mensual: %s", exc, exc_info=True)
+    finally:
+        db.close()
+
+
 @app.on_event("startup")
 def iniciar_scheduler() -> None:
     _scheduler.add_job(
@@ -197,6 +216,14 @@ def iniciar_scheduler() -> None:
         hour=8,
         minute=30,
         id="reaplicacion_diaria",
+        replace_existing=True,
+    )
+    _scheduler.add_job(
+        _tarea_resumen_mensual,
+        "cron",
+        hour=8,
+        minute=45,
+        id="resumen_mensual",
         replace_existing=True,
     )
     _scheduler.start()

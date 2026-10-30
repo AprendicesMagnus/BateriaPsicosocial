@@ -16,6 +16,7 @@ const DESTINOS_POR_TIPO = {
   COMPRA_APROBADA: "/perfil",
   INFORME_GENERADO: "/reportes",
   RECORDATORIO_REAPLICACION: "/dashboard",
+  RESUMEN_MENSUAL: "/dashboard",
 
 };
 
