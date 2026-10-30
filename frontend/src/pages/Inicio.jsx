@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom"; // <-- AGREGADO AQUÍ "use
 import { VscBriefcase } from "react-icons/vsc";
 import { BsCart4 } from "react-icons/bs";
 import { BsFillClipboard2Fill } from "react-icons/bs";
-import {  HiOutlineUser,  HiOutlineDocumentText,  HiOutlineClipboardList,  HiOutlineClipboardCheck,  HiOutlineChartBar,} from "react-icons/hi";
+import { HiOutlineUser, HiOutlineDocumentText, HiOutlineClipboardList, HiOutlineClipboardCheck, HiOutlineChartBar, } from "react-icons/hi";
 import "../styles/Inicio.css";
 import "../styles/app-shell.css";
 import { useAuth } from "../context/AuthContext"; // <-- EN LÍNEA NUEVA: IMPORTADO "useAuth"
@@ -295,7 +295,7 @@ export default function Inicio() {
                   gap: 6,
                 }}
               >
-                 <VscBriefcase size={18} />
+                <VscBriefcase size={18} />
                 Empresas
               </button>
 
@@ -355,17 +355,17 @@ export default function Inicio() {
               onCatalogo={() => navigate("/catalogo")}
             />
 
-            <Link  to="/dashboard"  onClick={() => setMenuTiendaAbierto(false)}  style={{
+            <Link to="/dashboard" onClick={() => setMenuTiendaAbierto(false)} style={{
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
               gap: "8px",
-              }}
-              >
+            }}
+            >
               <BsFillClipboard2Fill size={16} />
               <span>Encuestas</span>
             </Link>
-            
+
           </nav>
 
           {/* =====================================================
@@ -374,54 +374,54 @@ export default function Inicio() {
           <div className="app-acciones-usuario">
             <CampanaNotificaciones />
             <div className="app-profile-menu" ref={menuPerfilRef}>
-            <button
-              type="button"
-              className="app-profile"
-              onClick={() => setMenuPerfilAbierto((v) => !v)}
-              aria-haspopup="true"
-              aria-expanded={menuPerfilAbierto}
-            >
-              {usuario?.fotoUrl ? (
-                <img
-                  src={urlArchivo(usuario.fotoUrl)}
-                  alt={nombreUsuario}
-                  className="app-avatar app-avatar--foto"
-                />
-              ) : (
-                <div className="app-avatar">{iniciales}</div>
-              )}
-              <div className="app-profile-text">
-                <span className="app-profile-name">{nombreUsuario || "Usuario"}</span>
-                {rolUsuario && <span className="app-profile-role">{rolUsuario}</span>}
-              </div>
-            </button>
-
-            {menuPerfilAbierto && (
-              <div className="app-profile-dropdown">
-                <Link to="/perfil" onClick={() => setMenuPerfilAbierto(false)}>
-                  Ver perfil
-                </Link>
-
-                {esSuperAdmin(usuario?.rol) && (
-                  <Link to="/panel" onClick={() => setMenuPerfilAbierto(false)}>
-                    Panel de Administrador
-                  </Link>
+              <button
+                type="button"
+                className="app-profile"
+                onClick={() => setMenuPerfilAbierto((v) => !v)}
+                aria-haspopup="true"
+                aria-expanded={menuPerfilAbierto}
+              >
+                {usuario?.fotoUrl ? (
+                  <img
+                    src={urlArchivo(usuario.fotoUrl)}
+                    alt={nombreUsuario}
+                    className="app-avatar app-avatar--foto"
+                  />
+                ) : (
+                  <div className="app-avatar">{iniciales}</div>
                 )}
+                <div className="app-profile-text">
+                  <span className="app-profile-name">{nombreUsuario || "Usuario"}</span>
+                  {rolUsuario && <span className="app-profile-role">{rolUsuario}</span>}
+                </div>
+              </button>
 
-                <Link to="/soporte" onClick={() => setMenuPerfilAbierto(false)}>
-                  Centro de ayuda
-                </Link>
+              {menuPerfilAbierto && (
+                <div className="app-profile-dropdown">
+                  <Link to="/perfil" onClick={() => setMenuPerfilAbierto(false)}>
+                    Ver perfil
+                  </Link>
 
-                <button
-                  type="button"
-                  className="app-profile-dropdown-danger"
-                  onClick={handleCerrarSesion}
-                >
-                  Cerrar sesión
-                </button>
-              </div>
-            )}
-          </div>
+                  {esSuperAdmin(usuario?.rol) && (
+                    <Link to="/panel" onClick={() => setMenuPerfilAbierto(false)}>
+                      Panel de Administrador
+                    </Link>
+                  )}
+
+                  <Link to="/soporte" onClick={() => setMenuPerfilAbierto(false)}>
+                    Centro de ayuda
+                  </Link>
+
+                  <button
+                    type="button"
+                    className="app-profile-dropdown-danger"
+                    onClick={handleCerrarSesion}
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
@@ -468,13 +468,7 @@ export default function Inicio() {
               </span>
             </h1>
 
-            {usuario ? (
-              <p>Bienvenido de nuevo, {nombreUsuario.split(" ")[0] || "de nuevo"}.</p>
-            ) : (
-              <p>
-                hola este es el inicio 
-              </p>
-            )}
+            {usuario && <p>Bienvenido de nuevo, {nombreUsuario.split(" ")[0] || "de nuevo"}.</p>}
 
             <div className="hero__cta">
 
@@ -484,15 +478,6 @@ export default function Inicio() {
               >
                 Más información — Encuestas
               </Link>
-              {/* =====================================================
-          pensar en que apartado mandar esta informacion o que hacer con ese boton
-      ===================================================== */}
-              <a
-                className="cta-secondary"
-                href="#"
-              >
-                Más información — Clientes
-              </a>
             </div>
           </div>
         </div>
@@ -519,14 +504,14 @@ export default function Inicio() {
           <div className="section__header">
 
             <span className="section__eyebrow"
-            style={{
-                    color: "var(--gold-500)",
-                    fontSize: "20px",
-                  }}
-                >
+              style={{
+                color: "var(--gold-500)",
+                fontSize: "20px",
+              }}
+            >
               Resolución 2764 de 2022
             </span>
-                
+
 
             <h2>
               Factores evaluados por la batería
@@ -579,11 +564,11 @@ export default function Inicio() {
           <div className="section__header">
 
             <span className="section__eyebrow"
-            style={{
-                    color: "var(--gold-500)",
-                    fontSize: "20px",
-                  }}
-                >
+              style={{
+                color: "var(--gold-500)",
+                fontSize: "20px",
+              }}
+            >
               Por qué aplicarla
             </span>
 
@@ -624,34 +609,34 @@ export default function Inicio() {
 
       </section>
 
-        {/* =====================================================
+      {/* =====================================================
             CÓMO FUNCIONA
         ====================================================== */}
 
-        <section className="section como-funciona" id="como-funciona">
-          <div className="container">
+      <section className="section como-funciona" id="como-funciona">
+        <div className="container">
 
-            <h2 className="como-funciona__titulo">Cómo funciona</h2>
+          <h2 className="como-funciona__titulo">Cómo funciona</h2>
 
-            <div className="pasos">
-              {PASOS.map((paso, index) => {
-                const Icono = paso.icono;
-                return (
-                  <div className="paso" key={paso.titulo}>
-                    <div className="paso__circulo">
-                      <Icono size={28} />
-                    </div>
-                    <h4 className="paso__titulo">
-                      {index + 1}. {paso.titulo}
-                    </h4>
-                    <p className="paso__texto">{paso.texto}</p>
+          <div className="pasos">
+            {PASOS.map((paso, index) => {
+              const Icono = paso.icono;
+              return (
+                <div className="paso" key={paso.titulo}>
+                  <div className="paso__circulo">
+                    <Icono size={28} />
                   </div>
-                );
-              })}
-            </div>
-
+                  <h4 className="paso__titulo">
+                    {index + 1}. {paso.titulo}
+                  </h4>
+                  <p className="paso__texto">{paso.texto}</p>
+                </div>
+              );
+            })}
           </div>
-        </section>
+
+        </div>
+      </section>
 
 
       {/* =====================================================
@@ -783,7 +768,7 @@ export default function Inicio() {
             <div className="footer__col">
 
               <h5>
-                
+
                 Empresas
               </h5>
 
@@ -795,11 +780,6 @@ export default function Inicio() {
                   </Link>
                 </li>
 
-                <li>
-                  <a href="#psicologos">
-                    Para clientes
-                  </a>
-                </li>
               </ul>
             </div>
 
