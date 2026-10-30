@@ -418,6 +418,26 @@ def test_solo_reciben_jefe_administrador_y_responsable_activos(db_session, crear
     )
 
     jefe_invitado = _crear_usuario(db_session, "JEFE", es_invitado=True)
+    org_invitado = _crear_empresa(db_session, creada_por=jefe_invitado)
+    _participante(
+        db_session,
+        crear_paciente,
+        org_invitado,
+        evaluador,
+        fecha_fin=datetime(2026, 10, 14, 10, 0, tzinfo=LOCAL),
+        estado="COMPLETADA",
+    )
+
+    evaluador_dueno = _crear_usuario(db_session, "EVALUADOR_SST")
+    org_evaluador = _crear_empresa(db_session, creada_por=evaluador_dueno)
+    _participante(
+        db_session,
+        crear_paciente,
+        org_evaluador,
+        evaluador,
+        fecha_fin=datetime(2026, 10, 16, 10, 0, tzinfo=LOCAL),
+        estado="COMPLETADA",
+    )
 
     _participante(
         db_session,
@@ -438,6 +458,7 @@ def test_solo_reciben_jefe_administrador_y_responsable_activos(db_session, crear
     assert jefe_otro.email not in destinatarios
     assert jefe_inactivo.email not in destinatarios
     assert jefe_invitado.email not in destinatarios
+    assert evaluador_dueno.email not in destinatarios
 
 
 def test_los_limites_del_mes_usan_hora_de_colombia(db_session, crear_paciente, correos_enviados):
