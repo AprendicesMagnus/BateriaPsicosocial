@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { descargarExportacionPanel } from "../api/panel";
 import { subirImagenProducto } from "../api/productos";
-import { categoriasDe, CATEGORIAS_PRODUCTO, formatearCOP, imagenDe, useProductos } from "../data/products";
+import { categoriasDe, CATEGORIAS_PRODUCTO, formatearCOP, imagenDe, manejaStock, useProductos } from "../data/products";
 import "../styles/Planes.css";
 import "../styles/PanelAcciones.css";
 import "../styles/Catalogo.css";
@@ -11,6 +11,8 @@ const VACIO = {
   nombre: "",
   categoria: CATEGORIAS_PRODUCTO[0],
   precio: "",
+  stock: "0",
+  es_servicio: false,
   imagen_url: "",
 };
 
@@ -83,6 +85,8 @@ export default function PanelProductos() {
       nombre: producto.nombre,
       categoria: producto.categoria,
       precio: String(producto.precio),
+      stock: String(producto.stock ?? 0),
+      es_servicio: Boolean(producto.es_servicio),
       imagen_url: producto.imagen_url || "",
     });
   };
@@ -114,6 +118,17 @@ export default function PanelProductos() {
       precio,
       imagen_url: form.imagen_url.trim(),
     };
+
+    // Los servicios no llevan inventario.
+    datos.es_servicio = Boolean(form.es_servicio);
+    if (!form.es_servicio) {
+      const stock = Number(form.stock);
+      if (form.stock === "" || !Number.isInteger(stock) || stock < 0) {
+        setMensaje({ tipo: "error", texto: "El stock debe ser un número entero igual o mayor a 0." });
+        return;
+      }
+      datos.stock = stock;
+    }
 
     try {
       if (form.id) {
@@ -168,19 +183,48 @@ export default function PanelProductos() {
       {error && <div className="plan-mensaje plan-mensaje--error">{error}</div>}
 
       {form && (
-        <form className="plan-form" onSubmit={guardar} noValidate>
-          <label>
-            Nombre
-            <input
-              type="text"
-              maxLength={120}
-              value={form.nombre}
-              onChange={cambiar("nombre")}
-            />
-          </label>
+        <form className="plan-form producto-form" onSubmit={guardar} noValidate>
+          <h3 className="producto-form__titulo">{form.id ? "Editar producto" : "Nuevo producto"}</h3>
 
-          <label>
-            Categoría
+          <div className="producto-form__cuerpo">
+            <div className="producto-form__imagen">
+              <img className="producto-form__vista" src={imagenDe({ imagen_url: form.imagen_url })} alt="Vista previa" />
+              <label className="adm-btn adm-btn--borde producto-imagen__subir">
+                {subiendo ? "Subiendo…" : form.imagen_url ? "Cambiar imagen" : "Cargar imagen"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={elegirImagen}
+                  disabled={subiendo}
+                  hidden
+                />
+              </label>
+              {form.imagen_url && (
+                <button
+                  type="button"
+                  className="adm-accion adm-accion--peligro"
+                  onClick={() => setForm((a) => ({ ...a, imagen_url: "" }))}
+                >
+                  ✕ Quitar imagen
+                </button>
+              )}
+              <small>JPG, PNG o WEBP, máximo 3 MB.</small>
+            </div>
+
+            <div className="producto-form__campos">
+              <label className="producto-form__ancho">
+                Nombre
+                <input
+                  type="text"
+                  maxLength={120}
+                  placeholder="Ej: Cámara de seguridad Wi-Fi"
+                  value={form.nombre}
+                  onChange={cambiar("nombre")}
+                />
+              </label>
+
+              <label>
+                Categoría
             {categoriaNueva ? (
               <>
                 <input
@@ -222,57 +266,70 @@ export default function PanelProductos() {
                 <option value="__nueva__">➕ Nueva categoría…</option>
               </select>
             )}
-          </label>
+              </label>
 
-          <label>
-            Precio (COP)
-            <input
-              type="number"
-              min={1}
-              value={form.precio}
-              onChange={cambiar("precio")}
-            />
-          </label>
+              <label>
+                Precio (COP)
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="0"
+                  value={form.precio}
+                  onChange={cambiar("precio")}
+                />
+              </label>
 
-          <div className="producto-imagen">
-            <img className="producto-imagen__vista" src={imagenDe({ imagen_url: form.imagen_url })} alt="Vista previa" />
-            <div className="producto-imagen__campos">
-              <span>Imagen del producto</span>
-              <div className="producto-imagen__botones">
-                <label className="adm-btn adm-btn--borde producto-imagen__subir">
-                  {subiendo ? "Subiendo…" : form.imagen_url ? "Cambiar imagen" : "Cargar imagen"}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={elegirImagen}
-                    disabled={subiendo}
-                    hidden
-                  />
-                </label>
-                {form.imagen_url && (
+              <div className="producto-form__ancho producto-form__tipo">
+                <span>Tipo de producto</span>
+                <div className="producto-form__segmento" role="group" aria-label="Tipo de producto">
                   <button
                     type="button"
-                    className="adm-accion adm-accion--peligro"
-                    onClick={() => setForm((a) => ({ ...a, imagen_url: "" }))}
+                    className={!form.es_servicio ? "is-activo" : ""}
+                    aria-pressed={!form.es_servicio}
+                    onClick={() => setForm((a) => ({ ...a, es_servicio: false }))}
                   >
-                    ✕ Quitar
+                    📦 Producto con stock
                   </button>
-                )}
+                  <button
+                    type="button"
+                    className={form.es_servicio ? "is-activo" : ""}
+                    aria-pressed={form.es_servicio}
+                    onClick={() => setForm((a) => ({ ...a, es_servicio: true }))}
+                  >
+                    🛠️ Servicio (sin stock)
+                  </button>
+                </div>
               </div>
-              <small>JPG, PNG o WEBP, máximo 3 MB.</small>
+
+              {!form.es_servicio ? (
+                <label className="producto-form__ancho">
+                  Stock (unidades disponibles)
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={form.stock}
+                    onChange={cambiar("stock")}
+                  />
+                </label>
+              ) : (
+                <p className="producto-form__nota producto-form__ancho">
+                  Los servicios no llevan inventario: siempre aparecen disponibles en el catálogo.
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="plan-form__acciones">
-            <button type="submit" className="adm-btn adm-btn--dorado" disabled={subiendo}>
-              Guardar
-            </button>
+          <div className="producto-form__acciones">
             <button
               type="button"
               className="adm-btn adm-btn--borde"
               onClick={() => setForm(null)}
             >
               Cancelar
+            </button>
+            <button type="submit" className="adm-btn adm-btn--dorado" disabled={subiendo}>
+              {form.id ? "Guardar cambios" : "Crear producto"}
             </button>
           </div>
         </form>
@@ -289,6 +346,7 @@ export default function PanelProductos() {
                 <th>Producto</th>
                 <th>Categoría</th>
                 <th>Precio</th>
+                <th>Stock</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -313,6 +371,17 @@ export default function PanelProductos() {
                   </td>
                   <td>{formatearCOP(producto.precio)}</td>
                   <td>
+                    {!manejaStock(producto) ? (
+                      <span className="adm-chip adm-chip--info">Servicio</span>
+                    ) : producto.stock <= 0 ? (
+                      <span className="adm-chip adm-chip--peligro">Agotado</span>
+                    ) : producto.stock <= 5 ? (
+                      <span className="adm-chip adm-chip--aviso">{producto.stock} (bajo)</span>
+                    ) : (
+                      producto.stock
+                    )}
+                  </td>
+                  <td>
                     <div className="adm-acciones">
                       <button
                         type="button"
@@ -335,7 +404,7 @@ export default function PanelProductos() {
 
               {!productos.length && (
                 <tr>
-                  <td colSpan={5} className="adm-vacio">
+                  <td colSpan={6} className="adm-vacio">
                     No hay productos registrados.
                   </td>
                 </tr>

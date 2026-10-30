@@ -140,6 +140,7 @@ class RegistroRequest(BaseModel):
     rol: RolRegistro
     # Obligatorio solo para el Psicologo (se valida en el servicio): 6 dígitos numéricos.
     numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+    trustedDeviceToken: str | None = Field(default=None, max_length=512)
 
 
 class CambioPasswordPerfilRequest(BaseModel):
@@ -153,6 +154,7 @@ class InvitarUsuarioRequest(BaseModel):
     email: Correo
     rolCodigo: Literal["SUPER_ADMINISTRADOR", "ADMINISTRADOR", "JEFE", "EVALUADOR_SST"]
     numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+    trustedDeviceToken: str | None = Field(default=None, max_length=512)
 
 
 class ResolucionRequest(BaseModel):
@@ -170,6 +172,7 @@ class EmpresaActivaRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: Correo
     password: str = Field(min_length=1, max_length=72)
+    trustedDeviceToken: str | None = Field(default=None, max_length=512)
 
 
 class GoogleLoginRequest(BaseModel):
@@ -179,6 +182,17 @@ class GoogleLoginRequest(BaseModel):
     )
     rol: RolRegistro | None = None
     numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+    trustedDeviceToken: str | None = Field(default=None, max_length=512)
+
+
+class VerificarCodigoLoginRequest(BaseModel):
+    challengeToken: str = Field(min_length=20, max_length=1024)
+    codigo: str = Field(pattern=r"^\d{6}$")
+    confiarDispositivo: bool = False
+
+
+class ReenviarCodigoLoginRequest(BaseModel):
+    challengeToken: str = Field(min_length=20, max_length=1024)
 
 
 class VerificarEmailRequest(BaseModel):

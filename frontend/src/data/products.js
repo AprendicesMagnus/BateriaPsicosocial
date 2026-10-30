@@ -9,6 +9,9 @@ import {
 
 export const CATEGORIAS_PRODUCTO = ["SST", "Tecnología"];
 
+// Los servicios (es_servicio) no llevan inventario: siempre disponibles.
+export const manejaStock = (producto) => !producto?.es_servicio;
+
 // Categorías en uso: las base primero y luego las nuevas, en orden alfabético.
 export const categoriasDe = (productos = []) => {
   const enUso = new Set(productos.map((p) => p.categoria).filter(Boolean));

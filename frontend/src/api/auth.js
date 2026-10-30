@@ -22,3 +22,18 @@ export const resetPassword = (data) =>
   request("/auth/reset-password", { method: "POST", body: data });
 
 export const fetchMe = (token) => request("/auth/me", { token });
+export const verificarCodigoLogin = (data) =>
+  request("/auth/verify-login-code", { method: "POST", body: data });
+
+export const reenviarCodigoLogin = (challengeToken) =>
+  request("/auth/resend-login-code", { method: "POST", body: { challengeToken } });
+
+export const listarSesionesActivas = (token) => request("/auth/sessions", { token });
+export const cerrarSesionActiva = (token, id) =>
+  request(`/auth/sessions/${id}`, { method: "DELETE", token });
+export const cerrarOtrasSesiones = (token) =>
+  request("/auth/sessions/close-others", { method: "POST", token });
+export const cerrarSesionServidor = (token) =>
+  request("/auth/logout", { method: "POST", token });
+export const revocarDispositivosConfiables = (token) =>
+  request("/auth/trusted-devices", { method: "DELETE", token });

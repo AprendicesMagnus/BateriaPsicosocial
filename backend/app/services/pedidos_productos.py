@@ -10,7 +10,7 @@ from app.models.product import Producto
 from app.models.product_order import PagoPedidoProducto, PedidoProducto, PedidoProductoItem
 from app.models.user import Usuario
 from app.services import wompi as wompi_service
-from app.services.productos import _alertar_stock_bajo
+from app.services.productos import _alertar_stock_bajo, maneja_stock
 from app.services.notificaciones import notificar
 
 
@@ -160,7 +160,7 @@ def _reintegrar_stock(db: Session, pedido: PedidoProducto) -> None:
         if item.producto_id is None:
             continue
         producto = db.query(Producto).filter(Producto.id == item.producto_id).with_for_update().first()
-        if producto is not None:
+        if producto is not None and maneja_stock(producto):
             producto.stock += item.cantidad
     pedido.stock_reintegrado = True
 
@@ -195,7 +195,7 @@ def crear_pedido(db: Session, data, actual: Usuario) -> dict:
 
     for producto_id, cantidad in cantidades.items():
         producto = productos_por_id[producto_id]
-        if producto.stock < cantidad:
+        if maneja_stock(producto) and producto.stock < cantidad:
             raise AppError(409, f"Stock insuficiente para {producto.nombre}. Disponibles: {producto.stock}.")
         linea_subtotal = producto.precio * cantidad
         subtotal += linea_subtotal
@@ -217,6 +217,8 @@ def crear_pedido(db: Session, data, actual: Usuario) -> dict:
 
     for producto_id, cantidad in cantidades.items():
         producto = productos_por_id[producto_id]
+        if not maneja_stock(producto):
+            continue
         stock_anterior = producto.stock
         producto.stock -= cantidad
         if stock_anterior > 5 and producto.stock <= 5:

@@ -18,6 +18,11 @@ URL_PRODUCTOS = "/api/uploads/productos"
 
 
 
+def maneja_stock(producto: Producto) -> bool:
+    """Los servicios (es_servicio) no llevan inventario."""
+    return not producto.es_servicio
+
+
 def _categoria(valor: str) -> str:
     limpia = " ".join(valor.split())
     if len(limpia) < 2 or len(limpia) > 40:
@@ -26,7 +31,7 @@ def _categoria(valor: str) -> str:
 
 
 def _alertar_stock_bajo(db: Session, producto: Producto) -> None:
-    if producto.stock > 5:
+    if not maneja_stock(producto) or producto.stock > 5:
         return
     administradores = (
         db.query(Usuario)
@@ -45,6 +50,7 @@ def _alertar_stock_bajo(db: Session, producto: Producto) -> None:
 
 
 def _publico(producto: Producto) -> dict:
+    maneja = maneja_stock(producto)
     return {
         "id": str(producto.id),
         "nombre": producto.nombre,
@@ -52,9 +58,11 @@ def _publico(producto: Producto) -> dict:
         "precio": producto.precio,
         "imagen_url": producto.imagen_url,
         "activo": producto.activo,
+        "es_servicio": producto.es_servicio,
+        "maneja_stock": maneja,
         "stock": producto.stock,
-        "agotado": producto.stock <= 0,
-        "stock_bajo": 0 < producto.stock <= 5,
+        "agotado": maneja and producto.stock <= 0,
+        "stock_bajo": maneja and 0 < producto.stock <= 5,
     }
 
 
@@ -87,6 +95,7 @@ def crear_producto(db: Session, data) -> dict:
         imagen_url=imagen_url,
         activo=data.activo,
         stock=data.stock,
+        es_servicio=data.es_servicio,
     )
     db.add(producto)
     db.flush()
@@ -118,6 +127,9 @@ def actualizar_producto(db: Session, producto_id, data) -> dict:
 
     if "activo" in cambios and cambios["activo"] is not None:
         producto.activo = cambios["activo"]
+
+    if "es_servicio" in cambios and cambios["es_servicio"] is not None:
+        producto.es_servicio = cambios["es_servicio"]
 
     if "stock" in cambios and cambios["stock"] is not None:
         producto.stock = cambios["stock"]

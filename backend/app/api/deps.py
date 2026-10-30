@@ -10,6 +10,8 @@ from app.core.errors import AppError
 from app.core.security import decodificar_token
 from app.db.session import get_db
 from app.models.organization import Organizacion
+from app.models.security import SesionActiva
+from app.core.crypto import utcnow
 from app.models.user import Permiso, Rol, RolPermiso, Usuario
 
 bearer = HTTPBearer(auto_error=False)
@@ -23,9 +25,29 @@ def get_current_user(
     if credenciales is None:
         raise AppError(401, "No autenticado.")
     payload = decodificar_token(credenciales.credentials)
-    if payload.get("purpose") == "reset_password":
+    # Los tokens de recuperación y los retos 2FA nunca son tokens de sesión.
+    if payload.get("purpose") is not None:
         raise AppError(401, "Sesión inválida o expirada.")
     usuario_id = payload.get("sub")
+    try:
+        usuario_uuid = UUID(str(usuario_id))
+    except (TypeError, ValueError):
+        raise AppError(401, "Sesión inválida o expirada.")
+    session_id = payload.get("sid")
+    if session_id:
+        sesion = db.query(SesionActiva).filter(
+            SesionActiva.token_id == session_id,
+            SesionActiva.usuario_id == usuario_uuid,
+            SesionActiva.revocada.is_(False),
+            SesionActiva.expiracion > utcnow(),
+        ).first()
+        if sesion is None:
+            raise AppError(401, "Esta sesión fue cerrada o expiró. Inicia sesión nuevamente.")
+        ahora = utcnow()
+        if (ahora - sesion.ultimo_acceso).total_seconds() >= 60:
+            sesion.ultimo_acceso = ahora
+            db.commit()
+    request.state.token_id = session_id
     usuario = (
         db.query(Usuario)
         .options(
@@ -33,7 +55,7 @@ def get_current_user(
             .joinedload(Rol.permisos)
             .joinedload(RolPermiso.permiso)
         )
-        .filter(Usuario.id == usuario_id)
+        .filter(Usuario.id == usuario_uuid)
         .first()
     )
     if usuario is None:

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { categoriasDe, formatearCOP, imagenDe, useProductos } from "../data/products";
+import { categoriasDe, formatearCOP, imagenDe, manejaStock, useProductos } from "../data/products";
 import "../styles/Planes.css";
 import "../styles/Catalogo.css";
 
@@ -67,8 +67,8 @@ export default function ModalCatalogo({ onCerrar }) {
                       <div className="producto-card__cuerpo">
                         <h4>{producto.nombre}</h4>
                         <strong>{formatearCOP(producto.precio)}</strong>
-                        <span className={`producto-stock ${producto.stock <= 0 ? "producto-stock--agotado" : producto.stock <= 5 ? "producto-stock--bajo" : ""}`}>
-                          {producto.stock <= 0 ? "Agotado" : producto.stock <= 5 ? `Últimas ${producto.stock} unidades` : "Disponible"}
+                        <span className={`producto-stock ${manejaStock(producto) && producto.stock <= 0 ? "producto-stock--agotado" : manejaStock(producto) && producto.stock <= 5 ? "producto-stock--bajo" : ""}`}>
+                          {!manejaStock(producto) ? "Servicio disponible" : producto.stock <= 0 ? "Agotado" : producto.stock <= 5 ? `Últimas ${producto.stock} unidades` : "Disponible"}
                         </span>
                       </div>
                     </article>
