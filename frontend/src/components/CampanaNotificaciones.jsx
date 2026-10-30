@@ -15,6 +15,7 @@ const DESTINOS_POR_TIPO = {
   SOPORTE_MENSAJE: { ruta: "/panel", state: { seccion: "soporte", vista: "mensajes" } },
   COMPRA_APROBADA: "/perfil",
   INFORME_GENERADO: "/reportes",
+  RECORDATORIO_REAPLICACION: "/dashboard",
 
 };
 

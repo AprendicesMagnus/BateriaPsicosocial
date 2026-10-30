@@ -155,6 +155,25 @@ def _tarea_limpiar_enlaces() -> None:
         db.close()
 
 
+def _tarea_reaplicacion_diaria() -> None:
+    """Avisa a las empresas que deben volver a aplicar la bateria (12 meses desde la ultima aplicacion)."""
+    from app.db.session import SessionLocal
+    from app.services.reaplicacion import enviar_recordatorios_reaplicacion
+
+    db = SessionLocal()
+    try:
+        resultado = enviar_recordatorios_reaplicacion(db)
+        logger.info(
+            "Scheduler reaplicacion: empresas=%s, avisos=%s",
+            resultado["empresasRevisadas"],
+            resultado["avisosEnviados"],
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Error en scheduler de reaplicacion: %s", exc, exc_info=True)
+    finally:
+        db.close()
+
+
 @app.on_event("startup")
 def iniciar_scheduler() -> None:
     _scheduler.add_job(
@@ -170,6 +189,14 @@ def iniciar_scheduler() -> None:
         "interval",
         hours=4,
         id="limpiar_enlaces",
+        replace_existing=True,
+    )
+    _scheduler.add_job(
+        _tarea_reaplicacion_diaria,
+        "cron",
+        hour=8,
+        minute=30,
+        id="reaplicacion_diaria",
         replace_existing=True,
     )
     _scheduler.start()
