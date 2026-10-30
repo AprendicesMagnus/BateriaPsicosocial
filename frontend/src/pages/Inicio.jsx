@@ -11,6 +11,7 @@ import { urlArchivo } from "../api/client";
 import { esSuperAdmin, etiquetaRol } from "../utils/roles";
 import CampanaNotificaciones from "../components/CampanaNotificaciones";
 import TiendaMenu from "../components/TiendaMenu";
+import PrimerosPasos from "../components/PrimerosPasos";
 
 
 
@@ -497,6 +498,12 @@ export default function Inicio() {
         </div>
 
       </section>
+
+      {/* =====================================================
+          PRIMEROS PASOS
+      ====================================================== */}
+
+      <PrimerosPasos />
 
       {/* =====================================================
           FACTORES

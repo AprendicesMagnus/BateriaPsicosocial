@@ -1,0 +1,107 @@
+.primeros-pasos {
+  padding: 32px 0 8px;
+  background: var(--bg-100);
+}
+.primeros-pasos__tarjeta {
+  background: var(--white);
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+.primeros-pasos__cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.primeros-pasos__titulo {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--navy-800);
+}
+.primeros-pasos__progreso {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-500);
+}
+.primeros-pasos__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.primeros-pasos__paso {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--ink-900);
+  background: var(--white);
+}
+a.primeros-pasos__paso:hover {
+  border-color: var(--gold-500);
+}
+a.primeros-pasos__paso:focus-visible {
+  outline: 2px solid var(--navy-800);
+  outline-offset: 2px;
+}
+.primeros-pasos__paso--hecho {
+  background: var(--bg-100);
+}
+.primeros-pasos__paso--bloqueado {
+  opacity: 0.75;
+}
+.primeros-pasos__marca {
+  flex: 0 0 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: var(--navy-800);
+  color: var(--white);
+}
+.primeros-pasos__paso--hecho .primeros-pasos__marca {
+  background: var(--success-600);
+}
+.primeros-pasos__cuerpo {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.primeros-pasos__nombre {
+  font-weight: 700;
+}
+.primeros-pasos__descripcion {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+.primeros-pasos__estado {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-500);
+}
+.primeros-pasos__paso--hecho .primeros-pasos__estado {
+  color: var(--success-600);
+}
+@media (max-width: 600px) {
+  .primeros-pasos__paso {
+    flex-wrap: wrap;
+  }
+  .primeros-pasos__estado {
+    flex-basis: 100%;
+    padding-left: 46px;
+  }
+}
