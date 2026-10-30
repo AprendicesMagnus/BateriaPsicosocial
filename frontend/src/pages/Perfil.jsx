@@ -17,6 +17,7 @@ import {
   guardarMiResolucion,
 } from "../api/perfil";
 import { listarPedidosUsuarioProductos } from "../api/pedidosProductos";
+import PerfilPrivacidad from "../components/PerfilPrivacidad";
 
 import {
   TEXTO_AYUDA_PASSWORD,
@@ -1054,6 +1055,11 @@ export default function Perfil() {
                       </div>
                     )}
                   </div>
+                  <PerfilPrivacidad
+                    token={token}
+                    puedeSolicitarEliminacion={!esSuperAdmin}
+                    onMensaje={setMensajeOk}
+                  />
                   <div className="perfil-actions">
                     <button
                       type="button"

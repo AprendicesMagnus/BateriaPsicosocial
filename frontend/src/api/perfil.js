@@ -1,4 +1,4 @@
-import { request } from "./client";
+import { request, API_URL } from "./client";
 
 // Edición de perfil (nombre, apellido, foto). Se envía como multipart/form-data.
 export function editarPerfil(token, { nombre, apellido, foto }) {
@@ -80,4 +80,34 @@ export function verificarResolucion(token, usuarioId, verificada) {
 export const invitarUsuario = (token, body) => request("/usuarios/invitar", { method: "POST", body, token });
 export const editarUsuarioAdmin = (token, id, body) => request(`/usuarios/${id}`, { method: "PATCH", body, token });
 export const reenviarCodigoVerificacion = (email) =>
-  request("/auth/reenviar-codigo", { method: "POST", body: { email, tipo: "VERIFICACION_EMAIL" } });
+  request("/auth/resend-code", { method: "POST", body: { email, tipo: "VERIFICACION_EMAIL" } });
+
+// Derechos del titular: descarga una copia de los datos propios como archivo JSON.
+export async function descargarMisDatos(token) {
+  let res;
+  try {
+    res = await fetch(`${API_URL}/usuarios/me/datos`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error("No se pudo conectar con el servidor. Verifica que el backend esté corriendo.");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "No fue posible descargar tus datos.");
+  }
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const fecha = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mis-datos-magnussig-${fecha}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+// Derechos del titular: solicita la eliminacion de la cuenta (llega al Centro de ayuda). El motivo es opcional.
+export const solicitarEliminacionCuenta = (token, motivo) =>
+  request("/usuarios/me/solicitar-eliminacion", { method: "POST", body: motivo ? { motivo } : {}, token });
