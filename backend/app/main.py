@@ -235,3 +235,8 @@ def detener_scheduler() -> None:
     if _scheduler.running:
         _scheduler.shutdown(wait=False)
         logger.info("Scheduler de recordatorios detenido.")
+
+
+@app.get("/")
+def root():
+    return {"status": "ok"}

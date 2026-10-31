@@ -110,7 +110,9 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
     setRespuestas((prev) => ({ ...prev, [preguntaId]: valor }));
     setGuardando(true);
     try {
-      await guardarRespuesta(token, evaluacionId, preguntaId, valor);
+      // El backend identifica la pregunta por su código (p. ej. "EST_12"), no por su UUID
+      const codigo = preguntas.find((p) => p.id === preguntaId)?.codigo;
+      await guardarRespuesta(token, evaluacionId, codigo, valor);
     } catch (err) {
       setErrorMsg(`Error guardando respuesta: ${err.message}`);
     } finally {

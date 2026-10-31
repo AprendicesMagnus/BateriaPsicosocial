@@ -110,6 +110,7 @@ def _guardar_ficha(client, headers_pac, eval_id, **cambios):
         "tipoContrato": "Indefinido",
         "horasDiarias": 8,
         "tipoSalario": "Fijo",
+        "tienePersonalACargo": True,
     }
     datos.update(cambios)
     res = client.post(f"/api/evaluaciones/{eval_id}/ficha", headers=headers_pac, json=datos)
@@ -180,7 +181,7 @@ def _verificar_resultados_tabulados(client, headers_admin, eval_id, n_intralabor
 
 def test_seed_crea_cinco_versiones_con_preguntas_correctas(db_session):
     esperados = {
-        "FICHA_DATOS": 21,
+        "FICHA_DATOS": 22,
         "ESTRES": 31,
         "EXTRALABORAL": 31,
         "INTRALABORAL_A": 123,
@@ -217,6 +218,7 @@ def test_guardar_ficha_jefatura_asigna_intralaboral_a(client, crear_paciente):
         nombreCompleto="Carlos Jefe",
         nombreCargo="Director General",
         tipoCargo=TIPO_CARGO_JEFATURA,
+        tienePersonalACargo=True,
     )
     assert ficha["intralaboralAsignado"] == "INTRALABORAL_A"
 
@@ -236,6 +238,7 @@ def test_guardar_ficha_auxiliar_asigna_intralaboral_b(client, crear_paciente):
         sexo="Femenino",
         nombreCargo="Auxiliar de Archivo",
         tipoCargo=TIPO_CARGO_AUXILIAR,
+        tienePersonalACargo=False,
     )
     assert ficha["intralaboralAsignado"] == "INTRALABORAL_B"
 
@@ -255,6 +258,7 @@ def test_participante_no_puede_tener_ambas_formas_intralaboral(client, crear_pac
         nombreCompleto="Pedro Cambio",
         nombreCargo="Supervisor",
         tipoCargo=TIPO_CARGO_JEFATURA,
+        tienePersonalACargo=True,
     )
     assert ficha1["intralaboralAsignado"] == "INTRALABORAL_A"
 
@@ -268,6 +272,7 @@ def test_participante_no_puede_tener_ambas_formas_intralaboral(client, crear_pac
         nombreCompleto="Pedro Cambio",
         nombreCargo="Supervisor",
         tipoCargo=TIPO_CARGO_OPERARIO,
+        tienePersonalACargo=False,
     )
     assert ficha2["intralaboralAsignado"] == "INTRALABORAL_B"
 
@@ -294,6 +299,7 @@ def test_get_cuestionario_resuelve_instrumento_real_pendiente(client, crear_paci
         nombreCompleto="Pedro Operario",
         nombreCargo="Operario de Producción",
         tipoCargo=TIPO_CARGO_OPERARIO,
+        tienePersonalACargo=False,
     )
     assert ficha["intralaboralAsignado"] == "INTRALABORAL_B"
 
@@ -350,6 +356,7 @@ def test_crear_evaluacion_sin_version_id_inicializa_los_5_instrumentos_reales(cl
         nombreCompleto="Jorge Operario",
         nombreCargo="Técnico Mantenimiento",
         tipoCargo=TIPO_CARGO_OPERARIO,
+        tienePersonalACargo=False,
     )
     assert ficha["intralaboralAsignado"] == "INTRALABORAL_B"
 
@@ -390,6 +397,7 @@ def test_flujo_completo_evaluacion_real_tabula_todas_las_dimensiones(client, cre
         nombreCompleto="Pedro Auxiliar",
         nombreCargo="Auxiliar Bodega",
         tipoCargo=TIPO_CARGO_AUXILIAR,
+        tienePersonalACargo=False,
     )
     assert ficha["intralaboralAsignado"] == "INTRALABORAL_B"
 
@@ -422,6 +430,7 @@ def test_flujo_completo_evaluacion_real_tabula_todas_las_dimensiones_forma_a(cli
         nombreCompleto="Carlos Jefe",
         nombreCargo="Director General",
         tipoCargo=TIPO_CARGO_JEFATURA,
+        tienePersonalACargo=True,
     )
     assert ficha["intralaboralAsignado"] == "INTRALABORAL_A"
 

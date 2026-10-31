@@ -141,6 +141,7 @@ class RegistroRequest(BaseModel):
     aceptaPolitica: bool = False
     # Obligatorio solo para el Psicologo (se valida en el servicio): 6 dígitos numéricos.
     numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+    trustedDeviceToken: str | None = Field(default=None, max_length=512)
 
 
 class CambioPasswordPerfilRequest(BaseModel):
@@ -154,6 +155,7 @@ class InvitarUsuarioRequest(BaseModel):
     email: Correo
     rolCodigo: Literal["SUPER_ADMINISTRADOR", "ADMINISTRADOR", "JEFE", "EVALUADOR_SST"]
     numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+    trustedDeviceToken: str | None = Field(default=None, max_length=512)
 
 
 class SolicitudEliminacionRequest(BaseModel):
@@ -175,6 +177,7 @@ class EmpresaActivaRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: Correo
     password: str = Field(min_length=1, max_length=72)
+    trustedDeviceToken: str | None = Field(default=None, max_length=512)
 
 
 class GoogleLoginRequest(BaseModel):
@@ -185,6 +188,17 @@ class GoogleLoginRequest(BaseModel):
     rol: RolRegistro | None = None
     aceptaPolitica: bool = False
     numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+    trustedDeviceToken: str | None = Field(default=None, max_length=512)
+
+
+class VerificarCodigoLoginRequest(BaseModel):
+    challengeToken: str = Field(min_length=20, max_length=1024)
+    codigo: str = Field(pattern=r"^\d{6}$")
+    confiarDispositivo: bool = False
+
+
+class ReenviarCodigoLoginRequest(BaseModel):
+    challengeToken: str = Field(min_length=20, max_length=1024)
 
 
 class VerificarEmailRequest(BaseModel):
@@ -438,6 +452,7 @@ class ProductoCreate(BaseModel):
     precio: int = Field(gt=0)
     imagen_url: str = Field(default="", max_length=500)
     activo: bool = True
+    stock: int = Field(default=0, ge=0)
 
 
 class ProductoUpdate(BaseModel):
@@ -446,6 +461,7 @@ class ProductoUpdate(BaseModel):
     precio: int | None = Field(default=None, gt=0)
     imagen_url: str | None = Field(default=None, max_length=500)
     activo: bool | None = None
+    stock: int | None = Field(default=None, ge=0)
 
 
 class PedidoProductoItemCreate(BaseModel):
@@ -455,6 +471,10 @@ class PedidoProductoItemCreate(BaseModel):
 
 class PedidoProductoCreate(BaseModel):
     items: list[PedidoProductoItemCreate] = Field(min_length=1, max_length=100)
+
+
+class PedidoProductoEstadoUpdate(BaseModel):
+    estado: str = Field(min_length=3, max_length=30)
 
 
 class RespuestaEnvio(BaseModel):
@@ -687,6 +707,12 @@ class FichaDatosRequest(BaseModel):
         validation_alias=AliasChoices(
             "area_departamento",
             "areaODepartamento",
+        ),
+    )
+    tiene_personal_a_cargo: bool = Field(
+        validation_alias=AliasChoices(
+            "tiene_personal_a_cargo",
+            "tienePersonalACargo",
         ),
     )
 

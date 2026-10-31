@@ -59,6 +59,11 @@
   color: var(--ink-900);
 }
 
+.reportes-enlace-solo-badge {
+  font-weight: 500;
+  color: #2e7869;
+}
+
 .reportes-item-desc {
   font-size: 12px;
   color: var(--ink-500);

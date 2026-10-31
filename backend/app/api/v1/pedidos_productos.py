@@ -3,9 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user, get_db, require_comprador, require_admin
 from app.models.user import Usuario
-from app.schemas.common import PagoPedidoProductoCreate, PedidoProductoCreate
+from app.schemas.common import PagoPedidoProductoCreate, PedidoProductoCreate, PedidoProductoEstadoUpdate
 from app.services import pedidos_productos as pedidos_service
 
 
@@ -16,7 +16,7 @@ router = APIRouter()
 def crear_pedido(
     data: PedidoProductoCreate,
     db: Session = Depends(get_db),
-    actual: Usuario = Depends(get_current_user),
+    actual: Usuario = Depends(require_comprador),
 ):
     return pedidos_service.crear_pedido(db, data, actual)
 
@@ -34,7 +34,7 @@ def listar_pedidos_usuario(
 def procesar_pago(
     data: PagoPedidoProductoCreate,
     db: Session = Depends(get_db),
-    actual: Usuario = Depends(get_current_user),
+    actual: Usuario = Depends(require_comprador),
 ):
     return pedidos_service.procesar_pago(db, data, actual)
 
@@ -52,9 +52,19 @@ def obtener_pedido(
 def preparar_checkout_wompi(
     pedido_id: UUID,
     db: Session = Depends(get_db),
-    actual: Usuario = Depends(get_current_user),
+    actual: Usuario = Depends(require_comprador),
 ):
     return pedidos_service.preparar_checkout_wompi(db, pedido_id, actual)
+
+
+@router.patch("/{pedido_id}/estado")
+def actualizar_estado_pedido(
+    pedido_id: UUID,
+    data: PedidoProductoEstadoUpdate,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_admin),
+):
+    return pedidos_service.actualizar_estado_envio(db, pedido_id, data.estado, actual)
 
 
 @router.post("/{pedido_id}/cancelar")

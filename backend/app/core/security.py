@@ -15,11 +15,11 @@ def crear_token(datos: dict[str, Any], minutos: int) -> str:
     return jwt.encode(payload, settings.jwt_secret, algorithm=ALGORITMO)
 
 
-def crear_token_sesion(usuario_id: str, rol: str, email: str) -> str:
-    return crear_token(
-        {"sub": usuario_id, "rol": rol, "email": email},
-        settings.jwt_expira_minutos,
-    )
+def crear_token_sesion(usuario_id: str, rol: str, email: str, session_id: str | None = None) -> str:
+    datos = {"sub": usuario_id, "rol": rol, "email": email}
+    if session_id:
+        datos["sid"] = session_id
+    return crear_token(datos, settings.jwt_expira_minutos)
 
 
 def crear_token_reset(usuario_id: str) -> str:

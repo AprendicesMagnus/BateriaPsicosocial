@@ -439,3 +439,17 @@
     padding: 28px 24px;
   }
 }
+/* Verificación adicional de inicio de sesión */
+.login-2fa { width: 100%; max-width: 430px; margin: 0 auto; text-align: center; }
+.login-2fa__icon { font-size: 34px; margin: 4px 0 12px; }
+.login-2fa h2 { margin: 0 0 8px; color: #172b4d; font-size: 22px; }
+.login-2fa p { margin: 0 0 22px; color: #64748b; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.login-2fa__code { text-align: center; letter-spacing: .35em; font-size: 22px; font-weight: 700; }
+.login-2fa__trust { display: flex; align-items: flex-start; gap: 9px; text-align: left; color: #334155; font-size: 13px; margin: 8px 0 14px; }
+.login-2fa__trust input { margin-top: 2px; }
+.login-2fa__error, .login-2fa__success { padding: 10px 12px; border-radius: 8px; font-size: 13px; margin: 8px 0; }
+.login-2fa__error { color: #991b1b; background: #fee2e2; }
+.login-2fa__success { color: #166534; background: #dcfce7; }
+.login-2fa__link, .login-2fa__cancel { display: block; width: 100%; border: 0; background: transparent; padding: 10px; color: #174a73; cursor: pointer; font: inherit; font-size: 13px; }
+.login-2fa__link:disabled { opacity: .6; cursor: wait; }
+.login-2fa__cancel { color: #64748b; }

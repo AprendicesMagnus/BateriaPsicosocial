@@ -14,6 +14,7 @@ from app.models.audit import Auditoria
 from app.models.commercial import Compra
 from app.models.organization import Organizacion
 from app.models.product import Producto
+from app.services.productos import maneja_stock
 from app.models.user import Usuario
 from app.services import panel as panel_service
 from app.services.panel import TIPO_POR_ACCION
@@ -248,7 +249,7 @@ def exportar_tabla_excel(
 
     elif tabla == "productos":
         ws.title = "Inventario de productos"
-        ws.append(["Producto", "Categoría", "Precio (COP)", "Estado", "Imagen", "Creado", "Actualizado"])
+        ws.append(["Producto", "Categoría", "Precio (COP)", "Stock", "Estado", "Imagen", "Creado", "Actualizado"])
         productos = db.query(Producto).order_by(Producto.categoria.asc(), Producto.nombre.asc()).all()
         for pr in productos:
             if b_norm and b_norm not in _normalizar(pr.nombre) and b_norm not in _normalizar(pr.categoria):
@@ -257,6 +258,7 @@ def exportar_tabla_excel(
                 pr.nombre,
                 pr.categoria,
                 pr.precio,
+                pr.stock if maneja_stock(pr) else "No aplica (servicio)",
                 "Activo" if pr.activo else "Inactivo",
                 "Sí" if pr.imagen_url else "No",
                 _formato_fecha(pr.creado_en),

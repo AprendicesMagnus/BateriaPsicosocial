@@ -1,8 +1,9 @@
 import os
+import re
 from uuid import UUID
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import FileResponse, StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.roles import ROLES_EVALUADOR
@@ -16,9 +17,11 @@ from app.api.deps import (
 from app.core.errors import AppError
 from app.db.session import get_db
 from app.models.evaluation import Evaluacion, Informe
+from app.models.organization import Organizacion
 from app.models.user import Usuario
 from app.services import auditoria as auditoria_service
 from app.services import informes as informes_service
+from app.services.informes_excel import generar_zip_informes_empresa
 
 router = APIRouter()
 
@@ -31,7 +34,6 @@ class InformeIndividualCreateRequest(BaseModel):
 class InformeAgrupadoCreateRequest(BaseModel):
     evaluacionId: UUID
     areaId: UUID | None = None
-    formato: str = Field(default="PDF", pattern=r"^(PDF|EXCEL|CSV)$")
 
 
 def _asegurar_evaluacion_accesible(db: Session, evaluacion_id: UUID, actual: Usuario) -> None:
@@ -89,28 +91,44 @@ def generar_informe_agrupado(
     db: Session = Depends(get_db),
     actual: Usuario = Depends(require_generador_informes),
 ):
-    _asegurar_evaluacion_accesible(db, data.evaluacionId, actual)
-    informe = informes_service.generar_informe_agrupado(
-        db, data.evaluacionId, data.areaId, actual.id, data.formato
-    )
+    """Genera y descarga en un ZIP las plantillas Excel llenas, filtradas a la evaluación
+    (y, si se indica, al área) seleccionada."""
+    evaluacion = db.query(Evaluacion).filter(Evaluacion.id == data.evaluacionId).first()
+    if evaluacion is None:
+        raise AppError(404, "Evaluación no encontrada.")
+    asegurar_acceso_organizacion_db(db, actual, evaluacion.organizacion_id)
+
+    try:
+        archivo_zip = generar_zip_informes_empresa(
+            db=db,
+            organizacion_id=evaluacion.organizacion_id,
+            evaluacion_id=data.evaluacionId,
+            area_id=data.areaId,
+            aplicar_minimo_anonimato=True,
+        )
+    except FileNotFoundError as exc:
+        raise AppError(500, str(exc))
+    except ValueError as exc:
+        raise AppError(400, str(exc))
+
     auditoria_service.registrar_auditoria(
         db,
         usuario=actual,
         accion="INFORME_AGRUPADO_GENERADO",
-        entidad="Informe",
-        entidad_id=str(informe.id),
+        entidad="Evaluacion",
+        entidad_id=str(data.evaluacionId),
         request=request,
     )
-    return {
-        "id": str(informe.id),
-        "tipo": informe.tipo,
-        "formato": informe.formato,
-        "rutaArchivo": informe.ruta_archivo,
-        "generadoEn": informe.generado_en.isoformat(),
-        "anonimizado": informe.anonimizado,
-        "codigoVerificacion": informe.codigo_verificacion,
-        "hashSha256": informe.hash_sha256,
-    }
+
+    nombre_archivo = f"Informe_Agrupado_{data.evaluacionId}.zip"
+    return StreamingResponse(
+        archivo_zip,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo}"',
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
+    )
 
 
 @router.get("/verificar/{codigo}")
@@ -172,4 +190,53 @@ def descargar_informe(
         path=informe.ruta_archivo,
         filename=filename,
         media_type=media_type,
+    )
+
+
+@router.get("/empresa/{organizacion_id}/excel/zip")
+def descargar_informes_empresa_zip(
+    organizacion_id: UUID,
+    request: Request,
+    evaluacion_id: UUID | None = Query(None),
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_generador_informes),
+):
+    """ZIP con los informes Excel llenos.
+
+    Sin evaluacion_id se incluyen todas las evaluaciones de la empresa (cada enlace de
+    pacientes es una evaluación distinta); con evaluacion_id, solo esa evaluación.
+    """
+    asegurar_acceso_organizacion_db(db, actual, organizacion_id)
+
+    try:
+        archivo_zip = generar_zip_informes_empresa(
+            db=db,
+            organizacion_id=organizacion_id,
+            evaluacion_id=evaluacion_id,
+        )
+    except FileNotFoundError as exc:
+        raise AppError(500, str(exc))
+    except ValueError as exc:
+        raise AppError(400, str(exc))
+
+    auditoria_service.registrar_auditoria(
+        db,
+        usuario=actual,
+        accion="INFORMES_EXCEL_DESCARGADOS",
+        entidad="Evaluacion" if evaluacion_id else "Organizacion",
+        entidad_id=str(evaluacion_id or organizacion_id),
+        request=request,
+    )
+
+    organizacion = db.query(Organizacion).filter(Organizacion.id == organizacion_id).first()
+    nombre_empresa = re.sub(r"[^0-9A-Za-z]+", "_", organizacion.nombre if organizacion else "").strip("_")
+    nombre_archivo = f"Informes_{nombre_empresa or organizacion_id}.zip"
+
+    return StreamingResponse(
+        archivo_zip,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo}"',
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
     )

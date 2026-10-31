@@ -901,6 +901,97 @@ body {
   background: #256658;
 }
 
+.modal-main-button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+
+/* FORMA A / FORMA B (y botones de enlace de un solo cuestionario) */
+
+.modal-type-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-type-btn {
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  background: #f7f9f7;
+  border: 1px solid #e2e8e5;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.modal-type-btn:hover:not(:disabled) {
+  background: #eef6f3;
+  border-color: #2e7869;
+  transform: translateX(3px);
+}
+
+.modal-type-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.modal-type-btn strong {
+  display: block;
+  color: #17324d;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.modal-type-btn span {
+  display: block;
+  color: #89928f;
+  font-size: 13px;
+}
+
+
+/* ENLACE PARA UN SOLO CUESTIONARIO */
+
+.modal-enlace-solo {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8e5;
+}
+
+.modal-enlace-solo > p {
+  margin: 0 0 10px;
+  text-align: center;
+  color: #89928f;
+  font-size: 13px;
+}
+
+.modal-enlace-solo .modal-type-buttons {
+  flex-direction: row;
+}
+
+.modal-type-btn--enlace {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2e7869;
+}
+
+.enlace-solo__input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.enlace-solo__input:focus {
+  outline: none;
+  border-color: #2e7869;
+}
+
 
 .indicator-row {
   display: grid;

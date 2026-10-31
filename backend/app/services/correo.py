@@ -97,3 +97,12 @@ def enviar_codigo_verificacion(destino: str, nombre: str, codigo: str, tipo: str
             "Vence en 15 minutos."
         )
     return enviar_correo(destino, asunto, texto)
+
+def enviar_codigo_2fa(destino: str, nombre: str, codigo: str) -> bool:
+    asunto = "Magnus|SIG - Código de seguridad para iniciar sesión"
+    texto = (
+        f"Hola {nombre}, tu código de seguridad para iniciar sesión es: {codigo}. "
+        "Este código vence en 5 minutos y solo puede utilizarse una vez. "
+        "Si no solicitaste este código, puedes ignorar este mensaje."
+    )
+    return enviar_correo(destino, asunto, texto)

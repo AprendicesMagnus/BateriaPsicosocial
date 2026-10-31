@@ -31,3 +31,6 @@ export const cancelarPedidoProductos = (token, id) =>
 
 export const listarPedidosUsuarioProductos = (token, usuarioId) =>
   request(`/pedidos-productos/usuario/${usuarioId}`, { token });
+
+export const actualizarEstadoPedidoProductos = (token, id, estado) =>
+  request(`/pedidos-productos/${id}/estado`, { method: "PATCH", body: { estado }, token });

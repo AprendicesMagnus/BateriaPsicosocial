@@ -6,8 +6,12 @@ export async function fetchEnlaces(token) {
   return request("/enlaces", { token });
 }
 
-export async function crearEnlace(token, nombre) {
-  return request("/enlaces", { method: "POST", token, body: { nombre } });
+// opciones.instrumento restringe el enlace a un solo cuestionario (FICHA_DATOS, ESTRES,
+// EXTRALABORAL, INTRALABORAL_A o INTRALABORAL_B); opciones.ruta es la página (Forma A/B) a la
+// que se envía al paciente al empezar. Sin opciones se crea el enlace de la batería completa.
+export async function crearEnlace(token, nombre, opciones = {}) {
+  const { instrumento, ruta } = opciones;
+  return request("/enlaces", { method: "POST", token, body: { nombre, instrumento, ruta } });
 }
 
 // Quita el enlace de la lista. Si ya lo usó un paciente, su encuesta se conserva.

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchMe } from "../api/auth";
+import { fetchMe, cerrarSesionServidor } from "../api/auth";
 import { hayPagoEnCurso } from "../utils/pagoPendiente";
 
 const AuthContext = createContext(null);
@@ -37,8 +37,9 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener("auth:expirada", alExpirar);
   }, []);
 
-  function iniciarSesion(nuevoToken, nuevoUsuario) {
+  function iniciarSesion(nuevoToken, nuevoUsuario, trustedDeviceToken) {
     localStorage.setItem(STORAGE_KEY, nuevoToken);
+    if (trustedDeviceToken) localStorage.setItem("magnussing_dispositivo_confiable", trustedDeviceToken);
     // Sesión nueva = actividad reciente (evita heredar una marca vieja de una sesión anterior)
     localStorage.setItem(ACTIVIDAD_KEY, String(Date.now()));
     // Un inicio de sesión normal ya no es el de un paciente del enlace
@@ -66,6 +67,8 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    const tokenActual = localStorage.getItem(STORAGE_KEY);
+    if (tokenActual) cerrarSesionServidor(tokenActual).catch(() => {});
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(ACTIVIDAD_KEY);
     setToken(null);

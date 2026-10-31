@@ -8,6 +8,7 @@ import BotonRegresar from "../components/BotonRegresar";
 import "../styles/app-shell.css";
 import "../styles/Perfil.css";
 import { request, urlArchivo } from "../api/client";
+import { listarSesionesActivas, cerrarSesionActiva, cerrarOtrasSesiones, revocarDispositivosConfiables } from "../api/auth";
 import {
   editarPerfil,
   cambiarPassword,
@@ -16,8 +17,13 @@ import {
   cambiarEmpresaActiva,
   guardarMiResolucion,
 } from "../api/perfil";
-import { listarPedidosUsuarioProductos } from "../api/pedidosProductos";
+import {
+  listarPedidosUsuarioProductos,
+  prepararCheckoutPedidoProductos,
+  confirmarPagoPedidoProductos,
+} from "../api/pedidosProductos";
 import PerfilPrivacidad from "../components/PerfilPrivacidad";
+
 
 import {
   TEXTO_AYUDA_PASSWORD,
@@ -130,6 +136,8 @@ function estiloEstadoCompra(estado) {
 function etiquetaEstadoPedido(estado) {
   const estados = {
     PAGADA: "Pagado",
+    ENVIADO: "Pedido enviado",
+    ENTREGADO: "Pedido entregado",
     PENDIENTE: "Pendiente de pago",
     RECHAZADO: "Pago rechazado",
     EXPIRADA: "Pedido expirado",
@@ -161,6 +169,24 @@ function tipoMensajeToast(mensaje) {
   }
   return "ok";
 }
+function cargarWidgetWompiPerfil() {
+  return new Promise((resolve, reject) => {
+    if (window.WidgetCheckout) return resolve();
+    const existente = document.querySelector('script[src="https://checkout.wompi.co/widget.js"]');
+    if (existente) {
+      existente.addEventListener("load", resolve, { once: true });
+      existente.addEventListener("error", () => reject(new Error("No se pudo cargar el Widget de Wompi.")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.wompi.co/widget.js";
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("No se pudo cargar el Widget de Wompi."));
+    document.body.appendChild(script);
+  });
+}
+
 export default function Perfil() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -169,9 +195,15 @@ export default function Perfil() {
   const [loadingCompras, setLoadingCompras] = useState(false);
   const [errorCompras, setErrorCompras] = useState(null);
   const [cancelandoCompraId, setCancelandoCompraId] = useState(null);
+  const [sesionesActivas, setSesionesActivas] = useState([]);
+  const [cargandoSesiones, setCargandoSesiones] = useState(false);
+  const [accionSesiones, setAccionSesiones] = useState(false);
+  const [errorSesiones, setErrorSesiones] = useState("");
+  const [mensajeSesiones, setMensajeSesiones] = useState("");
   const [pedidos, setPedidos] = useState([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const [errorPedidos, setErrorPedidos] = useState(null);
+  const [reintentandoPedidoId, setReintentandoPedidoId] = useState(null);
   // ---- edición de perfil / contraseña ----
   const [modo, setModo] = useState(null);
   const [guardando, setGuardando] = useState(false);
@@ -221,6 +253,65 @@ export default function Perfil() {
   });
   const [loadingDirectorio, setLoadingDirectorio] = useState(false);
   const [errorDirectorio, setErrorDirectorio] = useState("");
+  // ---- sesiones activas y dispositivos conectados ----
+  async function cargarSesiones() {
+    if (!token) return;
+    setCargandoSesiones(true);
+    setErrorSesiones("");
+    try {
+      const data = await listarSesionesActivas(token);
+      setSesionesActivas(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setErrorSesiones(err.message || "No se pudieron cargar las sesiones.");
+    } finally {
+      setCargandoSesiones(false);
+    }
+  }
+
+  useEffect(() => { cargarSesiones(); }, [token]);
+
+  async function handleCerrarSesionDispositivo(id, esActual = false) {
+    if (!window.confirm(esActual ? "Vas a cerrar esta sesión. Tendrás que iniciar sesión nuevamente. ¿Continuar?" : "¿Cerrar la sesión seleccionada?")) return;
+    setAccionSesiones(true);
+    setErrorSesiones("");
+    try {
+      await cerrarSesionActiva(token, id);
+      if (esActual) {
+        localStorage.removeItem("magnussing_token");
+        localStorage.removeItem("magnussing_ultima_actividad");
+        window.dispatchEvent(new Event("auth:expirada"));
+        navigate("/iniciar-sesion", { replace: true });
+        return;
+      }
+      setMensajeSesiones("La sesión seleccionada fue cerrada.");
+      await cargarSesiones();
+    } catch (err) {
+      setErrorSesiones(err.message || "No se pudo cerrar la sesión.");
+    } finally { setAccionSesiones(false); }
+  }
+
+  async function handleCerrarOtrasSesiones() {
+    if (!window.confirm("Se cerrarán todas las demás sesiones de tu cuenta. La sesión actual permanecerá abierta. ¿Continuar?")) return;
+    setAccionSesiones(true);
+    try {
+      const resultado = await cerrarOtrasSesiones(token);
+      setMensajeSesiones(resultado.message || "Se cerraron las demás sesiones.");
+      await cargarSesiones();
+    } catch (err) { setErrorSesiones(err.message || "No se pudieron cerrar las demás sesiones."); }
+    finally { setAccionSesiones(false); }
+  }
+
+  async function handleRevocarDispositivosConfiables() {
+    if (!window.confirm("Se eliminará la confianza de todos tus dispositivos. En el próximo inicio de sesión protegido tendrás que verificar el código. ¿Continuar?")) return;
+    setAccionSesiones(true);
+    try {
+      const resultado = await revocarDispositivosConfiables(token);
+      localStorage.removeItem("magnussing_dispositivo_confiable");
+      setMensajeSesiones(resultado.message || "Se revocó la confianza de los dispositivos.");
+    } catch (err) { setErrorSesiones(err.message || "No se pudo revocar la confianza."); }
+    finally { setAccionSesiones(false); }
+  }
+
   // ---- cargar historial de compras ----
 
   useEffect(() => {
@@ -701,6 +792,35 @@ export default function Perfil() {
       );
     }
   }
+  async function reintentarPagoPedido(pedido) {
+    if (!pedido?.id || reintentandoPedidoId) return;
+    setReintentandoPedidoId(pedido.id);
+    setErrorPedidos(null);
+    try {
+      const checkout = await prepararCheckoutPedidoProductos(token, pedido.id);
+      await cargarWidgetWompiPerfil();
+      if (!window.WidgetCheckout) throw new Error("El Widget de Wompi no está disponible.");
+      const widget = new window.WidgetCheckout({
+        currency: checkout.currency, amountInCents: checkout.amountInCents,
+        reference: checkout.reference, publicKey: checkout.publicKey,
+        signature: { integrity: checkout.signature },
+      });
+      widget.open(async (resultado) => {
+        try {
+          const transaction = resultado?.transaction;
+          if (!transaction?.id) return;
+          await confirmarPagoPedidoProductos(token, pedido.id, transaction.id);
+          const actualizados = await listarPedidosUsuarioProductos(token, usuario.id);
+          setPedidos(actualizados);
+        } catch (err) { setErrorPedidos(err.message || "No fue posible confirmar el pago."); }
+        finally { setReintentandoPedidoId(null); }
+      });
+    } catch (err) {
+      setErrorPedidos(err.message || "No fue posible reintentar el pago.");
+      setReintentandoPedidoId(null);
+    }
+  }
+
   const totalPaginas = Math.max(
     1,
     Math.ceil(
@@ -1099,6 +1219,38 @@ export default function Perfil() {
                 </>
               )}
             </div>
+            {/* ===================== SEGURIDAD Y SESIONES ACTIVAS ===================== */}
+            <div className="app-card sesiones-card">
+              <h2 className="compras-titulo">Seguridad y sesiones activas</h2>
+              <p className="compras-subtitulo">Dispositivos donde tu cuenta tiene una sesión abierta.</p>
+              {errorSesiones && <p className="sesiones-error">{errorSesiones}</p>}
+              {mensajeSesiones && <p className="sesiones-ok">{mensajeSesiones}</p>}
+              {cargandoSesiones ? (
+                <p className="sesiones-muted">Cargando dispositivos...</p>
+              ) : sesionesActivas.length ? (
+                <div className="sesiones-list">
+                  {sesionesActivas.map((sesion) => (
+                    <div className="sesion-item" key={sesion.id}>
+                      <div className="sesion-item__icon" aria-hidden="true">{/Android|iPhone|Mobile/i.test(sesion.dispositivo) ? "📱" : "💻"}</div>
+                      <div className="sesion-item__info">
+                        <strong>{/Windows/i.test(sesion.dispositivo) ? "Windows" : /Android/i.test(sesion.dispositivo) ? "Android" : /Mac OS|Macintosh/i.test(sesion.dispositivo) ? "macOS" : /iPhone|iPad/i.test(sesion.dispositivo) ? "iOS" : "Dispositivo"} · {sesion.dispositivo}</strong>
+                        <span>{sesion.actual ? "Esta es tu sesión actual" : "Sesión abierta"}</span>
+                        <small>Inicio: {formatearFechaHora(sesion.creadoEn)}</small>
+                        <small>Última actividad: {formatearFechaHora(sesion.ultimoAcceso)}</small>
+                        {sesion.ip && <small>IP: {sesion.ip}</small>}
+                      </div>
+                      {sesion.actual && <span className="sesion-actual">Actual</span>}
+                      <button type="button" className="sesion-cerrar" disabled={accionSesiones} onClick={() => handleCerrarSesionDispositivo(sesion.id, sesion.actual)}>Cerrar</button>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="sesiones-muted">No hay sesiones activas registradas.</p>}
+              <div className="sesiones-actions">
+                <button type="button" className="app-btn-secondary" onClick={handleCerrarOtrasSesiones} disabled={accionSesiones || sesionesActivas.filter((s) => !s.actual).length === 0}>Cerrar las demás sesiones</button>
+                <button type="button" className="app-btn-secondary" onClick={handleRevocarDispositivosConfiables} disabled={accionSesiones}>Revocar dispositivos de confianza</button>
+              </div>
+              <p className="sesiones-nota">La opción de confiar en un dispositivo dura 4 horas. Después de ese tiempo, se solicitará nuevamente el código de seguridad en los roles protegidos.</p>
+            </div>
             {/* ===================== HISTORIAL DE COMPRAS ===================== */}
             <div className="app-card compras-card">
               <h2 className="compras-titulo">
@@ -1266,6 +1418,11 @@ export default function Perfil() {
                             maximumFractionDigits: 0,
                           })}
                         </span>
+                        {["PENDIENTE", "RECHAZADO", "ERROR"].includes(pedido.estado) && (
+                          <button type="button" className="adm-btn adm-btn--borde" style={{ marginTop: "8px" }} disabled={reintentandoPedidoId === pedido.id} onClick={() => reintentarPagoPedido(pedido)}>
+                            {reintentandoPedidoId === pedido.id ? "Abriendo pago…" : "Reintentar pago"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}

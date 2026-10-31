@@ -12,6 +12,7 @@ import {
 } from "../components/FormControls";
 
 import SeleccionRolGoogle from "../components/SeleccionRolGoogle";
+import VerificacionDosPasos from "../components/VerificacionDosPasos";
 import { login, loginConGoogle } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import { emailValido, normalizarEmail } from "../utils/validaciones";
@@ -68,6 +69,7 @@ export default function SignIn() {
 
   // Datos de Google pendientes de que la persona elija su rol (cuenta nueva).
   const [googlePendiente, setGooglePendiente] = useState(null);
+  const [challenge2FA, setChallenge2FA] = useState(null);
   const [errorRolGoogle, setErrorRolGoogle] = useState("");
 
   const { iniciarSesion } = useAuth();
@@ -131,10 +133,14 @@ export default function SignIn() {
     try {
       const data = await login({
         email: correoNorm,
-        password
+        password,
+        trustedDeviceToken: localStorage.getItem("magnussing_dispositivo_confiable") || undefined,
       });
-
-      iniciarSesion(data.token, data.usuario);
+      if (data.requiere2FA) {
+        setChallenge2FA(data);
+        return;
+      }
+      iniciarSesion(data.token, data.usuario, data.trustedDeviceToken);
 
       navigate(rutaInicial(data.usuario?.rol), { replace: true });
     } catch (err) {
@@ -181,8 +187,13 @@ export default function SignIn() {
       }
 
       const data = await loginConGoogle({
-        credential: response.credential
+        credential: response.credential,
+        trustedDeviceToken: localStorage.getItem("magnussing_dispositivo_confiable") || undefined,
       });
+      if (data.requiere2FA) {
+        setChallenge2FA(data);
+        return;
+      }
 
       // Cuenta nueva: primero se pide el rol, todavía no se crea nada.
       if (data.requiereRol) {
@@ -195,7 +206,8 @@ export default function SignIn() {
 
       iniciarSesion(
         data.token,
-        data.usuario
+        data.usuario,
+        data.trustedDeviceToken
       );
 
       navigate(rutaInicial(data.usuario?.rol), { replace: true });
@@ -224,10 +236,16 @@ export default function SignIn() {
         credential: googlePendiente.credential,
         aceptaPolitica,
         rol,
-        numeroResolucion
+        numeroResolucion,
+        trustedDeviceToken: localStorage.getItem("magnussing_dispositivo_confiable") || undefined,
       });
+      if (data.requiere2FA) {
+        setChallenge2FA(data);
+        setGooglePendiente(null);
+        return;
+      }
 
-      iniciarSesion(data.token, data.usuario);
+      iniciarSesion(data.token, data.usuario, data.trustedDeviceToken);
       setGooglePendiente(null);
       navigate(rutaInicial(data.usuario?.rol), { replace: true });
     } catch (err) {
@@ -358,6 +376,7 @@ export default function SignIn() {
           className="auth-form"
           onSubmit={handleSubmit}
           noValidate
+          style={challenge2FA ? { display: "none" } : undefined}
         >
 
           <TextField
@@ -464,9 +483,19 @@ export default function SignIn() {
           )}
 
         </form>
+        {challenge2FA && (
+          <VerificacionDosPasos
+            challenge={challenge2FA}
+            onSuccess={(data) => {
+              iniciarSesion(data.token, data.usuario, data.trustedDeviceToken);
+              navigate(rutaInicial(data.usuario?.rol), { replace: true });
+            }}
+            onCancelar={() => setChallenge2FA(null)}
+          />
+        )}
       </div>
 
-      {googlePendiente && (
+      {googlePendiente && !challenge2FA && (
         <SeleccionRolGoogle
           email={googlePendiente.email}
           loading={loadingGoogle}

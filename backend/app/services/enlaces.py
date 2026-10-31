@@ -20,7 +20,14 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.crypto import hash_password, utcnow
 from app.core.errors import AppError
 from app.core.security import crear_token
-from app.models.evaluation import Consentimiento, Evaluacion, EvaluacionParticipante, ParticipanteInstrumento
+from app.models.evaluation import (
+    Consentimiento,
+    Evaluacion,
+    EvaluacionInstrumento,
+    EvaluacionParticipante,
+    ParticipanteInstrumento,
+)
+from app.models.survey import CuestionarioVersion
 from app.db.seed import ROLES
 from app.models.user import Rol, Usuario
 from app.services.auth import usuario_publico
@@ -29,6 +36,9 @@ from app.services.evaluaciones import TEXTO_CONSENTIMIENTO, _inicializar_instrum
 
 # La sesión del paciente dura 7 días para que pueda retomar la batería en el mismo navegador
 MINUTOS_SESION_INVITADO = 7 * 24 * 60
+
+# Instrumentos a los que se puede restringir un enlace de un solo cuestionario
+INSTRUMENTOS_ENLACE = {"FICHA_DATOS", "ESTRES", "EXTRALABORAL", "INTRALABORAL_A", "INTRALABORAL_B"}
 
 
 def _serializar_enlace(evaluacion: Evaluacion) -> dict:
@@ -56,12 +66,43 @@ def _serializar_enlace(evaluacion: Evaluacion) -> dict:
         "completados": sum(1 for p in evaluacion.participantes if p.estado == "COMPLETADA"),
         # null si nadie ha abierto el enlace todavía
         "paciente": paciente,
+        # null = enlace de la batería completa; si no, código del único instrumento habilitado
+        "soloInstrumento": evaluacion.enlace_instrumento,
     }
 
 
-def crear_enlace(db: Session, nombre: str, actual: Usuario) -> dict:
+def _inicializar_instrumento_unico(db: Session, evaluacion: Evaluacion, codigo: str) -> None:
+    """Enlace restringido a un solo cuestionario: crea ese instrumento en la evaluación para
+    que el paciente invitado no reciba los demás. Si el instrumento elegido no es la Ficha de
+    datos generales, esta se agrega primero (orden 1) para que el paciente siempre empiece por
+    ahí antes de pasar a la encuesta seleccionada."""
+    orden = 1
+    if codigo != "FICHA_DATOS":
+        ficha_version = db.query(CuestionarioVersion).filter(CuestionarioVersion.codigo == "FICHA_DATOS").first()
+        if ficha_version is not None:
+            db.add(
+                EvaluacionInstrumento(
+                    evaluacion_id=evaluacion.id, version_id=ficha_version.id, orden=orden, obligatorio=True
+                )
+            )
+            orden += 1
+    version = db.query(CuestionarioVersion).filter(CuestionarioVersion.codigo == codigo).first()
+    if version is None:
+        raise AppError(400, "El cuestionario seleccionado no está disponible.")
+    db.add(EvaluacionInstrumento(evaluacion_id=evaluacion.id, version_id=version.id, orden=orden, obligatorio=True))
+
+
+def crear_enlace(
+    db: Session,
+    nombre: str,
+    actual: Usuario,
+    instrumento: str | None = None,
+    ruta: str | None = None,
+) -> dict:
     if not actual.organizacion_id:
         raise AppError(400, "Tu usuario no tiene una organización asociada; no se puede crear el enlace.")
+    if instrumento is not None and instrumento not in INSTRUMENTOS_ENLACE:
+        raise AppError(400, "El cuestionario seleccionado no es válido.")
     version = version_vigente(db)
     evaluacion = Evaluacion(
         organizacion_id=actual.organizacion_id,
@@ -72,11 +113,17 @@ def crear_enlace(db: Session, nombre: str, actual: Usuario) -> dict:
         estado="EN_CURSO",
         fecha_inicio=utcnow(),
         enlace_token=secrets.token_urlsafe(24),
+        enlace_instrumento=instrumento,
+        enlace_ruta=ruta.strip() if ruta else None,
     )
     db.add(evaluacion)
     db.flush()
-    # Crea los instrumentos de la evaluación (Ficha, Estrés, Extralaboral); aún sin participantes
-    _inicializar_instrumentos_evaluacion(db, evaluacion, [])
+    if instrumento:
+        # Enlace de un solo cuestionario: el paciente invitado solo recibe ese instrumento
+        _inicializar_instrumento_unico(db, evaluacion, instrumento)
+    else:
+        # Crea los instrumentos de la batería completa (Ficha, Estrés, Extralaboral); aún sin participantes
+        _inicializar_instrumentos_evaluacion(db, evaluacion, [])
     db.commit()
     db.refresh(evaluacion)
     return _serializar_enlace(evaluacion)
@@ -178,6 +225,9 @@ def info_publica(db: Session, token: str) -> dict:
         "activo": evaluacion.estado != "FINALIZADA",
         # Ya hay un paciente respondiendo con este enlace (solo lo puede continuar él)
         "enUso": len(evaluacion.participantes) > 0,
+        # Si el enlace es de un solo cuestionario, ruta del frontend a la que se le envía
+        # directamente al empezar (null = batería completa, empieza por la Ficha)
+        "ruta": evaluacion.enlace_ruta,
     }
 
 

@@ -7,7 +7,7 @@ import {
 } from "../api/pedidosProductos";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
-import { categoriasDe, formatearCOP, imagenDe, useProductos } from "../data/products";
+import { categoriasDe, formatearCOP, imagenDe, manejaStock, useProductos } from "../data/products";
 import "../styles/app-shell.css";
 import "../styles/Catalogo.css";
 
@@ -93,7 +93,9 @@ export default function Catalogo() {
 
   const cambiarCantidad = (id, delta) =>
     setCarrito((actual) => {
-      const nueva = Math.max(0, Math.min(99, (actual[id] || 0) + delta));
+      const producto = productos.find((p) => p.id === id);
+      const maximo = producto && !manejaStock(producto) ? 99 : Math.min(99, Number(producto?.stock ?? 0));
+      const nueva = Math.max(0, Math.min(maximo, (actual[id] || 0) + delta));
       const { [id]: _quitado, ...resto } = actual;
       return nueva > 0 ? { ...resto, [id]: nueva } : resto;
     });
@@ -262,12 +264,20 @@ export default function Catalogo() {
                           </span>
                           <h4>{producto.nombre}</h4>
                           <strong>{formatearCOP(producto.precio)}</strong>
+                          {manejaStock(producto) ? (
+                            <span className={`producto-stock ${producto.stock <= 0 ? "producto-stock--agotado" : producto.stock <= 5 ? "producto-stock--bajo" : ""}`}>
+                              {producto.stock <= 0 ? "Agotado" : producto.stock <= 5 ? `Últimas ${producto.stock} unidades` : `${producto.stock} unidades disponibles`}
+                            </span>
+                          ) : (
+                            <span className="producto-stock">Servicio disponible</span>
+                          )}
                           <button
                             type="button"
                             className="catalogo-btn"
+                            disabled={manejaStock(producto) && (producto.stock <= 0 || (carrito[producto.id] || 0) >= producto.stock)}
                             onClick={() => cambiarCantidad(producto.id, 1)}
                           >
-                            Añadir al carrito
+                            {manejaStock(producto) && producto.stock <= 0 ? "Agotado" : manejaStock(producto) && (carrito[producto.id] || 0) >= producto.stock ? "Stock máximo" : "Añadir al carrito"}
                           </button>
                         </div>
                       </article>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { descargarExportacionPanel, fetchHistorialComprasTienda } from "../api/panel";
+import { actualizarEstadoPedidoProductos } from "../api/pedidosProductos";
 import "../styles/PanelHistorialCompras.css";
 
 const formatoFecha = (iso) =>
@@ -21,8 +22,10 @@ const formatoPesos = (valor) =>
   });
 
 const etiquetaEstado = (estado) => ({
-  PAGADA: "Aprobada",
-  PAGADO: "Aprobada",
+  PAGADA: "Pagada",
+  PAGADO: "Pagada",
+  ENVIADO: "Enviado",
+  ENTREGADO: "Entregado",
   PENDIENTE: "Pendiente",
   RECHAZADO: "Rechazada",
   RECHAZADA: "Rechazada",
@@ -38,6 +41,7 @@ export default function PanelHistorialCompras() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [exportando, setExportando] = useState(false);
+  const [actualizandoId, setActualizandoId] = useState(null);
 
   useEffect(() => {
     let activo = true;
@@ -48,6 +52,16 @@ export default function PanelHistorialCompras() {
       .finally(() => activo && setCargando(false));
     return () => { activo = false; };
   }, [token]);
+
+  async function cambiarEstado(compra, estado) {
+    setActualizandoId(compra.id);
+    setError("");
+    try {
+      await actualizarEstadoPedidoProductos(token, compra.id, estado);
+      setCompras((actuales) => actuales.map((item) => item.id === compra.id && item.tipo === "Producto" ? { ...item, estado } : item));
+    } catch (err) { setError(err.message || "No fue posible actualizar el estado del pedido."); }
+    finally { setActualizandoId(null); }
+  }
 
   async function exportar() {
     setExportando(true);
@@ -93,6 +107,7 @@ export default function PanelHistorialCompras() {
                 <th>Detalle</th>
                 <th>Valor</th>
                 <th>Estado</th>
+                <th>Seguimiento</th>
               </tr>
             </thead>
             <tbody>
@@ -106,10 +121,19 @@ export default function PanelHistorialCompras() {
                   <td>{compra.detalle}</td>
                   <td>{formatoPesos(compra.total)}</td>
                   <td><span className="adm-chip adm-chip--info">{etiquetaEstado(compra.estado)}</span></td>
+                  <td>
+                    {compra.tipo === "Producto" ? (
+                      <select aria-label={`Cambiar estado de ${compra.detalle}`} value={compra.estado} disabled={actualizandoId === compra.id || ["CANCELADA", "EXPIRADA"].includes(compra.estado)} onChange={(e) => cambiarEstado(compra, e.target.value)}>
+                        <option value={compra.estado}>{etiquetaEstado(compra.estado)}</option>
+                        {compra.estado === "PAGADA" && <option value="ENVIADO">Enviado</option>}
+                        {compra.estado === "ENVIADO" && <option value="ENTREGADO">Entregado</option>}
+                      </select>
+                    ) : "—"}
+                  </td>
                 </tr>
               ))}
               {compras.length === 0 && (
-                <tr><td colSpan={8} className="adm-vacio">Aún no hay compras registradas.</td></tr>
+                <tr><td colSpan={9} className="adm-vacio">Aún no hay compras registradas.</td></tr>
               )}
             </tbody>
           </table>

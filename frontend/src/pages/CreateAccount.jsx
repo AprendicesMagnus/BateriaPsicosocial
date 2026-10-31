@@ -9,6 +9,7 @@ import {
   FormMessage
 } from "../components/FormControls";
 import SeleccionRolGoogle from "../components/SeleccionRolGoogle";
+import VerificacionDosPasos from "../components/VerificacionDosPasos";
 import { ROLES_REGISTRO } from "../utils/roles";
 import { useAuth } from "../context/AuthContext";
 import { register, loginConGoogle } from "../api/auth";
@@ -76,6 +77,7 @@ export default function CreateAccount() {
 
   // Datos de Google pendientes de que la persona elija su rol (cuenta nueva).
   const [googlePendiente, setGooglePendiente] = useState(null);
+  const [challenge2FA, setChallenge2FA] = useState(null);
   const [errorRolGoogle, setErrorRolGoogle] = useState("");
 
   const { iniciarSesion } = useAuth();
@@ -190,8 +192,13 @@ export default function CreateAccount() {
       }
 
       const data = await loginConGoogle({
-        credential: response.credential
+        credential: response.credential,
+        trustedDeviceToken: localStorage.getItem("magnussing_dispositivo_confiable") || undefined,
       });
+      if (data.requiere2FA) {
+        setChallenge2FA(data);
+        return;
+      }
 
       // Cuenta nueva: primero se pide el rol, todavía no se crea nada.
       if (data.requiereRol) {
@@ -202,7 +209,7 @@ export default function CreateAccount() {
         return;
       }
 
-      iniciarSesion(data.token, data.usuario);
+      iniciarSesion(data.token, data.usuario, data.trustedDeviceToken);
       navigate(rutaInicial(data.usuario?.rol), { replace: true });
     } catch (err) {
       console.error(
@@ -229,10 +236,16 @@ export default function CreateAccount() {
         credential: googlePendiente.credential,
         aceptaPolitica,
         rol,
-        numeroResolucion
+        numeroResolucion,
+        trustedDeviceToken: localStorage.getItem("magnussing_dispositivo_confiable") || undefined,
       });
+      if (data.requiere2FA) {
+        setChallenge2FA(data);
+        setGooglePendiente(null);
+        return;
+      }
 
-      iniciarSesion(data.token, data.usuario);
+      iniciarSesion(data.token, data.usuario, data.trustedDeviceToken);
       setGooglePendiente(null);
       navigate(rutaInicial(data.usuario?.rol), { replace: true });
     } catch (err) {
@@ -319,6 +332,7 @@ export default function CreateAccount() {
         className="auth-form"
         onSubmit={handleSubmit}
         noValidate
+        style={challenge2FA ? { display: "none" } : undefined}
       >
         <div className="form-row">
           <TextField
@@ -541,7 +555,18 @@ export default function CreateAccount() {
         )}
       </form>
 
-      {googlePendiente && (
+      {challenge2FA && (
+        <VerificacionDosPasos
+          challenge={challenge2FA}
+          onSuccess={(data) => {
+            iniciarSesion(data.token, data.usuario, data.trustedDeviceToken);
+            navigate(rutaInicial(data.usuario?.rol), { replace: true });
+          }}
+          onCancelar={() => setChallenge2FA(null)}
+        />
+      )}
+
+      {googlePendiente && !challenge2FA && (
         <SeleccionRolGoogle
           email={googlePendiente.email}
           loading={loadingGoogle}

@@ -86,10 +86,22 @@ export default function ResponderEnlace() {
           (instrumento) => instrumento.estado !== "COMPLETADA"
         );
 
+        // Enlace de un solo cuestionario (Forma A o B): una vez completada la Ficha, la
+        // encuesta pendiente usa la ruta exacta guardada en el enlace, no la ruta genérica
+        // de RUTAS (que siempre apunta a la Forma A para Estrés/Extralaboral).
+        let siguienteRuta = null;
+        if (siguiente?.codigo === "FICHA_DATOS") {
+          siguienteRuta = info?.ruta?.endsWith("B")
+            ? "/ficha-datos-generalesB"
+            : "/ficha-datos-generales";
+        } else if (siguiente) {
+          siguienteRuta = info?.ruta || RUTAS[siguiente.codigo];
+        }
+
         if (activo) {
           setAvance({
             evaluacionId,
-            siguiente: siguiente ? RUTAS[siguiente.codigo] : null,
+            siguiente: siguienteRuta,
           });
         }
       } catch (e) {
@@ -102,7 +114,7 @@ export default function ResponderEnlace() {
     return () => {
       activo = false;
     };
-  }, [loading, yaEmpezo, token]);
+  }, [loading, yaEmpezo, token, info]);
 
   async function comenzar() {
     setIniciando(true);
@@ -114,7 +126,12 @@ export default function ResponderEnlace() {
       localStorage.setItem(CLAVE_ENLACE, tokenEnlace);
       iniciarSesion(res.token, res.usuario);
 
-      navigate("/ficha-datos-generales", {
+      // Siempre se empieza por el Sociodemográfico (Forma A o B según la encuesta elegida al
+      // crear el enlace); desde ahí la Ficha redirige a la encuesta restringida del enlace.
+      const fichaRuta = info?.ruta?.endsWith("B")
+        ? "/ficha-datos-generalesB"
+        : "/ficha-datos-generales";
+      navigate(fichaRuta, {
         state: { evaluacionId: res.evaluacionId },
       });
     } catch (e) {

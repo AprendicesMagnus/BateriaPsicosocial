@@ -12,15 +12,14 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
-from openpyxl import Workbook
 
 from app.core.roles import ROLES_EVALUADOR
 from app.core.config import get_settings
 from app.core.crypto import utcnow
 from app.core.errors import AppError
 from app.models.evaluation import Evaluacion, EvaluacionParticipante, ResultadoDimension, Informe
-from app.models.organization import Area, Organizacion
-from app.models.survey import Dimension, Recomendacion
+from app.models.organization import Organizacion
+from app.models.survey import Recomendacion
 from app.models.user import Usuario
 from app.services.notificaciones import notificar
 from app.services import prediccion as prediccion_service

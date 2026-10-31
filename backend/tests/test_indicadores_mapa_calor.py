@@ -103,7 +103,7 @@ def test_mapa_calor_areas_y_dimensiones(client, db_session, crear_paciente):
     data = res.json()
 
     assert data["codigo"] == cuestionario.codigo
-    assert data["minimoAnonimato"] == 5
+    assert data["minimoAnonimato"] == 1
 
     areas_por_nombre = {a["nombre"]: a for a in data["areas"]}
 
@@ -115,10 +115,13 @@ def test_mapa_calor_areas_y_dimensiones(client, db_session, crear_paciente):
     assert celda_ops["nivel"] == "ALTO"
     assert celda_ops["porcentajeAltoMuyAlto"] == 80.0
 
-    # Caso 2: Área Administración con 3 participantes -> exactamente {"anonimizado": True}
+    # Caso 2: Área Administración con 3 participantes -> con mínimo de anonimato en 1, ya se muestra
     assert "Administración" in areas_por_nombre
     celda_admin = areas_por_nombre["Administración"]["celdas"][dim.codigo]
-    assert celda_admin == {"anonimizado": True}
+    assert celda_admin["anonimizado"] is False
+    assert celda_admin["total"] == 3
+    assert celda_admin["nivel"] == "BAJO"
+    assert celda_admin["porcentajeAltoMuyAlto"] == 0.0
 
     # Caso 3: Participantes sin área aparecen en fila "Sin área asignada"
     assert "Sin área asignada" in areas_por_nombre

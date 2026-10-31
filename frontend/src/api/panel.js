@@ -35,3 +35,5 @@ export async function descargarExportacionPanel(token, tabla, { filtro, buscar }
 export async function fetchHistorialComprasTienda(token) {
   return request("/panel/historial-compras", { token });
 }
+
+export const fetchVentasProductos = (token) => request("/panel/ventas-productos", { token });

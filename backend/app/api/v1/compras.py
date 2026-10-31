@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user, get_db, require_comprador
 from app.models.user import Usuario
 from app.schemas.common import CompraCreate
 from app.services import compras as compras_service
@@ -16,7 +16,7 @@ router = APIRouter()
 def crear_compra(
     data: CompraCreate,
     db: Session = Depends(get_db),
-    actual: Usuario = Depends(get_current_user),
+    actual: Usuario = Depends(require_comprador),
 ):
     return compras_service.crear_compra(
         db,
@@ -68,7 +68,7 @@ def cancelar_compra(
 def preparar_checkout_wompi(
     compra_id: UUID,
     db: Session = Depends(get_db),
-    actual: Usuario = Depends(get_current_user),
+    actual: Usuario = Depends(require_comprador),
 ):
     return compras_service.preparar_checkout_wompi(
         db=db,
