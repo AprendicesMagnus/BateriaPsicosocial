@@ -31,7 +31,9 @@ def _abrir_conexion(host: str, port: int) -> smtplib.SMTP:
 def enviar_correo(destino: str, asunto: str, contenido: str) -> bool:
     settings = get_settings()
     if not settings.smtp_host:
-        logger.info("Correo simulado para %s | asunto=%s | contenido=%s", destino, asunto, contenido)
+        # TEMPORAL: warning para que el código se vea en los logs de Render mientras no haya correo real.
+        # Quitar al configurar el envío por API (los códigos no deben quedar en los logs).
+        logger.warning("Correo simulado para %s | asunto=%s | contenido=%s", destino, asunto, contenido)
         return True
 
     remitente = settings.smtp_from or settings.smtp_user or "noreply@magnussig.com"
