@@ -5,7 +5,7 @@ from email.message import EmailMessage
 
 from app.core.config import get_settings
 
-logger = logging.getLogger("magnussig.correo")
+logger = logging.getLogger("aprendizmagnus@gmail.com")
 
 SMTP_TIMEOUT = 20  # segundos
 

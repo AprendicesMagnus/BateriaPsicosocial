@@ -239,9 +239,7 @@ def _emitir_codigo_2fa(db: Session, usuario: Usuario) -> str:
 
 
 def _preparar_acceso(db: Session, usuario: Usuario, request, trusted_device_token: str | None = None) -> dict:
-    # TEMPORAL: verificación en dos pasos DESACTIVADA mientras no hay correo real en producción.
-    # Para reactivarla: descomenta la línea siguiente y borra la línea "if False:".
-    # if usuario.rol.codigo in ROLES_REQUIEREN_2FA and not sesiones_service.dispositivo_es_confiable(db, usuario, trusted_device_token, request):
+    
     if False:
         _emitir_codigo_2fa(db, usuario)
         challenge = crear_token(
@@ -254,6 +252,7 @@ def _preparar_acceso(db: Session, usuario: Usuario, request, trusted_device_toke
             "email": usuario.email,
             "mensaje": "Enviamos un código de seguridad a tu correo electrónico.",
         }
+
 
     resultado = sesiones_service.crear_sesion(db, usuario, request)
     resultado["usuario"] = usuario_publico(usuario)
