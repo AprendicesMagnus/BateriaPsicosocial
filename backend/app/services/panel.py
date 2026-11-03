@@ -76,7 +76,11 @@ def obtener_panel(db: Session) -> dict:
             "nombrePila": u.nombre,
             "apellido": u.apellido,
             "rol": u.rol.codigo,
-            "empresa": orgs[u.organizacion_id].nombre if u.organizacion_id in orgs else "—",
+            "empresa": (
+                orgs[u.organizacion_id].nombre
+                if u.organizacion_id in orgs
+                else "MAGNUS | SIG" if u.rol.codigo == "SUPER_ADMINISTRADOR" else "—"
+            ),
             "registro": "Google" if u.id in con_google else "Correo",
             "estado": u.estado,
             "emailVerificado": u.email_verificado,

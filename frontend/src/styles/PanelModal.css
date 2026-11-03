@@ -84,3 +84,29 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Acciones de confirmación claramente diferenciadas */
+.adm-modal__confirmar {
+  min-width: 170px;
+  font-weight: 700;
+  border: 1px solid #123b60;
+  background: #123b60;
+  color: #ffffff;
+}
+.adm-modal__confirmar:hover:not(:disabled) {
+  background: #0d2d49;
+}
+.adm-modal__acciones button {
+  min-height: 40px;
+}
+.adm-modal .adm-modal__check {
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+}
+.adm-modal .adm-modal__check input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+}

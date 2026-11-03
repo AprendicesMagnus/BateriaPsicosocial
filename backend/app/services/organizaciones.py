@@ -176,6 +176,11 @@ def actualizar_organizacion(db: Session, org_id, data) -> Organizacion:
     if data.nit is not None:
         nit_limpio = data.nit.strip()
         validar_nit_con_dv(nit_limpio)
+        duplicada = db.query(Organizacion).filter(
+            Organizacion.nit == nit_limpio, Organizacion.id != org_id
+        ).first()
+        if duplicada:
+            raise AppError(409, "Ya existe otra empresa registrada con ese NIT.")
     for campo, valor in {
         "nombre": data.nombre,
         "nit": data.nit,

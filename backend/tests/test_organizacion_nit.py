@@ -1,9 +1,9 @@
 r"""
 Tests de validación del NIT completo con Dígito de Verificación (DV) Módulo 11 DIAN.
 
-Formato requerido: `NNNNNNNNN-D` (9 dígitos base, guion, 1 dígito verificador).
+Formato requerido: `NNNNNNNNN-D` o `NNNNNNNNNN-D` (9 o 10 dígitos base y 1 dígito verificador).
 Validación en 2 niveles:
-1. Schema Pydantic / Query parameter: `pattern=r"^\d{9}-\d$"` (error 422 si el formato no coincide).
+1. Schema Pydantic / Query parameter: `pattern=r"^\d{9,10}-\d$"` (error 422 si el formato no coincide).
 2. Capa de servicio: `calcular_digito_verificador_nit(base) == dv` (error 400 AppError con mensaje específico si el DV no coincide).
 """
 
@@ -48,8 +48,11 @@ class TestExisteNitQueryParam:
     def test_nit_menos_de_9_digitos_base(self, client):
         assert _existe_get(client, "12345678-1") == 422
 
-    def test_nit_mas_de_9_digitos_base(self, client):
-        assert _existe_get(client, "1234567890-1") == 422
+    def test_nit_de_10_digitos_base(self, client):
+        assert _existe_get(client, "1075277687-2") == 200
+
+    def test_nit_mas_de_10_digitos_base(self, client):
+        assert _existe_get(client, "12345678901-1") == 422
 
     def test_nit_con_letras(self, client):
         assert _existe_get(client, "12345678a-1") == 422
@@ -66,6 +69,11 @@ class TestNitAutorregistroConDigitoVerificador:
     def test_nit_con_dv_correcto_exitoso(self, client):
         # BANCO DE BOGOTA S.A.: 860003020-1 (DV real = 1)
         payload = {**AUTORREGISTRO_BASE, "nit": "860003020-1", "usuarioEmail": "banco_test@test.com"}
+        res = client.post("/api/organizaciones/autorregistro", json=payload)
+        assert res.status_code == 200, res.text
+
+    def test_nit_de_10_digitos_con_dv_correcto(self, client):
+        payload = {**AUTORREGISTRO_BASE, "nit": "1075277687-2", "usuarioEmail": "magnus_test@test.com"}
         res = client.post("/api/organizaciones/autorregistro", json=payload)
         assert res.status_code == 200, res.text
 

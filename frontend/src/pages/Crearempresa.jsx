@@ -80,8 +80,8 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
       : "",
     nit: !nit
       ? "Este campo es obligatorio."
-      : !/^\d{9}-\d$/.test(nit.trim())
-      ? "El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador)."
+      : !/^\d{9,10}-\d$/.test(nit.trim())
+      ? "El NIT debe tener 9 o 10 dígitos base, guion y dígito verificador."
       : "",
     codigoVerificacion: !codigoVerificacion
       ? "Este campo es obligatorio."
@@ -278,7 +278,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                   aria-describedby={mostrarError("nit") ? "nit-error" : undefined}
                   placeholder="900123456-7"
                   inputMode="numeric"
-                  maxLength={11}
+                  maxLength={12}
                   value={nit}
                   onChange={(e) => { setNit(formatearNit(e.target.value)); setNitDuplicateError(""); }}
                   onBlur={() => marcar("nit")}

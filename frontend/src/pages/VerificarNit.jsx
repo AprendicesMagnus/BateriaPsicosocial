@@ -34,8 +34,8 @@ export default function VerificarNit() {
   const errores = {
     nit: !nit
       ? "Este campo es obligatorio."
-      : !/^\d{9}-\d$/.test(nit.trim())
-      ? "El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador)."
+      : !/^\d{9,10}-\d$/.test(nit.trim())
+      ? "El NIT debe tener 9 o 10 dígitos base, guion y dígito verificador."
       : "",
   };
 
@@ -116,7 +116,7 @@ export default function VerificarNit() {
                   aria-invalid={mostrarError("nit") ? "true" : "false"}
                   aria-describedby={mostrarError("nit") ? "nit-error" : undefined}
                   placeholder="900123456-7"
-                  maxLength={11}
+                  maxLength={12}
                   value={nit}
                   disabled={nitYaRegistrado}
                   onChange={(e) => setNit(formatearNit(e.target.value))}

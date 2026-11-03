@@ -70,8 +70,8 @@ def validar_nit_con_dv(nit: str) -> None:
     if "-" not in nit_limpio:
         raise AppError(400, "El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador).")
     partes = nit_limpio.split("-")
-    if len(partes) != 2 or not partes[0].isdigit() or not partes[1].isdigit() or len(partes[0]) != 9 or len(partes[1]) != 1:
-        raise AppError(400, "El NIT debe estar en formato 900123456-7 (9 dígitos base, guion y dígito verificador).")
+    if len(partes) != 2 or not partes[0].isdigit() or not partes[1].isdigit() or len(partes[0]) not in {9, 10} or len(partes[1]) != 1:
+        raise AppError(400, "El NIT debe estar en formato de 9 o 10 dígitos base, guion y dígito verificador.")
     nit_base, dv_str = partes[0], partes[1]
     if calcular_digito_verificador_nit(nit_base) != int(dv_str):
         raise AppError(400, "El dígito de verificación del NIT no es válido.")

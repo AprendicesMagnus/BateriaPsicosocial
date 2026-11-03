@@ -7,6 +7,7 @@ from app.core.errors import AppError
 from app.models.organization import Area, Organizacion
 from app.models.user import Rol, Usuario
 from app.services.auth import forgot_password, usuario_publico
+from app.services.empresa_interna import obtener_empresa_interna
 
 
 def listar_usuarios(db: Session, actual: Usuario) -> list[dict]:
@@ -49,13 +50,17 @@ def crear_usuario(db: Session, data, actual: Usuario) -> dict:
         if area is None or area.organizacion_id != data.organizacionId:
             raise AppError(400, "El área no pertenece a la organización indicada.")
 
+    organizacion_id = data.organizacionId
+    if rol.codigo == "SUPER_ADMINISTRADOR":
+        organizacion_id = obtener_empresa_interna(db).id
+
     usuario = Usuario(
         nombre=data.nombre.strip(),
         apellido=data.apellido.strip(),
         email=str(data.email).lower(),
         password_hash=hash_password(data.password),
         rol_id=rol.id,
-        organizacion_id=data.organizacionId,
+        organizacion_id=organizacion_id,
         area_id=data.areaId,
         numero_identificacion=data.numeroIdentificacion,
         cargo=data.cargo,
@@ -76,11 +81,13 @@ def actualizar_usuario(db: Session, usuario_id, data, actual: Usuario) -> dict:
     if actual.rol.codigo != "SUPER_ADMINISTRADOR" and usuario.organizacion_id != actual.organizacion_id:
         raise AppError(403, "No tiene acceso a este usuario.")
 
+    rol_destino = usuario.rol.codigo
     if data.rolCodigo:
         rol = db.query(Rol).filter(Rol.codigo == data.rolCodigo, Rol.activo.is_(True)).first()
         if rol is None:
             raise AppError(400, "El rol indicado no existe o no está activo.")
         usuario.rol_id = rol.id
+        rol_destino = rol.codigo
     if data.nombre is not None:
         usuario.nombre = data.nombre.strip()
     if data.apellido is not None:
@@ -97,6 +104,9 @@ def actualizar_usuario(db: Session, usuario_id, data, actual: Usuario) -> dict:
         usuario.numero_identificacion = data.numeroIdentificacion
     if data.cargo is not None:
         usuario.cargo = data.cargo
+    if rol_destino == "SUPER_ADMINISTRADOR":
+        # La empresa asociada identifica MAGNUS | SIG, pero los permisos siguen siendo globales por rol.
+        usuario.organizacion_id = obtener_empresa_interna(db).id
     db.commit()
     usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario.id).one()
     return usuario_publico(usuario)
@@ -166,6 +176,11 @@ def cambiar_rol_usuario(db: Session, usuario_id, rol_codigo: str, actual: Usuari
 
     rol_anterior = usuario.rol.codigo
     usuario.rol_id = nuevo_rol.id
+    if nuevo_rol.codigo == "SUPER_ADMINISTRADOR":
+        usuario.organizacion_id = obtener_empresa_interna(db).id
+    elif rol_anterior == "SUPER_ADMINISTRADOR" and usuario.organizacion and usuario.organizacion.nit == "1075277687-2":
+        # La empresa interna no debe quedar como empresa operativa si deja de ser Super Administrador.
+        usuario.organizacion_id = None
     db.commit()
     usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario.id).one()
     return {**usuario_publico(usuario), "rol_anterior": rol_anterior}
@@ -184,12 +199,14 @@ def invitar_usuario(db: Session, data, actual: Usuario) -> dict:
     if rol is None:
         raise AppError(400, "El rol indicado no existe o no está activo.")
 
+    organizacion_id = obtener_empresa_interna(db).id if rol.codigo == "SUPER_ADMINISTRADOR" else None
     usuario = Usuario(
         nombre=data.nombre.strip(),
         apellido=data.apellido.strip(),
         email=email,
         password_hash=hash_password(secrets.token_urlsafe(24) + "aA1"),  # inutilizable: la persona crea la suya
         rol_id=rol.id,
+        organizacion_id=organizacion_id,
         numero_resolucion=data.numeroResolucion if data.rolCodigo == "EVALUADOR_SST" else None,
         email_verificado=True,
         estado="ACTIVO",
