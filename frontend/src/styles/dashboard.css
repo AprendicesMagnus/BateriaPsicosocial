@@ -47,6 +47,11 @@ body {
   border-radius: 50%;
 }
 
+.sidebar .sidebar__logo img {
+  object-fit: contain;
+  object-position: left center;
+}
+
 .sidebar__logo strong {
   display: block;
   font-size: 14px;
