@@ -453,6 +453,7 @@ class ProductoCreate(BaseModel):
     imagen_url: str = Field(default="", max_length=500)
     activo: bool = True
     stock: int = Field(default=0, ge=0)
+    es_servicio: bool = False
 
 
 class ProductoUpdate(BaseModel):
@@ -462,6 +463,7 @@ class ProductoUpdate(BaseModel):
     imagen_url: str | None = Field(default=None, max_length=500)
     activo: bool | None = None
     stock: int | None = Field(default=None, ge=0)
+    es_servicio: bool | None = None
 
 
 class PedidoProductoItemCreate(BaseModel):
