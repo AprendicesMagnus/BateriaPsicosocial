@@ -244,6 +244,7 @@ body {
   display: flex;
   gap: 7px;
   margin: 16px 0;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
