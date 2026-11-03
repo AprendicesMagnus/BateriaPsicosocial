@@ -827,7 +827,7 @@
 
   .mobile-nav__group > span { color: #6b7485; }
 
-  .app-profile-menu {
+  .nav .app-profile-menu {
     display: none !important;
     grid-column: 1 / -1;
     grid-row: 3;
