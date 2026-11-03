@@ -8,6 +8,9 @@ from app.models.evaluation import EvaluacionParticipante, ResultadoDimension
 from app.models.survey import Dimension
 
 
+pytestmark = pytest.mark.usefixtures("anonimato_minimo_1")
+
+
 @pytest.fixture(autouse=True)
 def setup_seed(db_session):
     sembrar_todos_los_cuestionarios(db_session)

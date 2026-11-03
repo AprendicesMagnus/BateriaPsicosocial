@@ -148,6 +148,7 @@ def test_area_con_5_o_mas_completados_es_listo(client, escenario_reportes):
     assert item_a["participantesCompletados"] >= 5
 
 
+@pytest.mark.usefixtures("anonimato_minimo_1")
 def test_area_con_al_menos_un_completado_es_listo(client, escenario_reportes):
     # Con el mínimo de anonimato en 1, un área con 2 completados ya no está restringida.
     res = client.get("/api/reportes", headers=escenario_reportes["headers_evaluador_b"])
@@ -186,6 +187,7 @@ def test_trabajador_sin_acceso_reportes(client, escenario_reportes):
     assert res.status_code == 403
 
 
+@pytest.mark.usefixtures("anonimato_minimo_1")
 def test_conteo_anonimato_solo_evaluacion_reciente(client, db_session, crear_paciente):
     """Demuestra que el conteo de anonimato se calcula únicamente sobre la evaluación más reciente de la organización."""
     res_login = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})

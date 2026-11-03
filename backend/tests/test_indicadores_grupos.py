@@ -10,6 +10,9 @@ from app.models.survey import CuestionarioVersion, Dimension, Pregunta
 from app.models.user import Usuario
 
 
+pytestmark = pytest.mark.usefixtures("anonimato_minimo_1")
+
+
 @pytest.fixture(autouse=True)
 def setup_seed(db_session):
     sembrar_todos_los_cuestionarios(db_session)

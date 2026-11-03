@@ -151,3 +151,13 @@ def desactivar_2fa(monkeypatch):
     (test_auth_2fa.py) la reactivan de forma explicita.
     """
     monkeypatch.setattr(auth_service, "ROLES_REQUIEREN_2FA", set())
+
+
+@pytest.fixture
+def anonimato_minimo_1(monkeypatch):
+    """Fija en 1 el minimo de participantes para el anonimato durante la prueba.
+
+    Las pruebas que la usan asumen ese valor y no deben depender del .env de
+    quien las ejecute. No cambia la configuracion real de la aplicacion.
+    """
+    monkeypatch.setattr(get_settings(), "min_grupo_anonimato", 1)
