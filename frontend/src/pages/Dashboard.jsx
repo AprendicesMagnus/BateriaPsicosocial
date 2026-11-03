@@ -790,7 +790,7 @@ export default function Dashboard() {
               <div>
                 <h3>Análisis Predictivo (K-Means Clustering IA)</h3>
                 <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>
-                  Identificación de perfiles de riesgo no supervisados y alertas tempranas en tiempo real.
+                  Identificación de perfiles de riesgo no supervisados, alertas tempranas y lectura automática de resultados.
                 </p>
               </div>
 
@@ -816,6 +816,31 @@ export default function Dashboard() {
 
             {prediccion && (
               <div style={{ marginTop: "16px" }}>
+                {prediccion.resumenInterpretativo && (
+                  <div
+                    style={{
+                      padding: "16px",
+                      background: "#eff6ff",
+                      borderRadius: "8px",
+                      border: "1px solid #bfdbfe",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    <p style={{ margin: "0 0 6px", fontSize: "13px", fontWeight: 700, color: "#1e3a8a" }}>
+                      Lectura automática de los resultados
+                    </p>
+                    <p style={{ margin: 0, fontSize: "13px", lineHeight: 1.55, color: "#1e40af" }}>
+                      {prediccion.resumenInterpretativo}
+                    </p>
+                    {prediccion.calidadAgrupacion?.silhouette != null && (
+                      <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#475569" }}>
+                        Calidad de la agrupación: {prediccion.calidadAgrupacion.silhouette} ·{" "}
+                        {prediccion.calidadAgrupacion.lectura}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div
                   style={{
                     display: "grid",
@@ -843,6 +868,11 @@ export default function Dashboard() {
                       <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
                         {cluster.numTrabajadores} trabajador(es) · Promedio: {cluster.promedioGlobalPuntaje} pts
                       </p>
+                      {cluster.descripcion && (
+                        <p style={{ margin: "8px 0 0", fontSize: "12px", lineHeight: 1.5, color: "#334155" }}>
+                          {cluster.descripcion}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -862,6 +892,39 @@ export default function Dashboard() {
                       {prediccion.alertasTempranas.map((alerta, idx) => (
                         <li key={idx} style={{ marginBottom: "4px" }}>
                           <strong>[{alerta.nivelAlerta}]</strong> {alerta.mensaje}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {prediccion.recomendacionesOrientativas?.length > 0 && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <h4 style={{ fontSize: "14px", color: "#1e293b", marginBottom: "8px" }}>
+                      Recomendaciones orientativas
+                    </h4>
+                    <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#475569" }}>
+                      {prediccion.recomendacionesOrientativas.map((rec) => (
+                        <li key={rec.dimension} style={{ marginBottom: "4px" }}>
+                          <strong>{rec.dimension}:</strong> {rec.accion}
+                        </li>
+                      ))}
+                    </ul>
+                    <p style={{ margin: "6px 0 0", fontSize: "11px", color: "#64748b" }}>
+                      Sugerencias generadas automáticamente; requieren el criterio del profesional SST.
+                    </p>
+                  </div>
+                )}
+
+                {prediccion.dimensionesRelacionadas?.length > 0 && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <h4 style={{ fontSize: "14px", color: "#1e293b", marginBottom: "8px" }}>
+                      Dimensiones que se mueven juntas
+                    </h4>
+                    <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#475569" }}>
+                      {prediccion.dimensionesRelacionadas.map((par) => (
+                        <li key={`${par.dimensionA}-${par.dimensionB}`} style={{ marginBottom: "4px" }}>
+                          {par.mensaje}
                         </li>
                       ))}
                     </ul>
