@@ -12,6 +12,7 @@ from app.core.crypto import hash_password
 from app.db.base import Base
 from app.models.user import Rol, Usuario
 import app.models
+from app.services import auth as auth_service
 
 from app.db.seed import (
     sembrar_permisos,
@@ -140,3 +141,13 @@ def crear_paciente(db_session):
         return usuario.id, email
 
     return _crear
+
+
+@pytest.fixture(autouse=True)
+def desactivar_2fa(monkeypatch):
+    """Deja vacia la lista de roles con verificacion en dos pasos en cada prueba.
+
+    Asi el login devuelve el token directamente. Las pruebas de la 2FA
+    (test_auth_2fa.py) la reactivan de forma explicita.
+    """
+    monkeypatch.setattr(auth_service, "ROLES_REQUIEREN_2FA", set())
