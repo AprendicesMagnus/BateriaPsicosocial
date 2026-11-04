@@ -4,6 +4,7 @@ import "../styles/landing.css";
 import ModalPlanes from "../components/ModalPlanes";
 import ModalCatalogo from "../components/ModalCatalogo";
 import TiendaMenu from "../components/TiendaMenu";
+import { BsFacebook, BsInstagram, BsTiktok } from "react-icons/bs";
 
 const SLIDES = [
   "/pasare1.jpg",
@@ -245,9 +246,8 @@ export default function Landing() {
               key={src}
               src={src}
               alt={`Fondo ${index + 1}`}
-              className={`hero__background-image ${
-                index === slide ? "active" : ""
-              }`}
+              className={`hero__background-image ${index === slide ? "active" : ""
+                }`}
             />
           ))}
 
@@ -352,11 +352,11 @@ export default function Landing() {
           <div className="section__header">
 
             <span className="section__eyebrow"
-            style={{
-                    color: "var(--gold-500)",
-                    fontSize: "20px",
-                  }}
-                >
+              style={{
+                color: "var(--gold-500)",
+                fontSize: "20px",
+              }}
+            >
               Resolución 2764 de 2022
             </span>
 
@@ -427,11 +427,11 @@ export default function Landing() {
           <div className="section__header">
 
             <span className="section__eyebrow"
-            style={{
-                    color: "var(--gold-500)",
-                    fontSize: "20px",
-                  }}
-                >
+              style={{
+                color: "var(--gold-500)",
+                fontSize: "20px",
+              }}
+            >
               Por qué aplicarla
             </span>
 
@@ -492,9 +492,9 @@ export default function Landing() {
         className="section"
         id="como-funciona"
         style={{
-    background: "linear-gradient(135deg, #f6f7fb 100%)",
-    padding: "70px 0",
-  }}
+          background: "linear-gradient(135deg, #f6f7fb 100%)",
+          padding: "70px 0",
+        }}
       >
 
         <div className="container">
@@ -502,11 +502,11 @@ export default function Landing() {
           <div className="section__header">
 
             <span className="section__eyebrow"
-            style={{
-                    color: "var(--gold-500)",
-                    fontSize: "20px",
-                  }}
-                >
+              style={{
+                color: "var(--gold-500)",
+                fontSize: "20px",
+              }}
+            >
               Proceso
             </span>
 
@@ -573,7 +573,7 @@ export default function Landing() {
             >
               Ley 1581 de 2012
             </span>
-            
+
 
             <h2
               style={{
@@ -736,24 +736,30 @@ export default function Landing() {
               <div className="footer__social">
 
                 <a
-                  href="#"
+                  href="https://www.facebook.com/share/19MuhyUBSa/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Facebook"
                 >
-                  f
+                  <BsFacebook size={16} aria-hidden="true" />
                 </a>
 
                 <a
-                  href="#"
+                  href="https://www.instagram.com/magnussig.sas"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Instagram"
                 >
-                  in
+                  <BsInstagram size={16} aria-hidden="true" />
                 </a>
 
                 <a
-                  href="#"
-                  aria-label="X"
+                  href="https://www.tiktok.com/@magnusssig"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="TikTok"
                 >
-                  x
+                  <BsTiktok size={16} aria-hidden="true" />
                 </a>
 
               </div>

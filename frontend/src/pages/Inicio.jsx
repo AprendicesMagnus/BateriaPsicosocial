@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom"; // <-- AGREGADO AQUÍ "useNavigate"
 import { VscBriefcase } from "react-icons/vsc";
 import { BsCart4 } from "react-icons/bs";
+import { BsFacebook, BsInstagram, BsTiktok } from "react-icons/bs";
 import { BsFillClipboard2Fill } from "react-icons/bs";
 import { HiOutlineUser, HiOutlineDocumentText, HiOutlineClipboardList, HiOutlineClipboardCheck, HiOutlineChartBar, } from "react-icons/hi";
 import "../styles/Inicio.css";
@@ -797,24 +798,30 @@ export default function Inicio() {
               <div className="footer__social">
 
                 <a
-                  href="#"
+                  href="https://www.facebook.com/share/19MuhyUBSa/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Facebook"
                 >
-                  f
+                  <BsFacebook size={16} aria-hidden="true" />
                 </a>
 
                 <a
-                  href="#"
+                  href="https://www.instagram.com/magnussig.sas"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Instagram"
                 >
-                  in
+                  <BsInstagram size={16} aria-hidden="true" />
                 </a>
 
                 <a
-                  href="#"
-                  aria-label="X"
+                  href="https://www.tiktok.com/@magnusssig"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="TikTok"
                 >
-                  x
+                  <BsTiktok size={16} aria-hidden="true" />
                 </a>
 
               </div>
