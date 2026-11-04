@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { BsExclamationTriangleFill, BsClipboardCheck, BsCheckCircleFill, BsSave } from "react-icons/bs";
+
+const ICONO_TEXTO = { marginRight: 6, verticalAlign: "-2px" };
 import {
   fetchEvaluacionDetalle,
   registrarConsentimiento,
@@ -170,7 +173,7 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
   if (step === "error") {
     return (
       <div style={{ background: "white", padding: 32, borderRadius: 12, border: "1px solid #E2E8F0" }}>
-        <h3 style={{ color: "#991B1B", marginBottom: 12 }}>⚠️ No se pudo acceder</h3>
+        <h3 style={{ color: "#991B1B", marginBottom: 12 }}><BsExclamationTriangleFill style={ICONO_TEXTO} aria-hidden="true" />No se pudo acceder</h3>
         <p style={{ color: "#475569", marginBottom: 20 }}>{errorMsg}</p>
         <button className="btn-secondary" onClick={onVolver}>
           ← Volver a Mis Evaluaciones
@@ -183,7 +186,7 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
     return (
       <div style={{ background: "white", padding: 32, borderRadius: 12, border: "1px solid #E2E8F0", maxWidth: 800, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 22, color: "#1E293B", margin: 0 }}>📋 Consentimiento Informado</h2>
+          <h2 style={{ fontSize: 22, color: "#1E293B", margin: 0 }}><BsClipboardCheck style={ICONO_TEXTO} aria-hidden="true" />Consentimiento Informado</h2>
           <button className="btn-secondary" onClick={onVolver}>← Volver</button>
         </div>
 
@@ -205,7 +208,7 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
 
         {errorMsg && (
           <div style={{ padding: 12, background: "#FEF2F2", color: "#991B1B", borderRadius: 6, marginBottom: 16, fontSize: 14 }}>
-            ⚠️ {errorMsg}
+            <BsExclamationTriangleFill style={ICONO_TEXTO} aria-hidden="true" />{errorMsg}
           </div>
         )}
 
@@ -224,14 +227,14 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
       <div style={{ background: "white", padding: 32, borderRadius: 12, border: "1px solid #E2E8F0", maxWidth: 800, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <div>
-            <h2 style={{ fontSize: 22, color: "#1E293B", margin: 0 }}>✅ Evaluación Completada</h2>
+            <h2 style={{ fontSize: 22, color: "#1E293B", margin: 0 }}><BsCheckCircleFill style={ICONO_TEXTO} aria-hidden="true" />Evaluación Completada</h2>
             <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>{evaluacionInfo?.nombre}</p>
           </div>
           <button className="btn-secondary" onClick={onVolver}>← Volver</button>
         </div>
 
         <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", padding: 16, borderRadius: 8, marginBottom: 24, color: "#166534" }}>
-          🎉 ¡Gracias por completar su evaluación! Sus respuestas han sido procesadas de manera confidencial.
+          ¡Gracias por completar su evaluación! Sus respuestas han sido procesadas de manera confidencial.
         </div>
 
         {resultados && resultados.length > 0 && (
@@ -289,7 +292,7 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
 
       {errorMsg && (
         <div style={{ padding: 12, background: "#FEF2F2", color: "#991B1B", borderRadius: 6, marginBottom: 20, fontSize: 14 }}>
-          ⚠️ {errorMsg}
+          <BsExclamationTriangleFill style={ICONO_TEXTO} aria-hidden="true" />{errorMsg}
         </div>
       )}
 
@@ -374,7 +377,7 @@ export default function CuestionarioTrabajador({ evaluacionId, token, onVolver }
 
           {guardando && (
             <div style={{ fontSize: 12, color: "#64748B", marginTop: 12, fontStyle: "italic" }}>
-              💾 Guardando respuesta cifrada...
+              <BsSave style={ICONO_TEXTO} aria-hidden="true" />Guardando respuesta cifrada...
             </div>
           )}
         </div>
