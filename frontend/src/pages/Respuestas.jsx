@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { BsExclamationTriangleFill } from "react-icons/bs";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
@@ -272,7 +273,7 @@ export default function Respuestas() {
             Resultados individuales: información confidencial, visible solo para administradores y evaluadores SST.
           </p>
 
-          {error && <div className="resp-error">⚠️ {error}</div>}
+          {error && <div className="resp-error"><BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{error}</div>}
 
           <div className="resp-layout">
             {/* ---------- Lista de usuarios con buscador ---------- */}

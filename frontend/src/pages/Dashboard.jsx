@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BsLockFill, BsExclamationTriangleFill, BsLink45Deg } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import ProfileMenu from "../components/ProfileMenu";
 import CampanaNotificaciones from "../components/CampanaNotificaciones";
@@ -565,7 +566,7 @@ export default function Dashboard() {
               ) : indicadores?.anonimizado ? (
                 <div style={{ padding: "30px 20px", textAlign: "center", color: "#64748b" }}>
                   <p style={{ fontWeight: 600, fontSize: "15px", marginBottom: "8px" }}>
-                    🔒 Datos Anonimizados
+                    <BsLockFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />Datos Anonimizados
                   </p>
                   <p style={{ fontSize: "13px" }}>
                     {indicadores.mensajeAnonimato ||
@@ -856,7 +857,7 @@ export default function Dashboard() {
                 {prediccion.alertasTempranas?.length > 0 && (
                   <div style={{ marginBottom: "16px" }}>
                     <h4 style={{ fontSize: "14px", color: "#b91c1c", marginBottom: "8px" }}>
-                      ⚠️ Alertas Tempranas Identificadas ({prediccion.alertasTempranas.length})
+                      <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />Alertas Tempranas Identificadas ({prediccion.alertasTempranas.length})
                     </h4>
                     <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#475569" }}>
                       {prediccion.alertasTempranas.map((alerta, idx) => (
@@ -1077,7 +1078,7 @@ export default function Dashboard() {
                           })
                         }
                       >
-                        🔗 Enlace solo Forma A
+                        <BsLink45Deg style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />Enlace solo Forma A
                       </button>
 
                       <button
@@ -1091,7 +1092,7 @@ export default function Dashboard() {
                           })
                         }
                       >
-                        🔗 Enlace solo Forma B
+                        <BsLink45Deg style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />Enlace solo Forma B
                       </button>
                     </div>
                   </div>

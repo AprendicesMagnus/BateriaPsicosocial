@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BsShieldLock } from "react-icons/bs";
 import { verificarCodigoLogin, reenviarCodigoLogin } from "../api/auth";
 
 export default function VerificacionDosPasos({ challenge, onSuccess, onCancelar }) {
@@ -49,7 +50,7 @@ export default function VerificacionDosPasos({ challenge, onSuccess, onCancelar 
 
   return (
     <div className="login-2fa">
-      <div className="login-2fa__icon" aria-hidden="true">🔐</div>
+      <div className="login-2fa__icon" aria-hidden="true"><BsShieldLock /></div>
       <h2>Verificación en dos pasos</h2>
       <p>Enviamos un código de seguridad a <strong>{challenge.email}</strong>. El código vence en cinco minutos.</p>
       <form className="auth-form" onSubmit={verificar}>

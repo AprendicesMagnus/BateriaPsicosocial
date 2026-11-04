@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { BsExclamationTriangleFill } from "react-icons/bs";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -1045,7 +1046,7 @@ return (
             </div>
             {errorBackend && (
               <div style={{ color: "#991B1B", background: "#FEF2F2", padding: "12px", borderRadius: "8px", border: "1px solid #FCA5A5", margin: "16px 0", fontSize: "14px" }}>
-                ⚠️ {errorBackend}
+                <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{errorBackend}
               </div>
             )}
           </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { BsExclamationTriangleFill } from "react-icons/bs";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
@@ -314,7 +315,7 @@ export default function Reportes() {
 
               {errorEnlaces && (
                 <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
-                  ⚠️ {errorEnlaces}
+                  <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{errorEnlaces}
                 </div>
               )}
 
@@ -383,7 +384,7 @@ export default function Reportes() {
 
           {error && (
             <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
-              ⚠️ {error}
+              <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{error}
             </div>
           )}
 
@@ -456,7 +457,7 @@ export default function Reportes() {
 
           {errorEncuestas && (
             <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
-              ⚠️ {errorEncuestas}
+              <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{errorEncuestas}
             </div>
           )}
 

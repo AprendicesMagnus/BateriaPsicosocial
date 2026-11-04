@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BsExclamationTriangleFill } from "react-icons/bs";
 import { fetchEvaluaciones } from "../api/evaluaciones";
 
 const ESTADO_BADGE = {
@@ -37,7 +38,7 @@ export default function ListaEvaluacionesTrabajador({ token, onSeleccionarEvalua
   if (error) {
     return (
       <div style={{ padding: 16, background: "#FEF2F2", color: "#991B1B", borderRadius: 8 }}>
-        ⚠️ {error}
+        <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{error}
       </div>
     );
   }

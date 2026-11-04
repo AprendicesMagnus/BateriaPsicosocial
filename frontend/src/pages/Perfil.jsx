@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BsPhone, BsLaptop } from "react-icons/bs";
 import { useLocation, useNavigate } from "react-router-dom";
 import { etiquetaRol } from "../utils/roles";
 import { useAuth } from "../context/AuthContext";
@@ -1231,7 +1232,7 @@ export default function Perfil() {
                 <div className="sesiones-list">
                   {sesionesActivas.map((sesion) => (
                     <div className="sesion-item" key={sesion.id}>
-                      <div className="sesion-item__icon" aria-hidden="true">{/Android|iPhone|Mobile/i.test(sesion.dispositivo) ? "📱" : "💻"}</div>
+                      <div className="sesion-item__icon" aria-hidden="true">{/Android|iPhone|Mobile/i.test(sesion.dispositivo) ? <BsPhone size={18} /> : <BsLaptop size={18} />}</div>
                       <div className="sesion-item__info">
                         <strong>{/Windows/i.test(sesion.dispositivo) ? "Windows" : /Android/i.test(sesion.dispositivo) ? "Android" : /Mac OS|Macintosh/i.test(sesion.dispositivo) ? "macOS" : /iPhone|iPad/i.test(sesion.dispositivo) ? "iOS" : "Dispositivo"} · {sesion.dispositivo}</strong>
                         <span>{sesion.actual ? "Esta es tu sesión actual" : "Sesión abierta"}</span>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BsBoxSeam, BsTools } from "react-icons/bs";
 import { useAuth } from "../context/AuthContext";
 import { descargarExportacionPanel } from "../api/panel";
 import { subirImagenProducto } from "../api/productos";
@@ -263,7 +264,7 @@ export default function PanelProductos() {
                     {categoria}
                   </option>
                 ))}
-                <option value="__nueva__">➕ Nueva categoría…</option>
+                <option value="__nueva__">+ Nueva categoría…</option>
               </select>
             )}
               </label>
@@ -288,7 +289,7 @@ export default function PanelProductos() {
                     aria-pressed={!form.es_servicio}
                     onClick={() => setForm((a) => ({ ...a, es_servicio: false }))}
                   >
-                    📦 Producto con stock
+                    <BsBoxSeam style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />Producto con stock
                   </button>
                   <button
                     type="button"
@@ -296,7 +297,7 @@ export default function PanelProductos() {
                     aria-pressed={form.es_servicio}
                     onClick={() => setForm((a) => ({ ...a, es_servicio: true }))}
                   >
-                    🛠️ Servicio (sin stock)
+                    <BsTools style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />Servicio (sin stock)
                   </button>
                 </div>
               </div>
