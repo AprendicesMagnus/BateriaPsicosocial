@@ -326,8 +326,8 @@ SectorEmpresa = Literal["Comercial", "Servicios", "Otros"]
 class OrganizacionCreate(BaseModel):
     nombre: RazonSocial
     nit: str = Field(
-        pattern=r"^\d{9}(-\d)?$",
-        description="NIT de 9 dígitos, opcionalmente seguido de guion y dígito",
+        pattern=r"^\d{9,10}(-\d)?$",
+        description="NIT de 9 o 10 dígitos, opcionalmente seguido de guion y dígito",
     )
     sector: str | None = Field(default=None, min_length=2, max_length=80)
     municipio: Lugar | None = None
@@ -346,7 +346,7 @@ class OrganizacionCreate(BaseModel):
 
 class OrganizacionUpdate(BaseModel):
     nombre: RazonSocial | None = None
-    nit: str | None = Field(default=None, pattern=r"^\d{9}(-\d)?$")
+    nit: str | None = Field(default=None, pattern=r"^\d{9,10}(-\d)?$")
     sector: str | None = Field(default=None, min_length=2, max_length=80)
     municipio: Lugar | None = None
     telefono: str | None = Field(default=None, pattern=r"^\d{7,10}$")
@@ -761,9 +761,9 @@ class OrganizacionAutorregistroCreate(BaseModel):
     nombre: RazonSocial
     nit: str = Field(
         min_length=11,
-        max_length=11,
-        pattern=r"^\d{9}-\d$",
-        description="NIT con dígito de verificación, formato NNNNNNNNN-D",
+        max_length=12,
+        pattern=r"^\d{9,10}-\d$",
+        description="NIT con dígito de verificación, con 9 o 10 dígitos base",
     )
     sector: SectorEmpresa | None = None
     numeroTrabajadores: int | None = Field(default=None, ge=1, le=1000000)

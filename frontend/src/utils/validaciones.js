@@ -103,21 +103,20 @@ export const TEXTO_AYUDA_PASSWORD = "Mínimo 8 caracteres, con mayúsculas, min�
 export function formatearNit(valor) {
   if (!valor) return "";
   const limpio = String(valor).replace(/[^\d-]/g, "");
-  const partes = limpio.split("-");
-  const base = partes[0].replace(/\D/g, "");
-  if (partes.length > 1) {
-    const dv = partes.slice(1).join("").replace(/\D/g, "");
-    return `${base}-${dv}`;
+  if (limpio.includes("-")) {
+    const [base, ...resto] = limpio.split("-");
+    return `${base.replace(/\D/g, "").slice(0, 10)}-${resto.join("").replace(/\D/g, "").slice(0, 1)}`;
   }
-  if (base.length > 9) {
-    return `${base.slice(0, 9)}-${base.slice(9)}`;
-  }
-  return base;
+  const digitos = limpio.replace(/\D/g, "");
+  // Permite pegar el NIT completo sin guion (10 dígitos base + DV).
+  if (digitos.length === 11) return `${digitos.slice(0, 10)}-${digitos.slice(10)}`;
+  // Si aún no se ha escrito el guion, conserva hasta los 10 dígitos de la base.
+  return digitos.slice(0, 10);
 }
 
 export function nitValido(valor) {
   if (!valor) return false;
-  return /^\d{9}-\d$/.test(String(valor).trim());
+  return /^\d{9,10}-\d$/.test(String(valor).trim());
 }
 
 export function formatearVencimiento(value) {

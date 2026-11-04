@@ -13,6 +13,7 @@ import { fetchPanel, descargarExportacionPanel } from "../api/panel";
 import { editarUsuarioAdmin, reenviarCodigoVerificacion, verificarResolucion } from "../api/perfil";
 import AppSidebar from "../components/AppSidebar";
 import ModalUsuarioAdmin from "../components/ModalUsuarioAdmin";
+import ModalEmpresaAdmin from "../components/ModalEmpresaAdmin";
 import "../styles/dashboard.css";
 import "../styles/Panel.css";
 import BotonRegresar from "../components/BotonRegresar";
@@ -157,6 +158,7 @@ export default function Panel() {
   const [error, setError] = useState("");
   const [version, setVersion] = useState(0); // al cambiar, se vuelve a pedir el panel
   const [modalUsuario, setModalUsuario] = useState(null); // {modo: "invitar" | "editar", usuario?}
+  const [modalEmpresa, setModalEmpresa] = useState(null);
   const [aviso, setAviso] = useState(null); // {tipo: "ok" | "error", texto}
   const [seccion, setSeccion] = useState(location.state?.seccion ?? "usuarios");
   const [exportando, setExportando] = useState(false);
@@ -348,16 +350,14 @@ export default function Panel() {
                           </td>
                           <td><span className={`adm-chip adm-chip--rol-${r.clase}`}>{r.label}</span></td>
                           <td>
-                            {u.numeroResolucion ? (
-                              <div className="adm-celda-doble">
-                                <strong>{u.numeroResolucion}</strong>
-                                <span>{u.resolucionVerificada ? "Verificada" : "Pendiente"}</span>
-                              </div>
-                            ) : u.rol === "EVALUADOR_SST" || u.rol === "RESPONSABLE_SST" ? (
-                              <span className="adm-chip adm-chip--peligro">Sin número</span>
-                            ) : (
-                              <span className="adm-muted">—</span>
-                            )}
+                            {u.rol === "EVALUADOR_SST" || u.rol === "RESPONSABLE_SST" ? (
+                              u.numeroResolucion ? (
+                                <div className="adm-celda-doble">
+                                  <strong>{u.numeroResolucion}</strong>
+                                  <span>{u.resolucionVerificada ? "Verificada" : "Pendiente"}</span>
+                                </div>
+                              ) : <span className="adm-chip adm-chip--peligro">Sin número</span>
+                            ) : <span className="adm-muted">—</span>}
                           </td>
                           <td>{u.empresa}</td>
                           <td>{u.registro}</td>
@@ -377,7 +377,7 @@ export default function Panel() {
                                   Editar
                                 </button>
                               )}
-                              {u.numeroResolucion && (
+                              {(u.rol === "EVALUADOR_SST" || u.rol === "RESPONSABLE_SST") && u.numeroResolucion && (
                                 <button
                                   type="button"
                                   className={`adm-accion ${u.resolucionVerificada ? "" : "adm-accion--ok"}`.trim()}
@@ -392,7 +392,7 @@ export default function Panel() {
                       );
                     })}
                     {usuariosFiltrados.length === 0 && (
-                      <tr><td colSpan={7} className="adm-vacio">No hay usuarios que coincidan con la búsqueda.</td></tr>
+                      <tr><td colSpan={8} className="adm-vacio">No hay usuarios que coincidan con la búsqueda.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -436,6 +436,7 @@ export default function Panel() {
                         <th>Responsable SST</th>
                         <th>Encuestas</th>
                         <th>Evaluaciones</th>
+                        <th>Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -458,10 +459,14 @@ export default function Panel() {
                               />
                             </div>
                           </td>
+                          <td>
+                            <button type="button" className="adm-accion"
+                              onClick={() => setModalEmpresa(e)}>Editar empresa</button>
+                          </td>
                         </tr>
                       ))}
                       {empresasFiltradas.length === 0 && (
-                        <tr><td colSpan={4} className="adm-vacio">No hay empresas que coincidan.</td></tr>
+                        <tr><td colSpan={5} className="adm-vacio">No hay empresas que coincidan.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -638,10 +643,23 @@ export default function Panel() {
         <ModalUsuarioAdmin
           modo={modalUsuario.modo}
           usuario={modalUsuario.usuario}
+          empresas={empresas}
           token={token}
           onCerrar={() => setModalUsuario(null)}
           onGuardado={(texto) => {
             setModalUsuario(null);
+            setAviso({ tipo: "ok", texto });
+            setVersion((v) => v + 1);
+          }}
+        />
+      )}
+      {modalEmpresa && (
+        <ModalEmpresaAdmin
+          empresa={modalEmpresa}
+          token={token}
+          onCerrar={() => setModalEmpresa(null)}
+          onGuardado={(texto) => {
+            setModalEmpresa(null);
             setAviso({ tipo: "ok", texto });
             setVersion((v) => v + 1);
           }}

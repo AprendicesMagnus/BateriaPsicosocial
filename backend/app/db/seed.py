@@ -3,6 +3,7 @@ from app.core.crypto import hash_password
 from app.db.session import SessionLocal
 from app.models.survey import Baremo, CuestionarioVersion, Dimension, Pregunta, Recomendacion
 from app.models.user import Permiso, Rol, RolPermiso, Usuario
+from app.services.empresa_interna import asignar_empresa_a_superadministradores
 from app.db.intralaboral_oficial import sembrar_forma_intralaboral
 
 PERMISOS = [
@@ -616,6 +617,7 @@ def ejecutar_seed() -> None:
         permisos = sembrar_permisos(db)
         roles = sembrar_roles(db, permisos)
         sembrar_administrador(db, roles)
+        asignar_empresa_a_superadministradores(db)
         sembrar_cuestionario_brp(db)
         sembrar_todos_los_cuestionarios(db)
         db.commit()
