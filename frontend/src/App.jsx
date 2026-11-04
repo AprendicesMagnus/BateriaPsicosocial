@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -18,6 +18,7 @@ import VerificarNit from "./pages/VerificarNit";
 import MisEmpresas from "./pages/MisEmpresas";
 import RestriccionRolLimitado from "./components/RestriccionRolLimitado";
 import CierreInactividad from "./components/CierreInactividad";
+import TituloPagina from "./components/TituloPagina";
 import CompletarResolucion from "./components/CompletarResolucion";
 import BienvenidaLogin from "./components/BienvenidaLogin";
 import CrearEmpresa from "./pages/Crearempresa";
@@ -42,6 +43,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <TituloPagina />
         <CierreInactividad />
         <CompletarResolucion />
         <BienvenidaLogin />
@@ -120,6 +122,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          {/* Cualquier URL que no exista vuelve a la página principal */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </RestriccionRolLimitado>
       </BrowserRouter>
