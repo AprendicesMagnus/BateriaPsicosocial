@@ -73,6 +73,7 @@ const SECCIONES = [
 // Texto legible para las acciones registradas en auditoría
 const TEXTO_ACCION = {
   LOGIN: "inició sesión",
+  LOGIN_2FA: "inició sesión con verificación en dos pasos",
   LOGIN_GOOGLE: "inició sesión con Google",
   CREAR_USUARIO: "creó un usuario",
   ACTUALIZAR_USUARIO: "actualizó un usuario",
@@ -87,6 +88,7 @@ const TEXTO_ACCION = {
   FINALIZAR_EVALUACION: "finalizó una evaluación",
   INFORME_INDIVIDUAL_GENERADO: "generó un informe individual",
   INFORME_AGRUPADO_GENERADO: "generó un informe agrupado",
+  INFORMES_EXCEL_DESCARGADOS: "descargó informes en Excel",
   INFORME_DESCARGADO: "descargó un informe",
   EDITAR_EMPRESA: "editó una empresa",
   EDITAR_RESPONSABLE_EMPRESA: "editó el responsable de una empresa",

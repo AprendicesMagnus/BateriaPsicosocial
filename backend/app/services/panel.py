@@ -15,8 +15,10 @@ TIPO_POR_ACCION = {
     "INFORME_INDIVIDUAL_GENERADO": "Resultados",
     "INFORME_AGRUPADO_GENERADO": "Resultados",
     "INFORME_DESCARGADO": "Resultados",
+    "INFORMES_EXCEL_DESCARGADOS": "Resultados",
     "LOGIN": "Accesos",
     "LOGIN_GOOGLE": "Accesos",
+    "LOGIN_2FA": "Accesos",
     "CREAR_EVALUACION": "Evaluaciones",
     "INICIAR_EVALUACION": "Evaluaciones",
     "FINALIZAR_EVALUACION": "Evaluaciones",
@@ -50,7 +52,7 @@ def obtener_panel(db: Session) -> dict:
     # Último acceso y tipo de registro, sacados de los LOGIN de auditoría
     ultimos = dict(
         db.query(Auditoria.usuario_id, func.max(Auditoria.registrado_en))
-        .filter(Auditoria.accion.in_(["LOGIN", "LOGIN_GOOGLE"]))
+        .filter(Auditoria.accion.in_(["LOGIN", "LOGIN_GOOGLE", "LOGIN_2FA"]))
         .group_by(Auditoria.usuario_id)
         .all()
     )
