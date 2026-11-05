@@ -37,7 +37,7 @@ def notificar(
 def listar_notificaciones(db: Session, usuario_id) -> list[dict]:
     registros = (
         db.query(Notificacion)
-        .filter(Notificacion.usuario_id == usuario_id)
+        .filter(Notificacion.usuario_id == usuario_id, Notificacion.oculta.is_(False))
         .order_by(Notificacion.fecha_envio.desc())
         .all()
     )
@@ -69,6 +69,21 @@ def marcar_leida(db: Session, notificacion_id, usuario_id) -> dict:
         registro.fecha_lectura = utcnow()
         db.commit()
     return {"message": "Notificación marcada como leída."}
+
+
+def ocultar_leidas(db: Session, usuario_id) -> dict:
+    # No se borran las filas: reaplicacion y resumen_mensual las usan como registro de envio.
+    ocultadas = (
+        db.query(Notificacion)
+        .filter(
+            Notificacion.usuario_id == usuario_id,
+            Notificacion.leida.is_(True),
+            Notificacion.oculta.is_(False),
+        )
+        .update({Notificacion.oculta: True}, synchronize_session="fetch")
+    )
+    db.commit()
+    return {"message": "Notificaciones leídas eliminadas de la lista.", "ocultadas": ocultadas}
 
 
 def _ejecutar_envio_recordatorios(db: Session, horas_idempotencia: int = 24) -> dict:

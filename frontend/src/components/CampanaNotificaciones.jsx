@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineBell } from "react-icons/hi";
 import { useAuth } from "../context/AuthContext";
-import { listarNotificaciones, marcarNotificacionLeida } from "../api/notificaciones";
+import { listarNotificaciones, marcarNotificacionLeida, ocultarNotificacionesLeidas } from "../api/notificaciones";
 import "../styles/CampanaNotificaciones.css";
 
 const INTERVALO_MS = 60000;
@@ -126,9 +126,22 @@ export default function CampanaNotificaciones() {
     if (resultados.some((r) => r.status === "rejected")) cargar();
   }
 
+  async function eliminarLeidas() {
+    if (!notificaciones.some((n) => n.leida)) return;
+    const previas = notificaciones;
+    setNotificaciones((actuales) => actuales.filter((n) => !n.leida));
+    try {
+      await ocultarNotificacionesLeidas(token);
+      cargar();
+    } catch {
+      setNotificaciones(previas);
+    }
+  }
+
   if (!visible) return null;
 
   const sinLeer = notificaciones.filter((n) => !n.leida).length;
+  const hayLeidas = notificaciones.some((n) => n.leida);
   const visibles = notificaciones.slice(0, MAX_VISIBLES);
 
   return (
@@ -156,6 +169,14 @@ export default function CampanaNotificaciones() {
               disabled={sinLeer === 0}
             >
               Marcar todas como leídas
+            </button>
+            <button
+              type="button"
+              className="campana__marcar-todas"
+              onClick={eliminarLeidas}
+              disabled={!hayLeidas}
+            >
+              Eliminar leídas
             </button>
           </div>
 

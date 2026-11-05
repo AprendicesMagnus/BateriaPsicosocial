@@ -199,5 +199,6 @@ class Notificacion(Base):
     evaluacion_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("evaluaciones.id"))
     fecha_envio: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     fecha_lectura: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    oculta: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     usuario: Mapped["Usuario"] = relationship()

@@ -28,6 +28,14 @@ def marcar_leida(
     return notificaciones_service.marcar_leida(db, notificacion_id, actual.id)
 
 
+@router.post("/ocultar-leidas")
+def ocultar_leidas(
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(get_current_user),
+):
+    return notificaciones_service.ocultar_leidas(db, actual.id)
+
+
 @router.post("/enviar-recordatorios")
 def enviar_recordatorios(
     db: Session = Depends(get_db),
