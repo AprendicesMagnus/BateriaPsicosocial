@@ -425,7 +425,9 @@ export default function Soporte() {
                 ))}
               </ul>
             )}
-            <Paginador paginacion={pagMisMensajes} />
+            <div className="soporte-mensajes__paginacion">
+              <Paginador paginacion={pagMisMensajes} />
+            </div>
           </section>
         </div>
       </main>

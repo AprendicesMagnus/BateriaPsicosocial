@@ -1,4 +1,9 @@
+import os
 import uuid
+
+# Las pruebas inician sesión directamente; la verificación en dos pasos se prueba aparte
+# activándola con monkeypatch (ver test_dos_pasos.py).
+os.environ.setdefault("DOS_PASOS_ACTIVO", "false")
 
 import pytest
 from fastapi.testclient import TestClient
@@ -81,6 +86,12 @@ def setup_database():
     yield
 
     engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def _sin_doble_factor_por_defecto(monkeypatch):
+    """Las demás pruebas inician sesión con admin/jefe sin código; las de 2FA lo activan."""
+    monkeypatch.setattr(settings, "doble_factor_activo", False)
 
 
 @pytest.fixture

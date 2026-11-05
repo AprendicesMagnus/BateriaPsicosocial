@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     smtp_pass: str = ""
     smtp_from: str = "Magnus|SIG <no-reply@magnussig.local>"
 
+    # Envío por la API HTTP de Brevo (funciona en Render gratis, donde SMTP está bloqueado).
+    # Si hay clave se usa Brevo; si no, SMTP. El remitente sale de SMTP_FROM y debe estar verificado en Brevo.
+    brevo_api_key: str = ""
+
     # Buzón que recibe los mensajes del Centro de ayuda (si está vacío se usa ADMIN_EMAIL)
     soporte_email: str = "aprendizmagnus@gmail.com"
 
@@ -50,11 +54,21 @@ class Settings(BaseSettings):
 
     storage_path: str = "./storage"
 
-    min_grupo_anonimato: int = 1
+    min_grupo_anonimato: int = 5
+
+    # Verificación en dos pasos para roles administrativos. Solo desactivar (DOS_PASOS_ACTIVO=false)
+    # en entornos donde todavía no hay envío de correo real.
+    dos_pasos_activo: bool = True
 
     jwt_expira_minutos: int = 120
     reset_expira_minutos: int = 15
     codigo_expira_minutos: int = 15
+
+    # Verificación en dos pasos (código por correo) para Super Administrador, Administrador, Jefe y Psicólogo.
+    # DOBLE_FACTOR_ACTIVO=false la apaga por completo (desarrollo sin correo o emergencia si el correo falla).
+    doble_factor_activo: bool = True
+    # Correos (separados por coma) que NO pasan por la verificación en dos pasos (cuenta de pruebas).
+    doble_factor_correos_exentos: str = "admin@magnussig.com"
 
     max_intentos_login: int = 5
     bloqueo_minutos: int = 15
@@ -84,6 +98,12 @@ class Settings(BaseSettings):
             if not self.admin_password.strip():
                 raise ValueError(
                     "En producción es obligatorio configurar ADMIN_PASSWORD."
+                )
+
+            if self.doble_factor_activo and not self.smtp_host.strip():
+                raise ValueError(
+                    "Con DOBLE_FACTOR_ACTIVO=true en producción es obligatorio configurar SMTP_HOST "
+                    "(si no, nadie recibiría el código). Configura el correo o pon DOBLE_FACTOR_ACTIVO=false."
                 )
 
             if not self.wompi_public_key.strip():

@@ -57,7 +57,8 @@ def verify_login_code(data: VerificarCodigoLoginRequest, request: Request, db: S
     )
     auditoria_service.registrar_auditoria(
         db, usuario=db.get(Usuario, UUID(resultado["usuario"]["id"])),
-        accion="LOGIN_2FA", entidad="Usuario", entidad_id=resultado["usuario"]["id"], request=request,
+        accion="LOGIN_GOOGLE" if resultado.pop("metodo", "password") == "google" else "LOGIN",
+        entidad="Usuario", entidad_id=resultado["usuario"]["id"], request=request,
     )
     return resultado
 

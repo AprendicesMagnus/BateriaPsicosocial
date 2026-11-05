@@ -989,6 +989,22 @@
   flex-shrink: 0;
 }
 
+/* Móvil: la campanita queda al lado del botón del menú y el "+" de Tienda se alinea con el de Empresas y el perfil. */
+@media (max-width: 700px) {
+  .nav__inner { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .nav__inner > .app-acciones-usuario { grid-column: 2; grid-row: 1; gap: 0; }
+  .nav__inner > .app-acciones-usuario .app-profile-menu { display: none; }
+  .nav__inner > .mobile-menu-toggle { grid-column: 3; }
+  /* El panel de notificaciones se alinea al borde derecho de la pantalla, no al de la campana */
+  .nav__inner > .app-acciones-usuario .campana__panel { right: -64px; }
+  .tienda-movil > button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tienda-movil__sub { padding-left: 12px; }
+}
+
 /* Logos del navbar de Inicio: un poco más a la izquierda y sin invadir los enlaces */
 @media (min-width: 1001px) {
   .nav__logos--inicio {
@@ -1005,131 +1021,131 @@
 
 @media (min-width: 1001px) {
   .nav__logos--inicio~.nav__links {
-    width: auto;
-    flex: 1 1 auto;
-    min-width: 0;
-    gap: 22px;
+      width: auto;
+      flex: 1 1 auto;
+      min-width: 0;
+      gap: 22px;
+    }
+  
+    .nav__logos--inicio~.nav__links a,
+    .nav__logos--inicio~.nav__links button {
+      white-space: nowrap;
+    }
   }
-
-  .nav__logos--inicio~.nav__links a,
-  .nav__logos--inicio~.nav__links button {
-    white-space: nowrap;
+  
+  /* Navbar de Inicio: logos del mismo tamano que en la Landing y espacios repartidos de forma pareja */
+  @media (min-width: 901px) {
+    .nav__logos--inicio~.nav__links {
+      flex: 1 1 auto;
+      width: auto;
+      min-width: 0;
+      justify-content: space-evenly;
+    }
   }
-}
-
-/* Navbar de Inicio: logos del mismo tamano que en la Landing y espacios repartidos de forma pareja */
-@media (min-width: 901px) {
-  .nav__logos--inicio~.nav__links {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 0;
-    justify-content: space-evenly;
+  
+  @media (min-width: 901px) and (max-width: 1000px) {
+    .nav__logos--inicio {
+      margin-left: 0;
+      gap: 6px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(1) {
+      height: 44px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(2) {
+      height: 29px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(3) {
+      height: 42px !important;
+    }
+  
+    .nav__logos--inicio~.nav__links {
+      gap: 10px;
+    }
   }
-}
-
-@media (min-width: 901px) and (max-width: 1000px) {
-  .nav__logos--inicio {
-    margin-left: 0;
-    gap: 6px !important;
+  
+  @media (min-width: 1001px) and (max-width: 1279px) {
+    .nav__logos--inicio {
+      margin-left: 0;
+      gap: 8px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(1) {
+      height: 58px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(2) {
+      height: 37px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(3) {
+      height: 54px !important;
+    }
+  
+    .nav__logos--inicio~.nav__links {
+      gap: 12px;
+    }
   }
-
-  .nav__logos--inicio img:nth-child(1) {
-    height: 44px !important;
+  
+  @media (min-width: 1280px) and (max-width: 1479px) {
+    .nav__logos--inicio {
+      margin-left: -40px;
+    }
+  
+    .nav__logos--inicio img:nth-child(1) {
+      height: 92px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(2) {
+      height: 59px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(3) {
+      height: 84px !important;
+    }
   }
-
-  .nav__logos--inicio img:nth-child(2) {
-    height: 29px !important;
+  
+  @media (min-width: 1480px) {
+    header.nav:has(.nav__logos--inicio) .nav__inner {
+      max-width: 1400px;
+    }
+  
+    .nav__logos--inicio {
+      margin-left: -32px;
+    }
+  
+    .nav__logos--inicio img:nth-child(1) {
+      height: 100px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(2) {
+      height: 64px !important;
+    }
+  
+    .nav__logos--inicio img:nth-child(3) {
+      height: 92px !important;
+    }
   }
-
-  .nav__logos--inicio img:nth-child(3) {
-    height: 42px !important;
-  }
-
-  .nav__logos--inicio~.nav__links {
-    gap: 10px;
-  }
-}
-
-@media (min-width: 1001px) and (max-width: 1279px) {
-  .nav__logos--inicio {
-    margin-left: 0;
-    gap: 8px !important;
-  }
-
-  .nav__logos--inicio img:nth-child(1) {
-    height: 58px !important;
-  }
-
-  .nav__logos--inicio img:nth-child(2) {
-    height: 37px !important;
-  }
-
-  .nav__logos--inicio img:nth-child(3) {
-    height: 54px !important;
-  }
-
-  .nav__logos--inicio~.nav__links {
-    gap: 12px;
-  }
-}
-
-@media (min-width: 1280px) and (max-width: 1479px) {
-  .nav__logos--inicio {
-    margin-left: -40px;
-  }
-
-  .nav__logos--inicio img:nth-child(1) {
-    height: 92px !important;
-  }
-
-  .nav__logos--inicio img:nth-child(2) {
-    height: 59px !important;
-  }
-
-  .nav__logos--inicio img:nth-child(3) {
-    height: 84px !important;
-  }
-}
-
-@media (min-width: 1480px) {
-  header.nav:has(.nav__logos--inicio) .nav__inner {
-    max-width: 1400px;
-  }
-
-  .nav__logos--inicio {
-    margin-left: -32px;
-  }
-
-  .nav__logos--inicio img:nth-child(1) {
-    height: 100px !important;
-  }
-
-  .nav__logos--inicio img:nth-child(2) {
-    height: 64px !important;
-  }
-
-  .nav__logos--inicio img:nth-child(3) {
-    height: 92px !important;
-  }
-}
-
-/* Navbar de Inicio: todos los items con la misma altura y centrados en la misma línea */
-@media (min-width: 901px) {
-
-  .nav__logos--inicio~.nav__links>a,
-  .nav__logos--inicio~.nav__links>.nav__dropdown,
-  .nav__logos--inicio~.nav__links>.tienda-dd {
-    display: flex;
-    align-items: center;
-    min-height: 24px;
-    line-height: 24px;
-    margin: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  .nav__logos--inicio~.nav__links>.nav__dropdown>button,
-  .nav__logos--inicio~.nav__links>.tienda-dd>button {
-    line-height: 24px;
-  }
+  
+  /* Navbar de Inicio: todos los items con la misma altura y centrados en la misma línea */
+  @media (min-width: 901px) {
+  
+    .nav__logos--inicio~.nav__links>a,
+    .nav__logos--inicio~.nav__links>.nav__dropdown,
+    .nav__logos--inicio~.nav__links>.tienda-dd {
+      display: flex;
+      align-items: center;
+      min-height: 24px;
+      line-height: 24px;
+      margin: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+  
+    .nav__logos--inicio~.nav__links>.nav__dropdown>button,
+    .nav__logos--inicio~.nav__links>.tienda-dd>button {
+      line-height: 24px;
+    }
 }

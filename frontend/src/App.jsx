@@ -1,41 +1,45 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Landing from "./pages/Landing";
 import SignIn from "./pages/SignIn";
-import CreateAccount from "./pages/CreateAccount";
-import VerifyCode from "./pages/VerifyCode";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Checkout from "./pages/Checkout";
-import Catalogo from "./pages/Catalogo";
-import Reportes from "./pages/Reportes";
-import Respuestas from "./pages/Respuestas";
-import Perfil from "./pages/Perfil";
-import Soporte from "./pages/Soporte";
-import VerificarNit from "./pages/VerificarNit";
-import MisEmpresas from "./pages/MisEmpresas";
 import RestriccionRolLimitado from "./components/RestriccionRolLimitado";
 import CierreInactividad from "./components/CierreInactividad";
 import TituloPagina from "./components/TituloPagina";
 import CompletarResolucion from "./components/CompletarResolucion";
 import BienvenidaLogin from "./components/BienvenidaLogin";
-import CrearEmpresa from "./pages/Crearempresa";
-import Panel from "./pages/Panel";
-import Dashboard from "./pages/Dashboard";
-import CuestionarioEstres from "./pages/CuestionarioEstres";
-import CuestionarioExtralaboral from "./pages/CuestionarioExtralaboral";
-import CuestionarioIntralaboral from "./pages/CuestionarioIntralaboral";
 
-import CuestionarioEstresB from "./pages/CuestionarioEstresB";
-import CuestionarioExtralaboralB from "./pages/CuestionarioExtralaboralB";
-import CuestionarioIntralaboralB from "./pages/CuestionarioIntralaboralB";
-import FichaDatosGenerales from "./pages/Fichadatosgenerales";
-import Inicio from "./pages/Inicio";
-import ResponderEnlace from "./pages/ResponderEnlace";
-import VerificarInforme from "./pages/VerificarInforme";
-import PoliticaDatos from "./pages/PoliticaDatos";
+// Las páginas se cargan bajo demanda para que el bundle inicial sea más liviano.
+const CreateAccount = lazy(() => import("./pages/CreateAccount"));
+const VerifyCode = lazy(() => import("./pages/VerifyCode"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Catalogo = lazy(() => import("./pages/Catalogo"));
+const Reportes = lazy(() => import("./pages/Reportes"));
+const Respuestas = lazy(() => import("./pages/Respuestas"));
+const Perfil = lazy(() => import("./pages/Perfil"));
+const Soporte = lazy(() => import("./pages/Soporte"));
+const VerificarNit = lazy(() => import("./pages/VerificarNit"));
+const MisEmpresas = lazy(() => import("./pages/MisEmpresas"));
+const CrearEmpresa = lazy(() => import("./pages/Crearempresa"));
+const Panel = lazy(() => import("./pages/Panel"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const CuestionarioEstres = lazy(() => import("./pages/CuestionarioEstres"));
+const CuestionarioExtralaboral = lazy(() => import("./pages/CuestionarioExtralaboral"));
+const CuestionarioIntralaboral = lazy(() => import("./pages/CuestionarioIntralaboral"));
+const CuestionarioEstresB = lazy(() => import("./pages/CuestionarioEstresB"));
+const CuestionarioExtralaboralB = lazy(() => import("./pages/CuestionarioExtralaboralB"));
+const CuestionarioIntralaboralB = lazy(() => import("./pages/CuestionarioIntralaboralB"));
+const FichaDatosGenerales = lazy(() => import("./pages/Fichadatosgenerales"));
+const Inicio = lazy(() => import("./pages/Inicio"));
+const ResponderEnlace = lazy(() => import("./pages/ResponderEnlace"));
+const VerificarInforme = lazy(() => import("./pages/VerificarInforme"));
+const PoliticaDatos = lazy(() => import("./pages/PoliticaDatos"));
+
 
 
 

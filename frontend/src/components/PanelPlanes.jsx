@@ -122,34 +122,49 @@ export default function PanelPlanes() {
       {mensaje && <div className={`plan-mensaje plan-mensaje--${mensaje.tipo}`}>{mensaje.texto}</div>}
 
       {form && (
-        <form className="plan-form" onSubmit={guardar} noValidate>
-          <label>
-            Nombre
-            <input type="text" maxLength={80} value={form.nombre} onChange={cambiar("nombre")} />
-          </label>
-          <label>
-            Cantidad mínima
-            <input type="number" min={1} value={form.cantidadMin} onChange={cambiar("cantidadMin")} />
-          </label>
-          <label>
-            Cantidad máxima (vacío = en adelante)
-            <input type="number" min={1} value={form.cantidadMax} onChange={cambiar("cantidadMax")} />
-          </label>
-          <label>
-            Precio por batería (COP)
-            <input type="number" min={0} value={form.precioUnitario} onChange={cambiar("precioUnitario")} />
-          </label>
-          <div className="plan-form__acciones">
-            <label className="plan-form__check">
+        <form className="adm-formulario" onSubmit={guardar} noValidate>
+          <div className="plan-form__cabecera">
+            <h3>{form.id ? "Editar plan" : "Nuevo plan"}</h3>
+            <p>Define el rango de baterías y el precio que verán los visitantes.</p>
+          </div>
+          <div className="plan-form__campos">
+            <label className="plan-campo plan-campo--ancho">
+              Nombre del plan
+              <input type="text" maxLength={80} placeholder="Ej.: Plan 1 a 10" value={form.nombre} onChange={cambiar("nombre")} />
+            </label>
+            <label className="plan-campo">
+              Cantidad mínima
+              <input type="number" min={1} value={form.cantidadMin} onChange={cambiar("cantidadMin")} />
+              <small>Desde cuántas baterías aplica.</small>
+            </label>
+            <label className="plan-campo">
+              Cantidad máxima
+              <input type="number" min={1} placeholder="En adelante" value={form.cantidadMax} onChange={cambiar("cantidadMax")} />
+              <small>Déjala vacía para "en adelante".</small>
+            </label>
+            <label className="plan-campo">
+              Precio por batería (COP)
+              <span className="plan-campo__dinero">
+                <span>$</span>
+                <input type="number" min={0} value={form.precioUnitario} onChange={cambiar("precioUnitario")} />
+              </span>
+              <small>En pesos, sin puntos ni comas.</small>
+            </label>
+          </div>
+          <div className="plan-form__pie">
+            <label className="plan-switch">
               <input type="checkbox" checked={form.activo} onChange={(e) => setForm((f) => ({ ...f, activo: e.target.checked }))} />
+              <span className="plan-switch__pista" />
               Visible en la página
             </label>
-            <button type="submit" className="adm-btn adm-btn--dorado" disabled={guardando}>
-              {guardando ? "Guardando..." : "Guardar"}
-            </button>
-            <button type="button" className="adm-btn adm-btn--borde" onClick={() => setForm(null)} disabled={guardando}>
-              Cancelar
-            </button>
+            <div className="plan-form__botones">
+              <button type="button" className="adm-btn adm-btn--borde" onClick={() => setForm(null)} disabled={guardando}>
+                Cancelar
+              </button>
+              <button type="submit" className="adm-btn adm-btn--dorado" disabled={guardando}>
+                {guardando ? "Guardando..." : form.id ? "Guardar cambios" : "Crear plan"}
+              </button>
+            </div>
           </div>
         </form>
       )}

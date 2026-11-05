@@ -141,6 +141,195 @@
   gap: 8px !important;
 }
 
+/* Formulario de crear / editar del Panel (Planes y Centro de ayuda) */
+.adm-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 4px 0 20px;
+  padding: 22px 24px;
+  border: 1px solid var(--adm-line, #e3e8ef);
+  border-left: 4px solid var(--adm-gold, #f5a623);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(11, 21, 56, 0.06);
+}
+
+.plan-form__cabecera h3 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--adm-navy, #0b1538);
+}
+
+.plan-form__cabecera p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--adm-muted, #5b6478);
+}
+
+.plan-form__campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px 18px;
+}
+
+.plan-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--adm-ink, #1f2a4d);
+}
+
+.plan-campo--ancho {
+  grid-column: 1 / -1;
+}
+
+.plan-campo small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--adm-muted, #5b6478);
+}
+
+.plan-campo input[type="text"],
+.plan-campo input[type="number"],
+.plan-campo textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid var(--adm-line-2, #d5dce6);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--adm-ink, #1f2a4d);
+  font: inherit;
+  font-weight: 500;
+}
+
+.plan-campo input[type="text"],
+.plan-campo input[type="number"] {
+  height: 44px;
+}
+
+.plan-campo textarea {
+  padding: 10px 12px;
+  min-height: 96px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.plan-campo input:focus,
+.plan-campo textarea:focus {
+  outline: none;
+  border-color: var(--adm-navy-2, #12314b);
+  box-shadow: 0 0 0 3px rgba(18, 49, 75, 0.12);
+}
+
+.plan-campo__dinero {
+  position: relative;
+}
+
+.plan-campo__dinero > span {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 700;
+  color: var(--adm-muted, #5b6478);
+}
+
+.plan-campo__dinero input {
+  padding-left: 28px !important;
+}
+
+.plan-campo__contador {
+  align-self: flex-end;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--adm-muted, #5b6478);
+}
+
+.plan-form__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--adm-line, #e3e8ef);
+}
+
+.plan-form__botones {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* Interruptor "Visible" */
+.plan-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--adm-ink, #1f2a4d);
+  cursor: pointer;
+}
+
+.plan-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.plan-switch__pista {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: #cbd2de;
+  transition: background 0.2s ease;
+}
+
+.plan-switch__pista::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.plan-switch input:checked + .plan-switch__pista {
+  background: #1f9d55;
+}
+
+.plan-switch input:checked + .plan-switch__pista::after {
+  transform: translateX(18px);
+}
+
+.plan-switch input:focus-visible + .plan-switch__pista {
+  box-shadow: 0 0 0 3px rgba(18, 49, 75, 0.25);
+}
+
+@media (max-width: 560px) {
+  .adm-formulario {
+    padding: 18px 16px;
+  }
+  .plan-form__botones {
+    width: 100%;
+  }
+  .plan-form__botones .adm-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
 .plan-mensaje {
   padding: 10px 14px;
   border-radius: 10px;

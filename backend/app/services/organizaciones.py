@@ -61,7 +61,7 @@ def autorregistrar_organizacion(db: Session, data, creador: Usuario | None = Non
             raise AppError(400, "Todos los datos del usuario responsable de la empresa son obligatorios.")
 
         if not data.usuarioNumeroResolucion:
-            raise AppError(400, "El número de resolución del usuario responsable es obligatorio (6 dígitos).")
+            raise AppError(400, "El número de resolución del usuario responsable es obligatorio (de 3 a 6 dígitos).")
 
         if not email_valido(email_usuario):
             raise AppError(400, "El correo electrónico del usuario no es válido.")

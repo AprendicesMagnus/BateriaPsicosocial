@@ -307,7 +307,7 @@ export default function Reportes() {
           {/* El selector de "Empresa activa" para Jefe/Psicólogo ahora vive en el Dashboard. */}
 
           <p className="reportes-legal-note">
-            Resultados desglosados por área de la organización. Los grupos con menos de 5 participantes se ocultan para proteger el anonimato.
+            Resultados desglosados por área de la organización. Los grupos con menos de 2 participantes se ocultan para proteger el anonimato.
           </p>
 
           {/* =================================================

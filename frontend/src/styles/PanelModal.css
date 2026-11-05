@@ -1,5 +1,13 @@
 /* Ventana de invitar / editar usuario (Panel de administración) */
 .adm-modal-fondo {
+  /* El modal se pinta fuera de .adm: sin estas variables los botones .adm-btn quedaban sin color */
+  --adm-navy: #0b1538;
+  --adm-navy-2: #12314b;
+  --adm-gold: #f5a623;
+  --adm-line: #e3e8ef;
+  --adm-line-2: #d5dce6;
+  --adm-ink: #1f2a4d;
+  --adm-muted: #5b6478;
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -87,18 +95,28 @@
 
 
 /* Acciones de confirmación claramente diferenciadas */
-.adm-modal__confirmar {
+.adm-modal .adm-modal__confirmar {
   min-width: 170px;
   font-weight: 700;
   border: 1px solid #123b60;
   background: #123b60;
   color: #ffffff;
 }
-.adm-modal__confirmar:hover:not(:disabled) {
+.adm-modal .adm-modal__confirmar:hover:not(:disabled) {
   background: #0d2d49;
 }
 .adm-modal__acciones button {
   min-height: 40px;
+  justify-content: center;
+}
+.adm-modal .adm-modal__confirmar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.adm-modal .adm-btn--borde {
+  background: #ffffff;
+  color: #12314b;
+  border: 1px solid #d5dce6;
 }
 .adm-modal .adm-modal__check {
   flex-direction: row;

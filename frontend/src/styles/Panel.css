@@ -715,3 +715,17 @@
   width: 100%;
   flex: 1 1 auto;
 }
+
+/* Móvil: la campanita sube a la esquina superior derecha (a la altura de "Regresar"), debajo del menú */
+@media (max-width: 600px) {
+  .adm-main {
+    position: relative;
+  }
+
+  .adm-header__acciones .app-acciones-usuario {
+    position: absolute;
+    top: 23px;
+    right: clamp(16px, 3vw, 40px);
+    z-index: 5;
+  }
+}

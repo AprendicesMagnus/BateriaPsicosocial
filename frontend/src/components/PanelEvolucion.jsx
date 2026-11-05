@@ -124,10 +124,10 @@ export default function PanelEvolucion({ token }) {
           Aún no hay actividad registrada en este periodo.
         </p>
       ) : (
-        <div style={{ margin: "20px 0", overflowX: "auto" }}>
+        <div style={{ margin: "20px 0" }}>
           <svg
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-            style={{ width: "100%", minWidth: "600px", height: "auto", display: "block" }}
+            style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }}
           >
             <line
               x1={paddingX - 10}

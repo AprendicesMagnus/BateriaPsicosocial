@@ -146,32 +146,43 @@ export default function PanelSoporte() {
       {mensaje && <div className={`plan-mensaje plan-mensaje--${mensaje.tipo}`}>{mensaje.texto}</div>}
 
       {form && (
-        <form className="plan-form" onSubmit={guardar} noValidate>
-          {info.conTitulo && (
-            <label>
-              {seccion === "faq" ? "Pregunta" : "Título"}
-              <input type="text" maxLength={200} value={form.titulo} onChange={cambiar("titulo")} />
+        <form className="adm-formulario" onSubmit={guardar} noValidate>
+          <div className="plan-form__cabecera">
+            <h3>{form.id ? "Editar" : "Agregar"} · {info.label}</h3>
+            <p>Esto es lo que verán los usuarios en la página de soporte.</p>
+          </div>
+          <div className="plan-form__campos">
+            {info.conTitulo && (
+              <label className="plan-campo plan-campo--ancho">
+                {seccion === "faq" ? "Pregunta" : "Título"}
+                <input type="text" maxLength={200} value={form.titulo} onChange={cambiar("titulo")} />
+              </label>
+            )}
+            <label className="plan-campo plan-campo--ancho">
+              {seccion === "faq" ? "Respuesta" : info.conTitulo ? "Texto" : "Paso"}
+              <textarea rows={4} maxLength={2000} value={form.texto} onChange={cambiar("texto")} />
+              <span className="plan-campo__contador">{form.texto.length} / 2000</span>
             </label>
-          )}
-          <label style={{ gridColumn: "1 / -1" }}>
-            {seccion === "faq" ? "Respuesta" : info.conTitulo ? "Texto" : "Paso"}
-            <textarea rows={3} maxLength={2000} value={form.texto} onChange={cambiar("texto")} style={{ padding: 10, border: "1px solid var(--adm-line-2, #d5dce6)", borderRadius: 8, font: "inherit" }} />
-          </label>
-          <label>
-            Orden (vacío = al final)
-            <input type="number" min={0} value={form.orden} onChange={cambiar("orden")} />
-          </label>
-          <div className="plan-form__acciones">
-            <label className="plan-form__check">
+            <label className="plan-campo">
+              Orden
+              <input type="number" min={0} placeholder="Al final" value={form.orden} onChange={cambiar("orden")} />
+              <small>Vacío = se agrega al final.</small>
+            </label>
+          </div>
+          <div className="plan-form__pie">
+            <label className="plan-switch">
               <input type="checkbox" checked={form.activo} onChange={(e) => setForm((f) => ({ ...f, activo: e.target.checked }))} />
+              <span className="plan-switch__pista" />
               Visible
             </label>
-            <button type="submit" className="adm-btn adm-btn--dorado" disabled={guardando}>
-              {guardando ? "Guardando..." : "Guardar"}
-            </button>
-            <button type="button" className="adm-btn adm-btn--borde" onClick={() => setForm(null)} disabled={guardando}>
-              Cancelar
-            </button>
+            <div className="plan-form__botones">
+              <button type="button" className="adm-btn adm-btn--borde" onClick={() => setForm(null)} disabled={guardando}>
+                Cancelar
+              </button>
+              <button type="submit" className="adm-btn adm-btn--dorado" disabled={guardando}>
+                {guardando ? "Guardando..." : form.id ? "Guardar cambios" : "Agregar"}
+              </button>
+            </div>
           </div>
         </form>
       )}

@@ -12,7 +12,7 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
   const [intento, setIntento] = useState(false);
   const [acepta, setAcepta] = useState(false);
   const pideResolucion = rol === "EVALUADOR_SST";
-  const resolucionInvalida = pideResolucion && !/^\d{6}$/.test(numero);
+  const resolucionInvalida = pideResolucion && !/^\d{3,6}$/.test(numero);
 
   function confirmar() {
     setIntento(true);
@@ -86,7 +86,7 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
               onChange={(e) => setNumero(soloDigitos(e.target.value, 6))}
             />
             {intento && resolucionInvalida && (
-              <span className="field__error">Ingresa los 6 dígitos de tu número de resolución.</span>
+              <span className="field__error">Ingresa entre 3 y 6 dígitos en tu número de resolución.</span>
             )}
           </label>
         )}

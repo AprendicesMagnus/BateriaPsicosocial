@@ -90,6 +90,8 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
   const [mensajeFinal, setMensajeFinal] = useState(null);
   // Respuestas elegidas antes de que terminara de cargar el cuestionario: { preguntaId: texto }
   const pendientesRef = useRef({});
+  // Guardados de respuestas que todavía no terminan (promesas)
+  const enCursoRef = useRef(new Set());
 
   const prefijo = PREFIJOS[codigoEsperado];
 
@@ -162,13 +164,14 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
       .finally(() => setCargando(false));
   }, [evaluacionId, token, codigoEsperado]);
 
-  // Guarda una respuesta (no filtro) en la BD y muestra el error si falla
+  // Guarda una respuesta (no filtro) en la BD y muestra el error si falla.
+  // Devuelve true si quedó guardada, false si no.
   const guardarEnBackend = useCallback(
     async (preguntaId, texto) => {
       // Sin evaluación no se puede guardar; se deja el mensaje de carga (no se sobrescribe)
       if (!evaluacionId) {
         setError((prev) => prev || "No hay una evaluación activa; esta respuesta no se guardó.");
-        return;
+        return false;
       }
       const codigo = `${prefijo}${preguntaId}`;
       if (!(codigo in uuidPorCodigo)) {
@@ -179,22 +182,30 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
         } else {
           setError(`La pregunta ${preguntaId} no existe en la base de datos.`);
         }
-        return;
+        return false;
       }
       // La página debe enviar el TEXTO de la opción; si no está en el mapa no hay valor numérico
       // y el backend lo rechazaría con "El campo 'valor' es obligatorio"
       const valor = mapa[texto];
       if (valor === undefined) {
         setError(`La opción "${texto}" no tiene un valor configurado; la respuesta no se guardó.`);
-        return;
+        return false;
       }
+      // Se registra el guardado en curso para que "Finalizar" lo espere: si el trabajador
+      // finaliza justo después del último clic, el backend todavía no tendría esa respuesta.
+      const promesa = guardarRespuesta(token, evaluacionId, codigo, valor);
+      enCursoRef.current.add(promesa);
       try {
         // El backend identifica la pregunta por su código (p. ej. "EST_12"), no por su UUID
-        await guardarRespuesta(token, evaluacionId, codigo, valor);
+        await promesa;
         // Si antes falló un guardado y este funcionó, se quita el aviso de error
         setError(null);
+        return true;
       } catch (e) {
         setError(e.message);
+        return false;
+      } finally {
+        enCursoRef.current.delete(promesa);
       }
     },
     [uuidPorCodigo, prefijo, token, evaluacionId, mapa]
@@ -241,8 +252,35 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
     Object.entries(FILTROS).forEach(([idPagina, codigo]) => {
       if (respuestas[idPagina] !== undefined) filtros[codigo] = respuestas[idPagina] === "Sí";
     });
+    // Número de la pregunta en la página a partir de su UUID en la BD ("EST_12" -> 12)
+    const numeroPorUuid = {};
+    Object.entries(uuidPorCodigo).forEach(([codigo, uuid]) => {
+      numeroPorUuid[uuid] = codigo.replace(prefijo, "");
+    });
+
+    // Intenta finalizar; si el backend dice que faltan preguntas que en pantalla sí están
+    // respondidas (un guardado que no llegó o falló), las reenvía y lo intenta una vez más.
+    const finalizarConReintento = async () => {
+      await Promise.allSettled([...enCursoRef.current]);
+      try {
+        return await finalizarCuestionario(token, evaluacionId, filtros);
+      } catch (e) {
+        const pendientes = e.payload?.pendientes;
+        if (!pendientes?.length) throw e;
+        const reenviables = pendientes
+          .map((uuid) => numeroPorUuid[uuid])
+          .filter((numero) => numero !== undefined && respuestas[numero] !== undefined);
+        if (reenviables.length !== pendientes.length) throw e;
+        const resultados = await Promise.all(
+          reenviables.map((numero) => guardarEnBackend(numero, respuestas[numero]))
+        );
+        if (resultados.some((ok) => !ok)) throw e;
+        return await finalizarCuestionario(token, evaluacionId, filtros);
+      }
+    };
+
     try {
-      const res = await finalizarCuestionario(token, evaluacionId, filtros);
+      const res = await finalizarConReintento();
       // completadoTotal = true cuando era el último instrumento de la batería
       if (res.completadoTotal) {
         if (usuario?.esInvitado) {
@@ -262,11 +300,25 @@ export function useCuestionarioBackend(codigoEsperado, mapa) {
     } catch (e) {
       // El backend devuelve { error, pendientes: [...] } cuando faltan preguntas
       const pendientes = e.payload?.pendientes;
-      setError(pendientes ? `Faltan ${pendientes.length} pregunta(s) por responder.` : e.message);
+      if (pendientes) {
+        // Se indica qué preguntas faltan (por su número en la página) para que el trabajador las ubique
+        const numeros = pendientes
+          .map((uuid) => numeroPorUuid[uuid])
+          .filter((numero) => numero !== undefined)
+          .sort((a, b) => Number(a) - Number(b));
+        const lista = numeros.length > 10 ? `${numeros.slice(0, 10).join(", ")}…` : numeros.join(", ");
+        setError(
+          numeros.length
+            ? `Faltan ${pendientes.length} pregunta(s) por responder: ${numeros.length === 1 ? "pregunta" : "preguntas"} ${lista}.`
+            : `Faltan ${pendientes.length} pregunta(s) por responder.`
+        );
+      } else {
+        setError(e.message);
+      }
       // Sube al inicio para que el trabajador vea el aviso
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [respuestas, token, evaluacionId, navigate, usuario]);
+  }, [respuestas, token, evaluacionId, navigate, usuario, uuidPorCodigo, prefijo, guardarEnBackend]);
 
   return { respuestas, seleccionarRespuesta, finalizarYNavegar, cargando, error, mensajeFinal };
 }

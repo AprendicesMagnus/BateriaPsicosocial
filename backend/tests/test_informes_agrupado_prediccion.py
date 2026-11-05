@@ -1,3 +1,9 @@
+"""Regla de anonimato de los perfiles K-Means del análisis predictivo.
+
+El endpoint /api/informes/agrupado ahora devuelve un ZIP con las plantillas Excel;
+ese flujo se prueba en test_informes_agrupado.py.
+"""
+
 from app.services.informes import _perfiles_visibles
 
 

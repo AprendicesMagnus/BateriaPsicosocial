@@ -2,12 +2,44 @@ import logging
 import smtplib
 import ssl
 from email.message import EmailMessage
+from email.utils import parseaddr
+
+import httpx
 
 from app.core.config import get_settings
 
 logger = logging.getLogger("aprendizmagnus@gmail.com")
 
 SMTP_TIMEOUT = 20  # segundos
+BREVO_URL = "https://api.brevo.com/v3/smtp/email"
+
+
+def _enviar_brevo(api_key: str, remitente: str, destino: str, asunto: str, contenido: str) -> bool:
+    nombre, email = parseaddr(remitente)
+    if not email:
+        logger.error("Remitente inválido para Brevo (revisa SMTP_FROM): %r", remitente)
+        return False
+    try:
+        respuesta = httpx.post(
+            BREVO_URL,
+            headers={"api-key": api_key, "accept": "application/json"},
+            json={
+                "sender": {"name": nombre or email, "email": email},
+                "to": [{"email": destino}],
+                "subject": asunto,
+                "textContent": contenido,
+            },
+            timeout=SMTP_TIMEOUT,
+        )
+    except httpx.HTTPError as err:
+        logger.error("Falló la conexión con Brevo para %s | error=%s", destino, err)
+        return False
+    if respuesta.status_code >= 300:
+        # El cuerpo de error de Brevo explica la causa (clave inválida, remitente sin verificar, cuenta sin activar...).
+        logger.error("Brevo rechazó el correo a %s | estado=%s | detalle=%s", destino, respuesta.status_code, respuesta.text[:500])
+        return False
+    logger.info("Correo enviado a %s por Brevo", destino)
+    return True
 
 
 def _abrir_conexion(host: str, port: int) -> smtplib.SMTP:
@@ -28,15 +60,32 @@ def _abrir_conexion(host: str, port: int) -> smtplib.SMTP:
     return servidor
 
 
+def describir_configuracion() -> str:
+    """Resumen de la configuración de correo para los logs, sin exponer secretos."""
+    settings = get_settings()
+    remitente = settings.smtp_from or settings.smtp_user or "noreply@magnussig.com"
+    if settings.brevo_api_key:
+        clave = settings.brevo_api_key.strip()
+        formato = "ok" if clave.startswith("xkeysib-") else "NO empieza por xkeysib- (¿es una clave SMTP?)"
+        return f"proveedor=Brevo | clave={len(clave)} caracteres, formato {formato} | remitente={parseaddr(remitente)[1]!r}"
+    if settings.smtp_host:
+        return f"proveedor=SMTP | host={settings.smtp_host}:{settings.smtp_port} | remitente={parseaddr(remitente)[1]!r}"
+    return "proveedor=NINGUNO (no hay BREVO_API_KEY ni SMTP_HOST): los correos NO se envían"
+
+
 def enviar_correo(destino: str, asunto: str, contenido: str) -> bool:
     settings = get_settings()
-    if not settings.smtp_host:
-        # TEMPORAL: warning para que el código se vea en los logs de Render mientras no haya correo real.
-        # Quitar al configurar el envío por API (los códigos no deben quedar en los logs).
-        logger.warning("Correo simulado para %s | asunto=%s | contenido=%s", destino, asunto, contenido)
-        return True
-
     remitente = settings.smtp_from or settings.smtp_user or "noreply@magnussig.com"
+
+    if settings.brevo_api_key:
+        return _enviar_brevo(settings.brevo_api_key, remitente, destino, asunto, contenido)
+
+    if not settings.smtp_host:
+        # Sin proveedor configurado no se envía nada. El contenido no se registra: puede llevar códigos.
+        logger.warning(
+            "Correo NO enviado a %s (no hay BREVO_API_KEY ni SMTP_HOST configurados) | asunto=%s", destino, asunto
+        )
+        return True
 
     mensaje = EmailMessage()
     mensaje["From"] = remitente

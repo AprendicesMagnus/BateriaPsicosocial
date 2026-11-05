@@ -234,8 +234,8 @@ export default function Perfil() {
   async function handleGuardarResolucion() {
     setErrorResolucion("");
     setMensajeResolucion("");
-    if (!/^\d{6}$/.test(numeroResolucion)) {
-      setErrorResolucion("El número de resolución debe tener 6 dígitos.");
+    if (!/^\d{3,6}$/.test(numeroResolucion)) {
+      setErrorResolucion("El número de resolución debe tener entre 3 y 6 dígitos.");
       return;
     }
     setGuardandoResolucion(true);

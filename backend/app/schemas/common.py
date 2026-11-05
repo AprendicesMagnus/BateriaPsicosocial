@@ -139,8 +139,8 @@ class RegistroRequest(BaseModel):
     password: PasswordNueva
     rol: RolRegistro
     aceptaPolitica: bool = False
-    # Obligatorio solo para el Psicologo (se valida en el servicio): 6 dígitos numéricos.
-    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+    # Obligatorio solo para el Psicologo (se valida en el servicio): de 3 a 6 dígitos numéricos.
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{3,6}$")
     trustedDeviceToken: str | None = Field(default=None, max_length=512)
 
 
@@ -154,7 +154,7 @@ class InvitarUsuarioRequest(BaseModel):
     apellido: NombrePersona
     email: Correo
     rolCodigo: Literal["SUPER_ADMINISTRADOR", "ADMINISTRADOR", "JEFE", "EVALUADOR_SST"]
-    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{3,6}$")
     trustedDeviceToken: str | None = Field(default=None, max_length=512)
 
 
@@ -163,7 +163,7 @@ class SolicitudEliminacionRequest(BaseModel):
 
 
 class ResolucionRequest(BaseModel):
-    numeroResolucion: str = Field(pattern=r"^\d{6}$", description="6 dígitos numéricos")
+    numeroResolucion: str = Field(pattern=r"^\d{3,6}$", description="De 3 a 6 dígitos numéricos")
 
 
 class VerificarResolucionRequest(BaseModel):
@@ -187,7 +187,7 @@ class GoogleLoginRequest(BaseModel):
     )
     rol: RolRegistro | None = None
     aceptaPolitica: bool = False
-    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$")
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{3,6}$")
     trustedDeviceToken: str | None = Field(default=None, max_length=512)
 
 
@@ -373,7 +373,7 @@ class ResponsableEmpresaUpdate(BaseModel):
 
     nombre: NombrePersona | None = None
     apellido: NombrePersona | None = None
-    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{6}$", description="6 dígitos numéricos")
+    numeroResolucion: str | None = Field(default=None, pattern=r"^\d{3,6}$", description="De 3 a 6 dígitos numéricos")
 
 
 class AreaCreate(BaseModel):
@@ -822,10 +822,10 @@ class OrganizacionAutorregistroCreate(BaseModel):
         ),
     )
     
-    # Número de resolución del responsable: exactamente 6 dígitos numéricos.
+    # Número de resolución del responsable: entre 3 y 6 dígitos numéricos.
     usuarioNumeroResolucion: str | None = Field(
         default=None, 
-        pattern=r"^\d{6}$", 
+        pattern=r"^\d{3,6}$", 
         description="6 dígitos numéricos"
     )
 

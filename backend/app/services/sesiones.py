@@ -60,7 +60,9 @@ def dispositivo_es_confiable(db: Session, usuario: Usuario, token: str | None, r
         )
         .first()
     )
-    return registro is not None and secrets.compare_digest(registro.nombre, dispositivo_desde_request(request))
+    return registro is not None and secrets.compare_digest(
+        registro.nombre.encode("utf-8"), dispositivo_desde_request(request).encode("utf-8")
+    )
 
 
 def crear_dispositivo_confiable(db: Session, usuario: Usuario, request) -> str:

@@ -131,8 +131,8 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
       : "",
     usuarioResolucion: !usuarioResolucion
       ? "Este campo es obligatorio."
-      : !/^\d{6}$/.test(usuarioResolucion)
-      ? "El número de resolución debe tener exactamente 6 dígitos."
+      : !/^\d{3,6}$/.test(usuarioResolucion)
+      ? "El número de resolución debe tener entre 3 y 6 dígitos."
       : "",
   };
 
