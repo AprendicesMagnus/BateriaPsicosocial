@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     smtp_pass: str = ""
     smtp_from: str = "Magnus|SIG <no-reply@magnussig.local>"
 
+    # Envío por la API HTTP de Brevo (funciona en Render gratis, donde SMTP está bloqueado).
+    # Si hay clave se usa Brevo; si no, SMTP. El remitente sale de SMTP_FROM y debe estar verificado en Brevo.
+    brevo_api_key: str = ""
+
     # Buzón que recibe los mensajes del Centro de ayuda (si está vacío se usa ADMIN_EMAIL)
     soporte_email: str = "aprendizmagnus@gmail.com"
 
