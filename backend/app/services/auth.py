@@ -238,15 +238,26 @@ def _emitir_codigo_2fa(db: Session, usuario: Usuario) -> str:
     return codigo
 
 
-def _preparar_acceso(db: Session, usuario: Usuario, request, trusted_device_token: str | None = None) -> dict:
+def _correo_exento_2fa(email: str) -> bool:
+    """Cuentas de prueba que entran sin código (DOBLE_FACTOR_CORREOS_EXENTOS, separadas por coma)."""
+    exentos = {c.strip().lower() for c in settings.doble_factor_correos_exentos.split(",") if c.strip()}
+    return (email or "").strip().lower() in exentos
+
+
+def _preparar_acceso(
+    db: Session, usuario: Usuario, request, trusted_device_token: str | None = None, metodo: str = "password"
+) -> dict:
+    """Credenciales ya validadas (contraseña o Google). Si el rol exige verificación en dos pasos y el
+    dispositivo no es de confianza, envía el código al correo; si no, abre la sesión."""
     if (
-        get_settings().dos_pasos_activo
+        settings.doble_factor_activo
         and usuario.rol.codigo in ROLES_REQUIEREN_2FA
+        and not _correo_exento_2fa(usuario.email)
         and not sesiones_service.dispositivo_es_confiable(db, usuario, trusted_device_token, request)
     ):
         _emitir_codigo_2fa(db, usuario)
         challenge = crear_token(
-            {"sub": str(usuario.id), "purpose": "login_2fa"},
+            {"sub": str(usuario.id), "purpose": "login_2fa", "metodo": metodo},
             DOS_PASOS_EXPIRA_MINUTOS,
         )
         return {
@@ -255,7 +266,6 @@ def _preparar_acceso(db: Session, usuario: Usuario, request, trusted_device_toke
             "email": usuario.email,
             "mensaje": "Enviamos un código de seguridad a tu correo electrónico.",
         }
-
 
     resultado = sesiones_service.crear_sesion(db, usuario, request)
     resultado["usuario"] = usuario_publico(usuario)
@@ -304,6 +314,7 @@ def verificar_codigo_login(db: Session, challenge_token: str, codigo: str, reque
     trusted_token = sesiones_service.crear_dispositivo_confiable(db, usuario, request) if confiar_dispositivo else None
     resultado = sesiones_service.crear_sesion(db, usuario, request, trusted_token)
     resultado["usuario"] = usuario_publico(usuario)
+    resultado["metodo"] = payload.get("metodo", "password")  # el router lo usa para auditar y lo retira
     db.commit()
     return resultado
 
@@ -430,7 +441,7 @@ def login_con_google(db: Session, credential: str, request: Request | None = Non
             usuario.email_verificado = True
             db.commit()
 
-    return _preparar_acceso(db, usuario, request, trusted_device_token)
+    return _preparar_acceso(db, usuario, request, trusted_device_token, "google")
 
 def forgot_password(db: Session, email: str) -> dict:
     usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.email == email.lower()).first()

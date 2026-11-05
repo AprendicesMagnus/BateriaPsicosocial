@@ -501,3 +501,49 @@
   font-size: 14px;
   text-align: center;
 }
+
+/* Paginador de "Mis mensajes" (mismo aspecto que el de Auditoría del Panel) */
+.soporte-mensajes__paginacion {
+  --adm-navy-2: #12314b;
+  --adm-line-2: #d5dce6;
+  --adm-muted: #5b6478;
+  margin-top: 18px;
+}
+
+.soporte-mensajes__paginacion .adm-paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.soporte-mensajes__paginacion .adm-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--adm-line-2);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--adm-navy-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.soporte-mensajes__paginacion .adm-btn:hover:not(:disabled) {
+  background: #f6f8fb;
+}
+
+.soporte-mensajes__paginacion .adm-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.soporte-mensajes__paginacion .adm-paginacion__info {
+  font-size: 13px;
+  color: var(--adm-muted);
+}

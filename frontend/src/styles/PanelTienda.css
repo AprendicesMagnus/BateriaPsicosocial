@@ -3,3 +3,37 @@
 .tienda-selector__op { border: none; background: transparent; padding: 8px 18px; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 700; color: #17233d; cursor: pointer; transition: background .15s, color .15s; }
 .tienda-selector__op:hover { background: #eef3fa; }
 .tienda-selector__op.activo { background: #12375e; color: #fff; }
+
+/* Móvil: "Gestionar" en cuadrícula de 2 columnas, ancho completo y botones grandes */
+@media (max-width: 600px) {
+  .tienda-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 16px;
+    box-sizing: border-box;
+  }
+  .tienda-selector__titulo {
+    grid-column: 1 / -1;
+    padding: 0 2px 2px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .tienda-selector__op {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 8px;
+    border-radius: 12px;
+    background: #f3f6fb;
+    text-align: center;
+    line-height: 1.25;
+  }
+  .tienda-selector__op.activo {
+    background: #12375e;
+  }
+}

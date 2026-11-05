@@ -87,6 +87,12 @@ def setup_database():
     engine.dispose()
 
 
+@pytest.fixture(autouse=True)
+def _sin_doble_factor_por_defecto(monkeypatch):
+    """Las demás pruebas inician sesión con admin/jefe sin código; las de 2FA lo activan."""
+    monkeypatch.setattr(settings, "doble_factor_activo", False)
+
+
 @pytest.fixture
 def db_session():
     db = TestingSessionLocal()

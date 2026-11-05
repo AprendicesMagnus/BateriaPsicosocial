@@ -260,7 +260,7 @@ export default function Inicio() {
             </div>
             <div className="tienda-movil">
               <button type="button" aria-expanded={tiendaMovilAbierta} onClick={() => setTiendaMovilAbierta((v) => !v)}>
-                Tienda {tiendaMovilAbierta ? "−" : "+"}
+                Tienda <span aria-hidden="true">{tiendaMovilAbierta ? "−" : "+"}</span>
               </button>
               {tiendaMovilAbierta && (
                 <div className="tienda-movil__sub">
