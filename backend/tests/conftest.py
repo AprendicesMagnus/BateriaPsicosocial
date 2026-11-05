@@ -1,4 +1,9 @@
+import os
 import uuid
+
+# Las pruebas inician sesión directamente; la verificación en dos pasos se prueba aparte
+# activándola con monkeypatch (ver test_dos_pasos.py).
+os.environ.setdefault("DOS_PASOS_ACTIVO", "false")
 
 import pytest
 from fastapi.testclient import TestClient

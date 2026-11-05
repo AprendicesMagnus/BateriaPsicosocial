@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -193,7 +195,6 @@ def _tarea_resumen_mensual() -> None:
         db.close()
 
 
-@app.on_event("startup")
 def iniciar_scheduler() -> None:
     _scheduler.add_job(
         _tarea_recordatorios_diarios,
@@ -230,11 +231,23 @@ def iniciar_scheduler() -> None:
     logger.info("Scheduler iniciado (recordatorios diarios a las 08:00, limpieza de enlaces cada 4 horas).")
 
 
-@app.on_event("shutdown")
 def detener_scheduler() -> None:
     if _scheduler.running:
         _scheduler.shutdown(wait=False)
         logger.info("Scheduler de recordatorios detenido.")
+
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    iniciar_scheduler()
+    try:
+        yield
+    finally:
+        detener_scheduler()
+
+
+# La app se crea arriba; el ciclo de vida se asigna aquí porque usa el scheduler definido después.
+app.router.lifespan_context = _lifespan
 
 
 @app.get("/")

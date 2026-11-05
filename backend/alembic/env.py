@@ -12,6 +12,7 @@ sys.path.insert(0, str(BASE_DIR))
 
 from app.core.config import get_settings
 from app.db import Base
+import app.models  # noqa: F401  (registra todas las tablas para autogenerate)
 
 settings = get_settings()
 

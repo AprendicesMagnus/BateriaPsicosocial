@@ -50,7 +50,11 @@ class Settings(BaseSettings):
 
     storage_path: str = "./storage"
 
-    min_grupo_anonimato: int = 1
+    min_grupo_anonimato: int = 5
+
+    # Verificación en dos pasos para roles administrativos. Solo desactivar (DOS_PASOS_ACTIVO=false)
+    # en entornos donde todavía no hay envío de correo real.
+    dos_pasos_activo: bool = True
 
     jwt_expira_minutos: int = 120
     reset_expira_minutos: int = 15
