@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import BotonRegresar from "../components/BotonRegresar";
 import { RESPONSABLE_DATOS, POLITICA_DATOS } from "../utils/responsableDatos";
 import "../styles/PoliticaDatos.css";
 
@@ -19,7 +20,7 @@ export default function PoliticaDatos() {
   return (
     <div className="politica">
       <main className="politica__tarjeta">
-        <Link to="/" className="politica__volver">Volver al inicio</Link>
+        <BotonRegresar tono="oscuro" />
         <h1 className="politica__titulo">Política de tratamiento de datos personales</h1>
         <p className="politica__version">
           Versión {POLITICA_DATOS.version} · Vigente desde {POLITICA_DATOS.vigenteDesde}
