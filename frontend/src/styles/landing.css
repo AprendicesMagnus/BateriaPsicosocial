@@ -371,6 +371,42 @@
   color: var(--gold-500);
 }
 
+/* Banda de estadisticas, tamano ajustado. Mayor especificidad (.landing) que las reglas base y que las reglas anteriores. */
+.landing .stats-band .stats-band__inner {
+  gap: 56px;
+  padding: 32px 0;
+}
+
+.landing .stats-band .stat strong {
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.landing .stats-band .stat span {
+  font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+  .landing .stats-band .stats-band__inner {
+    gap: 36px;
+  }
+
+  .landing .stats-band .stat span {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 600px) {
+  .landing .stats-band .stats-band__inner {
+    gap: 24px;
+    padding: 24px 0;
+  }
+
+  .landing .stats-band .stat strong {
+    font-size: 26px;
+  }
+}
+
 /* Banda de estadisticas mas grande y legible. Selectores con mayor especificidad que las reglas base. */
 .stats-band .stats-band__inner {
   gap: 70px;

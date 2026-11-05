@@ -925,6 +925,9 @@
   .mobile-nav .mobile-profile-submenu button { padding: 10px 12px; font-weight: 600; }
 }
 
+/* Iconos del navbar de Inicio: no se encogen cuando la fila de enlaces queda estrecha */
+.nav__logos--inicio ~ .nav__links svg { flex-shrink: 0; }
+
 /* Logos del navbar de Inicio: un poco más a la izquierda y sin invadir los enlaces */
 @media (min-width: 1001px) {
   .nav__logos--inicio { margin-left: -16px; flex: 0 0 auto; }

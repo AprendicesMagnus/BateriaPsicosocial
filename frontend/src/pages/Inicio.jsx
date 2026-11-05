@@ -181,7 +181,7 @@ export default function Inicio() {
               src="/logo a 2_Mesa de trabajo 1.jpg"
               alt="Magnus"
               style={{
-                height: 112,
+                height: 76,
                 marginRight: "auto",
               }}
             />
@@ -190,7 +190,7 @@ export default function Inicio() {
               src="/logo javeriana.jpg"
               alt="Javeriana"
               style={{
-                height: 58,
+                height: 66,
               }}
             />
 
@@ -198,7 +198,7 @@ export default function Inicio() {
               src="/ministerio.jpg"
               alt="Ministerio"
               style={{
-                height: 102,
+                height: 92,
               }}
             />
           </div>
@@ -296,7 +296,7 @@ export default function Inicio() {
                   gap: 6,
                 }}
               >
-                <VscBriefcase size={18} />
+                <VscBriefcase size={22} />
                 Empresas
               </button>
 
@@ -350,7 +350,7 @@ export default function Inicio() {
             </div>
 
             <TiendaMenu
-              icono={<BsCart4 size={18} />}
+              icono={<BsCart4 size={22} />}
               peso={600}
               onPlanes={() => navigate("/pago")}
               onCatalogo={() => navigate("/catalogo")}
@@ -363,7 +363,7 @@ export default function Inicio() {
               gap: "8px",
             }}
             >
-              <BsFillClipboard2Fill size={16} />
+              <BsFillClipboard2Fill size={20} />
               <span>Encuestas</span>
             </Link>
 
