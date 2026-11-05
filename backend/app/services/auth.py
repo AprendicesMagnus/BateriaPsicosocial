@@ -45,10 +45,10 @@ def _exigir_aceptacion_politica(acepta: bool) -> None:
 
 
 def _exigir_resolucion_psicologo(rol: str, numero: str | None) -> str | None:
-    """El Psicologo debe registrar su número de resolución (6 dígitos); los demás roles no."""
+    """El Psicologo debe registrar su número de resolución (de 3 a 6 dígitos); los demás roles no."""
     if rol == "EVALUADOR_SST":
-        if not numero or not numero.isdigit() or len(numero) != 6:
-            raise AppError(400, "El número de resolución es obligatorio y debe tener exactamente 6 dígitos.")
+        if not numero or not numero.isdigit() or not 3 <= len(numero) <= 6:
+            raise AppError(400, "El número de resolución es obligatorio y debe tener entre 3 y 6 dígitos.")
         return numero
     return None
 

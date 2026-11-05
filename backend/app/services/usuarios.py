@@ -194,7 +194,7 @@ def invitar_usuario(db: Session, data, actual: Usuario) -> dict:
     if db.query(Usuario).filter(Usuario.email == email).first():
         raise AppError(409, "Ya existe una cuenta registrada con este correo.")
     if data.rolCodigo == "EVALUADOR_SST" and not data.numeroResolucion:
-        raise AppError(400, "El número de resolución del Psicólogo es obligatorio (6 dígitos).")
+        raise AppError(400, "El número de resolución del Psicólogo es obligatorio (de 3 a 6 dígitos).")
     rol = db.query(Rol).filter(Rol.codigo == data.rolCodigo, Rol.activo.is_(True)).first()
     if rol is None:
         raise AppError(400, "El rol indicado no existe o no está activo.")

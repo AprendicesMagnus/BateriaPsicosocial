@@ -68,7 +68,7 @@ export default function GuiaInterpretacion() {
       <h3 className="guia-interpretacion__titulo">Cómo interpretar los resultados</h3>
       <p className="guia-interpretacion__intro">
         Resumen breve de los términos que aparecen en este tablero. Los resultados se muestran
-        agrupados y solo cuando hay al menos 5 personas.
+        agrupados y solo cuando hay al menos 2 personas.
       </p>
 
       <details className="guia-interpretacion__bloque">

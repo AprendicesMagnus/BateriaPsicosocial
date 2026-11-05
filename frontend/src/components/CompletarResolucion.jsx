@@ -16,8 +16,8 @@ export default function CompletarResolucion() {
 
   async function guardar(e) {
     e.preventDefault();
-    if (!/^\d{6}$/.test(numero)) {
-      setError("El número de resolución debe tener exactamente 6 dígitos.");
+    if (!/^\d{3,6}$/.test(numero)) {
+      setError("El número de resolución debe tener entre 3 y 6 dígitos.");
       return;
     }
     setGuardando(true);
@@ -48,7 +48,7 @@ export default function CompletarResolucion() {
           Completa tu número de resolución
         </h2>
         <p style={{ margin: 0, fontSize: 14, color: "#475569" }}>
-          Para seguir usando la plataforma como Psicologo, registra tu número de resolución (6 dígitos). Será verificado por el administrador.
+          Para seguir usando la plataforma como Psicologo, registra tu número de resolución (de 3 a 6 dígitos). Será verificado por el administrador.
         </p>
 
         <label className="field">

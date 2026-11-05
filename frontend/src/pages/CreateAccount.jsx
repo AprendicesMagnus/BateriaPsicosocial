@@ -123,8 +123,8 @@ export default function CreateAccount() {
         ? ""
         : !form.numeroResolucion
         ? "Este campo es obligatorio."
-        : !/^\d{6}$/.test(form.numeroResolucion)
-        ? "El número de resolución debe tener exactamente 6 dígitos."
+        : !/^\d{3,6}$/.test(form.numeroResolucion)
+        ? "El número de resolución debe tener entre 3 y 6 dígitos."
         : "",
 
     confirmPassword: !form.confirmPassword

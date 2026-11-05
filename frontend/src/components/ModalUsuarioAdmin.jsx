@@ -33,8 +33,8 @@ export default function ModalUsuarioAdmin({ modo, usuario, empresas = [], token,
     if (!nombrePersonaValido(form.nombre.trim(), 100)) return setError("Escribe un nombre válido (solo letras).");
     if (!nombrePersonaValido(form.apellido.trim(), 100)) return setError("Escribe un apellido válido (solo letras).");
     if (!editando && !emailValido(normalizarEmail(form.email))) return setError("Escribe un correo válido.");
-    if (USA_RESOLUCION.includes(form.rolCodigo) && !/^\d{6}$/.test(form.numeroResolucion))
-      return setError("El número de resolución debe tener exactamente 6 dígitos.");
+    if (USA_RESOLUCION.includes(form.rolCodigo) && !/^\d{3,6}$/.test(form.numeroResolucion))
+      return setError("El número de resolución debe tener entre 3 y 6 dígitos.");
 
     setGuardando(true);
     try {

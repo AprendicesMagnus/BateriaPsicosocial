@@ -148,6 +148,8 @@ export default function Dashboard() {
 
   const [indicadores, setIndicadores] = useState(null);
   const [indicadoresCategoria, setIndicadoresCategoria] = useState(null);
+  // Mínimo de participantes completados para mostrar resultados (lo define el servidor: MIN_GRUPO_ANONIMATO)
+  const minAnonimato = indicadores?.minimoAnonimato ?? indicadoresCategoria?.minimoAnonimato ?? 2;
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [areas, setAreas] = useState([]);
@@ -223,7 +225,7 @@ export default function Dashboard() {
 
   async function obtenerEvaluacionMasReciente() {
     const respuesta = await fetchHistoricoIndicadores(token, usuario?.organizacionId);
-    const minimo = respuesta?.minimoAnonimato ?? 1;
+    const minimo = respuesta?.minimoAnonimato ?? 2;
     const disponibles = (respuesta?.historico || []).filter((item) => !item.oculto);
     if (disponibles.length === 0) {
       throw new Error(`Aún no hay una evaluación con al menos ${minimo} participantes completados.`);
@@ -378,6 +380,7 @@ export default function Dashboard() {
         onLogoClick={() => navigate(rutaInicial(usuario?.rol))}
         items={[
           { key: "dash", label: "Dashboard", icono: "▣", activo: true, onClick: () => navigate("/dashboard") },
+          { key: "cuest", label: "Cuestionario", icono: "☑", onClick: () => navigate("/ficha-datos-generales") },
           ...(esSuperAdmin(usuario?.rol) ? [{ key: "panel", label: "Panel Admin", icono: "⚙", onClick: () => navigate("/panel") }] : []),
           { key: "rep", label: "Reportes", icono: "▤", onClick: () => navigate("/reportes") },
           ...(["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol)
@@ -568,7 +571,7 @@ export default function Dashboard() {
                   </p>
                   <p style={{ fontSize: "13px" }}>
                     {indicadores.mensajeAnonimato ||
-                      "Se requiere un mínimo de 5 participantes completados para desglosar la gráfica de riesgo."}
+                      `Se requiere un mínimo de ${minAnonimato} participantes completados para desglosar la gráfica de riesgo.`}
                   </p>
                 </div>
               ) : (
@@ -602,7 +605,7 @@ export default function Dashboard() {
                   {cargando
                     ? ""
                     : indicadores?.anonimizado
-                    ? "Grupo pequeño (<5)"
+                    ? `Grupo pequeño (<${minAnonimato})`
                     : `${nivelPrevalente.total} respuestas registradas`}
                 </small>
               </div>
@@ -674,7 +677,7 @@ export default function Dashboard() {
               if (catData.anonimizado || !catData.distribucion) {
                 cardValues = [
                   ["Información", "Protegida"],
-                  ["Anonimato", "Mínimo 5"],
+                  ["Anonimato", `Mínimo ${minAnonimato}`],
                 ];
               } else {
                 const d = catData.distribucion;
@@ -713,7 +716,7 @@ export default function Dashboard() {
               indicadores?.anonimizado
                 ? [
                     ["Información", "Protegida"],
-                    ["Anonimato", "Mínimo 5"],
+                    ["Anonimato", `Mínimo ${minAnonimato}`],
                   ]
                 : distribucionPorcentual.length > 0
                 ? distribucionPorcentual

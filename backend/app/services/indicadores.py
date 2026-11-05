@@ -77,6 +77,7 @@ def obtener_resumen_indicadores(db: Session, organizacion_id: UUID | None = None
         },
         "distribucionRiesgo": distribucion_riesgo if not anonimizado else None,
         "anonimizado": anonimizado,
+        "minimoAnonimato": settings.min_grupo_anonimato,
         "mensajeAnonimato": f"Requiere al menos {settings.min_grupo_anonimato} participantes completados para desglosar niveles de riesgo." if anonimizado else None
     }
 
