@@ -378,7 +378,6 @@ export default function Dashboard() {
         onLogoClick={() => navigate(rutaInicial(usuario?.rol))}
         items={[
           { key: "dash", label: "Dashboard", icono: "▣", activo: true, onClick: () => navigate("/dashboard") },
-          {  },
           ...(esSuperAdmin(usuario?.rol) ? [{ key: "panel", label: "Panel Admin", icono: "⚙", onClick: () => navigate("/panel") }] : []),
           { key: "rep", label: "Reportes", icono: "▤", onClick: () => navigate("/reportes") },
           ...(["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol)
