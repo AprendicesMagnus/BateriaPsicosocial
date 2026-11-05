@@ -377,7 +377,7 @@ export default function Dashboard() {
         mostrarPie
         onLogoClick={() => navigate(rutaInicial(usuario?.rol))}
         items={[
-          { key: "dash", label: "Dashboard", icono: "▣", activo: true, onClick: () => navigate("/dashboard") },
+          { },
           { key: "cuest", label: "Cuestionario", icono: "☑", onClick: () => navigate("/ficha-datos-generales") },
           ...(esSuperAdmin(usuario?.rol) ? [{ key: "panel", label: "Panel Admin", icono: "⚙", onClick: () => navigate("/panel") }] : []),
           { key: "rep", label: "Reportes", icono: "▤", onClick: () => navigate("/reportes") },
