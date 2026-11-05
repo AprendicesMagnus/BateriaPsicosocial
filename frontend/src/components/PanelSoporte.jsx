@@ -5,6 +5,7 @@ import { crearContenido, editarContenido, eliminarContenido, fetchContenidoAdmin
 import PanelMensajesSoporte from "./PanelMensajesSoporte";
 import "../styles/Planes.css";
 import "../styles/PanelAcciones.css";
+import ModalConfirmacion from "./ModalConfirmacion";
 
 const SECCIONES = [
   { clave: "faq", label: "Preguntas frecuentes", conTitulo: true },
@@ -28,6 +29,8 @@ export default function PanelSoporte() {
   const [seccion, setSeccion] = useState(location.state?.vista === "mensajes" ? "mensajes" : "faq");
   const [form, setForm] = useState(null); // {id?, titulo, texto, orden, activo}
   const [guardando, setGuardando] = useState(false);
+  const [itemPorEliminar, setItemPorEliminar] = useState(null);
+  const [eliminando, setEliminando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
 
   const info = SECCIONES.find((s) => s.clave === seccion);
@@ -77,8 +80,28 @@ export default function PanelSoporte() {
     }
   }
 
-  async function eliminar(item) {
-    if (!window.confirm("¿Eliminar este elemento? Esta acción no se puede deshacer.")) return;
+  function eliminar(item) {
+    setItemPorEliminar(item);
+  }
+
+  async function confirmarEliminarItem() {
+    if (!itemPorEliminar) return;
+    setEliminando(true);
+    try {
+      await eliminarContenido(token, itemPorEliminar.id);
+      await cargar();
+      setMensaje({ tipo: "ok", texto: "Elemento eliminado." });
+    } catch (err) {
+      setMensaje({ tipo: "error", texto: err.message || "No se pudo eliminar." });
+    } finally {
+      setEliminando(false);
+      setItemPorEliminar(null);
+    }
+  }
+
+  /*
+  async function eliminarItemAntiguo(item) {
+    // confirmacion reemplazada por ModalConfirmacion
     try {
       await eliminarContenido(token, item.id);
       await cargar();
@@ -88,6 +111,7 @@ export default function PanelSoporte() {
     }
   }
 
+  */
   const cambiar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }));
 
   // Mismo selector para el contenido editable y para los mensajes de los usuarios.
@@ -198,6 +222,23 @@ export default function PanelSoporte() {
         </table>
       </div>
     </section>
+    <ModalConfirmacion
+      abierto={Boolean(itemPorEliminar)}
+      titulo="¿Eliminar elemento?"
+      mensaje={
+        itemPorEliminar?.titulo
+          ? `Se eliminará "${itemPorEliminar.titulo}". Esta acción no se puede deshacer.`
+          : "Esta acción no se puede deshacer."
+      }
+      textoConfirmar="Sí, eliminar"
+      textoCancelar="Cancelar"
+      tipo="peligro"
+      cargando={eliminando}
+      onConfirmar={confirmarEliminarItem}
+      onCancelar={() => {
+        if (!eliminando) setItemPorEliminar(null);
+      }}
+    />
     </>
   );
 }

@@ -12,6 +12,7 @@ import { rutaEnlaceGuardado } from "../api/enlaces";
 import "../styles/cuestionario-estres.css";
 import "../styles/Fichadatosgenerales.css";
 import BotonRegresar from "../components/BotonRegresar";
+import ModalAviso from "../components/ModalAviso";
 import {
   nombrePersonaValido,
   lugarValido,
@@ -322,6 +323,7 @@ export default function FichaDatosGenerales() {
   const { token, usuario } = useAuth();
   const [evaluacionId, setEvaluacionId] = useState(location.state?.evaluacionId || null);
   const [guardando, setGuardando] = useState(false);
+  const [aviso, setAviso] = useState(null);
   const [errorBackend, setErrorBackend] = useState(null);
 
   useEffect(() => {
@@ -398,11 +400,15 @@ export default function FichaDatosGenerales() {
       } else if (usuario?.esInvitado) {
         // Enlace de un solo cuestionario (solo la Ficha): no hay más páginas internas que
         // mostrarle al paciente invitado, así que vuelve a la pantalla de "Gracias por participar"
-        alert(res.message || "Los datos generales han sido guardados correctamente.");
-        navigate(rutaEnlaceGuardado());
+        setAviso({
+          mensaje: res.message || "Los datos generales han sido guardados correctamente.",
+          alCerrar: () => navigate(rutaEnlaceGuardado()),
+        });
       } else {
-        alert(res.message || "Los datos generales han sido guardados correctamente.");
-        navigate("/dashboard");
+        setAviso({
+          mensaje: res.message || "Los datos generales han sido guardados correctamente.",
+          alCerrar: () => navigate("/dashboard"),
+        });
       }
     } catch (err) {
       setErrorBackend(err.message || "Error al guardar la Ficha de Datos Generales.");
@@ -1054,11 +1060,19 @@ return (
           {/* BOTONES */}
           {/* La ficha es un solo paso: no hay "Anterior" interno. Salir del módulo = <BotonRegresar /> */}
           <div className="questionnaire-navigation" style={{ justifyContent: "flex-end" }}>
-            <button className="next-button" type="submit" disabled={guardando}>
+            <button className="next-button" type="submit" disabled={guardando || Boolean(aviso)}>
               {guardando ? "Guardando..." : "Guardar y continuar →"}
             </button>
           </div>
         </form>
+      <ModalAviso
+        abierto={Boolean(aviso)}
+        titulo="Datos guardados"
+        mensaje={aviso?.mensaje}
+        textoBoton="Continuar"
+        tipo="exito"
+        onCerrar={() => { const accion = aviso?.alCerrar; setAviso(null); accion?.(); }}
+      />
       </main>
     </div>
   );

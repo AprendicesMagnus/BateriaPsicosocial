@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, startTransition } from "react";
 import { fetchMe, cerrarSesionServidor } from "../api/auth";
 import { hayPagoEnCurso } from "../utils/pagoPendiente";
+import ModalConfirmacion from "../components/ModalConfirmacion";
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = "magnussing_token";
@@ -10,6 +11,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(STORAGE_KEY));
   const [usuario, setUsuario] = useState(null);
   const [loading, setLoading] = useState(Boolean(token));
+  const [confirmacionCierre, setConfirmacionCierre] = useState(null);
 
   useEffect(() => {
     if (!token) {
@@ -54,25 +56,29 @@ export function AuthProvider({ children }) {
     setUsuario(nuevoUsuario);
   }
 
-  function cerrarSesion() {
-    // Un pago en el widget de Wompi sigue su curso aunque se cierre la sesión,
-    // pero el usuario no vería el resultado hasta volver a ingresar.
-    if (
-      hayPagoEnCurso(usuario?.id) &&
-      !window.confirm(
-        "Tienes un pago en proceso. Si cierras sesión, el pago seguirá su curso " +
-        "y podrás ver su resultado cuando vuelvas a ingresar (en Mi perfil). ¿Cerrar sesión de todas formas?"
-      )
-    ) {
-      return;
-    }
-
+  function ejecutarCierreSesion() {
     const tokenActual = localStorage.getItem(STORAGE_KEY);
     if (tokenActual) cerrarSesionServidor(tokenActual).catch(() => {});
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(ACTIVIDAD_KEY);
-    setToken(null);
-    setUsuario(null);
+    startTransition(() => {
+      setToken(null);
+      setUsuario(null);
+    });
+  }
+
+  function cerrarSesion(opciones) {
+    const despues = typeof opciones?.despues === "function" ? opciones.despues : null;
+    const forzar = opciones?.forzar === true;
+
+    if (forzar || !hayPagoEnCurso(usuario?.id)) {
+      ejecutarCierreSesion();
+      despues?.();
+      return true;
+    }
+
+    setConfirmacionCierre({ despues });
+    return false;
   }
 
   return (
@@ -80,6 +86,20 @@ export function AuthProvider({ children }) {
       value={{ token, usuario, loading, iniciarSesion, cerrarSesion, actualizarUsuario }}
     >
       {children}
+      <ModalConfirmacion
+        abierto={Boolean(confirmacionCierre)}
+        titulo="Tienes un pago en proceso"
+        mensaje="Si cierras sesión, el pago seguirá su curso y podrás ver su resultado cuando vuelvas a ingresar (en Mi perfil)."
+        textoConfirmar="Cerrar sesión de todas formas"
+        textoCancelar="Quedarme"
+        tipo="normal"
+        onConfirmar={() => {
+          ejecutarCierreSesion();
+          confirmacionCierre?.despues?.();
+          setConfirmacionCierre(null);
+        }}
+        onCancelar={() => setConfirmacionCierre(null)}
+      />
     </AuthContext.Provider>
   );
 }

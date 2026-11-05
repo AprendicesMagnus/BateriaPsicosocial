@@ -296,8 +296,9 @@ export default function Dashboard() {
   }
 
   function handleLogout() {
-    cerrarSesion();
-    navigate("/");
+    cerrarSesion({ despues: () => navigate("/", { replace: true }) });
+
+
   }
 
   const calcularNivelPrevalente = () => {

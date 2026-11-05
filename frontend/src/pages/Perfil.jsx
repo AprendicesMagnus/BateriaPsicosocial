@@ -24,6 +24,7 @@ import {
   confirmarPagoPedidoProductos,
 } from "../api/pedidosProductos";
 import PerfilPrivacidad from "../components/PerfilPrivacidad";
+import ModalConfirmacion from "../components/ModalConfirmacion";
 
 
 import {
@@ -196,6 +197,8 @@ export default function Perfil() {
   const [loadingCompras, setLoadingCompras] = useState(false);
   const [errorCompras, setErrorCompras] = useState(null);
   const [cancelandoCompraId, setCancelandoCompraId] = useState(null);
+  const [compraPorCancelar, setCompraPorCancelar] = useState(null);
+  const [confirmacionSesion, setConfirmacionSesion] = useState(null);
   const [sesionesActivas, setSesionesActivas] = useState([]);
   const [cargandoSesiones, setCargandoSesiones] = useState(false);
   const [accionSesiones, setAccionSesiones] = useState(false);
@@ -271,8 +274,21 @@ export default function Perfil() {
 
   useEffect(() => { cargarSesiones(); }, [token]);
 
-  async function handleCerrarSesionDispositivo(id, esActual = false) {
-    if (!window.confirm(esActual ? "Vas a cerrar esta sesión. Tendrás que iniciar sesión nuevamente. ¿Continuar?" : "¿Cerrar la sesión seleccionada?")) return;
+  function handleCerrarSesionDispositivo(id, esActual = false) {
+    setConfirmacionSesion({
+      titulo: esActual ? "¿Cerrar tu sesión actual?" : "¿Cerrar sesión?",
+      mensaje: esActual
+        ? "Vas a cerrar esta sesión. Tendrás que iniciar sesión nuevamente. ¿Continuar?"
+        : "¿Cerrar la sesión seleccionada?",
+      textoConfirmar: "Sí, cerrar sesión",
+      textoCancelar: "Cancelar",
+      tipo: "peligro",
+      accion: () => ejecutarCerrarSesionDispositivo(id, esActual),
+    });
+  }
+
+  async function ejecutarCerrarSesionDispositivo(id, esActual = false) {
+    /* confirmacion diferida a ModalConfirmacion */
     setAccionSesiones(true);
     setErrorSesiones("");
     try {
@@ -291,8 +307,19 @@ export default function Perfil() {
     } finally { setAccionSesiones(false); }
   }
 
-  async function handleCerrarOtrasSesiones() {
-    if (!window.confirm("Se cerrarán todas las demás sesiones de tu cuenta. La sesión actual permanecerá abierta. ¿Continuar?")) return;
+  function handleCerrarOtrasSesiones() {
+    setConfirmacionSesion({
+      titulo: "¿Cerrar las demás sesiones?",
+      mensaje: "Se cerrarán todas las demás sesiones de tu cuenta. La sesión actual permanecerá abierta. ¿Continuar?",
+      textoConfirmar: "Sí, cerrar las demás",
+      textoCancelar: "Cancelar",
+      tipo: "peligro",
+      accion: ejecutarCerrarOtrasSesiones,
+    });
+  }
+
+  async function ejecutarCerrarOtrasSesiones() {
+    /* confirmacion diferida a ModalConfirmacion */
     setAccionSesiones(true);
     try {
       const resultado = await cerrarOtrasSesiones(token);
@@ -302,8 +329,19 @@ export default function Perfil() {
     finally { setAccionSesiones(false); }
   }
 
-  async function handleRevocarDispositivosConfiables() {
-    if (!window.confirm("Se eliminará la confianza de todos tus dispositivos. En el próximo inicio de sesión protegido tendrás que verificar el código. ¿Continuar?")) return;
+  function handleRevocarDispositivosConfiables() {
+    setConfirmacionSesion({
+      titulo: "¿Revocar dispositivos de confianza?",
+      mensaje: "Se eliminará la confianza de todos tus dispositivos. En el próximo inicio de sesión protegido tendrás que verificar el código. ¿Continuar?",
+      textoConfirmar: "Sí, revocar confianza",
+      textoCancelar: "Cancelar",
+      tipo: "peligro",
+      accion: ejecutarRevocarDispositivosConfiables,
+    });
+  }
+
+  async function ejecutarRevocarDispositivosConfiables() {
+    /* confirmacion diferida a ModalConfirmacion */
     setAccionSesiones(true);
     try {
       const resultado = await revocarDispositivosConfiables(token);
@@ -740,6 +778,57 @@ export default function Perfil() {
       },
     });
   }
+  async function confirmarCancelacionCompra() {
+    if (!compraPorCancelar?.id || cancelandoCompraId) {
+      return;
+    }
+    const compra = compraPorCancelar;
+    setCancelandoCompraId(compra.id);
+    setErrorCompras(null);
+    try {
+      const res = await request(
+        `/compras/${compra.id}/cancelar`,
+        {
+          method: "POST",
+          token,
+        }
+      );
+      setCompras((actuales) =>
+        actuales.map((item) =>
+          item.id === compra.id
+            ? {
+              ...item,
+              estado:
+                res.estado ||
+                "CANCELADA",
+            }
+            : item
+        )
+      );
+      setMensajeOk("La compra fue cancelada correctamente.");
+    } catch (err) {
+      setErrorCompras(
+        err.message ||
+        "No se pudo cancelar la compra."
+      );
+    } finally {
+      setCancelandoCompraId(null);
+      setCompraPorCancelar(null);
+    }
+  }
+
+  function cancelarCompra(compra) {
+    if (
+      !compra?.id ||
+      compra.estado !== "PENDIENTE" ||
+      cancelandoCompraId
+    ) {
+      return;
+    }
+    setCompraPorCancelar(compra);
+  }
+
+  /*
   async function cancelarCompra(compra) {
     if (
       !compra?.id ||
@@ -748,7 +837,7 @@ export default function Perfil() {
     ) {
       return;
     }
-    const confirmar = window.confirm(
+    const confirmar = false; // confirmacion reemplazada por ModalConfirmacion
       "¿Quieres cancelar esta compra?\n\n" +
       "La compra quedará cancelada y podrás realizar una nueva compra."
     );
@@ -793,6 +882,7 @@ export default function Perfil() {
       );
     }
   }
+  */
   async function reintentarPagoPedido(pedido) {
     if (!pedido?.id || reintentandoPedidoId) return;
     setReintentandoPedidoId(pedido.id);
@@ -1437,6 +1527,60 @@ export default function Perfil() {
             </div>
           </div>
         </div>
+        <ModalConfirmacion
+          abierto={Boolean(compraPorCancelar)}
+          titulo="¿Cancelar esta compra?"
+          mensaje="La compra quedará cancelada y podrás realizar una nueva compra."
+          resumen={
+            compraPorCancelar && (
+              <div>
+                <strong>
+                  {compraPorCancelar.cantidad}{" "}
+                  {compraPorCancelar.cantidad === 1 ? "batería" : "baterías"}
+                </strong>
+                {" · "}
+                <span>
+                  Total:{" "}
+                  {Number(compraPorCancelar.total || 0).toLocaleString("es-CO", {
+                    style: "currency",
+                    currency: "COP",
+                    maximumFractionDigits: 0,
+                  })}
+                </span>
+              </div>
+            )
+          }
+          textoConfirmar="Sí, cancelar compra"
+          textoCancelar="No, volver"
+          tipo="peligro"
+          cargando={Boolean(cancelandoCompraId)}
+          textoCargando="Cancelando..."
+          onConfirmar={confirmarCancelacionCompra}
+          onCancelar={() => {
+            if (!cancelandoCompraId) setCompraPorCancelar(null);
+          }}
+        />
+
+        <ModalConfirmacion
+          abierto={Boolean(confirmacionSesion)}
+          titulo={confirmacionSesion?.titulo}
+          mensaje={confirmacionSesion?.mensaje}
+          textoConfirmar={confirmacionSesion?.textoConfirmar || "Confirmar"}
+          textoCancelar={confirmacionSesion?.textoCancelar || "Cancelar"}
+          tipo={confirmacionSesion?.tipo || "peligro"}
+          cargando={accionSesiones}
+          textoCargando="Procesando..."
+          onConfirmar={async () => {
+            const accion = confirmacionSesion?.accion;
+            if (accion) {
+              await accion();
+            }
+            setConfirmacionSesion(null);
+          }}
+          onCancelar={() => {
+            if (!accionSesiones) setConfirmacionSesion(null);
+          }}
+        />
       </main>
     </div>
   );

@@ -248,7 +248,7 @@ export default function Respuestas() {
   const activo = instrumentos.find((i) => i.codigo === pestana) || instrumentos[0];
 
   function seleccionar(participanteId) {
-    setParams({ id: participanteId });
+    setParams({ id: participanteId }, { replace: true });
     setPestana(null);
     // En pantallas angostas el detalle queda debajo de la lista
     if (window.matchMedia("(max-width: 860px)").matches) {

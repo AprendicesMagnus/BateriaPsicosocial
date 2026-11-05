@@ -4,6 +4,7 @@ import { crearPlan, editarPlan, eliminarPlan, fetchPlanesAdmin } from "../api/pl
 import { etiquetaRango, formatearPrecio } from "../utils/planes";
 import "../styles/Planes.css";
 import "../styles/PanelAcciones.css";
+import ModalConfirmacion from "./ModalConfirmacion";
 
 const VACIO = { nombre: "", cantidadMin: "", cantidadMax: "", precioUnitario: "", activo: true };
 
@@ -13,6 +14,8 @@ export default function PanelPlanes() {
   const [planes, setPlanes] = useState([]);
   const [form, setForm] = useState(null); // null = cerrado; {id?, ...campos}
   const [guardando, setGuardando] = useState(false);
+  const [planPorEliminar, setPlanPorEliminar] = useState(null);
+  const [eliminando, setEliminando] = useState(false);
   const [mensaje, setMensaje] = useState(null); // {tipo, texto}
 
   const cargar = () =>
@@ -70,8 +73,28 @@ export default function PanelPlanes() {
     }
   }
 
-  async function eliminar(plan) {
-    if (!window.confirm(`¿Eliminar "${plan.nombre}"? Esta acción no se puede deshacer.`)) return;
+  function eliminar(plan) {
+    setPlanPorEliminar(plan);
+  }
+
+  async function confirmarEliminarPlan() {
+    if (!planPorEliminar) return;
+    setEliminando(true);
+    try {
+      await eliminarPlan(token, planPorEliminar.id);
+      await cargar();
+      setMensaje({ tipo: "ok", texto: "Plan eliminado." });
+    } catch (err) {
+      setMensaje({ tipo: "error", texto: err.message || "No se pudo eliminar el plan." });
+    } finally {
+      setEliminando(false);
+      setPlanPorEliminar(null);
+    }
+  }
+
+  /*
+  async function eliminarPlanAntiguo(plan) {
+    // confirmacion reemplazada por ModalConfirmacion
     try {
       await eliminarPlan(token, plan.id);
       await cargar();
@@ -81,6 +104,7 @@ export default function PanelPlanes() {
     }
   }
 
+  */
   const cambiar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }));
 
   return (
@@ -174,6 +198,19 @@ export default function PanelPlanes() {
           </tbody>
         </table>
       </div>
+      <ModalConfirmacion
+        abierto={Boolean(planPorEliminar)}
+        titulo="¿Eliminar plan?"
+        mensaje={`Se eliminará "${planPorEliminar?.nombre}". Esta acción no se puede deshacer.`}
+        textoConfirmar="Sí, eliminar"
+        textoCancelar="Cancelar"
+        tipo="peligro"
+        cargando={eliminando}
+        onConfirmar={confirmarEliminarPlan}
+        onCancelar={() => {
+          if (!eliminando) setPlanPorEliminar(null);
+        }}
+      />
     </section>
   );
 }

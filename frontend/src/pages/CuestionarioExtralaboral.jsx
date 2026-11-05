@@ -4,6 +4,7 @@ import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
 // Muestra "Cargando…" o el error cuando las respuestas no se pueden guardar
 import AvisoCuestionario from "../components/AvisoCuestionario";
 import Toast from "../components/Toast";
+import ModalAviso from "../components/ModalAviso";
 import "../styles/cuestionario-estres.css";
 
 const preguntas = [
@@ -58,6 +59,7 @@ export default function CuestionarioExtralaboral() {
 
   const [pagina, setPagina] = useState(0);
   const [intentoFinalizar, setIntentoFinalizar] = useState(false);
+  const [aviso, setAviso] = useState(null);
 
   const {
     respuestas,
@@ -99,13 +101,13 @@ export default function CuestionarioExtralaboral() {
       );
 
       setIntentoFinalizar(true);
-
-      alert(
-        `Te faltan ${faltantes} pregunta(s) por responder. Te llevamos a la primera pregunta sin responder (pregunta ${preguntaSinResponder.id}).`
-      );
-
-      setPagina(paginaFaltante);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setAviso({
+        mensaje: `Te faltan ${faltantes} pregunta(s) por responder. Te llevamos a la primera pregunta sin responder (pregunta ${preguntaSinResponder.id}).`,
+        alCerrar: () => {
+          setPagina(paginaFaltante);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+      });
       return;
     }
 
@@ -455,6 +457,14 @@ export default function CuestionarioExtralaboral() {
 
       </main>
 
+      <ModalAviso
+        abierto={Boolean(aviso)}
+        titulo="Faltan preguntas por responder"
+        mensaje={aviso?.mensaje}
+        textoBoton="Ir a la pregunta pendiente"
+        tipo="advertencia"
+        onCerrar={() => { const accion = aviso?.alCerrar; setAviso(null); accion?.(); }}
+      />
     </div>
   );
 }

@@ -164,12 +164,10 @@
   width: 100%;
   height: 100%;
   z-index: 1;
-  background: linear-gradient(
-    90deg,
-    rgba(7, 17, 48, 0.85) 0%,
-    rgba(7, 17, 48, 0.65) 45%,
-    rgba(7, 17, 48, 0.35) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(7, 17, 48, 0.85) 0%,
+      rgba(7, 17, 48, 0.65) 45%,
+      rgba(7, 17, 48, 0.35) 100%);
 }
 
 
@@ -618,6 +616,7 @@
 ===================================================== */
 
 @media (max-width: 900px) {
+
   .hero,
   .hero__inner {
     min-height: 750px;
@@ -657,6 +656,7 @@
 ===================================================== */
 
 @media (max-width: 600px) {
+
   .hero,
   .hero__inner {
     min-height: 800px;
@@ -710,7 +710,9 @@
 
 /* Ajustes móviles de navegación, logos y video */
 .mobile-menu-toggle,
-.mobile-nav { display: none; }
+.mobile-nav {
+  display: none;
+}
 
 .hero__background-video {
   position: absolute;
@@ -776,7 +778,9 @@
     grid-row: 1;
   }
 
-  .nav__links { display: none !important; }
+  .nav__links {
+    display: none !important;
+  }
 
   .mobile-nav {
     display: none;
@@ -792,12 +796,14 @@
     box-shadow: 0 12px 28px rgba(15, 26, 61, .13);
   }
 
-  .mobile-nav--open { display: flex; }
+  .mobile-nav--open {
+    display: flex;
+  }
 
   .mobile-nav a,
   .mobile-nav button,
-  .mobile-nav__group > span,
-  .mobile-nav__group > a {
+  .mobile-nav__group>span,
+  .mobile-nav__group>a {
     display: block;
     width: 100%;
     padding: 11px 12px;
@@ -815,7 +821,9 @@
 
   .mobile-nav a:hover,
   .mobile-nav button:hover,
-  .mobile-nav__group > a:hover { background: #f3f5f9; }
+  .mobile-nav__group>a:hover {
+    background: #f3f5f9;
+  }
 
   .mobile-nav__group {
     display: flex;
@@ -825,7 +833,9 @@
     padding: 3px 0;
   }
 
-  .mobile-nav__group > span { color: #6b7485; }
+  .mobile-nav__group>span {
+    color: #6b7485;
+  }
 
   .nav .app-profile-menu {
     display: none !important;
@@ -866,9 +876,18 @@
     padding: 46px 20px 56px;
   }
 
-  .hero__content { max-width: 100%; }
-  .hero h1 { font-size: clamp(30px, 8vw, 38px); }
-  .hero p { font-size: 15px; line-height: 1.55; }
+  .hero__content {
+    max-width: 100%;
+  }
+
+  .hero h1 {
+    font-size: clamp(30px, 8vw, 38px);
+  }
+
+  .hero p {
+    font-size: 15px;
+    line-height: 1.55;
+  }
 
   .hero__cta {
     flex-direction: column;
@@ -888,7 +907,7 @@
 
 
 /* Ajustes de navegación móvil: los enlaces conservan sus secciones originales. */
-.mobile-nav__group--dropdown > button {
+.mobile-nav__group--dropdown>button {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -902,11 +921,13 @@
   text-align: left;
   cursor: pointer;
 }
+
 .mobile-nav__submenu {
   display: flex;
   flex-direction: column;
   padding-left: 12px;
 }
+
 .mobile-nav__submenu a {
   display: block;
   padding: 10px 12px;
@@ -915,27 +936,200 @@
 
 /* Perfil integrado dentro del menú desplegable móvil. */
 @media (max-width: 700px) {
-  .mobile-profile-group { border-bottom: 1px solid #edf0f5; padding-bottom: 5px; margin-bottom: 3px; }
-  .mobile-nav .mobile-profile-trigger { display: flex; align-items: center; gap: 10px; padding: 8px; }
-  .mobile-profile-trigger .app-avatar { flex: 0 0 38px; width: 38px; height: 38px; }
-  .mobile-profile-trigger .app-profile-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-  .mobile-profile-trigger .app-profile-name, .mobile-profile-trigger .app-profile-role { display: block; overflow-wrap: anywhere; }
-  .mobile-profile-chevron { margin-left: auto; }
-  .mobile-profile-submenu { display: flex; flex-direction: column; padding-left: 14px; }
-  .mobile-nav .mobile-profile-submenu button { padding: 10px 12px; font-weight: 600; }
+  .mobile-profile-group {
+    border-bottom: 1px solid #edf0f5;
+    padding-bottom: 5px;
+    margin-bottom: 3px;
+  }
+
+  .mobile-nav .mobile-profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+  }
+
+  .mobile-profile-trigger .app-avatar {
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .mobile-profile-trigger .app-profile-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .mobile-profile-trigger .app-profile-name,
+  .mobile-profile-trigger .app-profile-role {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-profile-chevron {
+    margin-left: auto;
+  }
+
+  .mobile-profile-submenu {
+    display: flex;
+    flex-direction: column;
+    padding-left: 14px;
+  }
+
+  .mobile-nav .mobile-profile-submenu button {
+    padding: 10px 12px;
+    font-weight: 600;
+  }
 }
 
 /* Iconos del navbar de Inicio: no se encogen cuando la fila de enlaces queda estrecha */
-.nav__logos--inicio ~ .nav__links svg { flex-shrink: 0; }
+.nav__logos--inicio~.nav__links svg {
+  flex-shrink: 0;
+}
 
 /* Logos del navbar de Inicio: un poco más a la izquierda y sin invadir los enlaces */
 @media (min-width: 1001px) {
-  .nav__logos--inicio { margin-left: -16px; flex: 0 0 auto; }
+  .nav__logos--inicio {
+    margin-left: -16px;
+    flex: 0 0 auto;
+  }
 }
+
 @media (min-width: 1280px) {
-  .nav__logos--inicio { margin-left: -56px; }
+  .nav__logos--inicio {
+    margin-left: -56px;
+  }
 }
+
 @media (min-width: 1001px) {
-  .nav__logos--inicio ~ .nav__links { width: auto; flex: 1 1 auto; min-width: 0; gap: 22px; }
-  .nav__logos--inicio ~ .nav__links a, .nav__logos--inicio ~ .nav__links button { white-space: nowrap; }
+  .nav__logos--inicio~.nav__links {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 22px;
+  }
+
+  .nav__logos--inicio~.nav__links a,
+  .nav__logos--inicio~.nav__links button {
+    white-space: nowrap;
+  }
+}
+
+/* Navbar de Inicio: logos del mismo tamano que en la Landing y espacios repartidos de forma pareja */
+@media (min-width: 901px) {
+  .nav__logos--inicio~.nav__links {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    justify-content: space-evenly;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1000px) {
+  .nav__logos--inicio {
+    margin-left: 0;
+    gap: 6px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(1) {
+    height: 44px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(2) {
+    height: 29px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(3) {
+    height: 42px !important;
+  }
+
+  .nav__logos--inicio~.nav__links {
+    gap: 10px;
+  }
+}
+
+@media (min-width: 1001px) and (max-width: 1279px) {
+  .nav__logos--inicio {
+    margin-left: 0;
+    gap: 8px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(1) {
+    height: 58px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(2) {
+    height: 37px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(3) {
+    height: 54px !important;
+  }
+
+  .nav__logos--inicio~.nav__links {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1479px) {
+  .nav__logos--inicio {
+    margin-left: -40px;
+  }
+
+  .nav__logos--inicio img:nth-child(1) {
+    height: 92px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(2) {
+    height: 59px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(3) {
+    height: 84px !important;
+  }
+}
+
+@media (min-width: 1480px) {
+  header.nav:has(.nav__logos--inicio) .nav__inner {
+    max-width: 1400px;
+  }
+
+  .nav__logos--inicio {
+    margin-left: -32px;
+  }
+
+  .nav__logos--inicio img:nth-child(1) {
+    height: 100px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(2) {
+    height: 64px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(3) {
+    height: 92px !important;
+  }
+}
+
+/* Navbar de Inicio: todos los items con la misma altura y centrados en la misma línea */
+@media (min-width: 901px) {
+
+  .nav__logos--inicio~.nav__links>a,
+  .nav__logos--inicio~.nav__links>.nav__dropdown,
+  .nav__logos--inicio~.nav__links>.tienda-dd {
+    display: flex;
+    align-items: center;
+    min-height: 24px;
+    line-height: 24px;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .nav__logos--inicio~.nav__links>.nav__dropdown>button,
+  .nav__logos--inicio~.nav__links>.tienda-dd>button {
+    line-height: 24px;
+  }
 }

@@ -6,6 +6,7 @@ import { subirImagenProducto } from "../api/productos";
 import { categoriasDe, CATEGORIAS_PRODUCTO, formatearCOP, imagenDe, manejaStock, useProductos } from "../data/products";
 import "../styles/Planes.css";
 import "../styles/PanelAcciones.css";
+import ModalConfirmacion from "./ModalConfirmacion";
 import "../styles/Catalogo.css";
 
 const VACIO = {
@@ -26,6 +27,8 @@ export default function PanelProductos() {
 
   const [form, setForm] = useState(null);
   const [mensaje, setMensaje] = useState(null);
+  const [productoPorEliminar, setProductoPorEliminar] = useState(null);
+  const [eliminando, setEliminando] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
   const [categoriaNueva, setCategoriaNueva] = useState(false);
   const [exportando, setExportando] = useState(false);
@@ -145,16 +148,35 @@ export default function PanelProductos() {
     }
   }
 
-  async function borrar(producto) {
-    if (!window.confirm(`¿Eliminar "${producto.nombre}"? Esta acción no se puede deshacer.`)) {
+  function borrar(producto) {
+    setProductoPorEliminar(producto);
+  }
+
+  async function confirmarBorrar() {
+    if (!productoPorEliminar) {
+
+
+
+
+
+
+
+
+
+
+
       return;
     }
 
     try {
-      await eliminar(producto.id);
+      setEliminando(true);
+      await eliminar(productoPorEliminar.id);
+      setProductoPorEliminar(null);
       setMensaje({ tipo: "ok", texto: "Producto eliminado." });
     } catch (err) {
       setMensaje({ tipo: "error", texto: err.message || "No se pudo eliminar el producto." });
+    } finally {
+      setEliminando(false);
     }
   }
 
@@ -414,6 +436,17 @@ export default function PanelProductos() {
           </table>
         </div>
       )}
+      <ModalConfirmacion
+        abierto={Boolean(productoPorEliminar)}
+        titulo="Eliminar producto"
+        mensaje={`Se eliminara "${productoPorEliminar?.nombre}". Esta accion no se puede deshacer.`}
+        textoConfirmar="Si, eliminar"
+        textoCancelar="Cancelar"
+        tipo="peligro"
+        cargando={eliminando}
+        onConfirmar={confirmarBorrar}
+        onCancelar={() => { if (!eliminando) setProductoPorEliminar(null); }}
+      />
     </section>
   );
 }

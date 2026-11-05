@@ -121,32 +121,32 @@
 }
 
 /* ============================================
-   Layout de dos tarjetas
+   Layout de cuatro tarjetas
    ============================================ */
 
 .app-content.perfil-page {
-  max-width: 1400px;
+  max-width: 1600px;
 }
 
 .perfil-layout {
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
-  flex-wrap: wrap;
+  align-items: stretch;
 }
 
 .perfil-card {
-  flex: 1 1 400px;
+  width: 100%;
+  min-width: 0;
 }
 
 .compras-card {
-  flex: 1 1 320px;
-  max-width: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
   padding: 32px;
-}
-
-.compras-card {
-  max-width: 400px;
 }
 
 .compras-titulo {
@@ -169,7 +169,8 @@
   display: flex;
   flex-direction: column;
 
-  max-height: min(360px, max(200px, calc(100vh - 440px)));
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
 
   padding-right: 6px;
@@ -177,21 +178,25 @@
 
 /* Barra de desplazamiento */
 
-.compras-list::-webkit-scrollbar {
+.compras-list::-webkit-scrollbar,
+.sesiones-list::-webkit-scrollbar {
   width: 6px;
 }
 
-.compras-list::-webkit-scrollbar-track {
+.compras-list::-webkit-scrollbar-track,
+.sesiones-list::-webkit-scrollbar-track {
   background: #f1f5f9;
   border-radius: 10px;
 }
 
-.compras-list::-webkit-scrollbar-thumb {
+.compras-list::-webkit-scrollbar-thumb,
+.sesiones-list::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
 }
 
-.compras-list::-webkit-scrollbar-thumb:hover {
+.compras-list::-webkit-scrollbar-thumb:hover,
+.sesiones-list::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
@@ -247,19 +252,25 @@
   padding: 12px 0;
 }
 
-@media (max-width: 1100px) {
-  .perfil-card {
-    flex-basis: 100%;
+@media (max-width: 1279px) and (min-width: 861px) {
+  .compras-list,
+  .sesiones-list {
+    flex: initial;
+    max-height: 360px;
+  }
+  .perfil-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 860px) {
-  .compras-card {
-    max-width: none;
-    flex-basis: 100%;
+  .perfil-layout {
+    grid-template-columns: 1fr;
   }
 
-  .compras-list {
+  .compras-list,
+  .sesiones-list {
+    flex: initial;
     max-height: 320px;
   }
 }
@@ -479,8 +490,8 @@
   white-space: nowrap;
 }
 /* Seguridad y sesiones activas */
-.sesiones-card { flex: 1 1 360px; max-width: 440px; padding: 28px; }
-.sesiones-list { display: flex; flex-direction: column; gap: 12px; max-height: 430px; overflow-y: auto; }
+.sesiones-card { width: 100%; min-width: 0; min-height: 0; padding: 28px; display: flex; flex-direction: column; }
+.sesiones-list { display: flex; flex-direction: column; gap: 12px; flex: 1 1 0; min-height: 0; overflow-y: auto; padding-right: 6px; }
 .sesion-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line-200); }
 .sesion-item__icon { flex: 0 0 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: #eef4f8; }
 .sesion-item__info { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; color: var(--ink-800); font-size: 12px; overflow-wrap: anywhere; }
@@ -489,10 +500,10 @@
 .sesion-actual { color: #166534; background: #dcfce7; border-radius: 20px; padding: 4px 8px; font-size: 10px; white-space: nowrap; }
 .sesion-cerrar { border: 1px solid #fecaca; background: #fff; color: #b91c1c; border-radius: 7px; padding: 6px 9px; font-size: 11px; cursor: pointer; }
 .sesion-cerrar:disabled { opacity: .5; cursor: wait; }
-.sesiones-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.sesiones-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 14px; }
 .sesiones-actions button { font-size: 11px; padding: 8px 10px; }
 .sesiones-error, .sesiones-ok { padding: 8px 10px; border-radius: 7px; font-size: 12px; }
 .sesiones-error { color: #991b1b; background: #fee2e2; }
 .sesiones-ok { color: #166534; background: #dcfce7; }
 .sesiones-nota { margin: 14px 0 0; line-height: 1.45; }
-@media (max-width: 560px) { .sesiones-card { flex-basis: 100%; padding: 20px; } .sesiones-actions { flex-direction: column; } }
+@media (max-width: 560px) { .sesiones-card { padding: 20px; } .sesiones-actions { flex-direction: column; } }

@@ -155,8 +155,8 @@ export default function Inicio() {
 
   function handleCerrarSesion() {
     setMenuPerfilAbierto(false);
-    const sesionCerrada = cerrarSesion?.();
-    if (sesionCerrada) navigate("/iniciar-sesion", { replace: true });
+    cerrarSesion?.({ despues: () => navigate("/", { replace: true }) });
+
   }
 
   return (

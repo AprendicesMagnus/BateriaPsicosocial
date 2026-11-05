@@ -12,6 +12,7 @@ import { ESTADOS_ENCUESTA, NIVELES, NOMBRES_INSTRUMENTO, formatearFecha, normali
 import Paginador from "../components/Paginador";
 import { usePaginacion } from "../hooks/usePaginacion";
 import QrEnlaceModal from "../components/QrEnlaceModal";
+import ModalConfirmacion from "../components/ModalConfirmacion";
 import { useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
 import "../styles/Reportes.css";
@@ -67,6 +68,7 @@ function urlEnlace(token) {
 
 export default function Reportes() {
   const { token, usuario } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
 
   const [reportes, setReportes] = useState([]);
@@ -139,6 +141,7 @@ export default function Reportes() {
   const [enlaceCopiado, setEnlaceCopiado] = useState(null);
   // evaluacionId del enlace que se está eliminando
   const [eliminandoEnlace, setEliminandoEnlace] = useState(null);
+  const [enlacePorEliminar, setEnlacePorEliminar] = useState(null);
   const [qrEnlace, setQrEnlace] = useState(null);
 
   const {
@@ -207,15 +210,24 @@ export default function Reportes() {
     }
   }
 
-  async function handleEliminarEnlace(enlace) {
-    if (!window.confirm(`¿Eliminar el enlace "${enlace.nombre}"? Si un paciente ya respondió, su encuesta se conserva.`)) {
+  function handleEliminarEnlace(enlace) {
+    setEnlacePorEliminar(enlace);
+  }
+
+  async function confirmarEliminarEnlace() {
+    if (!enlacePorEliminar) {
+
+
+
       return;
     }
+    const enlace = enlacePorEliminar;
     setEliminandoEnlace(enlace.evaluacionId);
     setErrorEnlaces(null);
     try {
       await eliminarEnlace(token, enlace.evaluacionId);
       setEnlaces((prev) => prev.filter((e) => e.evaluacionId !== enlace.evaluacionId));
+      setEnlacePorEliminar(null);
     } catch (err) {
       setErrorEnlaces(err.message || "Error al eliminar el enlace.");
     } finally {
@@ -580,9 +592,9 @@ export default function Reportes() {
                           type="button"
                           className="reportes-download-btn"
                           onClick={() => {
-                            window.location.href = `/respuestas?id=${encodeURIComponent(
+                            navigate(`/respuestas?id=${encodeURIComponent(
                               encuesta.participanteId
-                            )}`;
+                            )}`);
                           }}
                         >
                           Ver respuestas
@@ -606,9 +618,21 @@ export default function Reportes() {
           </>
           )}
         </div>
+        <ModalConfirmacion
+          abierto={Boolean(enlacePorEliminar)}
+          titulo="Eliminar enlace"
+          mensaje={`Se eliminara el enlace "${enlacePorEliminar?.nombre}". Si un paciente ya respondio, su encuesta se conserva.`}
+          textoConfirmar="Si, eliminar"
+          textoCancelar="Cancelar"
+          tipo="peligro"
+          cargando={eliminandoEnlace !== null}
+          onConfirmar={confirmarEliminarEnlace}
+          onCancelar={() => { if (eliminandoEnlace === null) setEnlacePorEliminar(null); }}
+        />
       </main>
       {qrEnlace && (
         <QrEnlaceModal url={qrEnlace.url} titulo={qrEnlace.titulo} onCerrar={() => setQrEnlace(null)} />
+
       )}
     </div>
   );

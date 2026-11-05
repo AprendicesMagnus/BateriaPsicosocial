@@ -4,6 +4,7 @@ import { useCuestionarioBackend } from "../hooks/useCuestionarioBackend";
 // Muestra "Cargando…" o el error cuando las respuestas no se pueden guardar
 import AvisoCuestionario from "../components/AvisoCuestionario";
 import Toast from "../components/Toast";
+import ModalAviso from "../components/ModalAviso";
 import "../styles/cuestionario-estres.css";
 
 /* =========================================================
@@ -243,6 +244,7 @@ export default function CuestionarioIntralaboralB() {
 
   const [pagina, setPagina] = useState(0);
   const [intentoFinalizar, setIntentoFinalizar] = useState(false);
+  const [aviso, setAviso] = useState(null);
   const [preguntaAEnfocar, setPreguntaAEnfocar] = useState(null);
 
   const {
@@ -304,13 +306,13 @@ export default function CuestionarioIntralaboralB() {
       const indicePrimera = preguntasVisibles.indexOf(primera);
 
       setIntentoFinalizar(true);
-
-      alert(
-        `Te faltan ${sinResponder.length} pregunta(s) por responder. Te llevamos a la primera pregunta sin responder.`
-      );
-
-      setPagina(Math.floor(indicePrimera / PREGUNTAS_POR_PAGINA));
-      setPreguntaAEnfocar(primera.id);
+      setAviso({
+        mensaje: `Te faltan ${sinResponder.length} pregunta(s) por responder. Te llevamos a la primera pregunta sin responder.`,
+        alCerrar: () => {
+          setPagina(Math.floor(indicePrimera / PREGUNTAS_POR_PAGINA));
+          setPreguntaAEnfocar(primera.id);
+        },
+      });
       return;
     }
 
@@ -562,6 +564,14 @@ export default function CuestionarioIntralaboralB() {
 
       </main>
 
+      <ModalAviso
+        abierto={Boolean(aviso)}
+        titulo="Faltan preguntas por responder"
+        mensaje={aviso?.mensaje}
+        textoBoton="Ir a la pregunta pendiente"
+        tipo="advertencia"
+        onCerrar={() => { const accion = aviso?.alCerrar; setAviso(null); accion?.(); }}
+      />
     </div>
   );
 }

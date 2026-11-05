@@ -53,8 +53,7 @@ export default function ProfileMenu() {
 
   function handleCerrarSesion() {
     setAbierto(false);
-    cerrarSesion?.();
-    navigate("/iniciar-sesion");
+    cerrarSesion?.({ despues: () => navigate("/", { replace: true }) });
   }
 
   return (

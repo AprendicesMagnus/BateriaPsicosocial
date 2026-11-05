@@ -51,7 +51,7 @@ export default function CierreInactividad() {
       } catch {
         /* se ignora */
       }
-      cerrarSesion();
+      cerrarSesion({ forzar: true });
       navigate("/iniciar-sesion", { replace: true });
       setAviso("Tu sesión se cerró por inactividad. Inicia sesión de nuevo.");
     }
@@ -59,7 +59,8 @@ export default function CierreInactividad() {
     function revisar() {
       // Otra pestaña cerró la sesión: se refleja en esta.
       if (!localStorage.getItem(CLAVE_TOKEN)) {
-        cerrarSesion();
+        cerrarSesion({ forzar: true });
+
         navigate("/iniciar-sesion", { replace: true });
         return;
       }
