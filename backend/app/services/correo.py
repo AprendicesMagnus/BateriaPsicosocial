@@ -60,6 +60,19 @@ def _abrir_conexion(host: str, port: int) -> smtplib.SMTP:
     return servidor
 
 
+def describir_configuracion() -> str:
+    """Resumen de la configuración de correo para los logs, sin exponer secretos."""
+    settings = get_settings()
+    remitente = settings.smtp_from or settings.smtp_user or "noreply@magnussig.com"
+    if settings.brevo_api_key:
+        clave = settings.brevo_api_key.strip()
+        formato = "ok" if clave.startswith("xkeysib-") else "NO empieza por xkeysib- (¿es una clave SMTP?)"
+        return f"proveedor=Brevo | clave={len(clave)} caracteres, formato {formato} | remitente={parseaddr(remitente)[1]!r}"
+    if settings.smtp_host:
+        return f"proveedor=SMTP | host={settings.smtp_host}:{settings.smtp_port} | remitente={parseaddr(remitente)[1]!r}"
+    return "proveedor=NINGUNO (no hay BREVO_API_KEY ni SMTP_HOST): los correos NO se envían"
+
+
 def enviar_correo(destino: str, asunto: str, contenido: str) -> bool:
     settings = get_settings()
     remitente = settings.smtp_from or settings.smtp_user or "noreply@magnussig.com"

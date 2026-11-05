@@ -119,6 +119,9 @@ app.include_router(api_v1_router)
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 
+# Muestra en consola (y en los logs de Render) los mensajes INFO de la app, p. ej. "Correo enviado ... por Brevo".
+logging.basicConfig(level=logging.INFO, format="%(levelname)s [%(name)s] %(message)s")
+
 _scheduler = BackgroundScheduler()
 
 logger = logging.getLogger(__name__)
@@ -239,6 +242,9 @@ def detener_scheduler() -> None:
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
+    from app.services.correo import describir_configuracion
+
+    logger.info("Correo: %s", describir_configuracion())
     iniciar_scheduler()
     try:
         yield
