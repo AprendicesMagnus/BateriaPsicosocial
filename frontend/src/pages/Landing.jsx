@@ -696,14 +696,6 @@ export default function Landing() {
               <ul>
 
                 <li>
-                  Para MiPymes
-                </li>
-
-                <li>
-                  Para clientes
-                </li>
-
-                <li>
                   <Link to="/iniciar-sesion">
                     Iniciar sesión
                   </Link>

@@ -181,7 +181,7 @@ export default function Inicio() {
               src="/logo a 2_Mesa de trabajo 1.jpg"
               alt="Magnus"
               style={{
-                height: 108,
+                height: 112,
                 marginRight: "auto",
               }}
             />
@@ -190,7 +190,7 @@ export default function Inicio() {
               src="/logo javeriana.jpg"
               alt="Javeriana"
               style={{
-                height: 46,
+                height: 58,
               }}
             />
 
@@ -198,7 +198,7 @@ export default function Inicio() {
               src="/ministerio.jpg"
               alt="Ministerio"
               style={{
-                height: 98,
+                height: 102,
               }}
             />
           </div>
