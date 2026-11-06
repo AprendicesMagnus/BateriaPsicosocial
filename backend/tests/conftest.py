@@ -91,7 +91,7 @@ def setup_database():
 @pytest.fixture(autouse=True)
 def _sin_doble_factor_por_defecto(monkeypatch):
     """Las demás pruebas inician sesión con admin/jefe sin código; las de 2FA lo activan."""
-    monkeypatch.setattr(settings, "doble_factor_activo", False)
+    monkeypatch.setattr(settings, "dos_pasos_activo", False)
 
 
 @pytest.fixture
@@ -152,6 +152,15 @@ def crear_paciente(db_session):
         return usuario.id, email
 
     return _crear
+
+
+@pytest.fixture(autouse=True)
+def _minimo_anonimato_de_pruebas(monkeypatch):
+    """Las pruebas de anonimato se escribieron con grupos de 4 y 5 personas: fijan el mínimo en 5.
+
+    En producción el valor lo define MIN_GRUPO_ANONIMATO (por defecto 2).
+    """
+    monkeypatch.setattr(settings, "min_grupo_anonimato", 5)
 
 
 @pytest.fixture(autouse=True)

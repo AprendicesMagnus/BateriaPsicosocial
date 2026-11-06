@@ -11,6 +11,7 @@ function fechaCorta(iso) {
 
 export default function ComparadorEvaluaciones({ token, organizacionId }) {
   const [evaluacionesVisibles, setEvaluacionesVisibles] = useState([]);
+  const [minimo, setMinimo] = useState(2);
   const [evaluacionA, setEvaluacionA] = useState("");
   const [evaluacionB, setEvaluacionB] = useState("");
   const [codigo, setCodigo] = useState(null);
@@ -31,6 +32,7 @@ export default function ComparadorEvaluaciones({ token, organizacionId }) {
           .filter((item) => !item.oculto)
           .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
         setEvaluacionesVisibles(lista);
+        setMinimo(datos?.minimoAnonimato ?? 2);
         if (lista.length >= 2) {
           setEvaluacionA(lista[lista.length - 2].evaluacionId);
           setEvaluacionB(lista[lista.length - 1].evaluacionId);
@@ -109,7 +111,7 @@ export default function ComparadorEvaluaciones({ token, organizacionId }) {
           </div>
         </div>
         <p className="comparador__vacio">
-          Se necesitan al menos dos evaluaciones con 5 o más participantes completados para compararlas.
+          Se necesitan al menos dos evaluaciones con {minimo} o más participantes completados para compararlas.
         </p>
       </div>
     );

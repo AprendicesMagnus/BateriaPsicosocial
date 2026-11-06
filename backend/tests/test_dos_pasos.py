@@ -3,6 +3,18 @@
 import pytest
 
 from app.core.config import get_settings
+from app.services import auth as auth_service
+
+
+@pytest.fixture(autouse=True)
+def _limpiar_auditoria_2fa(db_session):
+    """Deja la auditoría sin accesos LOGIN_2FA/LOGIN_GOOGLE (otra prueba busca solo "inició sesión")."""
+    yield
+    from app.models.audit import Auditoria
+
+    db_session.rollback()
+    db_session.query(Auditoria).filter(Auditoria.accion.in_(["LOGIN_2FA", "LOGIN_GOOGLE"])).delete(synchronize_session=False)
+    db_session.commit()
 
 
 @pytest.fixture
@@ -14,6 +26,9 @@ def dos_pasos_activo(monkeypatch):
         return True
 
     monkeypatch.setattr(get_settings(), "dos_pasos_activo", True)
+    monkeypatch.setattr(auth_service, "ROLES_REQUIEREN_2FA", {"SUPER_ADMINISTRADOR", "ADMINISTRADOR", "JEFE", "EVALUADOR_SST"})
+    # el admin de pruebas está exento por defecto; aquí se prueba el flujo completo
+    monkeypatch.setattr(get_settings(), "doble_factor_correos_exentos", "")
     monkeypatch.setattr("app.services.auth.enviar_codigo_2fa", _enviar_simulado)
     return codigos
 

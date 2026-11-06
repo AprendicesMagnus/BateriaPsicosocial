@@ -17,9 +17,20 @@ PASSWORD = "Clave12345"
 ROLES_CON_2FA = ["SUPER_ADMINISTRADOR", "ADMINISTRADOR", "JEFE", "EVALUADOR_SST"]
 
 
+@pytest.fixture(autouse=True)
+def _limpiar_auditoria_2fa(db_session):
+    """Estas pruebas dejan accesos LOGIN_2FA; otra prueba busca solo "inició sesión" en la auditoría."""
+    yield
+    db_session.rollback()
+    db_session.query(Auditoria).filter(Auditoria.accion.in_(["LOGIN_2FA", "LOGIN_GOOGLE"])).delete(synchronize_session=False)
+    db_session.commit()
+
+
 @pytest.fixture
 def activar_2fa(monkeypatch):
     monkeypatch.setattr(auth_service, "ROLES_REQUIEREN_2FA", set(ROLES_REALES))
+    monkeypatch.setattr(auth_service.settings, "dos_pasos_activo", True)
+    monkeypatch.setattr(auth_service.settings, "doble_factor_correos_exentos", "")
 
 
 @pytest.fixture

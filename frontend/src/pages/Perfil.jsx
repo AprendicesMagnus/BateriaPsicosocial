@@ -1543,20 +1543,26 @@ export default function Perfil() {
                           })}
                         </span>
                         {["PENDIENTE", "RECHAZADO", "ERROR"].includes(pedido.estado) && (
-                          <button type="button" className="adm-btn adm-btn--borde" style={{ marginTop: "8px" }} disabled={reintentandoPedidoId === pedido.id} onClick={() => reintentarPagoPedido(pedido)}>
-                            {reintentandoPedidoId === pedido.id ? "Abriendo pago…" : "Reintentar pago"}
-                          </button>
-                        )}
-                        {pedido.estado === "PENDIENTE" && (
-                          <button
-                            type="button"
-                            className="adm-btn adm-btn--borde"
-                            style={{ marginTop: "8px", marginLeft: "8px" }}
-                            disabled={cancelandoPedidoId === pedido.id}
-                            onClick={() => solicitarCancelacionPedido(pedido)}
-                          >
-                            {cancelandoPedidoId === pedido.id ? "Cancelando..." : "Cancelar pedido"}
-                          </button>
+                          <div className="pedido-acciones">
+                            <button
+                              type="button"
+                              className="btn-primary compras-row-action"
+                              disabled={reintentandoPedidoId === pedido.id || cancelandoPedidoId === pedido.id}
+                              onClick={() => reintentarPagoPedido(pedido)}
+                            >
+                              {reintentandoPedidoId === pedido.id ? "Abriendo pago…" : "Reintentar pago"}
+                            </button>
+                            {pedido.estado === "PENDIENTE" && (
+                              <button
+                                type="button"
+                                className="app-btn-secondary compras-row-action"
+                                disabled={cancelandoPedidoId === pedido.id || reintentandoPedidoId === pedido.id}
+                                onClick={() => solicitarCancelacionPedido(pedido)}
+                              >
+                                {cancelandoPedidoId === pedido.id ? "Cancelando..." : "Cancelar pedido"}
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>

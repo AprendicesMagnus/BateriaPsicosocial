@@ -6,6 +6,15 @@ from app.models.user import Usuario
 from app.models.audit import Auditoria
 from app.services import auth as auth_service
 
+@pytest.fixture(autouse=True)
+def _limpiar_accesos_google(db_session):
+    """El login con Google deja LOGIN_GOOGLE; otra prueba busca solo "inició sesión" en la auditoría."""
+    yield
+    db_session.rollback()
+    db_session.query(Auditoria).filter(Auditoria.accion.in_(["LOGIN_2FA", "LOGIN_GOOGLE"])).delete(synchronize_session=False)
+    db_session.commit()
+
+
 BASE_PAYLOAD = {
     "nombre": "Laura",
     "apellido": "Gomez",
