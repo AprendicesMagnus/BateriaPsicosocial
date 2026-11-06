@@ -244,9 +244,10 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                 : "Registra los datos de tu empresa y del usuario responsable."}
             </p>
 
-            <form className="empresas-form" onSubmit={handleSubmit} noValidate>
-              <h3 style={{ fontSize: "16px", color: "var(--ink-900, #12314b)", margin: "8px 0 4px" }}>
-                Datos de la Empresa
+            <form className="empresas-form empresas-form--grid" onSubmit={handleSubmit} noValidate>
+              <h3 className="empresas-seccion">
+                <span className="empresas-seccion__num">1</span>
+                Datos de la empresa
               </h3>
 
               <label className="field">
@@ -430,9 +431,8 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
 
               {!esPsicologo && (
                 <>
-              <hr style={{ border: "none", borderTop: "1px solid #e2e8f0", margin: "16px 0" }} />
-
-              <h3 style={{ fontSize: "16px", color: "var(--ink-900, #12314b)", margin: "4px 0 4px" }}>
+              <h3 className="empresas-seccion">
+                <span className="empresas-seccion__num">2</span>
                 Datos del Usuario Evaluador SST (Responsable)
               </h3>
 
