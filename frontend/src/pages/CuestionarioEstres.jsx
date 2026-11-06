@@ -138,13 +138,14 @@ export default function CuestionarioEstres() {
         </div>
 
         {/* MENÚ */}
-        <nav className="questionnaire-menu">
+        <nav className="questionnaire-menu" aria-label="Cuestionarios">
           <button
             className="questionnaire-menu-item active"
+            aria-current="page"
             type="button"
             onClick={() => navigate("/cuestionario-estres")}
           >
-            <span>▣</span>
+            <span aria-hidden="true">▣</span>
             <div>
               <strong>Estrés</strong>
               <small>31 preguntas</small>
@@ -156,7 +157,7 @@ export default function CuestionarioEstres() {
             type="button"
             onClick={() => navigate("/cuestionario-extralaboral")}
           >
-            <span>▣</span>
+            <span aria-hidden="true">▣</span>
             <div>
               <strong>Factores extralaborales</strong>
               <small>31 preguntas</small>
@@ -168,7 +169,7 @@ export default function CuestionarioEstres() {
             type="button"
             onClick={() => navigate("/cuestionario-intralaboral")}
           >
-            <span>▣</span>
+            <span aria-hidden="true">▣</span>
             <div>
               <strong>Factores intralaborales</strong>
               <small>Forma A · 123 preguntas</small>
@@ -187,13 +188,13 @@ export default function CuestionarioEstres() {
       {/* =====================================================
           CONTENIDO
       ===================================================== */}
-      <main className="questionnaire-main">
+      <main id="contenido-principal" tabIndex={-1} className="questionnaire-main">
         {/* Aviso de carga / error del guardado en la BD */}
         <AvisoCuestionario cargando={cargando} error={error} />
 
         {/* TARJETA DE PRESENTACIÓN */}
         <section className="questionnaire-intro">
-          <div className="questionnaire-heart">♥</div>
+          <div className="questionnaire-heart" aria-hidden="true">♥</div>
           <div>
             <h2>Cuestionario para la Evaluación del Estrés</h2>
             <p>
@@ -216,6 +217,7 @@ export default function CuestionarioEstres() {
           <button
             type="button"
             className="active"
+            aria-current="page"
             onClick={() => navigate("/cuestionario-estres")}
           >
             <strong>Estrés</strong>
@@ -240,7 +242,7 @@ export default function CuestionarioEstres() {
 
           <div className="general-progress">
             <span>Progreso general</span>
-            <div className="general-progress-bar">
+            <div className="general-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progreso} aria-label="Progreso general">
               <div style={{ width: `${progreso}%` }}></div>
             </div>
             <small>{progreso}%</small>
@@ -253,10 +255,10 @@ export default function CuestionarioEstres() {
           {/* ENCABEZADO DE PREGUNTAS */}
           <div className="questions-header">
             <div>
-              <strong>
+              <strong aria-live="polite">
                 Pregunta {inicio + 1}–{fin} de {preguntas.length}
               </strong>
-              <div className="questions-progress">
+              <div className="questions-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progreso} aria-label="Progreso de esta sección">
                 <div style={{ width: `${progreso}%` }}></div>
               </div>
             </div>
@@ -264,7 +266,7 @@ export default function CuestionarioEstres() {
           </div>
 
           {/* ENCABEZADO DE OPCIONES */}
-          <div className="answers-header">
+          <div className="answers-header" aria-hidden="true">
             <span>Frecuencia:</span>
             {opciones.map((opcion) => (
               <span key={opcion}>{opcion}</span>
@@ -273,22 +275,26 @@ export default function CuestionarioEstres() {
 
           {/* PREGUNTAS */}
           <div className="questions-list">
-            {preguntasPagina.map((pregunta) => (
-              <div
-                className={`question-row ${
-                  intentoFinalizar && respuestas[pregunta.id] === undefined
-                    ? "question-row-error"
-                    : ""
-                }`}
-                key={pregunta.id}
-              >
-                {/* NÚMERO */}
-                <div className="question-number">{pregunta.id}</div>
+            {preguntasPagina.map((pregunta) => {
+              const tieneError = intentoFinalizar && respuestas[pregunta.id] === undefined;
+              const textoId = `pregunta-texto-${pregunta.id}`;
+              return (
+                <div
+                  className={`question-row ${tieneError ? "question-row-error" : ""}`}
+                  key={pregunta.id}
+                  role="radiogroup"
+                  aria-labelledby={textoId}
+                  aria-required="true"
+                  aria-invalid={tieneError ? "true" : undefined}
+                >
+                  {tieneError && <span className="sr-only">Pregunta sin responder</span>}
+                  {/* NÚMERO */}
+                  <div className="question-number">{pregunta.id}</div>
 
-                {/* TEXTO */}
-                <div className="question-text">
-                  {pregunta.id}. {pregunta.texto}
-                </div>
+                  {/* TEXTO */}
+                  <div className="question-text" id={textoId}>
+                    {pregunta.id}. {pregunta.texto}
+                  </div>
 
                 {/* RESPUESTAS */}
                 {opciones.map((opcion) => (
@@ -307,7 +313,8 @@ export default function CuestionarioEstres() {
                   </label>
                 ))}
               </div>
-            ))}
+            );
+          })}
           </div>
 
           {/* BOTONES */}
@@ -315,7 +322,7 @@ export default function CuestionarioEstres() {
             <button className="previous-button" type="button" onClick={irAnterior}>
               ← Anterior
             </button>
-            <span className="page-indicator">
+            <span className="page-indicator" aria-live="polite">
               Página {pagina + 1} de {TOTAL_PAGINAS}
             </span>
             <button className="next-button" type="button" onClick={irSiguiente}>

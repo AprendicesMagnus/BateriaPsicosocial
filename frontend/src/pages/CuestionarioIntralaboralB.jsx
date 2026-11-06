@@ -197,16 +197,26 @@ function FilaPregunta({ pregunta, respuesta, sinResponder, onSeleccionar }) {
   if (esFiltro) clases.push("question-row-gate");
   if (sinResponder) clases.push("question-row-error");
 
+  const textoId = `pregunta-texto-${pregunta.id}`;
+
   return (
     // El id de la fila lo usa irSiguiente() para hacer scroll a la
     // primera pregunta sin responder. No lo quites.
-    <div className={clases.join(" ")} id={`fila-pregunta-${pregunta.id}`}>
+    <div
+      className={clases.join(" ")}
+      id={`fila-pregunta-${pregunta.id}`}
+      role="radiogroup"
+      aria-labelledby={textoId}
+      aria-required="true"
+      aria-invalid={sinResponder ? "true" : undefined}
+    >
+      {sinResponder && <span className="sr-only">Pregunta sin responder</span>}
 
       <div className="question-number">
         {esFiltro ? "?" : pregunta.id}
       </div>
 
-      <div className="question-text">
+      <div className="question-text" id={textoId}>
         {esFiltro ? pregunta.texto : `${pregunta.id}. ${pregunta.texto}`}
       </div>
 
@@ -361,7 +371,7 @@ export default function CuestionarioIntralaboralB() {
 
         {/* MENÚ */}
 
-        <nav className="questionnaire-menu">
+        <nav className="questionnaire-menu" aria-label="Cuestionarios">
 
           {NAVEGACION.map((item) => (
             <button
@@ -369,10 +379,11 @@ export default function CuestionarioIntralaboralB() {
               className={`questionnaire-menu-item ${
                 item.clave === CLAVE_ACTIVA ? "active" : ""
               }`}
+              aria-current={item.clave === CLAVE_ACTIVA ? "page" : undefined}
               type="button"
               onClick={() => navigate(item.ruta)}
             >
-              <span>▣</span>
+              <span aria-hidden="true">▣</span>
 
               <div>
                 <strong>{item.titulo}</strong>
@@ -402,7 +413,7 @@ export default function CuestionarioIntralaboralB() {
           CONTENIDO
       ===================================================== */}
 
-      <main className="questionnaire-main">
+      <main id="contenido-principal" tabIndex={-1} className="questionnaire-main">
         {/* Aviso de carga / error del guardado en la BD */}
         <AvisoCuestionario cargando={cargando} error={error} />
 
@@ -412,7 +423,7 @@ export default function CuestionarioIntralaboralB() {
 
         <section className="questionnaire-intro">
 
-          <div className="questionnaire-heart">
+          <div className="questionnaire-heart" aria-hidden="true">
             ♥
           </div>
 
@@ -451,6 +462,7 @@ export default function CuestionarioIntralaboralB() {
               key={item.clave}
               type="button"
               className={item.clave === CLAVE_ACTIVA ? "active" : undefined}
+              aria-current={item.clave === CLAVE_ACTIVA ? "page" : undefined}
               onClick={() => navigate(item.ruta)}
             >
               <strong>{item.tituloPestana}</strong>
@@ -461,7 +473,7 @@ export default function CuestionarioIntralaboralB() {
           {/* Este porcentaje es solo de ESTE cuestionario. */}
           <div className="general-progress">
             <span>Progreso</span>
-            <div className="general-progress-bar">
+            <div className="general-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progreso} aria-label="Progreso general">
               <div style={{ width: `${progreso}%` }}></div>
             </div>
             <small>{progreso}%</small>
@@ -482,9 +494,9 @@ export default function CuestionarioIntralaboralB() {
 
             <div>
 
-              <strong>{textoRango}</strong>
+              <strong aria-live="polite">{textoRango}</strong>
 
-              <div className="questions-progress">
+              <div className="questions-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progreso} aria-label="Progreso de esta sección">
                 <div style={{ width: `${progreso}%` }}></div>
               </div>
 
@@ -500,7 +512,7 @@ export default function CuestionarioIntralaboralB() {
 
           {/* ENCABEZADO DE OPCIONES */}
 
-          <div className="answers-header">
+          <div className="answers-header" aria-hidden="true">
 
             <span>
               Frecuencia:
@@ -546,7 +558,7 @@ export default function CuestionarioIntralaboralB() {
               ← Anterior
             </button>
 
-            <span className="page-indicator">
+            <span className="page-indicator" aria-live="polite">
               Página {paginaSegura + 1} de {totalPaginas}
             </span>
 
