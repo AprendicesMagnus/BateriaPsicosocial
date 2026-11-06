@@ -196,7 +196,7 @@ export default function MisEmpresas() {
     <div className="app-shell-page">
       <AppTopbar />
 
-      <main className="app-hero">
+      <main id="contenido-principal" tabIndex={-1} className="app-hero">
         <div className="app-decor app-decor--1" />
         <div className="app-decor app-decor--2" />
         <div className="app-decor app-decor--3" />
@@ -309,7 +309,7 @@ export default function MisEmpresas() {
                   </option>
                 ))}
               </select>
-              {intento && erroresForm.sector && <span className="field__error">{erroresForm.sector}</span>}
+              {intento && erroresForm.sector && <span className="field__error" role="alert">{erroresForm.sector}</span>}
             </label>
 
             <label className="field">
@@ -322,7 +322,7 @@ export default function MisEmpresas() {
                   setForm((f) => ({ ...f, municipio: filtrarLugar(e.target.value, MAX_LUGAR_LENGTH) }))
                 }
               />
-              {intento && erroresForm.municipio && <span className="field__error">{erroresForm.municipio}</span>}
+              {intento && erroresForm.municipio && <span className="field__error" role="alert">{erroresForm.municipio}</span>}
             </label>
 
             <label className="field">
@@ -334,7 +334,7 @@ export default function MisEmpresas() {
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               />
-              {intento && erroresForm.email && <span className="field__error">{erroresForm.email}</span>}
+              {intento && erroresForm.email && <span className="field__error" role="alert">{erroresForm.email}</span>}
             </label>
 
             <label className="field">
@@ -348,7 +348,7 @@ export default function MisEmpresas() {
                 value={form.telefono}
                 onChange={(e) => setForm((f) => ({ ...f, telefono: soloDigitos(e.target.value, 10) }))}
               />
-              {intento && erroresForm.telefono && <span className="field__error">{erroresForm.telefono}</span>}
+              {intento && erroresForm.telefono && <span className="field__error" role="alert">{erroresForm.telefono}</span>}
             </label>
 
             {responsable && (
@@ -365,7 +365,7 @@ export default function MisEmpresas() {
                       value={formResp.nombre}
                       onChange={(e) => setFormResp((f) => ({ ...f, nombre: filtrarNombrePersona(e.target.value, 100) }))}
                     />
-                    {intento && erroresForm.respNombre && <span className="field__error">{erroresForm.respNombre}</span>}
+                    {intento && erroresForm.respNombre && <span className="field__error" role="alert">{erroresForm.respNombre}</span>}
                   </label>
                   <label className="field">
                     <span className="field__label">Apellido del responsable</span>
@@ -378,7 +378,7 @@ export default function MisEmpresas() {
                       }
                     />
                     {intento && erroresForm.respApellido && (
-                      <span className="field__error">{erroresForm.respApellido}</span>
+                      <span className="field__error" role="alert">{erroresForm.respApellido}</span>
                     )}
                   </label>
                 </div>
@@ -405,7 +405,7 @@ export default function MisEmpresas() {
                     onChange={(e) => setFormResp((f) => ({ ...f, numeroResolucion: soloDigitos(e.target.value, 6) }))}
                   />
                   {intento && erroresForm.respResolucion && (
-                    <span className="field__error">{erroresForm.respResolucion}</span>
+                    <span className="field__error" role="alert">{erroresForm.respResolucion}</span>
                   )}
                 </label>
               </>

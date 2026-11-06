@@ -552,14 +552,15 @@
 
   text-align: center;
 
-  outline: none;
 }
 
-.checkout-stepper-input:focus {
-  border-color: #6878a8;
-
+.checkout-stepper-input:focus,
+.checkout-stepper-input:focus-visible {
+  border-color: var(--navy-600, #2d3f82);
+  outline: 2px solid var(--navy-600, #2d3f82);
+  outline-offset: 1px;
   box-shadow:
-    0 0 0 3px rgba(104, 120, 168, 0.12);
+    0 0 0 3px rgba(45, 63, 130, 0.2);
 }
 
 

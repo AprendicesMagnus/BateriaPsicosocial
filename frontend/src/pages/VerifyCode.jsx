@@ -103,7 +103,7 @@ export default function VerifyCode({ mode }) {
   if (!email) return null;
 
   return (
-    <div className="verify-shell">
+    <main id="contenido-principal" tabIndex={-1} className="verify-shell">
       <VerifyCodeBackground />
 
       <div className="verify-card">
@@ -155,6 +155,6 @@ export default function VerifyCode({ mode }) {
           </Link>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

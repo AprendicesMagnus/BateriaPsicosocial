@@ -62,6 +62,9 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
             className={`field__input ${intento && !rol ? "field__input--invalid" : ""}`.trim()}
             value={rol}
             onChange={(e) => setRol(e.target.value)}
+            aria-required="true"
+            aria-invalid={intento && !rol ? "true" : "false"}
+            aria-describedby={intento && !rol ? "rol-google-error" : undefined}
           >
             <option value="">Selecciona un rol</option>
             {ROLES_REGISTRO.map((r) => (
@@ -70,7 +73,7 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
               </option>
             ))}
           </select>
-          {intento && !rol && <span className="field__error">Selecciona un rol para continuar.</span>}
+          {intento && !rol && <span className="field__error" id="rol-google-error" role="alert">Selecciona un rol para continuar.</span>}
         </label>
 
         {pideResolucion && (
@@ -84,9 +87,12 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
               placeholder="Ej. 123456"
               value={numero}
               onChange={(e) => setNumero(soloDigitos(e.target.value, 6))}
+              aria-required="true"
+              aria-invalid={intento && resolucionInvalida ? "true" : "false"}
+              aria-describedby={intento && resolucionInvalida ? "resolucion-google-error" : undefined}
             />
             {intento && resolucionInvalida && (
-              <span className="field__error">Ingresa entre 3 y 6 dígitos en tu número de resolución.</span>
+              <span className="field__error" id="resolucion-google-error" role="alert">Ingresa entre 3 y 6 dígitos en tu número de resolución.</span>
             )}
           </label>
         )}
@@ -99,6 +105,7 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
               className={`politica-aceptacion__input ${intento && !acepta ? "politica-aceptacion__input--invalid" : ""}`.trim()}
               checked={acepta}
               onChange={(e) => setAcepta(e.target.checked)}
+              aria-required="true"
               aria-invalid={intento && !acepta ? "true" : "false"}
               aria-describedby={intento && !acepta ? "acepta-politica-google-error" : undefined}
             />
@@ -111,7 +118,7 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
             </span>
           </label>
           {intento && !acepta && (
-            <span className="field__error" id="acepta-politica-google-error">
+            <span className="field__error" id="acepta-politica-google-error" role="alert">
               Debes aceptar la política de tratamiento de datos para crear tu cuenta.
             </span>
           )}

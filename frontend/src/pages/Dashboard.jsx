@@ -392,7 +392,7 @@ export default function Dashboard() {
         ]}
       />
 
-      <main className="dashboard__main">
+      <main id="contenido-principal" tabIndex={-1} className="dashboard__main">
         <div className="dashboard__mobile-toolbar">
           <BotonRegresar tono="oscuro" />
           <div className="app-acciones-usuario">
@@ -1070,6 +1070,7 @@ export default function Dashboard() {
                 <input
                   type="text"
                   className="enlace-solo__input"
+                  aria-label="Nombre del enlace individual"
                   placeholder="Ej: Juan Pérez - Estrés"
                   value={nombreEnlaceSolo}
                   onChange={(e) => setNombreEnlaceSolo(e.target.value)}

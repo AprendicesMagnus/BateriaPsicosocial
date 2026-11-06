@@ -256,7 +256,7 @@ export default function ResponderEnlace() {
   }
 
   return (
-    <main className="enlace-shell">
+    <main id="contenido-principal" tabIndex={-1} className="enlace-shell">
       <header className="enlace__header">
         <div
           className="sidebar__logo"

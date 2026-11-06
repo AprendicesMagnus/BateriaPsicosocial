@@ -963,7 +963,7 @@ export default function Perfil() {
   return (
     <div className="app-shell-page">
       <AppTopbar />
-      <main className="app-hero">
+      <main id="contenido-principal" tabIndex={-1} className="app-hero">
         <div className="app-decor app-decor--1" />
         <div className="app-decor app-decor--2" />
         <div className="app-decor app-decor--3" />
@@ -993,7 +993,7 @@ export default function Perfil() {
                 {fotoMostrada ? (
                   <img
                     src={fotoMostrada}
-                    alt={nombreUsuario}
+                    alt={nombreUsuario ? `Foto de perfil de ${nombreUsuario}` : "Foto de perfil"}
                     className="perfil-avatar perfil-avatar--foto"
                   />
                 ) : (

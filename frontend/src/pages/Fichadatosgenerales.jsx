@@ -472,7 +472,7 @@ return (
           CONTENIDO
       ===================================================== */}
 
-      <main className="questionnaire-main">
+      <main id="contenido-principal" tabIndex={-1} className="questionnaire-main">
         <div className="ficha-topbar">
           <BotonRegresar tono="oscuro" />
 
@@ -527,7 +527,7 @@ return (
           <div className="ficha-form">
             {/* 1. Nombre completo */}
             <div className={`ficha-field ${esCampoInvalido("nombreCompleto") ? "ficha-field-error" : ""}`}>
-              <label>1. Nombre completo</label>
+              <label htmlFor="ficha-nombreCompleto">1. Nombre completo</label>
               <input
                 type="text"
                 className={`field__input ${esCampoInvalido("nombreCompleto") ? "field__input--invalid" : ""}`}
@@ -536,17 +536,21 @@ return (
                 onChange={(e) => actualizarCampo("nombreCompleto", filtrarNombrePersona(e.target.value, 100))}
                 onBlur={() => marcarTocado("nombreCompleto")}
                 placeholder="Escriba su nombre completo"
+                id="ficha-nombreCompleto"
+                aria-required="true"
+                aria-invalid={esCampoInvalido("nombreCompleto") ? "true" : "false"}
+                aria-describedby={esCampoInvalido("nombreCompleto") ? "nombreCompleto-error" : undefined}
               />
               {esCampoInvalido("nombreCompleto") && (
-                <span className="field__error" id="nombreCompleto-error">
+                <span className="field__error" id="nombreCompleto-error" role="alert">
                   {errores.nombreCompleto}
                 </span>
               )}
             </div>
 
             {/* 2. Sexo */}
-            <div className={`ficha-field ${esCampoInvalido("sexo") ? "ficha-field-error" : ""}`}>
-              <label>2. Sexo</label>
+            <fieldset className={`ficha-field ${esCampoInvalido("sexo") ? "ficha-field-error" : ""}`}>
+              <legend>2. Sexo</legend>
               <div className="ficha-opciones">
                 {OPCIONES_SEXO.map((op) => (
                   <label className="ficha-opcion" key={op}>
@@ -564,15 +568,15 @@ return (
                 ))}
               </div>
               {esCampoInvalido("sexo") && (
-                <span className="field__error" id="sexo-error">
+                <span className="field__error" id="sexo-error" role="alert">
                   {errores.sexo}
                 </span>
               )}
-            </div>
+            </fieldset>
 
             {/* 3. Año de nacimiento */}
             <div className={`ficha-field ${esCampoInvalido("anioNacimiento") ? "ficha-field-error" : ""}`}>
-              <label>3. Año de nacimiento</label>
+              <label htmlFor="ficha-anioNacimiento">3. Año de nacimiento</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -582,17 +586,21 @@ return (
                 onChange={(e) => actualizarCampo("anioNacimiento", soloDigitos(e.target.value, 4))}
                 onBlur={() => marcarTocado("anioNacimiento")}
                 placeholder="Ej: 1990"
+                id="ficha-anioNacimiento"
+                aria-required="true"
+                aria-invalid={esCampoInvalido("anioNacimiento") ? "true" : "false"}
+                aria-describedby={esCampoInvalido("anioNacimiento") ? "anioNacimiento-error" : undefined}
               />
               {esCampoInvalido("anioNacimiento") && (
-                <span className="field__error" id="anioNacimiento-error">
+                <span className="field__error" id="anioNacimiento-error" role="alert">
                   {errores.anioNacimiento}
                 </span>
               )}
             </div>
 
             {/* 4. Estado civil */}
-            <div className={`ficha-field ${esCampoInvalido("estadoCivil") ? "ficha-field-error" : ""}`}>
-              <label>4. Estado civil</label>
+            <fieldset className={`ficha-field ${esCampoInvalido("estadoCivil") ? "ficha-field-error" : ""}`}>
+              <legend>4. Estado civil</legend>
               <div className="ficha-opciones ficha-opciones-wrap">
                 {OPCIONES_ESTADO_CIVIL.map((op) => (
                   <label className="ficha-opcion" key={op}>
@@ -610,15 +618,15 @@ return (
                 ))}
               </div>
               {esCampoInvalido("estadoCivil") && (
-                <span className="field__error" id="estadoCivil-error">
+                <span className="field__error" id="estadoCivil-error" role="alert">
                   {errores.estadoCivil}
                 </span>
               )}
-            </div>
+            </fieldset>
 
             {/* 5. Nivel de estudios */}
-            <div className={`ficha-field ${esCampoInvalido("nivelEstudios") ? "ficha-field-error" : ""}`}>
-              <label>5. Último nivel de estudios que alcanzó</label>
+            <fieldset className={`ficha-field ${esCampoInvalido("nivelEstudios") ? "ficha-field-error" : ""}`}>
+              <legend>5. Último nivel de estudios que alcanzó</legend>
               <div className="ficha-opciones ficha-opciones-wrap">
                 {OPCIONES_ESTUDIOS.map((op) => (
                   <label className="ficha-opcion" key={op}>
@@ -636,15 +644,15 @@ return (
                 ))}
               </div>
               {esCampoInvalido("nivelEstudios") && (
-                <span className="field__error" id="nivelEstudios-error">
+                <span className="field__error" id="nivelEstudios-error" role="alert">
                   {errores.nivelEstudios}
                 </span>
               )}
-            </div>
+            </fieldset>
 
             {/* 6. Ocupación */}
             <div className={`ficha-field ${esCampoInvalido("ocupacion") ? "ficha-field-error" : ""}`}>
-              <label>6. ¿Cuál es su ocupación o profesión?</label>
+              <label htmlFor="ficha-ocupacion">6. ¿Cuál es su ocupación o profesión?</label>
               <input
                 type="text"
                 className={`field__input ${esCampoInvalido("ocupacion") ? "field__input--invalid" : ""}`}
@@ -653,9 +661,13 @@ return (
                 onChange={(e) => actualizarCampo("ocupacion", filtrarTextoLibre(e.target.value, 100))}
                 onBlur={() => marcarTocado("ocupacion")}
                 placeholder="Escriba su ocupación o profesión"
+                id="ficha-ocupacion"
+                aria-required="true"
+                aria-invalid={esCampoInvalido("ocupacion") ? "true" : "false"}
+                aria-describedby={esCampoInvalido("ocupacion") ? "ocupacion-error" : undefined}
               />
               {esCampoInvalido("ocupacion") && (
-                <span className="field__error" id="ocupacion-error">
+                <span className="field__error" id="ocupacion-error" role="alert">
                   {errores.ocupacion}
                 </span>
               )}
@@ -666,9 +678,13 @@ return (
               <label className="ficha-field-group-label">7. Lugar de residencia actual</label>
               <div className="ficha-field-row">
                 <div className={`ficha-field ${esCampoInvalido("residenciaCiudad") ? "ficha-field-error" : ""}`}>
-                  <label>Ciudad / municipio</label>
+                  <label htmlFor="ficha-residenciaCiudad">Ciudad / municipio</label>
                   <input
+                    id="ficha-residenciaCiudad"
                     type="text"
+                    aria-required="true"
+                    aria-invalid={esCampoInvalido("residenciaCiudad") ? "true" : "false"}
+                    aria-describedby={esCampoInvalido("residenciaCiudad") ? "residenciaCiudad-error" : undefined}
                     className={`field__input ${esCampoInvalido("residenciaCiudad") ? "field__input--invalid" : ""}`}
                     maxLength={80}
                     value={datos.residenciaCiudad}
@@ -676,15 +692,19 @@ return (
                     onBlur={() => marcarTocado("residenciaCiudad")}
                   />
                   {esCampoInvalido("residenciaCiudad") && (
-                    <span className="field__error" id="residenciaCiudad-error">
+                    <span className="field__error" id="residenciaCiudad-error" role="alert">
                       {errores.residenciaCiudad}
                     </span>
                   )}
                 </div>
                 <div className={`ficha-field ${esCampoInvalido("residenciaDepartamento") ? "ficha-field-error" : ""}`}>
-                  <label>Departamento</label>
+                  <label htmlFor="ficha-residenciaDepartamento">Departamento</label>
                   <input
+                    id="ficha-residenciaDepartamento"
                     type="text"
+                    aria-required="true"
+                    aria-invalid={esCampoInvalido("residenciaDepartamento") ? "true" : "false"}
+                    aria-describedby={esCampoInvalido("residenciaDepartamento") ? "residenciaDepartamento-error" : undefined}
                     className={`field__input ${esCampoInvalido("residenciaDepartamento") ? "field__input--invalid" : ""}`}
                     maxLength={80}
                     value={datos.residenciaDepartamento}
@@ -692,7 +712,7 @@ return (
                     onBlur={() => marcarTocado("residenciaDepartamento")}
                   />
                   {esCampoInvalido("residenciaDepartamento") && (
-                    <span className="field__error" id="residenciaDepartamento-error">
+                    <span className="field__error" id="residenciaDepartamento-error" role="alert">
                       {errores.residenciaDepartamento}
                     </span>
                   )}
@@ -701,8 +721,8 @@ return (
             </div>
 
             {/* 8. Estrato */}
-            <div className={`ficha-field ${esCampoInvalido("estrato") ? "ficha-field-error" : ""}`}>
-              <label>8. Estrato de los servicios públicos de su vivienda</label>
+            <fieldset className={`ficha-field ${esCampoInvalido("estrato") ? "ficha-field-error" : ""}`}>
+              <legend>8. Estrato de los servicios públicos de su vivienda</legend>
               <div className="ficha-opciones">
                 {OPCIONES_ESTRATO.map((op) => (
                   <label className="ficha-opcion" key={op}>
@@ -720,15 +740,15 @@ return (
                 ))}
               </div>
               {esCampoInvalido("estrato") && (
-                <span className="field__error" id="estrato-error">
+                <span className="field__error" id="estrato-error" role="alert">
                   {errores.estrato}
                 </span>
               )}
-            </div>
+            </fieldset>
 
             {/* 9. Tipo de vivienda */}
-            <div className={`ficha-field ${esCampoInvalido("tipoVivienda") ? "ficha-field-error" : ""}`}>
-              <label>9. Tipo de vivienda</label>
+            <fieldset className={`ficha-field ${esCampoInvalido("tipoVivienda") ? "ficha-field-error" : ""}`}>
+              <legend>9. Tipo de vivienda</legend>
               <div className="ficha-opciones">
                 {OPCIONES_VIVIENDA.map((op) => (
                   <label className="ficha-opcion" key={op}>
@@ -746,15 +766,15 @@ return (
                 ))}
               </div>
               {esCampoInvalido("tipoVivienda") && (
-                <span className="field__error" id="tipoVivienda-error">
+                <span className="field__error" id="tipoVivienda-error" role="alert">
                   {errores.tipoVivienda}
                 </span>
               )}
-            </div>
+            </fieldset>
 
             {/* 10. Personas a cargo */}
             <div className={`ficha-field ${esCampoInvalido("personasACargo") ? "ficha-field-error" : ""}`}>
-              <label>10. Número de personas que dependen económicamente de usted</label>
+              <label htmlFor="ficha-personasACargo">10. Número de personas que dependen económicamente de usted</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -763,9 +783,13 @@ return (
                 value={datos.personasACargo}
                 onChange={(e) => actualizarCampo("personasACargo", soloDigitos(e.target.value, 2))}
                 onBlur={() => marcarTocado("personasACargo")}
+                id="ficha-personasACargo"
+                aria-required="true"
+                aria-invalid={esCampoInvalido("personasACargo") ? "true" : "false"}
+                aria-describedby={esCampoInvalido("personasACargo") ? "personasACargo-error" : undefined}
               />
               {esCampoInvalido("personasACargo") && (
-                <span className="field__error" id="personasACargo-error">
+                <span className="field__error" id="personasACargo-error" role="alert">
                   {errores.personasACargo}
                 </span>
               )}
@@ -776,9 +800,13 @@ return (
               <label className="ficha-field-group-label">11. Lugar donde trabaja actualmente</label>
               <div className="ficha-field-row">
                 <div className={`ficha-field ${esCampoInvalido("trabajoCiudad") ? "ficha-field-error" : ""}`}>
-                  <label>Ciudad / municipio</label>
+                  <label htmlFor="ficha-trabajoCiudad">Ciudad / municipio</label>
                   <input
+                    id="ficha-trabajoCiudad"
                     type="text"
+                    aria-required="true"
+                    aria-invalid={esCampoInvalido("trabajoCiudad") ? "true" : "false"}
+                    aria-describedby={esCampoInvalido("trabajoCiudad") ? "trabajoCiudad-error" : undefined}
                     className={`field__input ${esCampoInvalido("trabajoCiudad") ? "field__input--invalid" : ""}`}
                     maxLength={80}
                     value={datos.trabajoCiudad}
@@ -786,15 +814,19 @@ return (
                     onBlur={() => marcarTocado("trabajoCiudad")}
                   />
                   {esCampoInvalido("trabajoCiudad") && (
-                    <span className="field__error" id="trabajoCiudad-error">
+                    <span className="field__error" id="trabajoCiudad-error" role="alert">
                       {errores.trabajoCiudad}
                     </span>
                   )}
                 </div>
                 <div className={`ficha-field ${esCampoInvalido("trabajoDepartamento") ? "ficha-field-error" : ""}`}>
-                  <label>Departamento</label>
+                  <label htmlFor="ficha-trabajoDepartamento">Departamento</label>
                   <input
+                    id="ficha-trabajoDepartamento"
                     type="text"
+                    aria-required="true"
+                    aria-invalid={esCampoInvalido("trabajoDepartamento") ? "true" : "false"}
+                    aria-describedby={esCampoInvalido("trabajoDepartamento") ? "trabajoDepartamento-error" : undefined}
                     className={`field__input ${esCampoInvalido("trabajoDepartamento") ? "field__input--invalid" : ""}`}
                     maxLength={80}
                     value={datos.trabajoDepartamento}
@@ -802,7 +834,7 @@ return (
                     onBlur={() => marcarTocado("trabajoDepartamento")}
                   />
                   {esCampoInvalido("trabajoDepartamento") && (
-                    <span className="field__error" id="trabajoDepartamento-error">
+                    <span className="field__error" id="trabajoDepartamento-error" role="alert">
                       {errores.trabajoDepartamento}
                     </span>
                   )}
@@ -812,7 +844,7 @@ return (
 
             {/* 12. Antigüedad en la empresa */}
             <div className={`ficha-field ${esCampoInvalido("antiguedadEmpresa") ? "ficha-field-error" : ""}`}>
-              <label>12. ¿Hace cuántos años que trabaja en esta empresa?</label>
+              <label htmlFor="ficha-antiguedadEmpresa">12. ¿Hace cuántos años que trabaja en esta empresa?</label>
               <div className="ficha-antiguedad">
                 <label className="ficha-opcion">
                   <input
@@ -831,6 +863,10 @@ return (
                   type="text"
                   inputMode="numeric"
                   placeholder="Años (si lleva más de 1)"
+                  id="ficha-antiguedadEmpresa"
+                  aria-label="Años en la empresa"
+                  aria-invalid={esCampoInvalido("antiguedadEmpresa") ? "true" : "false"}
+                  aria-describedby={esCampoInvalido("antiguedadEmpresa") ? "antiguedadEmpresa-error" : undefined}
                   disabled={datos.antiguedadEmpresaMenosUnAnio}
                   className={`field__input ${esCampoInvalido("antiguedadEmpresa") ? "field__input--invalid" : ""}`}
                   maxLength={2}
@@ -840,7 +876,7 @@ return (
                 />
               </div>
               {esCampoInvalido("antiguedadEmpresa") && (
-                <span className="field__error" id="antiguedadEmpresa-error">
+                <span className="field__error" id="antiguedadEmpresa-error" role="alert">
                   {errores.antiguedadEmpresa}
                 </span>
               )}
@@ -848,7 +884,7 @@ return (
 
             {/* 13. Nombre del cargo */}
             <div className={`ficha-field ${esCampoInvalido("nombreCargo") ? "ficha-field-error" : ""}`}>
-              <label>13. ¿Cuál es el nombre del cargo que ocupa en la empresa?</label>
+              <label htmlFor="ficha-nombreCargo">13. ¿Cuál es el nombre del cargo que ocupa en la empresa?</label>
               <input
                 type="text"
                 className={`field__input ${esCampoInvalido("nombreCargo") ? "field__input--invalid" : ""}`}
@@ -856,17 +892,21 @@ return (
                 value={datos.nombreCargo}
                 onChange={(e) => actualizarCampo("nombreCargo", filtrarTextoLibre(e.target.value, 100))}
                 onBlur={() => marcarTocado("nombreCargo")}
+                id="ficha-nombreCargo"
+                aria-required="true"
+                aria-invalid={esCampoInvalido("nombreCargo") ? "true" : "false"}
+                aria-describedby={esCampoInvalido("nombreCargo") ? "nombreCargo-error" : undefined}
               />
               {esCampoInvalido("nombreCargo") && (
-                <span className="field__error" id="nombreCargo-error">
+                <span className="field__error" id="nombreCargo-error" role="alert">
                   {errores.nombreCargo}
                 </span>
               )}
             </div>
 
             {/* 14. Tipo de cargo */}
-            <div className={`ficha-field ${esCampoInvalido("tipoCargo") ? "ficha-field-error" : ""}`}>
-              <label>14. Seleccione el tipo de cargo que más se parece al que usted desempeña</label>
+            <fieldset className={`ficha-field ${esCampoInvalido("tipoCargo") ? "ficha-field-error" : ""}`}>
+              <legend>14. Seleccione el tipo de cargo que más se parece al que usted desempeña</legend>
               <div className="ficha-opciones ficha-opciones-wrap">
                 {OPCIONES_TIPO_CARGO.map((op) => (
                   <label className="ficha-opcion" key={op}>
@@ -884,15 +924,15 @@ return (
                 ))}
               </div>
               {esCampoInvalido("tipoCargo") && (
-                <span className="field__error" id="tipoCargo-error">
+                <span className="field__error" id="tipoCargo-error" role="alert">
                   {errores.tipoCargo}
                 </span>
               )}
-            </div>
+            </fieldset>
 
             {/* 15. Antigüedad en el cargo */}
             <div className={`ficha-field ${esCampoInvalido("antiguedadCargo") ? "ficha-field-error" : ""}`}>
-              <label>15. ¿Hace cuántos años que desempeña el cargo u oficio actual en esta empresa?</label>
+              <label htmlFor="ficha-antiguedadCargo">15. ¿Hace cuántos años que desempeña el cargo u oficio actual en esta empresa?</label>
               <div className="ficha-antiguedad">
                 <label className="ficha-opcion">
                   <input
@@ -911,6 +951,10 @@ return (
                   type="text"
                   inputMode="numeric"
                   placeholder="Años (si lleva más de 1)"
+                  id="ficha-antiguedadCargo"
+                  aria-label="Años en el cargo u oficio"
+                  aria-invalid={esCampoInvalido("antiguedadCargo") ? "true" : "false"}
+                  aria-describedby={esCampoInvalido("antiguedadCargo") ? "antiguedadCargo-error" : undefined}
                   disabled={datos.antiguedadCargoMenosUnAnio}
                   className={`field__input ${esCampoInvalido("antiguedadCargo") ? "field__input--invalid" : ""}`}
                   maxLength={2}
@@ -920,7 +964,7 @@ return (
                 />
               </div>
               {esCampoInvalido("antiguedadCargo") && (
-                <span className="field__error" id="antiguedadCargo-error">
+                <span className="field__error" id="antiguedadCargo-error" role="alert">
                   {errores.antiguedadCargo}
                 </span>
               )}
@@ -928,7 +972,7 @@ return (
 
             {/* 16. Área / departamento de la empresa */}
             <div className={`ficha-field ${esCampoInvalido("areaODepartamento") ? "ficha-field-error" : ""}`}>
-              <label>16. Nombre del departamento, área o sección de la empresa en el que trabaja</label>
+              <label htmlFor="ficha-areaODepartamento">16. Nombre del departamento, área o sección de la empresa en el que trabaja</label>
               <input
                 type="text"
                 className={`field__input ${esCampoInvalido("areaODepartamento") ? "field__input--invalid" : ""}`}
@@ -936,17 +980,21 @@ return (
                 value={datos.areaODepartamento}
                 onChange={(e) => actualizarCampo("areaODepartamento", filtrarTextoLibre(e.target.value, 120))}
                 onBlur={() => marcarTocado("areaODepartamento")}
+                id="ficha-areaODepartamento"
+                aria-required="true"
+                aria-invalid={esCampoInvalido("areaODepartamento") ? "true" : "false"}
+                aria-describedby={esCampoInvalido("areaODepartamento") ? "areaODepartamento-error" : undefined}
               />
               {esCampoInvalido("areaODepartamento") && (
-                <span className="field__error" id="areaODepartamento-error">
+                <span className="field__error" id="areaODepartamento-error" role="alert">
                   {errores.areaODepartamento}
                 </span>
               )}
             </div>
 
             {/* 17. Tipo de contrato */}
-            <div className={`ficha-field ${esCampoInvalido("tipoContrato") ? "ficha-field-error" : ""}`}>
-              <label>17. Seleccione el tipo de contrato que tiene actualmente</label>
+            <fieldset className={`ficha-field ${esCampoInvalido("tipoContrato") ? "ficha-field-error" : ""}`}>
+              <legend>17. Seleccione el tipo de contrato que tiene actualmente</legend>
               <div className="ficha-opciones ficha-opciones-wrap">
                 {OPCIONES_CONTRATO.map((op) => (
                   <label className="ficha-opcion" key={op}>
@@ -964,15 +1012,15 @@ return (
                 ))}
               </div>
               {esCampoInvalido("tipoContrato") && (
-                <span className="field__error" id="tipoContrato-error">
+                <span className="field__error" id="tipoContrato-error" role="alert">
                   {errores.tipoContrato}
                 </span>
               )}
-            </div>
+            </fieldset>
 
             {/* 18. Horas diarias */}
             <div className={`ficha-field ${esCampoInvalido("horasDiarias") ? "ficha-field-error" : ""}`}>
-              <label>18. Horas diarias de trabajo establecidas habitualmente por la empresa</label>
+              <label htmlFor="ficha-horasDiarias">18. Horas diarias de trabajo establecidas habitualmente por la empresa</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -981,17 +1029,21 @@ return (
                 value={datos.horasDiarias}
                 onChange={(e) => actualizarCampo("horasDiarias", soloDigitos(e.target.value, 2))}
                 onBlur={() => marcarTocado("horasDiarias")}
+                id="ficha-horasDiarias"
+                aria-required="true"
+                aria-invalid={esCampoInvalido("horasDiarias") ? "true" : "false"}
+                aria-describedby={esCampoInvalido("horasDiarias") ? "horasDiarias-error" : undefined}
               />
               {esCampoInvalido("horasDiarias") && (
-                <span className="field__error" id="horasDiarias-error">
+                <span className="field__error" id="horasDiarias-error" role="alert">
                   {errores.horasDiarias}
                 </span>
               )}
             </div>
 
             {/* 19. Tipo de salario */}
-            <div className={`ficha-field ${esCampoInvalido("tipoSalario") ? "ficha-field-error" : ""}`}>
-              <label>19. Seleccione el tipo de salario que recibe</label>
+            <fieldset className={`ficha-field ${esCampoInvalido("tipoSalario") ? "ficha-field-error" : ""}`}>
+              <legend>19. Seleccione el tipo de salario que recibe</legend>
               <div className="ficha-opciones ficha-opciones-wrap">
                 {OPCIONES_SALARIO.map((op) => (
                   <label className="ficha-opcion" key={op}>
@@ -1009,15 +1061,15 @@ return (
                 ))}
               </div>
               {esCampoInvalido("tipoSalario") && (
-                <span className="field__error" id="tipoSalario-error">
+                <span className="field__error" id="tipoSalario-error" role="alert">
                   {errores.tipoSalario}
                 </span>
               )}
-            </div>
+            </fieldset>
 
             {/* 20. Cuenta con personal a cargo */}
-            <div className={`ficha-field ${esCampoInvalido("tienePersonalACargo") ? "ficha-field-error" : ""}`}>
-              <label>20. ¿Cuenta con personal a cargo?</label>
+            <fieldset className={`ficha-field ${esCampoInvalido("tienePersonalACargo") ? "ficha-field-error" : ""}`}>
+              <legend>20. ¿Cuenta con personal a cargo?</legend>
               <div className="ficha-opciones">
                 <label className="ficha-opcion">
                   <input
@@ -1045,11 +1097,11 @@ return (
                 </label>
               </div>
               {esCampoInvalido("tienePersonalACargo") && (
-                <span className="field__error" id="tienePersonalACargo-error">
+                <span className="field__error" id="tienePersonalACargo-error" role="alert">
                   {errores.tienePersonalACargo}
                 </span>
               )}
-            </div>
+            </fieldset>
             {errorBackend && (
               <div style={{ color: "#991B1B", background: "#FEF2F2", padding: "12px", borderRadius: "8px", border: "1px solid #FCA5A5", margin: "16px 0", fontSize: "14px" }}>
                 <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{errorBackend}

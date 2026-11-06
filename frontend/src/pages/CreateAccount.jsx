@@ -409,6 +409,8 @@ export default function CreateAccount() {
             onChange={(e) => setForm((f) => ({ ...f, rol: e.target.value }))}
             onBlur={() => marcar("rol")}
             aria-invalid={mostrarError("rol") ? "true" : "false"}
+            aria-required="true"
+            aria-describedby={mostrarError("rol") ? "rol-registro-error" : undefined}
           >
             <option value="">Selecciona un rol</option>
             {ROLES_REGISTRO.map((r) => (
@@ -418,7 +420,7 @@ export default function CreateAccount() {
             ))}
           </select>
           {mostrarError("rol") && (
-            <span className="field__error">{errores.rol}</span>
+            <span className="field__error" id="rol-registro-error" role="alert">{errores.rol}</span>
           )}
         </label>
 
@@ -435,9 +437,11 @@ export default function CreateAccount() {
               onChange={(e) => setForm((f) => ({ ...f, numeroResolucion: soloDigitos(e.target.value, 6) }))}
               onBlur={() => marcar("numeroResolucion")}
               aria-invalid={mostrarError("numeroResolucion") ? "true" : "false"}
+              aria-required="true"
+              aria-describedby={mostrarError("numeroResolucion") ? "resolucion-registro-error" : undefined}
             />
             {mostrarError("numeroResolucion") && (
-              <span className="field__error">{errores.numeroResolucion}</span>
+              <span className="field__error" id="resolucion-registro-error" role="alert">{errores.numeroResolucion}</span>
             )}
           </label>
         )}
@@ -490,6 +494,7 @@ export default function CreateAccount() {
               onChange={(e) => setForm((f) => ({ ...f, aceptaPolitica: e.target.checked }))}
               onBlur={() => marcar("aceptaPolitica")}
               aria-invalid={mostrarError("aceptaPolitica") ? "true" : "false"}
+              aria-required="true"
               aria-describedby={mostrarError("aceptaPolitica") ? "acepta-politica-error" : undefined}
             />
             <span>

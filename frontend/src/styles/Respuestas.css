@@ -73,6 +73,12 @@
   border-bottom: 1px solid var(--line-200);
   color: var(--ink-500);
 }
+.resp-buscador:focus-within {
+  border-color: var(--navy-600);
+  outline: 2px solid var(--navy-600);
+  outline-offset: -1px;
+  box-shadow: 0 0 0 2px rgba(45, 63, 130, 0.18);
+}
 .resp-buscador input {
   flex: 1;
   min-width: 0;
@@ -81,6 +87,9 @@
   background: transparent;
   font-size: 14px;
   color: var(--ink-900);
+}
+.resp-buscador input:focus-visible {
+  outline: none;
 }
 .resp-contador {
   font-size: 12px;

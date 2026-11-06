@@ -116,7 +116,7 @@ export default function PanelSoporte() {
 
   // Mismo selector para el contenido editable y para los mensajes de los usuarios.
   const selectorSeccion = (
-    <select className="adm-input" value={seccion} onChange={(e) => { setSeccion(e.target.value); setForm(null); setMensaje(null); }}>
+    <select className="adm-input" aria-label="Sección de soporte" value={seccion} onChange={(e) => { setSeccion(e.target.value); setForm(null); setMensaje(null); }}>
       {SECCIONES.map((s) => (
         <option key={s.clave} value={s.clave}>
           {s.label}

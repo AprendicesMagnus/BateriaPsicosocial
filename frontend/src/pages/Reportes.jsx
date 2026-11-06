@@ -287,7 +287,7 @@ export default function Reportes() {
       {/* =================================================
           FONDO OSCURO + CONTENIDO
           ================================================= */}
-      <main className="app-hero">
+      <main id="contenido-principal" tabIndex={-1} className="app-hero">
         <div className="app-decor app-decor--1" />
         <div className="app-decor app-decor--2" />
         <div className="app-decor app-decor--3" />

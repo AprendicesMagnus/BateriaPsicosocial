@@ -49,10 +49,25 @@
   transition: background 0.15s ease;
 }
 
-.ficha-field label {
+.ficha-field label,
+fieldset.ficha-field legend {
   font-size: 14px;
   font-weight: 600;
   color: #374151;
+}
+
+fieldset.ficha-field {
+  border: 0;
+  margin: 0;
+  min-inline-size: auto;
+}
+
+fieldset.ficha-field legend {
+  padding: 0;
+  display: block;
+  float: left;
+  width: 100%;
+  margin-bottom: 8px;
 }
 
 .ficha-field input[type="text"],
@@ -62,15 +77,18 @@
   padding: 10px 12px;
   font-size: 14px;
   color: #111827;
-  outline: none;
   transition: border-color 0.15s ease;
   max-width: 420px;
 }
 
 .ficha-field input[type="text"]:focus,
-.ficha-field input[type="number"]:focus {
+.ficha-field input[type="number"]:focus,
+.ficha-field input[type="text"]:focus-visible,
+.ficha-field input[type="number"]:focus-visible {
   border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
 }
 
 /* Campo marcado como incompleto al intentar guardar */

@@ -52,6 +52,7 @@ export default function App() {
         <CompletarResolucion />
         <BienvenidaLogin />
         <RestriccionRolLimitado>
+        <a href="#contenido-principal" className="skip-link">Saltar al contenido</a>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/iniciar-sesion" element={<SignIn />} />

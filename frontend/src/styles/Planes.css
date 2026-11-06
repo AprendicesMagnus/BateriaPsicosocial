@@ -220,10 +220,13 @@
 }
 
 .plan-campo input:focus,
-.plan-campo textarea:focus {
-  outline: none;
+.plan-campo textarea:focus,
+.plan-campo input:focus-visible,
+.plan-campo textarea:focus-visible {
+  outline: 2px solid var(--adm-navy-2, #12314b);
+  outline-offset: 1px;
   border-color: var(--adm-navy-2, #12314b);
-  box-shadow: 0 0 0 3px rgba(18, 49, 75, 0.12);
+  box-shadow: 0 0 0 3px rgba(18, 49, 75, 0.18);
 }
 
 .plan-campo__dinero {

@@ -268,7 +268,7 @@ export default function Panel() {
       {/* =====================================================
           CONTENIDO
       ====================================================== */}
-      <main className="adm adm-main">
+      <main id="contenido-principal" tabIndex={-1} className="adm adm-main">
         <BotonRegresar tono="oscuro" />
         <header className="adm-header">
           <div>
