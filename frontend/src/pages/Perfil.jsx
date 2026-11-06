@@ -22,6 +22,7 @@ import {
   listarPedidosUsuarioProductos,
   prepararCheckoutPedidoProductos,
   confirmarPagoPedidoProductos,
+  cancelarPedidoProductos,
 } from "../api/pedidosProductos";
 import PerfilPrivacidad from "../components/PerfilPrivacidad";
 import ModalConfirmacion from "../components/ModalConfirmacion";
@@ -208,6 +209,8 @@ export default function Perfil() {
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const [errorPedidos, setErrorPedidos] = useState(null);
   const [reintentandoPedidoId, setReintentandoPedidoId] = useState(null);
+  const [pedidoPorCancelar, setPedidoPorCancelar] = useState(null);
+  const [cancelandoPedidoId, setCancelandoPedidoId] = useState(null);
   // ---- edición de perfil / contraseña ----
   const [modo, setModo] = useState(null);
   const [guardando, setGuardando] = useState(false);
@@ -883,6 +886,33 @@ export default function Perfil() {
     }
   }
   */
+  function solicitarCancelacionPedido(pedido) {
+    if (!pedido?.id || pedido.estado !== "PENDIENTE" || cancelandoPedidoId) return;
+    setPedidoPorCancelar(pedido);
+  }
+
+  async function confirmarCancelacionPedido() {
+    if (!pedidoPorCancelar?.id || cancelandoPedidoId) return;
+    const pedidoId = pedidoPorCancelar.id;
+    setCancelandoPedidoId(pedidoId);
+    setErrorPedidos(null);
+    try {
+      const pedidoCancelado = await cancelarPedidoProductos(token, pedidoId);
+      setPedidos((actuales) =>
+        actuales.map((pedido) =>
+          pedido.id === pedidoId
+            ? { ...pedido, estado: pedidoCancelado?.estado || "CANCELADA" }
+            : pedido
+        )
+      );
+      setPedidoPorCancelar(null);
+    } catch (err) {
+      setErrorPedidos(err.message || "No se pudo cancelar el pedido.");
+    } finally {
+      setCancelandoPedidoId(null);
+    }
+  }
+
   async function reintentarPagoPedido(pedido) {
     if (!pedido?.id || reintentandoPedidoId) return;
     setReintentandoPedidoId(pedido.id);
@@ -899,7 +929,10 @@ export default function Perfil() {
       widget.open(async (resultado) => {
         try {
           const transaction = resultado?.transaction;
-          if (!transaction?.id) return;
+          if (!transaction?.id) {
+            setErrorPedidos("El pago no se completó. Puedes volver a intentarlo o cancelar el pedido.");
+            return;
+          }
           await confirmarPagoPedidoProductos(token, pedido.id, transaction.id);
           const actualizados = await listarPedidosUsuarioProductos(token, usuario.id);
           setPedidos(actualizados);
@@ -1514,6 +1547,17 @@ export default function Perfil() {
                             {reintentandoPedidoId === pedido.id ? "Abriendo pago…" : "Reintentar pago"}
                           </button>
                         )}
+                        {pedido.estado === "PENDIENTE" && (
+                          <button
+                            type="button"
+                            className="adm-btn adm-btn--borde"
+                            style={{ marginTop: "8px", marginLeft: "8px" }}
+                            disabled={cancelandoPedidoId === pedido.id}
+                            onClick={() => solicitarCancelacionPedido(pedido)}
+                          >
+                            {cancelandoPedidoId === pedido.id ? "Cancelando..." : "Cancelar pedido"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1558,6 +1602,37 @@ export default function Perfil() {
           onConfirmar={confirmarCancelacionCompra}
           onCancelar={() => {
             if (!cancelandoCompraId) setCompraPorCancelar(null);
+          }}
+        />
+
+        <ModalConfirmacion
+          abierto={Boolean(pedidoPorCancelar)}
+          titulo="¿Cancelar este pedido?"
+          mensaje="El pedido quedará cancelado y las unidades reservadas se devolverán al inventario cuando corresponda."
+          resumen={
+            pedidoPorCancelar && (
+              <div>
+                <strong>{pedidoPorCancelar.numero}</strong>
+                {" · "}
+                <span>
+                  Total:{" "}
+                  {Number(pedidoPorCancelar.total || 0).toLocaleString("es-CO", {
+                    style: "currency",
+                    currency: "COP",
+                    maximumFractionDigits: 0,
+                  })}
+                </span>
+              </div>
+            )
+          }
+          textoConfirmar="Sí, cancelar pedido"
+          textoCancelar="No, volver"
+          tipo="peligro"
+          cargando={Boolean(cancelandoPedidoId)}
+          textoCargando="Cancelando..."
+          onConfirmar={confirmarCancelacionPedido}
+          onCancelar={() => {
+            if (!cancelandoPedidoId) setPedidoPorCancelar(null);
           }}
         />
 

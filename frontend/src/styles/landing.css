@@ -1336,3 +1336,20 @@
     justify-content: space-evenly;
   }
 }
+
+/* Mantener los logos de Landing proporcionados y con separación uniforme. */
+@media (min-width: 1280px) {
+  .landing .nav__logos {
+    gap: 20px;
+  }
+
+  .landing .nav__logo--magnus {
+    max-width: 220px;
+    max-height: 82px;
+  }
+
+  .landing .nav__logo--javeriana {
+    max-width: 155px;
+    max-height: 58px;
+  }
+}

@@ -16,7 +16,10 @@ export default function BienvenidaLogin() {
   const [mensaje, setMensaje] = useState("");
 
   useEffect(() => {
-    if (!usuario || usuario.esInvitado) return;
+    if (!usuario || usuario.esInvitado) {
+      setMensaje("");
+      return;
+    }
     if (sessionStorage.getItem(CLAVE) !== "1") return;
     sessionStorage.removeItem(CLAVE);
 
@@ -30,9 +33,9 @@ export default function BienvenidaLogin() {
 
   useEffect(() => {
     if (!mensaje) return undefined;
-    const espera = setTimeout(() => setMensaje(""), 5000);
+    const espera = setTimeout(() => setMensaje(""), 2500);
     return () => clearTimeout(espera);
   }, [mensaje]);
 
-  return mensaje ? <Toast mensaje={mensaje} tipo="exito" duracion={5000} /> : null;
+  return mensaje ? <Toast mensaje={mensaje} tipo="exito" duracion={2500} /> : null;
 }

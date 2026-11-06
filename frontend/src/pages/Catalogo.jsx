@@ -4,6 +4,7 @@ import {
   crearPedidoProductos,
   prepararCheckoutPedidoProductos,
   confirmarPagoPedidoProductos,
+  obtenerPedidoProductos,
 } from "../api/pedidosProductos";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
@@ -144,9 +145,8 @@ export default function Catalogo() {
       widget.open(async (resultado) => {
         try {
           const transaction = resultado?.transaction;
-
           if (!transaction?.id) {
-            setErrorPago("El pago fue cancelado antes de crear una transacción.");
+            setErrorPago("El pago no se completó. Puedes revisar o cancelar el pedido desde tu perfil.");
             return;
           }
 
@@ -155,46 +155,47 @@ export default function Catalogo() {
             pedidoCreado.id,
             transaction.id
           );
-
-          const estado = String(
-            transaction.status || resPago?.estado || ""
+          const pedidoActualizado = await obtenerPedidoProductos(token, pedidoCreado.id);
+          const estadoWompi = String(
+            transaction.status || resPago?.wompiStatus || resPago?.estado || ""
+          ).toUpperCase();
+          const estadoPedido = String(
+            pedidoActualizado?.estado || resPago?.pedidoEstado || ""
           ).toUpperCase();
 
-          if (estado === "APPROVED" || resPago?.pedidoEstado === "PAGADA") {
-            setPedido({
-              ...pedidoCreado,
-              estado: "PAGADA",
-            });
+          if (estadoWompi === "APPROVED" || estadoPedido === "PAGADA") {
+            setPedido(pedidoActualizado);
             setCarrito({});
             setPaso("listo");
             return;
           }
 
-          if (estado === "PENDING") {
-            setErrorPago(
-              "El pago quedó pendiente de confirmación. Puedes consultar el estado del pedido desde el servidor."
-            );
+          if (estadoWompi === "PENDING" || estadoPedido === "PENDIENTE") {
+            setErrorPago("El pago quedó pendiente de confirmación. Puedes consultar el pedido desde tu perfil.");
             return;
           }
 
-          if (estado === "DECLINED" || resPago?.pedidoEstado === "RECHAZADO") {
-            setErrorPago("El pago fue rechazado por Wompi.");
+          if (estadoWompi === "DECLINED" || estadoPedido === "RECHAZADO") {
+            setErrorPago("El pago fue rechazado por Wompi. Puedes reintentarlo desde el historial de pedidos de tu perfil.");
             return;
           }
 
-          if (estado === "VOIDED") {
-            setErrorPago("El pago fue cancelado.");
+          if (estadoWompi === "VOIDED" || estadoPedido === "CANCELADA") {
+            setErrorPago("El pago fue cancelado. Puedes realizar un nuevo pedido cuando lo desees.");
+            return;
+          }
+
+          if (estadoWompi === "ERROR" || estadoPedido === "ERROR") {
+            setErrorPago("Wompi reportó un error al procesar el pago. Puedes revisar el pedido desde tu perfil.");
             return;
           }
 
           setErrorPago(
             resPago?.mensajeRespuesta ||
-              "Wompi no aprobó el pago del pedido."
+              "No fue posible confirmar el resultado del pago. Consulta el estado del pedido desde tu perfil."
           );
         } catch (err) {
-          setErrorPago(
-            err.message || "No se pudo confirmar el pago con el servidor."
-          );
+          setErrorPago(err.message || "No se pudo confirmar el pago con el servidor.");
         } finally {
           setProcesandoPago(false);
         }

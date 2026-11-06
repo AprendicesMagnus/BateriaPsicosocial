@@ -174,15 +174,14 @@ export default function Inicio() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
+              gap: 20,
             }}
           >
             <img
               src="/logo a 2_Mesa de trabajo 1.jpg"
               alt="Magnus"
               style={{
-                height: 76,
-                marginRight: "auto",
+                height: 68,
               }}
             />
 
@@ -190,7 +189,7 @@ export default function Inicio() {
               src="/logo javeriana.jpg"
               alt="Javeriana"
               style={{
-                height: 66,
+                height: 52,
               }}
             />
 

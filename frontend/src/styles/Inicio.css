@@ -1149,3 +1149,18 @@
       line-height: 24px;
     }
 }
+
+/* Ajuste moderado de los logos en el navbar de Inicio (solo escritorio). */
+@media (min-width: 1280px) {
+  .nav__logos--inicio {
+    gap: 20px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(1) {
+    height: 68px !important;
+  }
+
+  .nav__logos--inicio img:nth-child(2) {
+    height: 52px !important;
+  }
+}
