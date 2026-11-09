@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { PrimaryButton, SecondaryButton, FormMessage } from "./FormControls";
 import { ROLES_REGISTRO } from "../utils/roles";
 import { soloDigitos } from "../utils/validaciones";
+import useModalAccesible from "../hooks/useModalAccesible";
 
 // Pantalla rápida que se muestra cuando alguien entra con Google por primera vez.
 // La cuenta NO se crea hasta que confirme un rol.
@@ -11,6 +12,10 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
   const [numero, setNumero] = useState("");
   const [intento, setIntento] = useState(false);
   const [acepta, setAcepta] = useState(false);
+  const dialogRef = useRef(null);
+
+  useModalAccesible(true, dialogRef, { cerrarConEsc: false });
+
   const pideResolucion = rol === "EVALUADOR_SST";
   const resolucionInvalida = pideResolucion && !/^\d{3,6}$/.test(numero);
 
@@ -22,6 +27,7 @@ export default function SeleccionRolGoogle({ email, loading, error, onConfirmar,
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="rol-google-titulo"

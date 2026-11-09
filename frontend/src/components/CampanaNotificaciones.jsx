@@ -17,7 +17,6 @@ const DESTINOS_POR_TIPO = {
   INFORME_GENERADO: "/reportes",
   RECORDATORIO_REAPLICACION: "/dashboard",
   RESUMEN_MENSUAL: "/dashboard",
-
 };
 
 function formatearFecha(iso) {
@@ -39,6 +38,7 @@ export default function CampanaNotificaciones() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const contenedorRef = useRef(null);
+  const botonCampanaRef = useRef(null);
 
   const visible = Boolean(token) && Boolean(usuario) && !usuario.esInvitado;
 
@@ -77,7 +77,11 @@ export default function CampanaNotificaciones() {
       }
     }
     function alPresionarTecla(evento) {
-      if (evento.key === "Escape") setAbierta(false);
+      if (evento.key === "Escape") {
+        evento.preventDefault();
+        setAbierta(false);
+        botonCampanaRef.current?.focus();
+      }
     }
     document.addEventListener("mousedown", alHacerClicFuera);
     document.addEventListener("keydown", alPresionarTecla);
@@ -147,11 +151,12 @@ export default function CampanaNotificaciones() {
   return (
     <div className="campana" ref={contenedorRef}>
       <button
+        ref={botonCampanaRef}
         type="button"
         className="campana__boton"
         onClick={alternarPanel}
-        aria-haspopup="true"
         aria-expanded={abierta}
+        aria-controls="panel-notificaciones"
         aria-label={sinLeer > 0 ? `Notificaciones, ${sinLeer} sin leer` : "Notificaciones"}
       >
         <HiOutlineBell size={22} aria-hidden="true" />
@@ -159,7 +164,7 @@ export default function CampanaNotificaciones() {
       </button>
 
       {abierta && (
-        <div className="campana__panel" role="dialog" aria-label="Notificaciones">
+        <div id="panel-notificaciones" className="campana__panel" role="dialog" aria-label="Notificaciones">
           <div className="campana__encabezado">
             <strong>Notificaciones</strong>
             <button

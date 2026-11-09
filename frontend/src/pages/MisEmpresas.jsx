@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import useModalAccesible from "../hooks/useModalAccesible";
 import { Link, useLocation } from "react-router-dom";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
@@ -65,6 +66,11 @@ export default function MisEmpresas() {
   const [eliminando, setEliminando] = useState(null); // empresa a eliminar
   const [errorEliminar, setErrorEliminar] = useState("");
   const [borrando, setBorrando] = useState(false);
+  const editDialogRef = useRef(null);
+  const deleteDialogRef = useRef(null);
+
+  useModalAccesible(!!editando, editDialogRef, { onCerrar: () => setEditando(null) });
+  useModalAccesible(!!eliminando, deleteDialogRef, { onCerrar: () => setEliminando(null) });
 
   useEffect(() => {
     if (!token) return;
@@ -279,7 +285,7 @@ export default function MisEmpresas() {
 
       {/* ===================== MODAL EDITAR ===================== */}
       {editando && (
-        <div className="mis-empresas-fondo" role="dialog" aria-modal="true" aria-labelledby="editar-titulo">
+        <div ref={editDialogRef} className="mis-empresas-fondo" role="dialog" aria-modal="true" aria-labelledby="editar-titulo">
           <form className="mis-empresas-modal" onSubmit={guardarEdicion} noValidate>
             <h2 id="editar-titulo">Editar empresa</h2>
 
@@ -432,7 +438,7 @@ export default function MisEmpresas() {
 
       {/* ===================== MODAL ELIMINAR ===================== */}
       {eliminando && (
-        <div className="mis-empresas-fondo" role="alertdialog" aria-modal="true" aria-labelledby="eliminar-titulo">
+        <div ref={deleteDialogRef} className="mis-empresas-fondo" role="alertdialog" aria-modal="true" aria-labelledby="eliminar-titulo">
           <div className="mis-empresas-modal">
             <h2 id="eliminar-titulo">Eliminar empresa</h2>
             <p className="mis-empresas-texto">

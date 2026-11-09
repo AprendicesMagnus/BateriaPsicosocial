@@ -260,7 +260,16 @@ export default function ResponderEnlace() {
       <header className="enlace__header">
         <div
           className="sidebar__logo"
+          role="button"
+          tabIndex={0}
+          aria-label="Ir al inicio"
           onClick={() => navigate("/Inicio")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate("/Inicio");
+            }
+          }}
           style={{ cursor: "pointer" }}
         >
           <img src="/logo oscu.png" alt="Magnus" style={{ height: 70, marginRight: "auto" }} />

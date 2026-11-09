@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { guardarMiResolucion } from "../api/perfil";
 import { soloDigitos } from "../utils/validaciones";
+import useModalAccesible from "../hooks/useModalAccesible";
 
 // Ventana obligatoria: el Psicologo que aún no tiene número de resolución debe registrarlo
 // antes de usar el sistema. Se monta una sola vez dentro de <BrowserRouter>.
@@ -10,8 +11,12 @@ export default function CompletarResolucion() {
   const [numero, setNumero] = useState("");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const dialogRef = useRef(null);
 
   const debeCompletar = !loading && usuario?.rol === "EVALUADOR_SST" && !usuario?.numeroResolucion;
+
+  useModalAccesible(debeCompletar, dialogRef, { cerrarConEsc: false });
+
   if (!debeCompletar) return null;
 
   async function guardar(e) {
@@ -34,6 +39,7 @@ export default function CompletarResolucion() {
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="resolucion-titulo"
