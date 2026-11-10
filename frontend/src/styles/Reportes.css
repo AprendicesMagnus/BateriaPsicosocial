@@ -81,7 +81,7 @@
 }
 .reportes-status--listo {
   background: #e9f8ee;
-  color: var(--success-600);
+  color: var(--success-text);
 }
 .reportes-status--restringido {
   background: #eef1fb;
@@ -204,7 +204,7 @@
 }
 .reportes-chip--ok {
   background: #e9f8ee;
-  color: var(--success-600);
+  color: var(--success-text);
 }
 
 /* Tabla de resultados por dimensión */

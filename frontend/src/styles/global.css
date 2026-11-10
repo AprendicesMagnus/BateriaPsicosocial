@@ -8,7 +8,11 @@
   --gold-600: #dd8f13;
   --ink-900: #10182b;
   --ink-700: #3a4256;
-  --ink-500: #6b7290;
+  --ink-500: #626988;
+  --danger-text: #c0392b;
+  --success-text: #17803f;
+  --gold-text: #9a5700;
+  --focus-ring: var(--navy-600);
   --line-200: #e4e7f0;
   --bg-100: #f6f7fb;
   --white: #ffffff;
@@ -76,7 +80,7 @@ svg {
 }
 
 .field__error {
-  color: var(--danger-500);
+  color: var(--danger-text);
   font-size: 12px;
   font-weight: 600;
   margin-top: 4px;
@@ -121,7 +125,7 @@ svg {
 }
 
 :where(*:focus-visible) {
-  outline: 2px solid var(--navy-600);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 

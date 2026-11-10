@@ -184,16 +184,17 @@ export default function PanelEvolucion({ token }) {
         </div>
       )}
 
-      <div className="adm-tabla-wrap" style={{ marginTop: "16px" }}>
+      <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Evolución mensual de la plataforma" style={{ marginTop: "16px" }}>
         <table className="adm-tabla adm-tabla--ancha">
+          <caption className="sr-only">Evolución mensual de la plataforma</caption>
           <thead>
             <tr>
-              <th>Mes</th>
-              <th>Usuarios nuevos</th>
-              <th>Evaluaciones creadas</th>
-              <th>Encuestas completadas</th>
-              <th>Compras pagadas</th>
-              <th>Valor comprado</th>
+              <th scope="col">Mes</th>
+              <th scope="col">Usuarios nuevos</th>
+              <th scope="col">Evaluaciones creadas</th>
+              <th scope="col">Encuestas completadas</th>
+              <th scope="col">Compras pagadas</th>
+              <th scope="col">Valor comprado</th>
             </tr>
           </thead>
           <tbody>

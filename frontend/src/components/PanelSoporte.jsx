@@ -187,15 +187,16 @@ export default function PanelSoporte() {
         </form>
       )}
 
-      <div className="adm-tabla-wrap">
+      <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Contenido del Centro de Ayuda">
         <table className="adm-tabla">
+          <caption className="sr-only">Contenido del Centro de Ayuda</caption>
           <thead>
             <tr>
-              <th>Orden</th>
-              <th>{info.conTitulo ? "Título" : "Paso"}</th>
-              {info.conTitulo && <th>Texto</th>}
-              <th>Estado</th>
-              <th>Acciones</th>
+              <th scope="col">Orden</th>
+              <th scope="col">{info.conTitulo ? "Título" : "Paso"}</th>
+              {info.conTitulo && <th scope="col">Texto</th>}
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
             </tr>
           </thead>
           <tbody>

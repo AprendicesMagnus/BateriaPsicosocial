@@ -49,6 +49,7 @@
 }
 .auth-side:has(.illustration--dark) {
   background: var(--navy-950);
+  --focus-ring: var(--gold-500);
 }
 
 .illustration--light {
@@ -291,11 +292,11 @@
 }
 .form-message--error {
   background: #fdecec;
-  color: var(--danger-500);
+  color: var(--danger-text);
 }
 .form-message--success {
   background: #e9f8ee;
-  color: var(--success-600);
+  color: var(--success-text);
 }
 
 .verification-email {

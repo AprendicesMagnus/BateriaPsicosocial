@@ -83,6 +83,7 @@
   display: flex;
   align-items: center;
   background: #0b1538;
+  --focus-ring: var(--gold-500);
 }
 
 
@@ -511,7 +512,7 @@
 }
 
 .section__eyebrow {
-  color: var(--gold-600);
+  color: var(--gold-text);
 
   font-weight: 800;
 
@@ -575,7 +576,7 @@
 
 .factor-card ul li::before {
   content: "•";
-  color: var(--gold-500);
+  color: var(--gold-text);
   font-weight: 900;
   margin-right: 8px;
 }

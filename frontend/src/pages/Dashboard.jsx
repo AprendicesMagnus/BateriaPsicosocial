@@ -1008,13 +1008,14 @@ export default function Dashboard() {
           )}
 
           {!cargando && !indicadores?.anonimizado && (
-            <div className="table-wrap">
+            <div className="table-wrap" tabIndex={0} role="region" aria-label="Métricas de participación">
               <table className="responders-table">
+                <caption className="sr-only">Métricas de participación</caption>
                 <thead>
                   <tr>
-                    <th>Métrica de Participación</th>
-                    <th>Valor Registrado</th>
-                    <th>Estado</th>
+                    <th scope="col">Métrica de Participación</th>
+                    <th scope="col">Valor Registrado</th>
+                    <th scope="col">Estado</th>
                   </tr>
                 </thead>
                 <tbody>

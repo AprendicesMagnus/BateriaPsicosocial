@@ -226,18 +226,25 @@ export default function MisEmpresas() {
                 </Link>
               </div>
             ) : (
-              <div className="mis-empresas-tabla-wrap">
+              <div className="mis-empresas-tabla-wrap" tabIndex={0} role="region" aria-label="Listado de empresas">
                 <table className="mis-empresas-tabla">
+                  <caption className="sr-only">Listado de empresas</caption>
                   <thead>
                     <tr>
-                      <th>Razón social</th>
-                      <th>NIT</th>
-                      <th>Sector</th>
-                      <th>Ciudad</th>
-                      <th>Correo</th>
-                      <th>Celular</th>
-                      <th>Creada</th>
-                      <th>Acciones</th>
+                      <th scope="col">Razón social</th>
+                      <th scope="col">NIT</th>
+                      <th scope="col">Sector</th>
+                      <th scope="col">Ciudad</th>
+                      <th scope="col">Correo</th>
+                      <th scope="col">Celular</th>
+                      <th scope="col">Creada</th>
+                      <th scope="col">Acciones</th>
+
+
+
+
+
+
                     </tr>
                   </thead>
                   <tbody>
