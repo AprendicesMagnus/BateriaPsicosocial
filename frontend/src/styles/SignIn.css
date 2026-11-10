@@ -5,6 +5,7 @@
 .auth-page {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
 
   display: flex;
 
@@ -21,6 +22,7 @@
 .auth-image {
   width: 55%;
   min-height: 100vh;
+  min-height: 100dvh;
 
   overflow: hidden;
 
@@ -52,6 +54,7 @@
 .auth-content {
   width: 45%;
   min-height: 100vh;
+  min-height: 100dvh;
 
   display: flex;
 
@@ -313,6 +316,7 @@
 
   .auth-page {
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .auth-image {
@@ -323,6 +327,7 @@
     width: 100%;
 
     min-height: 100vh;
+    min-height: 100dvh;
 
     padding: 30px 25px;
 

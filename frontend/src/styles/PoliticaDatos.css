@@ -1,5 +1,6 @@
 .politica {
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 32px 16px;
   background: var(--bg-100);
 }
