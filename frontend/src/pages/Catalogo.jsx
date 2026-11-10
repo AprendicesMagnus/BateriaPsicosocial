@@ -12,17 +12,6 @@ import { categoriasDe, formatearCOP, imagenDe, manejaStock, useProductos } from 
 import "../styles/app-shell.css";
 import "../styles/Catalogo.css";
 
-const CLAVE_CARRITO = "magnussing_carrito_v1";
-
-function leerCarrito() {
-  try {
-    const carrito = JSON.parse(localStorage.getItem(CLAVE_CARRITO) || "{}");
-    return carrito && typeof carrito === "object" ? carrito : {};
-  } catch {
-    return {};
-  }
-}
-
 function cargarWidgetWompi() {
   return new Promise((resolve, reject) => {
     if (window.WidgetCheckout) {
@@ -58,20 +47,14 @@ export default function Catalogo() {
   const { usuario, token } = useAuth();
   const { productos, cargando, error } = useProductos();
 
-  const [carrito, setCarrito] = useState(leerCarrito);
+  // El carrito comienza vacío al iniciar el catálogo. Se conserva mientras
+  // el usuario navega por esta pantalla, pero no recupera selecciones antiguas.
+  const [carrito, setCarrito] = useState({});
   const [filtro, setFiltro] = useState("Todos");
   const [paso, setPaso] = useState("catalogo");
   const [pedido, setPedido] = useState(null);
   const [errorPago, setErrorPago] = useState("");
   const [procesandoPago, setProcesandoPago] = useState(false);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(CLAVE_CARRITO, JSON.stringify(carrito));
-    } catch {
-      /* ignorar */
-    }
-  }, [carrito]);
 
   const lineas = useMemo(
     () =>

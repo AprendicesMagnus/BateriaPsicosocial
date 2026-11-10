@@ -1341,16 +1341,16 @@
 /* Mantener los logos de Landing proporcionados y con separación uniforme. */
 @media (min-width: 1280px) {
   .landing .nav__logos {
-    gap: 20px;
+    gap: 24px;
   }
 
   .landing .nav__logo--magnus {
-    max-width: 220px;
-    max-height: 82px;
+    max-width: 185px;
+    max-height: 70px;
   }
 
   .landing .nav__logo--javeriana {
-    max-width: 155px;
-    max-height: 58px;
+    max-width: 132px;
+    max-height: 50px;
   }
 }

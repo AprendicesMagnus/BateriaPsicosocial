@@ -202,3 +202,50 @@
   .producto-form__campos { grid-template-columns: 1fr; }
   .producto-form__acciones .adm-btn { flex: 1; }
 }
+
+
+/* Landing: catálogo público de consulta, sin apariencia de tienda de compra */
+.catalogo-modal { max-width: 760px; max-height: min(82vh, 720px); padding: 24px; }
+.catalogo-modal .catalogo-seccion { margin-top: 16px; }
+.catalogo-modal .catalogo-seccion__titulo {
+  margin-bottom: 9px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #edf0f4;
+  font-size: 14px;
+  font-weight: 700;
+  color: #12314b;
+}
+.catalogo-modal .catalogo-grid--compacto {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.catalogo-modal .producto-card {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #e8edf2;
+  border-radius: 9px;
+  box-shadow: none;
+}
+.catalogo-modal .producto-card img {
+  width: 76px;
+  height: 68px;
+  aspect-ratio: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #f7f9fb;
+}
+.catalogo-modal .producto-card__cuerpo { gap: 4px; padding: 0; }
+.catalogo-modal .producto-card__cuerpo h4 { font-size: 13px; font-weight: 600; }
+.catalogo-modal .producto-card__cuerpo strong { font-size: 14px; font-weight: 700; }
+.catalogo-modal .producto-stock { margin-top: 1px; font-size: 11px; }
+
+@media (max-width: 560px) {
+  .catalogo-modal { max-height: 86vh; padding: 18px 16px; }
+  .catalogo-modal .catalogo-grid--compacto { grid-template-columns: 1fr; gap: 8px; }
+  .catalogo-modal .producto-card { grid-template-columns: 66px minmax(0, 1fr); gap: 10px; padding: 9px; }
+  .catalogo-modal .producto-card img { width: 66px; height: 60px; }
+  .catalogo-modal .catalogo-seccion { margin-top: 13px; }
+}
