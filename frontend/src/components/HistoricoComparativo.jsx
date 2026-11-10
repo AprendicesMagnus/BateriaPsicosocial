@@ -266,7 +266,12 @@ export default function HistoricoComparativo({ token, organizacionId }) {
         </span>
       </div>
 
-      <div className="historico__tabla-contenedor">
+      <div
+        className="historico__tabla-contenedor"
+        tabIndex={0}
+        role="region"
+        aria-label="Evaluaciones registradas, de la más reciente a la más antigua"
+      >
         <table className="historico__tabla">
           <caption className="historico__oculto">Evaluaciones registradas, de la más reciente a la más antigua</caption>
           <thead>

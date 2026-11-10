@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import useModalAccesible from "../hooks/useModalAccesible";
 import { fetchPlanes } from "../api/planes";
 import { etiquetaRango, formatearPrecio } from "../utils/planes";
 import "../styles/Planes.css";
@@ -16,14 +17,12 @@ export default function ModalPlanes({ onCerrar }) {
       .finally(() => setCargando(false));
   }, []);
 
-  useEffect(() => {
-    const alTeclear = (e) => e.key === "Escape" && onCerrar();
-    window.addEventListener("keydown", alTeclear);
-    return () => window.removeEventListener("keydown", alTeclear);
-  }, [onCerrar]);
+  const dialogRef = useRef(null);
+
+  useModalAccesible(true, dialogRef, { onCerrar });
 
   return (
-    <div className="planes-fondo" role="dialog" aria-modal="true" aria-labelledby="planes-titulo" onClick={onCerrar}>
+    <div ref={dialogRef} className="planes-fondo" role="dialog" aria-modal="true" aria-labelledby="planes-titulo" onClick={onCerrar}>
       <div className="planes-modal" onClick={(e) => e.stopPropagation()}>
         <div className="planes-modal__cabecera">
           <div>

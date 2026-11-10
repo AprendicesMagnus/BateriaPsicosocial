@@ -57,7 +57,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="verify-shell">
+    <main id="contenido-principal" tabIndex={-1} className="verify-shell">
       <ForgotPasswordBackground />
 
       <div className="verify-card">
@@ -91,6 +91,6 @@ export default function ForgotPassword() {
           </Link>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

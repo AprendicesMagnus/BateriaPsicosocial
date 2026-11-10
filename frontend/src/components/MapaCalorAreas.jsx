@@ -103,8 +103,14 @@ export default function MapaCalorAreas({ token, organizacionId }) {
 
       {!error && areas.length > 0 && (
         <>
-          <div className="mapa-calor__contenedor">
+          <div
+            className="mapa-calor__contenedor"
+            tabIndex={0}
+            role="region"
+            aria-label="Mapa de calor de riesgo psicosocial por área"
+          >
             <table className="mapa-calor__tabla">
+              <caption className="sr-only">Mapa de calor de riesgo psicosocial por área</caption>
               <thead>
                 <tr>
                   <th scope="col" className="mapa-calor__esquina">

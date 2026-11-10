@@ -169,15 +169,16 @@ export default function PanelPlanes() {
         </form>
       )}
 
-      <div className="adm-tabla-wrap">
+      <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Planes de evaluación">
         <table className="adm-tabla">
+          <caption className="sr-only">Planes de evaluación</caption>
           <thead>
             <tr>
-              <th>Plan</th>
-              <th>Rango</th>
-              <th>Precio por batería</th>
-              <th>Estado</th>
-              <th>Acciones</th>
+              <th scope="col">Plan</th>
+              <th scope="col">Rango</th>
+              <th scope="col">Precio por batería</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
             </tr>
           </thead>
           <tbody>

@@ -264,11 +264,10 @@ export default function Panel() {
         ]}
       />
 
-
       {/* =====================================================
           CONTENIDO
       ====================================================== */}
-      <main className="adm adm-main">
+      <main id="contenido-principal" tabIndex={-1} className="adm adm-main">
         <BotonRegresar tono="oscuro" />
         <header className="adm-header">
           <div>
@@ -322,18 +321,19 @@ export default function Panel() {
 
               {aviso && <div className={`plan-mensaje plan-mensaje--${aviso.tipo}`}>{aviso.texto}</div>}
 
-              <div className="adm-tabla-wrap">
+              <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Listado de usuarios">
                 <table className="adm-tabla adm-tabla--ancha">
+                  <caption className="sr-only">Listado de usuarios</caption>
                   <thead>
                     <tr>
-                      <th>Nombre</th>
-                      <th>Rol</th>
-                      <th>Resolución</th>
-                      <th>Empresa</th>
-                      <th>Registro</th>
-                      <th>Estado</th>
-                      <th>Último acceso</th>
-                      <th>Acciones</th>
+                      <th scope="col">Nombre</th>
+                      <th scope="col">Rol</th>
+                      <th scope="col">Resolución</th>
+                      <th scope="col">Empresa</th>
+                      <th scope="col">Registro</th>
+                      <th scope="col">Estado</th>
+                      <th scope="col">Último acceso</th>
+                      <th scope="col">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -428,15 +428,16 @@ export default function Panel() {
                   </div>
                 </div>
 
-                <div className="adm-tabla-wrap">
+                <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Listado de empresas registradas">
                   <table className="adm-tabla">
+                    <caption className="sr-only">Listado de empresas registradas</caption>
                     <thead>
                       <tr>
-                        <th>Empresa</th>
-                        <th>Responsable SST</th>
-                        <th>Encuestas</th>
-                        <th>Evaluaciones</th>
-                        <th>Acciones</th>
+                        <th scope="col">Empresa</th>
+                        <th scope="col">Responsable SST</th>
+                        <th scope="col">Encuestas</th>
+                        <th scope="col">Evaluaciones</th>
+                        <th scope="col">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -509,16 +510,17 @@ export default function Panel() {
                   </div>
                 </div>
 
-                <div className="adm-tabla-wrap">
+                <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Compras de evaluaciones">
                   <table className="adm-tabla">
+                    <caption className="sr-only">Compras de evaluaciones</caption>
                     <thead>
                       <tr>
-                        <th>Fecha</th>
-                        <th>Empresa</th>
-                        <th>Cantidad</th>
-                        <th>Medio de pago</th>
-                        <th>Valor</th>
-                        <th>Estado</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Empresa</th>
+                        <th scope="col">Cantidad</th>
+                        <th scope="col">Medio de pago</th>
+                        <th scope="col">Valor</th>
+                        <th scope="col">Estado</th>
                       </tr>
                     </thead>
                     <tbody>

@@ -17,7 +17,7 @@ export function TextField({ label, error, invalid, id, className, ...props }) {
         {...props}
       />
       {error && (
-        <span className="field__error" id={errorId}>
+        <span className="field__error" id={errorId} role="alert">
           {error}
         </span>
       )}
@@ -72,7 +72,7 @@ export function PasswordField({ label, error, invalid, id, className, ...props }
         </button>
       </div>
       {error && (
-        <span className="field__error" id={errorId}>
+        <span className="field__error" id={errorId} role="alert">
           {error}
         </span>
       )}
@@ -98,10 +98,17 @@ export function SecondaryButton({ children, loading, ...props }) {
 
 export function FormMessage({ type = "error", children }) {
   if (!children) return null;
-  return <div className={`form-message form-message--${type}`}>{children}</div>;
+  return (
+    <div
+      className={`form-message form-message--${type}`}
+      role={type === "error" ? "alert" : "status"}
+    >
+      {children}
+    </div>
+  );
 }
 
-export function CodeInput({ value, onChange, length = 6, error, invalid, id, onBlur, ...props }) {
+export function CodeInput({ value, onChange, length = 6, error, invalid, id, onBlur, "aria-label": ariaLabel = "Código de verificación", ...props }) {
   const generatedId = useId();
   const inputId = id || generatedId;
   const errorId = `${inputId}-error`;
@@ -111,6 +118,7 @@ export function CodeInput({ value, onChange, length = 6, error, invalid, id, onB
     <label className="field" htmlFor={inputId}>
       <input
         id={inputId}
+        aria-label={ariaLabel}
         className={`field__input field__input--code ${isInvalid ? "field__input--invalid" : ""}`.trim()}
         inputMode="numeric"
         maxLength={length}
@@ -123,7 +131,7 @@ export function CodeInput({ value, onChange, length = 6, error, invalid, id, onB
         {...props}
       />
       {error && (
-        <span className="field__error" id={errorId} style={{ textAlign: "center" }}>
+        <span className="field__error" id={errorId} role="alert" style={{ textAlign: "center" }}>
           {error}
         </span>
       )}

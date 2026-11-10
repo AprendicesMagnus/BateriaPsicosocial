@@ -19,7 +19,7 @@ export default function PoliticaDatos() {
 
   return (
     <div className="politica">
-      <main className="politica__tarjeta">
+      <main id="contenido-principal" tabIndex={-1} className="politica__tarjeta">
         <BotonRegresar tono="oscuro" />
         <h1 className="politica__titulo">Política de tratamiento de datos personales</h1>
         <p className="politica__version">

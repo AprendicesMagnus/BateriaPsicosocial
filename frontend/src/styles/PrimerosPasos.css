@@ -94,7 +94,7 @@ a.primeros-pasos__paso:focus-visible {
   color: var(--ink-500);
 }
 .primeros-pasos__paso--hecho .primeros-pasos__estado {
-  color: var(--success-600);
+  color: var(--success-text);
 }
 @media (max-width: 600px) {
   .primeros-pasos__paso {

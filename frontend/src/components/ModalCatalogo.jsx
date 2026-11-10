@@ -1,19 +1,18 @@
-import { useEffect } from "react";
+import { useRef } from "react";
+import useModalAccesible from "../hooks/useModalAccesible";
 import { categoriasDe, formatearCOP, imagenDe, manejaStock, useProductos } from "../data/products";
 import "../styles/Planes.css";
 import "../styles/Catalogo.css";
 
 export default function ModalCatalogo({ onCerrar }) {
   const { productos, cargando, error } = useProductos();
+  const dialogRef = useRef(null);
 
-  useEffect(() => {
-    const alTeclear = (e) => e.key === "Escape" && onCerrar();
-    window.addEventListener("keydown", alTeclear);
-    return () => window.removeEventListener("keydown", alTeclear);
-  }, [onCerrar]);
+  useModalAccesible(true, dialogRef, { onCerrar });
 
   return (
     <div
+      ref={dialogRef}
       className="planes-fondo"
       role="dialog"
       aria-modal="true"

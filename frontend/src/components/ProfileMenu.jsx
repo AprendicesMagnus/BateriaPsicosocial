@@ -12,6 +12,7 @@ export default function ProfileMenu() {
   const navigate = useNavigate();
   const [abierto, setAbierto] = useState(false);
   const menuRef = useRef(null);
+  const botonRef = useRef(null);
 
   // Cierra el menú si se hace clic fuera de él.
   useEffect(() => {
@@ -23,6 +24,20 @@ export default function ProfileMenu() {
     document.addEventListener("mousedown", handleClickFuera);
     return () => document.removeEventListener("mousedown", handleClickFuera);
   }, []);
+
+  // Cierra el menú con Escape y devuelve el foco al botón disparador.
+  useEffect(() => {
+    if (!abierto) return;
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setAbierto(false);
+        botonRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [abierto]);
 
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
@@ -59,11 +74,12 @@ export default function ProfileMenu() {
   return (
     <div className="app-profile-menu" ref={menuRef}>
       <button
+        ref={botonRef}
         type="button"
         className="app-profile"
         onClick={() => setAbierto((v) => !v)}
-        aria-haspopup="true"
         aria-expanded={abierto}
+        aria-controls="menu-perfil-dropdown"
         aria-label="Perfil de usuario"
       >
         {usuario?.fotoUrl ? (
@@ -78,7 +94,7 @@ export default function ProfileMenu() {
       </button>
 
       {abierto && (
-        <div className="app-profile-dropdown">
+        <div id="menu-perfil-dropdown" className="app-profile-dropdown">
           <button type="button" onClick={handleVerPerfil}>
             Ver perfil
           </button>

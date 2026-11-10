@@ -226,7 +226,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
         </Link>
       </header>
 
-      <main className="app-hero">
+      <main id="contenido-principal" tabIndex={-1} className="app-hero">
         <div className="app-decor app-decor--1" />
         <div className="app-decor app-decor--2" />
         <div className="app-decor app-decor--3" />
@@ -254,6 +254,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                 <span className="field__label">Razón social</span>
                 <input
                   className={`field__input ${mostrarError("razonSocial") ? "field__input--invalid" : ""}`}
+                  aria-required="true"
                   aria-invalid={mostrarError("razonSocial") ? "true" : "false"}
                   aria-describedby={mostrarError("razonSocial") ? "razonSocial-error" : undefined}
                   placeholder="Nombre de la empresa"
@@ -263,7 +264,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                   onBlur={() => marcar("razonSocial")}
                 />
                 {mostrarError("razonSocial") && (
-                  <span className="field__error" id="razonSocial-error">
+                  <span className="field__error" id="razonSocial-error" role="alert">
                     {errores.razonSocial}
                   </span>
                 )}
@@ -275,6 +276,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                 <span className="field__label">NIT de la empresa </span>
                 <input
                   className={`field__input ${mostrarError("nit") ? "field__input--invalid" : ""}`}
+                  aria-required="true"
                   aria-invalid={mostrarError("nit") ? "true" : "false"}
                   aria-describedby={mostrarError("nit") ? "nit-error" : undefined}
                   placeholder="900123456-7"
@@ -285,12 +287,12 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                   onBlur={() => marcar("nit")}
                 />
                 {mostrarError("nit") && (
-                  <span className="field__error" id="nit-error">
+                  <span className="field__error" id="nit-error" role="alert">
                     {errores.nit}
                   </span>
                 )}
                 {nitDuplicateError && (
-                  <span className="field__error" id="nit-duplicate-error">
+                  <span className="field__error" id="nit-duplicate-error" role="alert">
                     {nitDuplicateError}
                   </span>
                 )}
@@ -310,7 +312,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                   onBlur={() => marcar("codigoVerificacion")}
                 />
                 {mostrarError("codigoVerificacion") && (
-                  <span className="field__error" id="codigoVerificacion-error">
+                  <span className="field__error" id="codigoVerificacion-error" role="alert">
                     {errores.codigoVerificacion}
                   </span>
                 )}
@@ -337,7 +339,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     ))}
                   </select>
                   {mostrarError("sector") && (
-                    <span className="field__error" id="sector-error">
+                    <span className="field__error" id="sector-error" role="alert">
                       {errores.sector}
                     </span>
                   )}
@@ -358,7 +360,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     onBlur={() => marcar("numeroTrabajadores")}
                   />
                   {mostrarError("numeroTrabajadores") && (
-                    <span className="field__error" id="numeroTrabajadores-error">
+                    <span className="field__error" id="numeroTrabajadores-error" role="alert">
                       {errores.numeroTrabajadores}
                     </span>
                   )}
@@ -379,7 +381,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     onBlur={() => marcar("ciudad")}
                   />
                   {mostrarError("ciudad") && (
-                    <span className="field__error" id="ciudad-error">
+                    <span className="field__error" id="ciudad-error" role="alert">
                       {errores.ciudad}
                     </span>
                   )}
@@ -399,7 +401,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     onBlur={() => marcar("correoContacto")}
                   />
                   {mostrarError("correoContacto") && (
-                    <span className="field__error" id="correoContacto-error">
+                    <span className="field__error" id="correoContacto-error" role="alert">
                       {errores.correoContacto}
                     </span>
                   )}
@@ -422,7 +424,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     onBlur={() => marcar("celular")}
                   />
                   {mostrarError("celular") && (
-                    <span className="field__error" id="celular-error">
+                    <span className="field__error" id="celular-error" role="alert">
                       {errores.celular}
                     </span>
                   )}
@@ -450,7 +452,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     onBlur={() => marcar("usuarioNombre")}
                   />
                   {mostrarError("usuarioNombre") && (
-                    <span className="field__error" id="usuarioNombre-error">
+                    <span className="field__error" id="usuarioNombre-error" role="alert">
                       {errores.usuarioNombre}
                     </span>
                   )}
@@ -469,7 +471,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     onBlur={() => marcar("usuarioApellido")}
                   />
                   {mostrarError("usuarioApellido") && (
-                    <span className="field__error" id="usuarioApellido-error">
+                    <span className="field__error" id="usuarioApellido-error" role="alert">
                       {errores.usuarioApellido}
                     </span>
                   )}
@@ -491,7 +493,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     onBlur={() => marcar("usuarioEmail")}
                   />
                   {mostrarError("usuarioEmail") && (
-                    <span className="field__error" id="usuarioEmail-error">
+                    <span className="field__error" id="usuarioEmail-error" role="alert">
                       {errores.usuarioEmail}
                     </span>
                   )}
@@ -511,7 +513,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     onBlur={() => marcar("usuarioPassword")}
                   />
                   {mostrarError("usuarioPassword") && (
-                    <span className="field__error" id="usuarioPassword-error">
+                    <span className="field__error" id="usuarioPassword-error" role="alert">
                       {errores.usuarioPassword}
                     </span>
                   )}
@@ -534,7 +536,7 @@ const [nitDuplicateError, setNitDuplicateError] = useState("");
                     onBlur={() => marcar("usuarioResolucion")}
                   />
                   {mostrarError("usuarioResolucion") && (
-                    <span className="field__error" id="usuarioResolucion-error">
+                    <span className="field__error" id="usuarioResolucion-error" role="alert">
                       {errores.usuarioResolucion}
                     </span>
                   )}

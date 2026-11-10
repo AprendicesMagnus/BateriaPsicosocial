@@ -8,10 +8,16 @@ import "../styles/Catalogo.css";
 export default function TiendaMenu({ onPlanes, onCatalogo, icono = null, peso = 700 }) {
   const [abierto, setAbierto] = useState(false);
   const ref = useRef(null);
+  const botonRef = useRef(null);
 
   useEffect(() => {
     const alClicFuera = (e) => ref.current && !ref.current.contains(e.target) && setAbierto(false);
-    const alTeclear = (e) => e.key === "Escape" && setAbierto(false);
+    const alTeclear = (e) => {
+      if (e.key === "Escape") {
+        setAbierto(false);
+        botonRef.current?.focus();
+      }
+    };
     document.addEventListener("mousedown", alClicFuera);
     document.addEventListener("keydown", alTeclear);
     return () => {
@@ -28,11 +34,12 @@ export default function TiendaMenu({ onPlanes, onCatalogo, icono = null, peso = 
   return (
     <div className="tienda-dd" ref={ref}>
       <button
+        ref={botonRef}
         type="button"
         className="tienda-dd__trigger"
         style={{ fontWeight: peso }}
-        aria-haspopup="true"
         aria-expanded={abierto}
+        aria-controls="tienda-dropdown-menu"
         onClick={() => setAbierto((v) => !v)}
       >
         {icono}
@@ -41,9 +48,9 @@ export default function TiendaMenu({ onPlanes, onCatalogo, icono = null, peso = 
       </button>
 
       {abierto && (
-        <div className="tienda-dd__menu" role="menu">
-          <button type="button" role="menuitem" onClick={elegir(onPlanes)}>Planes</button>
-          <button type="button" role="menuitem" onClick={elegir(onCatalogo)}>Catálogo de Productos</button>
+        <div id="tienda-dropdown-menu" className="tienda-dd__menu">
+          <button type="button" onClick={elegir(onPlanes)}>Planes</button>
+          <button type="button" onClick={elegir(onCatalogo)}>Catálogo de Productos</button>
         </div>
       )}
     </div>

@@ -129,13 +129,13 @@ button {
 }
 
 .questionnaire-menu-item > span {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .questionnaire-menu-item strong {
   display: block;
 
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .questionnaire-menu-item small {
@@ -143,7 +143,7 @@ button {
 
   margin-top: 3px;
 
-  font-size: 9px;
+  font-size: 12px;
 
   opacity: .8;
 }
@@ -163,7 +163,7 @@ button {
 }
 
 .sections-title {
-  font-size: 7px;
+  font-size: 12px;
 
   color: #91a8bb;
 
@@ -181,7 +181,7 @@ button {
 
   text-align: left;
 
-  font-size: 8px;
+  font-size: 12px;
 
   padding: 2px 12px;
 
@@ -206,8 +206,8 @@ button {
   border-top: 1px solid rgba(255,255,255,.12);
   padding: 15px 12px 8px;
   color: #9fb1c0;
-  font-size: 11px;
-  line-height: 12px;
+  font-size: 12px;
+  line-height: 15px;
 }
 
 
@@ -293,13 +293,13 @@ button {
 }
 
 .questionnaire-tabs button {
-  height: 37px;
+  min-height: 37px;
   border: none;
   border-radius: 6px;
   background: #eaf0f6;
   color: #667b8e;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 12px;
   padding: 0 15px;
   display: flex;
   align-items: center;
@@ -312,7 +312,7 @@ button {
 }
 
 .questionnaire-tabs button span {
-  font-size: 7px;
+  font-size: 12px;
   opacity: .8;
 }
 
@@ -322,7 +322,7 @@ button {
 ========================================================= */
 
 .general-progress {
-  height: 37px;
+  min-height: 37px;
   background: #eaf0f6;
   border-radius: 6px;
   padding: 0 12px;
@@ -330,7 +330,7 @@ button {
   align-items: center;
   gap: 10px;
   color: #71869a;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .general-progress-bar {
@@ -356,7 +356,7 @@ button {
 }
 
 .general-progress small {
-  font-size: 7px;
+  font-size: 12px;
 }
 
 
@@ -388,14 +388,14 @@ button {
 
   align-items: flex-start;
 
-  font-size: 10px;
+  font-size: 12px;
 
   color: #173b63;
 }
 
 .questions-header > span {
   color: #8b99a5;
-  font-size: 7px;
+  font-size: 12px;
 }
 
 
@@ -448,12 +448,12 @@ button {
 
 .answers-header {
   margin-top: 8px;
-  height: 32px;
+  min-height: 32px;
   background: #f7f9fb;
   border-radius: 5px;
   padding: 0 12px 0 12px;
   color: #6f8191;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .answers-header > span:first-child {
@@ -498,7 +498,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
 }
 
@@ -556,6 +556,12 @@ button {
   border-color: #087bd1;
 }
 
+.answer-option input:focus-visible + .custom-radio {
+  outline: 2px solid #087bd1;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(8, 123, 209, 0.25);
+}
+
 .answer-option input:checked + .custom-radio::after {
   content: "";
 
@@ -573,11 +579,11 @@ button {
 }
 
 .answer-option small {
-  font-size: 10px;
+  font-size: 12px;
 
   text-align: center;
 
-  line-height: 10px;
+  line-height: 14px;
 }
 
 
@@ -595,7 +601,7 @@ button {
 
 .previous-button,
 .next-button {
-  height: 37px;
+  min-height: 37px;
 
   padding: 0 15px;
 
@@ -603,7 +609,7 @@ button {
 
   cursor: pointer;
 
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .previous-button {
@@ -631,7 +637,7 @@ button {
 }
 
 .page-indicator {
-  font-size: 9px;
+  font-size: 12px;
   color: #8c99a5;
 }
 

@@ -236,6 +236,7 @@ export default function Landing() {
           HERO + CARRUSEL DE FONDO
       ====================================================== */}
 
+      <main id="contenido-principal" tabIndex={-1}>
       <section className="hero">
 
         {/* CARRUSEL DE IMÁGENES */}
@@ -631,6 +632,8 @@ export default function Landing() {
       {/* =====================================================
           FOOTER
       ====================================================== */}
+
+      </main>
 
       <footer className="footer">
 

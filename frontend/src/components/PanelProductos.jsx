@@ -361,16 +361,21 @@ export default function PanelProductos() {
       {cargando ? (
         <p className="adm-vacio">Cargando productos…</p>
       ) : (
-        <div className="adm-tabla-wrap">
+        <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Catálogo de productos">
           <table className="adm-tabla">
+            <caption className="sr-only">Catálogo de productos</caption>
             <thead>
               <tr>
-                <th>Imagen</th>
-                <th>Producto</th>
-                <th>Categoría</th>
-                <th>Precio</th>
-                <th>Stock</th>
-                <th>Acciones</th>
+                <th scope="col">Imagen</th>
+                <th scope="col">Producto</th>
+                <th scope="col">Categoría</th>
+                <th scope="col">Precio</th>
+                <th scope="col">Stock</th>
+                <th scope="col">Acciones</th>
+
+
+
+
               </tr>
             </thead>
 

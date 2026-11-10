@@ -2,7 +2,8 @@
  * Tarjeta de consentimiento informado que se muestra antes de comenzar la batería.
  * Incluye una fila que abre el texto legal completo en una ventana modal y el botón para comenzar.
  */
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
+import useModalAccesible from "../hooks/useModalAccesible";
 import {
   HiOutlineShieldCheck,
   HiOutlineChevronRight,
@@ -50,12 +51,9 @@ function TextoConsentimiento() {
 export default function ConsentimientoInformado({ acepta, onChange, onComenzar, iniciando = false }) {
   const [abierto, setAbierto] = useState(false);
 
-  useEffect(() => {
-    if (!abierto) return;
-    const cerrarConEsc = (e) => e.key === "Escape" && setAbierto(false);
-    window.addEventListener("keydown", cerrarConEsc);
-    return () => window.removeEventListener("keydown", cerrarConEsc);
-  }, [abierto]);
+  const dialogRef = useRef(null);
+
+  useModalAccesible(abierto, dialogRef, { onCerrar: () => setAbierto(false) });
 
   function aceptarDesdeModal() {
     onChange(true);
@@ -113,6 +111,7 @@ export default function ConsentimientoInformado({ acepta, onChange, onComenzar, 
       {abierto && (
         <div className="consentimiento-modal" onClick={() => setAbierto(false)}>
           <div
+            ref={dialogRef}
             className="consentimiento-modal__caja"
             role="dialog"
             aria-modal="true"

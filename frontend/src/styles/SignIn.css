@@ -146,16 +146,18 @@
 
   color: #333333;
 
-  font-size: 11px;
+  font-size: 12px;
 
-  outline: none;
 }
 
 
-.login-container input:focus {
-  border-color: #b8b8b8;
-
+.login-container input:focus,
+.login-container input:focus-visible {
+  border-color: var(--navy-600, #2d3f82);
+  outline: 2px solid var(--navy-600, #2d3f82);
+  outline-offset: 1px;
   background: #f5f5f5;
+  box-shadow: 0 0 0 3px rgba(45, 63, 130, 0.18);
 }
 
 
@@ -164,7 +166,7 @@
    ========================================================= */
 
 .login-container label {
-  font-size: 10px;
+  font-size: 12px;
 
   color: #555555;
 }
@@ -198,7 +200,7 @@
 
   margin-bottom: 17px;
 
-  font-size: 9px;
+  font-size: 12px;
 }
 
 
@@ -251,7 +253,7 @@
 
   color: #777777;
 
-  font-size: 9px;
+  font-size: 12px;
 }
 
 
@@ -283,7 +285,7 @@
 
   border: 1px solid #dddddd;
 
-  font-size: 10px;
+  font-size: 12px;
 }
 
 
@@ -292,7 +294,7 @@
    ========================================================= */
 
 .login-container [class*="message"] {
-  font-size: 10px;
+  font-size: 12px;
 
   margin-bottom: 8px;
 

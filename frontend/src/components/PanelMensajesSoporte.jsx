@@ -109,15 +109,16 @@ export default function PanelMensajesSoporte({ selector = null }) {
 
       {mensaje && <div className={`plan-mensaje plan-mensaje--${mensaje.tipo}`}>{mensaje.texto}</div>}
 
-      <div className="adm-tabla-wrap">
+      <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Mensajes de soporte">
         <table className="adm-tabla">
+          <caption className="sr-only">Mensajes de soporte</caption>
           <thead>
             <tr>
-              <th>Usuario</th>
-              <th>Fecha</th>
-              <th>Mensaje</th>
-              <th>Estado</th>
-              <th>Acciones</th>
+              <th scope="col">Usuario</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Mensaje</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
             </tr>
           </thead>
           <tbody>

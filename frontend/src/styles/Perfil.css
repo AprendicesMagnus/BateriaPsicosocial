@@ -513,12 +513,12 @@
 .sesion-item__icon { flex: 0 0 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: #eef4f8; }
 .sesion-item__info { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; color: var(--ink-800); font-size: 12px; overflow-wrap: anywhere; }
 .sesion-item__info strong { font-size: 12px; }
-.sesion-item__info span, .sesion-item__info small, .sesiones-muted, .sesiones-nota { color: var(--ink-500); font-size: 11px; }
-.sesion-actual { color: #166534; background: #dcfce7; border-radius: 20px; padding: 4px 8px; font-size: 10px; white-space: nowrap; }
-.sesion-cerrar { border: 1px solid #fecaca; background: #fff; color: #b91c1c; border-radius: 7px; padding: 6px 9px; font-size: 11px; cursor: pointer; }
+.sesion-item__info span, .sesion-item__info small, .sesiones-muted, .sesiones-nota { color: var(--ink-500); font-size: 12px; }
+.sesion-actual { color: #166534; background: #dcfce7; border-radius: 20px; padding: 4px 8px; font-size: 12px; white-space: nowrap; }
+.sesion-cerrar { border: 1px solid #fecaca; background: #fff; color: #b91c1c; border-radius: 7px; padding: 6px 9px; font-size: 12px; cursor: pointer; }
 .sesion-cerrar:disabled { opacity: .5; cursor: wait; }
 .sesiones-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 14px; }
-.sesiones-actions button { font-size: 11px; padding: 8px 10px; }
+.sesiones-actions button { font-size: 12px; padding: 8px 10px; }
 .sesiones-error, .sesiones-ok { padding: 8px 10px; border-radius: 7px; font-size: 12px; }
 .sesiones-error { color: #991b1b; background: #fee2e2; }
 .sesiones-ok { color: #166534; background: #dcfce7; }

@@ -95,19 +95,20 @@ export default function PanelHistorialCompras() {
       {cargando ? (
         <p className="adm-vacio">Cargando historial de compras…</p>
       ) : (
-        <div className="adm-tabla-wrap">
+        <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Historial de compras">
           <table className="adm-tabla">
+            <caption className="sr-only">Historial de compras</caption>
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Nombre del comprador</th>
-                <th>Empresa</th>
-                <th>Tipo</th>
-                <th>Detalle</th>
-                <th>Valor</th>
-                <th>Estado</th>
-                <th>Seguimiento</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Hora</th>
+                <th scope="col">Nombre del comprador</th>
+                <th scope="col">Empresa</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Detalle</th>
+                <th scope="col">Valor</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Seguimiento</th>
               </tr>
             </thead>
             <tbody>

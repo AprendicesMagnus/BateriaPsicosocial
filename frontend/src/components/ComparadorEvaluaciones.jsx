@@ -257,15 +257,21 @@ export default function ComparadorEvaluaciones({ token, organizacionId }) {
               No hay cuestionarios ni dimensiones comunes entre ambas evaluaciones para comparar.
             </p>
           ) : (
-            <div className="comparador__tabla-contenedor">
+            <div
+              className="comparador__tabla-contenedor"
+              tabIndex={0}
+              role="region"
+              aria-label="Comparación de dimensiones entre evaluaciones"
+            >
               <table className="comparador__tabla">
+                <caption className="sr-only">Comparación de dimensiones entre evaluaciones</caption>
                 <thead>
                   <tr>
-                    <th>Dimensión</th>
-                    <th>Dominio</th>
-                    <th>A</th>
-                    <th>B</th>
-                    <th>Diferencia</th>
+                    <th scope="col">Dimensión</th>
+                    <th scope="col">Dominio</th>
+                    <th scope="col">A</th>
+                    <th scope="col">B</th>
+                    <th scope="col">Diferencia</th>
                   </tr>
                 </thead>
                 <tbody>

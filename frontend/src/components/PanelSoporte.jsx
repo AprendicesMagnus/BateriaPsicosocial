@@ -116,7 +116,7 @@ export default function PanelSoporte() {
 
   // Mismo selector para el contenido editable y para los mensajes de los usuarios.
   const selectorSeccion = (
-    <select className="adm-input" value={seccion} onChange={(e) => { setSeccion(e.target.value); setForm(null); setMensaje(null); }}>
+    <select className="adm-input" aria-label="Sección de soporte" value={seccion} onChange={(e) => { setSeccion(e.target.value); setForm(null); setMensaje(null); }}>
       {SECCIONES.map((s) => (
         <option key={s.clave} value={s.clave}>
           {s.label}
@@ -187,15 +187,16 @@ export default function PanelSoporte() {
         </form>
       )}
 
-      <div className="adm-tabla-wrap">
+      <div className="adm-tabla-wrap" tabIndex={0} role="region" aria-label="Contenido del Centro de Ayuda">
         <table className="adm-tabla">
+          <caption className="sr-only">Contenido del Centro de Ayuda</caption>
           <thead>
             <tr>
-              <th>Orden</th>
-              <th>{info.conTitulo ? "Título" : "Paso"}</th>
-              {info.conTitulo && <th>Texto</th>}
-              <th>Estado</th>
-              <th>Acciones</th>
+              <th scope="col">Orden</th>
+              <th scope="col">{info.conTitulo ? "Título" : "Paso"}</th>
+              {info.conTitulo && <th scope="col">Texto</th>}
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
             </tr>
           </thead>
           <tbody>

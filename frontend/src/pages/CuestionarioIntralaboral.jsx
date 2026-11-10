@@ -312,14 +312,14 @@ export default function CuestionarioIntralaboral() {
 
         {/* MENÚ */}
 
-        <nav className="questionnaire-menu">
+        <nav className="questionnaire-menu" aria-label="Cuestionarios">
 
           <button
             className="questionnaire-menu-item"
             type="button"
             onClick={() => navigate("/cuestionario-estres")}
           >
-            <span>▣</span>
+            <span aria-hidden="true">▣</span>
 
             <div>
               <strong>Estrés</strong>
@@ -334,7 +334,7 @@ export default function CuestionarioIntralaboral() {
             type="button"
             onClick={() => navigate("/cuestionario-extralaboral")}
           >
-            <span>▣</span>
+            <span aria-hidden="true">▣</span>
 
             <div>
               <strong>Factores extralaborales</strong>
@@ -346,10 +346,11 @@ export default function CuestionarioIntralaboral() {
 
           <button
             className="questionnaire-menu-item active"
+            aria-current="page"
             type="button"
             onClick={() => navigate("/cuestionario-intralaboral")}
           >
-            <span>▣</span>
+            <span aria-hidden="true">▣</span>
 
             <div>
               <strong>Factores intralaborales</strong>
@@ -379,7 +380,7 @@ export default function CuestionarioIntralaboral() {
           CONTENIDO
       ===================================================== */}
 
-      <main className="questionnaire-main">
+      <main id="contenido-principal" tabIndex={-1} className="questionnaire-main">
         {/* Aviso de carga / error del guardado en la BD */}
         <AvisoCuestionario cargando={cargando} error={error} />
 
@@ -389,7 +390,7 @@ export default function CuestionarioIntralaboral() {
 
         <section className="questionnaire-intro">
 
-          <div className="questionnaire-heart">
+          <div className="questionnaire-heart" aria-hidden="true">
             ♥
           </div>
 
@@ -442,6 +443,7 @@ export default function CuestionarioIntralaboral() {
           <button
             type="button"
             className="active"
+            aria-current="page"
             onClick={() => navigate("/cuestionario-intralaboral")}
           >
             <strong>Intralaboral - Forma A</strong>
@@ -450,7 +452,7 @@ export default function CuestionarioIntralaboral() {
 
           <div className="general-progress">
             <span>Progreso general</span>
-            <div className="general-progress-bar">
+            <div className="general-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progreso} aria-label="Progreso general">
               <div style={{ width: `${progreso}%` }}></div>
             </div>
             <small>{progreso}%</small>
@@ -475,7 +477,7 @@ export default function CuestionarioIntralaboral() {
                 Pregunta {inicio + 1}–{fin} de {preguntasVisibles.length}
               </strong>
 
-              <div className="questions-progress">
+              <div className="questions-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progreso} aria-label="Progreso de esta sección">
                 <div style={{ width: `${progreso}%` }}></div>
               </div>
 
@@ -491,7 +493,7 @@ export default function CuestionarioIntralaboral() {
 
           {/* ENCABEZADO DE OPCIONES */}
 
-          <div className="answers-header">
+          <div className="answers-header" aria-hidden="true">
 
             <span>
               Frecuencia:
@@ -514,6 +516,8 @@ export default function CuestionarioIntralaboral() {
               const sinResponder =
                 intentoFinalizar && respuestas[pregunta.id] === undefined;
 
+              const textoId = `pregunta-texto-${pregunta.id}`;
+
               if (pregunta.tipo === "si_no") {
                 return (
                   <div
@@ -521,11 +525,18 @@ export default function CuestionarioIntralaboral() {
                       sinResponder ? "question-row-error" : ""
                     }`}
                     key={pregunta.id}
+                    role="radiogroup"
+                    aria-labelledby={textoId}
+                    aria-required="true"
+                    aria-invalid={sinResponder ? "true" : undefined}
                   >
+                    {sinResponder && (
+                      <span className="sr-only">Pregunta sin responder</span>
+                    )}
 
                     <div className="question-number">?</div>
 
-                    <div className="question-text">
+                    <div className="question-text" id={textoId}>
                       {pregunta.texto}
                     </div>
 
@@ -555,13 +566,20 @@ export default function CuestionarioIntralaboral() {
                     sinResponder ? "question-row-error" : ""
                   }`}
                   key={pregunta.id}
+                  role="radiogroup"
+                  aria-labelledby={textoId}
+                  aria-required="true"
+                  aria-invalid={sinResponder ? "true" : undefined}
                 >
+                  {sinResponder && (
+                    <span className="sr-only">Pregunta sin responder</span>
+                  )}
 
                   <div className="question-number">
                     {pregunta.id}
                   </div>
 
-                  <div className="question-text">
+                  <div className="question-text" id={textoId}>
                     {pregunta.id}. {pregunta.texto}
                   </div>
 
@@ -602,7 +620,7 @@ export default function CuestionarioIntralaboral() {
               ← Anterior
             </button>
 
-            <span className="page-indicator">
+            <span className="page-indicator" aria-live="polite">
               Página {paginaSegura + 1} de {totalPaginas}
             </span>
 

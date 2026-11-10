@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { editarEmpresaAdmin } from "../api/perfil";
+import { soloDigitos } from "../utils/validaciones";
+import useModalAccesible from "../hooks/useModalAccesible";
 import "../styles/PanelModal.css";
 
 export default function ModalEmpresaAdmin({ empresa, token, onCerrar, onGuardado }) {
@@ -14,6 +16,10 @@ export default function ModalEmpresaAdmin({ empresa, token, onCerrar, onGuardado
   });
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const dialogRef = useRef(null);
+
+  useModalAccesible(true, dialogRef, { onCerrar });
+
   const cambiar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }));
 
   async function guardar(e) {
@@ -37,7 +43,7 @@ export default function ModalEmpresaAdmin({ empresa, token, onCerrar, onGuardado
   }
 
   return (
-    <div className="adm-modal-fondo" role="dialog" aria-modal="true" aria-labelledby="adm-empresa-titulo">
+    <div ref={dialogRef} className="adm-modal-fondo" role="dialog" aria-modal="true" aria-labelledby="adm-empresa-titulo">
       <form className="adm-modal" onSubmit={guardar} noValidate>
         <h2 id="adm-empresa-titulo">Editar empresa</h2>
         <label>Nombre de la empresa<input maxLength={180} value={form.nombre} onChange={cambiar("nombre")} /></label>

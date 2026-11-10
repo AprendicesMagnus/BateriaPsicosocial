@@ -260,7 +260,7 @@ export default function Respuestas() {
     <div className="app-shell-page resp-pagina">
       <AppTopbar />
 
-      <main className="app-hero">
+      <main id="contenido-principal" tabIndex={-1} className="app-hero">
         <div className="app-content">
           {/* Fondo claro: texto oscuro en el botón */}
           <BotonRegresar tono="oscuro" />
@@ -285,6 +285,7 @@ export default function Respuestas() {
                 </svg>
                 <input
                   type="search"
+                  aria-label="Buscar respuestas por nombre o ID"
                   placeholder="Buscar por nombre o ID"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}

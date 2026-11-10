@@ -20,7 +20,7 @@ export default function AvisoCuestionario({ cargando, error }) {
   }
   if (cargando) {
     return (
-      <div role="status" style={estilos.cargando}>
+      <div role="status" aria-live="polite" style={estilos.cargando}>
         Cargando cuestionario…
       </div>
     );

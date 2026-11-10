@@ -214,7 +214,7 @@ export default function Catalogo() {
     <div className="app-shell-page">
       <AppTopbar />
 
-      <main className="app-hero">
+      <main id="contenido-principal" tabIndex={-1} className="app-hero">
         <div className="app-decor app-decor--1" />
         <div className="app-decor app-decor--2" />
         <div className="app-content catalogo-pagina">

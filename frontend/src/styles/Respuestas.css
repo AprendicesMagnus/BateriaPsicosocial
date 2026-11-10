@@ -73,6 +73,12 @@
   border-bottom: 1px solid var(--line-200);
   color: var(--ink-500);
 }
+.resp-buscador:focus-within {
+  border-color: var(--navy-600);
+  outline: 2px solid var(--navy-600);
+  outline-offset: -1px;
+  box-shadow: 0 0 0 2px rgba(45, 63, 130, 0.18);
+}
 .resp-buscador input {
   flex: 1;
   min-width: 0;
@@ -81,6 +87,9 @@
   background: transparent;
   font-size: 14px;
   color: var(--ink-900);
+}
+.resp-buscador input:focus-visible {
+  outline: none;
 }
 .resp-contador {
   font-size: 12px;
@@ -164,7 +173,7 @@
   flex-shrink: 0;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -218,7 +227,7 @@
   margin: 6px 0 0;
 }
 .resp-datos dt {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -265,7 +274,7 @@
   border-bottom-color: var(--navy-900);
 }
 .resp-tab span {
-  color: var(--success-600);
+  color: var(--success-text);
 }
 
 /* Resultado total del cuestionario */
@@ -285,7 +294,7 @@
   gap: 2px;
 }
 .resp-resumen-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -316,7 +325,7 @@
   display: inline-block;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   background: #f1f5f9;

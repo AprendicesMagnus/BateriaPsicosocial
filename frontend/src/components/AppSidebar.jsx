@@ -16,6 +16,13 @@ export default function AppSidebar({ items, onLogoClick, mostrarPie = false, acc
         onClick={onLogoClick}
         style={{ cursor: "pointer" }}
         role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onLogoClick?.();
+          }
+        }}
         aria-label="Ir al inicio"
       >
         <img src="/logob1.png" alt="Magnus" style={{ height: 70, marginRight: "auto" }} />

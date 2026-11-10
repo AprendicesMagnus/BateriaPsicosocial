@@ -26,7 +26,7 @@
 
   margin-bottom: 7px;
 
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
 
@@ -186,11 +186,11 @@
 
   margin-bottom: 3px;
 
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.09em;
 
-  color: #98a2b3;
+  color: #667085;
 }
 
 .checkout-section-title {
@@ -387,9 +387,9 @@
 .checkout-terms {
   margin: 12px 0 0;
 
-  color: #98a2b3;
+  color: #667085;
 
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
 
   text-align: center;
@@ -481,9 +481,9 @@
 
   margin-top: 3px;
 
-  color: #98a2b3;
+  color: #667085;
 
-  font-size: 11px;
+  font-size: 12px;
 }
 
 
@@ -552,14 +552,15 @@
 
   text-align: center;
 
-  outline: none;
 }
 
-.checkout-stepper-input:focus {
-  border-color: #6878a8;
-
+.checkout-stepper-input:focus,
+.checkout-stepper-input:focus-visible {
+  border-color: var(--navy-600, #2d3f82);
+  outline: 2px solid var(--navy-600, #2d3f82);
+  outline-offset: 1px;
   box-shadow:
-    0 0 0 3px rgba(104, 120, 168, 0.12);
+    0 0 0 3px rgba(45, 63, 130, 0.2);
 }
 
 
@@ -594,7 +595,7 @@
 }
 
 .checkout-price-row small {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 
@@ -628,9 +629,9 @@
 }
 
 .checkout-total small {
-  color: #98a2b3;
+  color: #667085;
 
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .checkout-total>strong {
@@ -685,7 +686,7 @@
 .checkout-summary-security span {
   color: #7b8498;
 
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
 }
 

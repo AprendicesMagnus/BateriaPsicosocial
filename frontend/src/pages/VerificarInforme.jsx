@@ -62,7 +62,7 @@ export default function VerificarInforme() {
   }
 
   return (
-    <main className="verificacion">
+    <main id="contenido-principal" tabIndex={-1} className="verificacion">
       <section className="verificacion__tarjeta">
         <h1 className="verificacion__titulo">Verificación de informe</h1>
 

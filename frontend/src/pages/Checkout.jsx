@@ -422,7 +422,7 @@ export default function Checkout() {
     <div className="app-shell-page">
       <AppTopbar />
 
-      <main className="app-hero">
+      <main id="contenido-principal" tabIndex={-1} className="app-hero">
         <div className="app-decor app-decor--1" />
         <div className="app-decor app-decor--2" />
         <div className="app-decor app-decor--3" />
@@ -550,6 +550,7 @@ export default function Checkout() {
                     value={planId}
                     onChange={(e) => elegirPlan(e.target.value)}
                     disabled={loading}
+                    aria-required="true"
                   >
                     <option value="">Selecciona un plan</option>
                     {planes.map((p) => (
@@ -591,6 +592,7 @@ export default function Checkout() {
                     onChange={(e) => setCantidad(soloDigitos(e.target.value, 6))}
                     onBlur={() => setCantidadTocada(true)}
                     aria-label="Cantidad de baterías"
+                    aria-required="true"
                     aria-invalid={mostrarErrorCantidad}
                     aria-describedby={
                       mostrarErrorCantidad ? "cantidad-error" : undefined

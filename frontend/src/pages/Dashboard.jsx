@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import useModalAccesible from "../hooks/useModalAccesible";
 import { BsLockFill, BsExclamationTriangleFill, BsLink45Deg } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import ProfileMenu from "../components/ProfileMenu";
@@ -348,6 +349,9 @@ export default function Dashboard() {
     setNombreEnlaceSolo("");
   };
 
+  const modalCuestionarioRef = useRef(null);
+  useModalAccesible(mostrarModal, modalCuestionarioRef, { onCerrar: cerrarModal });
+
   const elegirTipo = (ruta) => {
     cerrarModal();
     navigate(ruta);
@@ -391,7 +395,7 @@ export default function Dashboard() {
         ]}
       />
 
-      <main className="dashboard__main">
+      <main id="contenido-principal" tabIndex={-1} className="dashboard__main">
         <div className="dashboard__mobile-toolbar">
           <BotonRegresar tono="oscuro" />
           <div className="app-acciones-usuario">
@@ -1003,13 +1007,14 @@ export default function Dashboard() {
           )}
 
           {!cargando && !indicadores?.anonimizado && (
-            <div className="table-wrap">
+            <div className="table-wrap" tabIndex={0} role="region" aria-label="Métricas de participación">
               <table className="responders-table">
+                <caption className="sr-only">Métricas de participación</caption>
                 <thead>
                   <tr>
-                    <th>Métrica de Participación</th>
-                    <th>Valor Registrado</th>
-                    <th>Estado</th>
+                    <th scope="col">Métrica de Participación</th>
+                    <th scope="col">Valor Registrado</th>
+                    <th scope="col">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1052,14 +1057,14 @@ export default function Dashboard() {
       {/* Modal de selección de cuestionario (cuestionario, luego tipo A/B) */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={cerrarModal}>
-          <div className="questionnaire-modal" onClick={(e) => e.stopPropagation()}>
+          <div ref={modalCuestionarioRef} className="questionnaire-modal" role="dialog" aria-modal="true" aria-labelledby="modal-cuestionario-titulo" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" type="button" onClick={cerrarModal} aria-label="Cerrar ventana">
               ×
             </button>
 
             {enlaceSoloObjetivo ? (
               <>
-                <h2>Enlace para un solo cuestionario</h2>
+                <h2 id="modal-cuestionario-titulo">Enlace para un solo cuestionario</h2>
                 <p>
                   Quien abra este enlace solo podrá responder{" "}
                   <strong>{enlaceSoloObjetivo.titulo}</strong>; no verá el resto de la batería.
@@ -1069,10 +1074,12 @@ export default function Dashboard() {
                 <input
                   type="text"
                   className="enlace-solo__input"
+                  aria-label="Nombre del enlace individual"
                   placeholder="Ej: Juan Pérez - Estrés"
                   value={nombreEnlaceSolo}
                   onChange={(e) => setNombreEnlaceSolo(e.target.value)}
                   autoFocus
+                  data-autofocus
                   disabled={creandoEnlace}
                 />
 
@@ -1108,7 +1115,7 @@ export default function Dashboard() {
                   />
                 </div>
 
-                <h2>¿Qué cuestionario deseas realizar?</h2>
+                <h2 id="modal-cuestionario-titulo">¿Qué cuestionario deseas realizar?</h2>
                 <p>Selecciona el cuestionario que deseas realizar para continuar con la evaluación.</p>
 
                 <div className="questionnaire-options">
@@ -1126,7 +1133,7 @@ export default function Dashboard() {
               </>
             ) : (
               <>
-                <h2>{cuestionarioSeleccionado.titulo}</h2>
+                <h2 id="modal-cuestionario-titulo">{cuestionarioSeleccionado.titulo}</h2>
                 <p>Selecciona la modalidad según el tipo de trabajador:</p>
 
                 {puedeCrearEnlaces && (
@@ -1238,6 +1245,16 @@ function IndicatorCard({
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       style={{ scrollMarginTop: "30px" }}
     >
       <div className="indicator-header">

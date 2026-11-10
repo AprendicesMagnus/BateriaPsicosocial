@@ -1,17 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import useModalAccesible from "../hooks/useModalAccesible";
 import "../styles/QrEnlaceModal.css";
 
 export default function QrEnlaceModal({ url, titulo, onCerrar }) {
   const contenedorRef = useRef(null);
+  const dialogRef = useRef(null);
 
-  useEffect(() => {
-    function alPresionarTecla(evento) {
-      if (evento.key === "Escape") onCerrar();
-    }
-    window.addEventListener("keydown", alPresionarTecla);
-    return () => window.removeEventListener("keydown", alPresionarTecla);
-  }, [onCerrar]);
+  useModalAccesible(true, dialogRef, { onCerrar });
 
   function descargar() {
     const canvas = contenedorRef.current?.querySelector("canvas");
@@ -26,6 +22,7 @@ export default function QrEnlaceModal({ url, titulo, onCerrar }) {
   return (
     <div className="qr-modal__fondo" onClick={onCerrar}>
       <div
+        ref={dialogRef}
         className="qr-modal"
         role="dialog"
         aria-modal="true"

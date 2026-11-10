@@ -252,7 +252,7 @@ export default function Soporte() {
   return (
     <div className="app-shell-page soporte-fondo">
       <AppTopbar />
-      <main className="app-hero">
+      <main id="contenido-principal" tabIndex={-1} className="app-hero">
 
         <div className="app-content soporte-page">
           <BotonRegresar tono="oscuro" />
@@ -437,6 +437,8 @@ export default function Soporte() {
                 <form onSubmit={handleEnviar} className="soporte-form">
                   <textarea
                     rows={4}
+                    aria-label="Describe tu problema o duda"
+                    aria-required="true"
                     placeholder="Describe tu problema o duda..."
                     value={mensaje}
                     onChange={(e) => setMensaje(e.target.value)}

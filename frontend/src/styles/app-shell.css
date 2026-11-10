@@ -83,7 +83,7 @@
 }
 
 .app-profile-dropdown-danger {
-  color: var(--danger-500) !important;
+  color: var(--danger-text) !important;
 }
 
 .app-avatar {

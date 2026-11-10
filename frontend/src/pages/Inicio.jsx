@@ -432,6 +432,7 @@ export default function Inicio() {
           HERO + CARRUSEL DE FONDO
       ====================================================== */}
 
+      <main id="contenido-principal" tabIndex={-1}>
       <section className="hero">
 
         {/* VIDEO DE FONDO */}
@@ -715,6 +716,8 @@ export default function Inicio() {
       {/* =====================================================
           FOOTER
       ====================================================== */}
+
+      </main>
 
       <footer className="footer">
 

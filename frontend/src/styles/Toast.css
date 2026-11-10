@@ -33,13 +33,14 @@
   align-items: center;
   justify-content: center;
   background: #f5a623;
-  color: #ffffff;
+  color: #0f1a3d;
   font-weight: 700;
   font-size: 14px;
 }
 
 .toast--error .toast__icono {
   background: #d64545;
+  color: #ffffff;
 }
 
 .toast__barra {
@@ -72,4 +73,5 @@
 .toast--exito .toast__icono,
 .toast--exito .toast__barra {
   background: #2e9e5b;
+  color: #ffffff;
 }

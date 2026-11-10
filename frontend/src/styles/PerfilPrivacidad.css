@@ -27,7 +27,7 @@
   gap: 8px;
 }
 .perfil-privacidad__peligro {
-  color: var(--danger-500);
+  color: var(--danger-text);
   border-color: var(--danger-500);
 }
 .perfil-privacidad__error {

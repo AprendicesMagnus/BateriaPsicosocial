@@ -96,7 +96,7 @@
 }
 
 .soporte-tab-tu {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   background: rgba(255, 255, 255, 0.25);
   padding: 1px 6px;
@@ -362,7 +362,7 @@
 }
 
 .soporte-badge-pronto {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   background: #fff3df;
@@ -408,6 +408,12 @@
   background: var(--white);
   color: var(--ink-500);
 }
+.soporte-buscador:focus-within {
+  border-color: var(--navy-600);
+  outline: 2px solid var(--navy-600);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px rgba(45, 63, 130, 0.18);
+}
 .soporte-buscador input {
   flex: 1;
   min-width: 0;
@@ -417,6 +423,9 @@
   color: var(--ink-900);
   font: inherit;
   font-size: 14px;
+}
+.soporte-buscador input:focus-visible {
+  outline: none;
 }
 .soporte-resultados {
   margin: 0;
@@ -455,7 +464,7 @@
 }
 
 .soporte-mensajes__chip {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   padding: 2px 10px;
   border-radius: 999px;

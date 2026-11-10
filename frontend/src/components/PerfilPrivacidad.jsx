@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import useModalAccesible from "../hooks/useModalAccesible";
 import { descargarMisDatos, solicitarEliminacionCuenta } from "../api/perfil";
 import "../styles/PerfilPrivacidad.css";
 
@@ -27,18 +28,12 @@ export default function PerfilPrivacidad({ token, puedeSolicitarEliminacion = tr
     setTimeout(() => botonSolicitar.current?.focus(), 0);
   }
 
-  useEffect(() => {
-    if (modalAbierto) campoMotivo.current?.focus();
-  }, [modalAbierto]);
+  const dialogRef = useRef(null);
 
-  useEffect(() => {
-    if (!modalAbierto) return undefined;
-    function alPresionarTecla(evento) {
-      if (evento.key === "Escape" && !enviando) cerrarModal();
-    }
-    window.addEventListener("keydown", alPresionarTecla);
-    return () => window.removeEventListener("keydown", alPresionarTecla);
-  }, [modalAbierto, enviando]);
+  useModalAccesible(modalAbierto, dialogRef, {
+    onCerrar: () => cerrarModal(),
+    cerrarConEsc: !enviando,
+  });
 
   async function handleDescargar() {
     setError("");
@@ -109,6 +104,7 @@ export default function PerfilPrivacidad({ token, puedeSolicitarEliminacion = tr
       {modalAbierto && (
         <div className="perfil-modal__fondo">
           <div
+            ref={dialogRef}
             className="perfil-modal"
             role="dialog"
             aria-modal="true"
@@ -129,6 +125,7 @@ export default function PerfilPrivacidad({ token, puedeSolicitarEliminacion = tr
             <textarea
               id="motivo-eliminacion"
               ref={campoMotivo}
+              data-autofocus
               className="perfil-modal__campo"
               rows={4}
               maxLength={MAX_MOTIVO}

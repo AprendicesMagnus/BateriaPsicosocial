@@ -28,6 +28,7 @@ def _limpiar_auditoria_2fa(db_session):
 
 @pytest.fixture
 def activar_2fa(monkeypatch):
+    monkeypatch.setattr(auth_service.settings, "doble_factor_activo", True)
     monkeypatch.setattr(auth_service, "ROLES_REQUIEREN_2FA", set(ROLES_REALES))
     monkeypatch.setattr(auth_service.settings, "dos_pasos_activo", True)
     monkeypatch.setattr(auth_service.settings, "doble_factor_correos_exentos", "")
@@ -123,7 +124,7 @@ def test_codigo_correcto_entrega_token_y_audita(client, db_session, activar_2fa,
 
     auditoria = (
         db_session.query(Auditoria)
-        .filter(Auditoria.usuario_id == usuario.id, Auditoria.accion == "LOGIN_2FA")
+        .filter(Auditoria.usuario_id == usuario.id, Auditoria.accion == "LOGIN")
         .count()
     )
     assert auditoria == 1

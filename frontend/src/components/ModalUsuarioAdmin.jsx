@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { editarUsuarioAdmin, invitarUsuario } from "../api/perfil";
 import { emailValido, filtrarNombrePersona, nombrePersonaValido, normalizarEmail, soloDigitos } from "../utils/validaciones";
+import useModalAccesible from "../hooks/useModalAccesible";
 import "../styles/PanelModal.css";
 
 const ROLES_INVITAR = [
@@ -25,6 +26,10 @@ export default function ModalUsuarioAdmin({ modo, usuario, empresas = [], token,
   });
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const dialogRef = useRef(null);
+
+  useModalAccesible(true, dialogRef, { onCerrar });
+
   const cambiar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }));
 
   async function guardar(e) {
@@ -66,7 +71,7 @@ export default function ModalUsuarioAdmin({ modo, usuario, empresas = [], token,
   }
 
   return (
-    <div className="adm-modal-fondo" role="dialog" aria-modal="true" aria-labelledby="adm-modal-titulo">
+    <div ref={dialogRef} className="adm-modal-fondo" role="dialog" aria-modal="true" aria-labelledby="adm-modal-titulo">
       <form className="adm-modal" onSubmit={guardar} noValidate>
         <h2 id="adm-modal-titulo">{editando ? "Editar usuario" : "Invitar usuario"}</h2>
         {!editando && <p className="adm-modal__nota">Se crea la cuenta y se envía un código al correo para que la persona defina su contraseña.</p>}

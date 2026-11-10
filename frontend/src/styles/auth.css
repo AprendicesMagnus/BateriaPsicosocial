@@ -49,6 +49,7 @@
 }
 .auth-side:has(.illustration--dark) {
   background: var(--navy-950);
+  --focus-ring: var(--gold-500);
 }
 
 .illustration--light {
@@ -136,13 +137,15 @@
   padding: 12px 14px;
   font-size: 14px;
   color: var(--ink-900);
-  outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   width: 100%;
 }
 
-.field__input:focus {
+.field__input:focus,
+.field__input:focus-visible {
   border-color: var(--gold-500);
+  outline: 2px solid var(--gold-500);
+  outline-offset: 1px;
   box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.18);
 }
 
@@ -289,11 +292,11 @@
 }
 .form-message--error {
   background: #fdecec;
-  color: var(--danger-500);
+  color: var(--danger-text);
 }
 .form-message--success {
   background: #e9f8ee;
-  color: var(--success-600);
+  color: var(--success-text);
 }
 
 .verification-email {

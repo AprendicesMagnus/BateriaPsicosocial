@@ -76,7 +76,7 @@ export default function ResetPassword() {
   if (!resetToken) return null;
 
   return (
-    <div className="verify-shell">
+    <main id="contenido-principal" tabIndex={-1} className="verify-shell">
       <ResetPasswordBackground />
 
       <div className="verify-card">
@@ -113,6 +113,6 @@ export default function ResetPassword() {
           </PrimaryButton>
         </form>
       </div>
-    </div>
+    </main>
   );
 }
