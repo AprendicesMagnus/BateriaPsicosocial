@@ -250,7 +250,7 @@ def _preparar_acceso(
     """Credenciales ya validadas (contraseña o Google). Si el rol exige verificación en dos pasos y el
     dispositivo no es de confianza, envía el código al correo; si no, abre la sesión."""
     if (
-        settings.doble_factor_activo
+        settings.dos_pasos_activo
         and usuario.rol.codigo in ROLES_REQUIEREN_2FA
         and not _correo_exento_2fa(usuario.email)
         and not sesiones_service.dispositivo_es_confiable(db, usuario, trusted_device_token, request)

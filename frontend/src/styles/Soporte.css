@@ -556,3 +556,67 @@
   font-size: 13px;
   color: var(--adm-muted);
 }
+
+/* Móvil: el ícono queda junto al título y el resto del cuadro ocupa todo el ancho */
+@media (max-width: 600px) {
+  .soporte-card--contacto {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 14px;
+    row-gap: 0;
+    align-items: center;
+  }
+
+  .soporte-contacto-texto {
+    display: contents;
+  }
+
+  .soporte-contacto-icono {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .soporte-card--contacto h2 {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.25;
+  }
+
+  .soporte-card--contacto p,
+  .soporte-card--contacto .soporte-form {
+    grid-column: 1 / -1;
+  }
+
+  .soporte-card--contacto p {
+    margin: 14px 0 14px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .soporte-link {
+    display: inline;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+
+  .soporte-link svg {
+    vertical-align: -3px;
+    margin-right: 4px;
+  }
+
+  .soporte-form textarea {
+    min-height: 110px;
+    font-size: 16px; /* evita el zoom automático en iPhone */
+  }
+
+  .soporte-btn-primary {
+    align-self: stretch;
+    width: 100%;
+    padding: 12px 22px;
+  }
+}

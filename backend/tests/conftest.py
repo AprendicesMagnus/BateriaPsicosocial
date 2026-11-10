@@ -91,7 +91,7 @@ def setup_database():
 @pytest.fixture(autouse=True)
 def _sin_doble_factor_por_defecto(monkeypatch):
     """Las demás pruebas inician sesión con admin/jefe sin código; las de 2FA lo activan."""
-    monkeypatch.setattr(settings, "doble_factor_activo", False)
+    monkeypatch.setattr(settings, "dos_pasos_activo", False)
 
 
 @pytest.fixture
@@ -153,6 +153,24 @@ def crear_paciente(db_session):
 
     return _crear
 
+
+@pytest.fixture(autouse=True)
+def _minimo_anonimato_de_pruebas(monkeypatch):
+    """Las pruebas de anonimato se escribieron con grupos de 4 y 5 personas: fijan el mínimo en 5.
+
+    En producción el valor lo define MIN_GRUPO_ANONIMATO (por defecto 2).
+    """
+    monkeypatch.setattr(settings, "min_grupo_anonimato", 5)
+
+
+@pytest.fixture(autouse=True)
+def desactivar_2fa(monkeypatch):
+    """Deja vacia la lista de roles con verificacion en dos pasos en cada prueba.
+
+    Asi el login devuelve el token directamente. Las pruebas de la 2FA
+    (test_auth_2fa.py) la reactivan de forma explicita.
+    """
+    monkeypatch.setattr(auth_service, "ROLES_REQUIEREN_2FA", set())
 
 @pytest.fixture
 def anonimato_minimo_1(monkeypatch):

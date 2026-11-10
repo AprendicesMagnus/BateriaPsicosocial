@@ -489,6 +489,23 @@
   line-height: 1.2;
   white-space: nowrap;
 }
+/* Historial de pedidos: botones apilados, del mismo ancho y alto */
+.pedido-acciones {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+}
+.pedido-acciones .compras-row-action {
+  width: 100%;
+  min-height: 38px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
 /* Seguridad y sesiones activas */
 .sesiones-card { width: 100%; min-width: 0; min-height: 0; padding: 28px; display: flex; flex-direction: column; }
 .sesiones-list { display: flex; flex-direction: column; gap: 12px; flex: 1 1 0; min-height: 0; overflow-y: auto; padding-right: 6px; }

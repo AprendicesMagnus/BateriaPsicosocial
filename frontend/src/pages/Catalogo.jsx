@@ -426,8 +426,7 @@ export default function Catalogo() {
               )}
 
               <p className="catalogo-nota">
-                El valor final se calcula nuevamente en el backend con los
-                precios guardados en la base de datos.
+                El valor final de tu pedido se confirma al momento de pagar.
               </p>
 
               <div className="catalogo-pago__acciones">

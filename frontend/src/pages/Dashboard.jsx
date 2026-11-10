@@ -386,7 +386,6 @@ export default function Dashboard() {
         onLogoClick={() => navigate(rutaInicial(usuario?.rol))}
         items={[
           { key: "dash", label: "Dashboard", icono: "▣", activo: true, onClick: () => navigate("/dashboard") },
-          { key: "cuest", label: "Cuestionario", icono: "☑", onClick: () => navigate("/ficha-datos-generales") },
           ...(esSuperAdmin(usuario?.rol) ? [{ key: "panel", label: "Panel Admin", icono: "⚙", onClick: () => navigate("/panel") }] : []),
           { key: "rep", label: "Reportes", icono: "▤", onClick: () => navigate("/reportes") },
           ...(["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol)
@@ -573,7 +572,7 @@ export default function Dashboard() {
               ) : indicadores?.anonimizado ? (
                 <div style={{ padding: "30px 20px", textAlign: "center", color: "#64748b" }}>
                   <p style={{ fontWeight: 600, fontSize: "15px", marginBottom: "8px" }}>
-                    <BsLockFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />Datos Anonimizados
+                    <BsLockFill size={16} style={{ display: "inline-block", width: 16, height: 16, marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />Datos Anonimizados
                   </p>
                   <p style={{ fontSize: "13px" }}>
                     {indicadores.mensajeAnonimato ||

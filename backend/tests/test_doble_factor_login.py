@@ -16,6 +16,7 @@ from test_pedidos_productos import (  # noqa: F401  (helpers de las pruebas de p
     _crear_usuario,
 )
 
+ROLES_2FA = frozenset({"SUPER_ADMINISTRADOR", "ADMINISTRADOR", "JEFE", "EVALUADOR_SST"})
 ADMIN = {"email": "admin@magnussig.com", "password": "Admin1234"}
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 
@@ -23,7 +24,8 @@ UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0 Safari/537.36"
 @pytest.fixture
 def con_2fa(monkeypatch, db_session):
     """Activa el 2FA y captura los códigos que se enviarían por correo."""
-    monkeypatch.setattr(auth_service.settings, "doble_factor_activo", True)
+    monkeypatch.setattr(auth_service.settings, "dos_pasos_activo", True)
+    monkeypatch.setattr(auth_service, "ROLES_REQUIEREN_2FA", set(ROLES_2FA))
     monkeypatch.setattr(auth_service.settings, "doble_factor_correos_exentos", "")
     db_session.query(CodigoDosPasos).delete()
     db_session.commit()
@@ -31,7 +33,11 @@ def con_2fa(monkeypatch, db_session):
     monkeypatch.setattr(
         auth_service, "enviar_codigo_2fa", lambda destino, nombre, codigo: enviados.append((destino, codigo)) or True
     )
-    return enviados
+    yield enviados
+    # No dejar accesos de 2FA/Google: otras pruebas buscan solo "inició sesión" en la auditoría.
+    db_session.rollback()
+    db_session.query(Auditoria).filter(Auditoria.accion.in_(["LOGIN_2FA", "LOGIN_GOOGLE"])).delete(synchronize_session=False)
+    db_session.commit()
 
 
 def _login(client, datos=ADMIN, ua=UA, **extra):
@@ -136,7 +142,7 @@ def test_reenviar_respeta_la_espera_e_invalida_el_codigo_anterior(client, con_2f
 
 
 def test_roles_con_2fa_y_roles_sin_2fa(client, con_2fa, db_session):
-    assert auth_service.ROLES_REQUIEREN_2FA == {"SUPER_ADMINISTRADOR", "ADMINISTRADOR", "JEFE", "EVALUADOR_SST"}
+    assert set(auth_service.ROLES_REQUIEREN_2FA) == set(ROLES_2FA)
     admin = _auth(_entrar_admin(client, con_2fa, db_session))
     org = _crear_organizacion(client, admin, f"Org Roles {uuid.uuid4().hex[:6]}")
     _, email_jefe = _crear_usuario(client, admin, "JEFE", org)
@@ -165,7 +171,7 @@ def test_solo_el_correo_exento_entra_sin_codigo(client, con_2fa, db_session, mon
 
 
 def test_apagado_global_no_pide_codigo(client, con_2fa, monkeypatch):
-    monkeypatch.setattr(auth_service.settings, "doble_factor_activo", False)
+    monkeypatch.setattr(auth_service.settings, "dos_pasos_activo", False)
     assert "token" in _login(client).json()
 
 
@@ -189,13 +195,13 @@ def test_google_tambien_pide_codigo_y_se_audita_como_google(client, con_2fa, mon
     db_session.commit()
 
 
-def test_login_con_codigo_queda_auditado_como_login(client, con_2fa, db_session):
+def test_login_con_codigo_queda_auditado_como_login_2fa(client, con_2fa, db_session):
     _entrar_admin(client, con_2fa, db_session)
     admin = db_session.query(Usuario).filter(Usuario.email == ADMIN["email"]).one()
     ultimo = (
         db_session.query(Auditoria).filter(Auditoria.usuario_id == admin.id).order_by(Auditoria.registrado_en.desc()).first()
     )
-    assert ultimo.accion == "LOGIN"  # así "Último acceso" del Panel sigue funcionando
+    assert ultimo.accion == "LOGIN_2FA"  # el Panel lo cuenta como acceso
 
 
 # ---------------------------------------------------------------- dispositivo de confianza
@@ -325,6 +331,6 @@ def _produccion(**extra):
 
 def test_en_produccion_con_2fa_exige_correo_configurado():
     with pytest.raises(ValueError, match="SMTP_HOST"):
-        _produccion(doble_factor_activo=True, smtp_host="")
-    assert _produccion(doble_factor_activo=True, smtp_host="smtp.gmail.com").doble_factor_activo is True
-    assert _produccion(doble_factor_activo=False, smtp_host="").doble_factor_activo is False
+        _produccion(dos_pasos_activo=True, smtp_host="")
+    assert _produccion(dos_pasos_activo=True, smtp_host="smtp.gmail.com").dos_pasos_activo is True
+    assert _produccion(dos_pasos_activo=False, smtp_host="").dos_pasos_activo is False
