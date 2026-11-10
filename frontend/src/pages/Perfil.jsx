@@ -212,6 +212,7 @@ export default function Perfil() {
   const [pedidoPorCancelar, setPedidoPorCancelar] = useState(null);
   const [cancelandoPedidoId, setCancelandoPedidoId] = useState(null);
   // ---- edición de perfil / contraseña ----
+  const [pestana, setPestana] = useState("cuenta");
   const [modo, setModo] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [errorForm, setErrorForm] = useState("");
@@ -986,9 +987,15 @@ export default function Perfil() {
           <h1 className="app-title">Mi Perfil</h1>
           <p className="app-subtitle">Consulta y administra la información de tu cuenta.</p>
 
-          <div className="perfil-layout">
+          <div className="perfil-tabs" role="tablist" aria-label="Secciones del perfil">
+            {[["cuenta", "Mi cuenta"], ["seguridad", "Seguridad"], ["compras", "Compras y pedidos"]].map(([id, texto]) => (
+              <button key={id} type="button" role="tab" aria-selected={pestana === id} className={`perfil-tab${pestana === id ? " perfil-tab--activa" : ""}`} onClick={() => setPestana(id)}>{texto}</button>
+            ))}
+          </div>
+
+          <div className="perfil-layout" data-pestana={pestana}>
             {/* ===================== PERFIL ===================== */}
-            <div className="app-card perfil-card">
+            <div className="app-card perfil-card" data-seccion="cuenta">
               <div className="perfil-header">
                 {fotoMostrada ? (
                   <img
@@ -1344,7 +1351,7 @@ export default function Perfil() {
               )}
             </div>
             {/* ===================== SEGURIDAD Y SESIONES ACTIVAS ===================== */}
-            <div className="app-card sesiones-card">
+            <div className="app-card sesiones-card" data-seccion="seguridad">
               <h2 className="compras-titulo">Seguridad y sesiones activas</h2>
               <p className="compras-subtitulo">Dispositivos donde tu cuenta tiene una sesión abierta.</p>
               {errorSesiones && <p className="sesiones-error">{errorSesiones}</p>}
@@ -1357,8 +1364,8 @@ export default function Perfil() {
                     <div className="sesion-item" key={sesion.id}>
                       <div className="sesion-item__icon" aria-hidden="true">{/Android|iPhone|Mobile/i.test(sesion.dispositivo) ? <BsPhone size={18} /> : <BsLaptop size={18} />}</div>
                       <div className="sesion-item__info">
-                        <strong>{/Windows/i.test(sesion.dispositivo) ? "Windows" : /Android/i.test(sesion.dispositivo) ? "Android" : /Mac OS|Macintosh/i.test(sesion.dispositivo) ? "macOS" : /iPhone|iPad/i.test(sesion.dispositivo) ? "iOS" : "Dispositivo"} · {sesion.dispositivo}</strong>
-                        <span>{sesion.actual ? "Esta es tu sesión actual" : "Sesión abierta"}</span>
+                        <strong>{/Windows/i.test(sesion.dispositivo) ? "Windows" : /Android/i.test(sesion.dispositivo) ? "Android" : /Mac OS|Macintosh/i.test(sesion.dispositivo) ? "macOS" : /iPhone|iPad/i.test(sesion.dispositivo) ? "iOS" : /Linux/i.test(sesion.dispositivo) ? "Linux" : "Dispositivo"} · {/Edg\//i.test(sesion.dispositivo) ? "Edge" : /OPR\/|Opera/i.test(sesion.dispositivo) ? "Opera" : /Firefox/i.test(sesion.dispositivo) ? "Firefox" : /Chrome|CriOS/i.test(sesion.dispositivo) ? "Chrome" : /Safari/i.test(sesion.dispositivo) ? "Safari" : "Navegador"}</strong>
+                        <small className="sesion-item__ua" title={sesion.dispositivo}>{sesion.dispositivo}</small>
                         <small>Inicio: {formatearFechaHora(sesion.creadoEn)}</small>
                         <small>Última actividad: {formatearFechaHora(sesion.ultimoAcceso)}</small>
                         {sesion.ip && <small>IP: {sesion.ip}</small>}
@@ -1376,7 +1383,7 @@ export default function Perfil() {
               <p className="sesiones-nota">La opción de confiar en un dispositivo dura 4 horas. Después de ese tiempo, se solicitará nuevamente el código de seguridad en los roles protegidos.</p>
             </div>
             {/* ===================== HISTORIAL DE COMPRAS ===================== */}
-            <div className="app-card compras-card">
+            <div className="app-card compras-card" data-seccion="compras">
               <h2 className="compras-titulo">
                 Historial de compras
               </h2>
@@ -1515,7 +1522,7 @@ export default function Perfil() {
                 )
               )}
             </div>
-            <div className="app-card compras-card">
+            <div className="app-card compras-card" data-seccion="compras">
               <h2 className="compras-titulo">Historial de pedidos</h2>
               <p className="compras-subtitulo">Productos del catálogo comprados</p>
               {loadingPedidos && (

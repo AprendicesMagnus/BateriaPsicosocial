@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
 import "../styles/Empresas.css";
+import "../styles/VerificarNit.css";
+import { HiArrowRight, HiOutlineCheckCircle, HiOutlineInformationCircle, HiOutlineOfficeBuilding } from "react-icons/hi";
 import { request } from "../api/client";
 import { formatearNit } from "../utils/validaciones";
 import Toast from "../components/Toast";
@@ -101,38 +103,74 @@ export default function VerificarNit() {
         <div className="app-decor app-decor--3" />
 
         <div className="empresas-center">
-          <div className="app-card empresas-card">
+          <div className="app-card empresas-card nit-card">
             <BotonRegresar tono="oscuro" />
-            <h1 className="empresas-titulo">Verificar NIT</h1>
-            <p className="empresas-subtitulo">
-              Antes de crear tu empresa, verifiquemos que no esté registrada todavía.
-            </p>
 
-            <form className="empresas-form" onSubmit={handleSubmit} noValidate>
+            <ol className="nit-pasos" aria-label="Progreso para registrar la empresa">
+              <li className="nit-paso nit-paso--activo" aria-current="step">
+                <span className="nit-paso__num">1</span>
+                <span className="nit-paso__txt">Verificar NIT</span>
+              </li>
+              <li className="nit-paso__linea" aria-hidden="true" />
+              <li className="nit-paso">
+                <span className="nit-paso__num">2</span>
+                <span className="nit-paso__txt">Datos de la empresa</span>
+              </li>
+            </ol>
+
+            <div className="nit-encabezado">
+              <span className="nit-icono" aria-hidden="true">
+                <HiOutlineOfficeBuilding size={30} />
+              </span>
+              <h1 className="nit-titulo">Verificar NIT</h1>
+              <p className="nit-subtitulo">
+                Antes de crear tu empresa, verifiquemos que no esté registrada todavía.
+              </p>
+            </div>
+
+            <form className="nit-form" onSubmit={handleSubmit} noValidate>
               <label className="field">
                 <span className="field__label">NIT de la empresa (con dígito verificador)</span>
-                <input
-                  className={`field__input ${mostrarError("nit") ? "field__input--invalid" : ""}`}
-                  aria-invalid={mostrarError("nit") ? "true" : "false"}
-                  aria-describedby={mostrarError("nit") ? "nit-error" : undefined}
-                  placeholder="900123456-7"
-                  maxLength={12}
-                  value={nit}
-                  disabled={nitYaRegistrado}
-                  onChange={(e) => setNit(formatearNit(e.target.value))}
-                  onBlur={() => marcar("nit")}
-                />
-                {mostrarError("nit") && (
+                <span className="nit-input">
+                  <input
+                    className={`field__input ${mostrarError("nit") ? "field__input--invalid" : ""}`}
+                    aria-invalid={mostrarError("nit") ? "true" : "false"}
+                    aria-describedby={mostrarError("nit") ? "nit-error" : "nit-ayuda"}
+                    placeholder="900123456-7"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={12}
+                    value={nit}
+                    disabled={nitYaRegistrado}
+                    onChange={(e) => setNit(formatearNit(e.target.value))}
+                    onBlur={() => marcar("nit")}
+                  />
+                  {nit && !errores.nit && (
+                    <HiOutlineCheckCircle className="nit-input__ok" size={22} aria-label="Formato válido" />
+                  )}
+                </span>
+                {mostrarError("nit") ? (
                   <span className="field__error" id="nit-error">
                     {errores.nit}
+                  </span>
+                ) : (
+                  <span className="nit-ayuda" id="nit-ayuda">
+                    Escríbelo sin puntos: 9 o 10 dígitos, guion y dígito verificador.
                   </span>
                 )}
               </label>
 
+              <div className="nit-info">
+                <HiOutlineInformationCircle size={20} aria-hidden="true" />
+                <p>
+                  Cada empresa se registra una sola vez. Si el NIT ya existe, te avisaremos y volverás al inicio.
+                </p>
+              </div>
+
               {error && <div className="form-message form-message--error">{error}</div>}
 
-              <button type="submit" className="btn-primary" disabled={verificando || nitYaRegistrado}>
-                {verificando ? "Verificando..." : "Continuar"}
+              <button type="submit" className="btn-primary nit-btn" disabled={verificando || nitYaRegistrado}>
+                {verificando ? "Verificando..." : (<>Continuar <HiArrowRight size={18} aria-hidden="true" /></>)}
               </button>
             </form>
           </div>
