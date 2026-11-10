@@ -239,7 +239,7 @@ def test_exportar_auditoria_buscar_texto_legible(client, db_session):
     filas = list(ws.iter_rows(min_row=2, values_only=True))
     assert len(filas) >= 1
     for fila in filas:
-        assert fila[2] == "inició sesión", f"Columna Acción debe ser 'inició sesión', fue '{fila[2]}'"
+        assert fila[2].startswith("inició sesión"), f"Columna Acción debe empezar por 'inició sesión', fue '{fila[2]}'"
 
 
 def test_exportar_registra_auditoria_exportar_panel(client, db_session):

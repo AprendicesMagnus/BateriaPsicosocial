@@ -154,16 +154,6 @@ def crear_paciente(db_session):
     return _crear
 
 
-@pytest.fixture(autouse=True)
-def desactivar_2fa(monkeypatch):
-    """Deja vacia la lista de roles con verificacion en dos pasos en cada prueba.
-
-    Asi el login devuelve el token directamente. Las pruebas de la 2FA
-    (test_auth_2fa.py) la reactivan de forma explicita.
-    """
-    monkeypatch.setattr(auth_service, "ROLES_REQUIEREN_2FA", set())
-
-
 @pytest.fixture
 def anonimato_minimo_1(monkeypatch):
     """Fija en 1 el minimo de participantes para el anonimato durante la prueba.
