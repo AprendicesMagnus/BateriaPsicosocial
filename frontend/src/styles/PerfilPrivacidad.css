@@ -48,7 +48,9 @@
   width: 100%;
   max-width: 440px;
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 24px;
   border-radius: 12px;
   background: #ffffff;
@@ -108,4 +110,14 @@
 .perfil-modal__confirmar:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .perfil-modal__fondo {
+    padding: 12px;
+  }
+  .perfil-modal {
+    padding: 18px 14px;
+    max-height: calc(100dvh - 24px);
+  }
 }

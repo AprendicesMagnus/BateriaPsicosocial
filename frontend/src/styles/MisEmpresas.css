@@ -5,10 +5,13 @@
 
 .mis-empresas-tabla-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
 }
 
 .mis-empresas-tabla {
   width: 100%;
+  min-width: 600px;
   border-collapse: collapse;
   font-size: 14px;
   color: var(--ink-900, #12314b);

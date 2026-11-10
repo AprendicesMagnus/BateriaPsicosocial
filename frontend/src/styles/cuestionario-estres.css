@@ -24,6 +24,7 @@ button {
 
 .questionnaire-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   background: #f3f6fa;
 }
@@ -36,6 +37,7 @@ button {
 .questionnaire-sidebar {
   width: 170px;
   min-height: 100vh;
+  min-height: 100dvh;
 
   background: #12375e;
   color: white;
@@ -366,6 +368,9 @@ button {
 
 .questions-card {
   margin-top: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 
   background: white;
 
@@ -519,6 +524,7 @@ button {
 ========================================================= */
 
 .answer-option {
+  position: relative;
   display: flex;
 
   flex-direction: column;
@@ -533,6 +539,10 @@ button {
 
 .answer-option input {
   position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
 
   opacity: 0;
 

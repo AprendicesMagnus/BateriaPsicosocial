@@ -10,6 +10,10 @@
 }
 
 .qr-modal {
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   width: 100%;
   max-width: 360px;
   padding: 24px;
@@ -51,4 +55,14 @@
   color: #1e293b;
   font-size: 13px;
   cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .qr-modal__fondo {
+    padding: 12px;
+  }
+  .qr-modal {
+    padding: 18px 14px;
+    max-height: calc(100dvh - 24px);
+  }
 }

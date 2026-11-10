@@ -111,11 +111,14 @@
 
 .comparador__tabla-contenedor {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
   margin-bottom: 16px;
 }
 
 .comparador__tabla {
   width: 100%;
+  min-width: 560px;
   border-collapse: collapse;
   font-size: 13px;
   text-align: left;
@@ -201,4 +204,13 @@
   background: #fef2f2;
   border-radius: 8px;
   margin-bottom: 16px;
+}
+
+@media (max-width: 480px) {
+  .comparador {
+    padding: 16px 12px;
+  }
+  .comparador__tarjetas {
+    grid-template-columns: 1fr;
+  }
 }

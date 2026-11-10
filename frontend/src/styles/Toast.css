@@ -75,3 +75,13 @@
   background: #2e9e5b;
   color: #ffffff;
 }
+
+@media (max-width: 480px) {
+  .toast {
+    top: 12px;
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+}

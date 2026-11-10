@@ -20,6 +20,7 @@
   display: flex;
   flex-wrap: wrap;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--adm-bg);
   color: var(--adm-ink);
   font-family: "Manrope", system-ui, sans-serif;
@@ -419,6 +420,7 @@
 
 .adm-tabla-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--adm-line);
   border-radius: 12px;
   min-width: 0;

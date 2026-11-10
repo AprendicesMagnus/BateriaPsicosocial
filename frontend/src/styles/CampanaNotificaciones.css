@@ -49,6 +49,7 @@
   max-width: calc(100vw - 24px);
   max-height: 440px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--white);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
@@ -136,4 +137,16 @@
 .campana__fecha {
   color: var(--ink-500);
   font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .campana__panel {
+    position: fixed;
+    top: 60px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 80px);
+  }
 }

@@ -1,6 +1,7 @@
 .verificacion {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   align-items: center;
   justify-content: center;
   padding: 24px;
@@ -83,4 +84,13 @@
   background: #fef2f2;
   color: #991b1b;
   font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .verificacion {
+    padding: 16px 12px;
+  }
+  .verificacion__tarjeta {
+    padding: 20px 16px;
+  }
 }

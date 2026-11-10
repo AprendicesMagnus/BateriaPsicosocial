@@ -93,3 +93,10 @@
   color: #991b1b;
   font-size: 13px;
 }
+
+@media (max-width: 480px) {
+  .grupos__fila {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

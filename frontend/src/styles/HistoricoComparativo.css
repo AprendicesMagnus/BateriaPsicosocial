@@ -208,10 +208,13 @@
 
 .historico__tabla-contenedor {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
 }
 
 .historico__tabla {
   width: 100%;
+  min-width: 600px;
   border-collapse: collapse;
   font-size: 13px;
   text-align: left;
@@ -297,4 +300,17 @@
   background: #fef2f2;
   color: #991b1b;
   font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .historico {
+    padding: 16px 12px;
+  }
+  .historico__resumen {
+    grid-template-columns: 1fr;
+  }
+  .historico__barras {
+    gap: 8px;
+    padding: 0;
+  }
 }

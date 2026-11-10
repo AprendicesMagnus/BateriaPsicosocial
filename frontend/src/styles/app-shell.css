@@ -6,6 +6,7 @@
 
 .app-shell-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--navy-950);
@@ -47,6 +48,8 @@
 }
 
 .app-profile-dropdown {
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
@@ -214,4 +217,21 @@
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
+}
+@media (max-width: 768px) {
+  .app-topbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .app-topbar-logo {
+    height: 36px;
+  }
+  .app-hero {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .app-profile-dropdown {
+    right: 0;
+    max-width: calc(100vw - 24px);
+  }
 }

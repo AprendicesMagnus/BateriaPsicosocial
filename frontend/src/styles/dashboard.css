@@ -11,6 +11,7 @@ body {
 
 .dashboard {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   background: #f5f2eb;
   overflow-x: hidden;
@@ -25,6 +26,7 @@ body {
   width: 160px;
   flex-shrink: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   background: #12375e;
   --focus-ring: var(--gold-500);
   color: white;
@@ -623,12 +625,15 @@ body {
 
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
   border: 1px solid #e7e2d9;
   border-radius: 10px;
 }
 
 .responders-table {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
   font-size: 12px;
 }
