@@ -459,3 +459,42 @@
 .login-2fa__link, .login-2fa__cancel { display: block; width: 100%; border: 0; background: transparent; padding: 10px; color: #174a73; cursor: pointer; font: inherit; font-size: 13px; }
 .login-2fa__link:disabled { opacity: .6; cursor: wait; }
 .login-2fa__cancel { color: #64748b; }
+
+
+/* Panel de autenticación (Login y Crear cuenta): imagen completa con fondo desenfocado */
+.illustration--dark:has(> .illustration-image) {
+  position: relative;
+  overflow: hidden;
+}
+
+.illustration--dark:has(> .illustration-image)::before {
+  content: "";
+  position: absolute;
+  inset: -24px;
+  background: url("/imagen1.jpg") center / cover no-repeat;
+  filter: blur(24px);
+  z-index: 0;
+}
+
+.illustration-image {
+  position: relative;
+  z-index: 1;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Fondo de recuperación en pantallas verticales o estrechas */
+@media (max-width: 768px), (max-width: 1024px) and (orientation: portrait) {
+  .verify-shell::before {
+    content: "";
+    position: absolute;
+    inset: -24px;
+    background: url("/imagen5.jpg") center / cover no-repeat;
+    filter: blur(24px);
+    z-index: 0;
+  }
+  .verify-bg {
+    object-fit: contain;
+    object-position: center;
+  }
+}
