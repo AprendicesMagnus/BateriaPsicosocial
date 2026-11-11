@@ -419,15 +419,17 @@ export default function Soporte() {
           {ver("contacto") && (
           <>
           <section className="soporte-card soporte-card--contacto">
-            <div className="soporte-contacto-icono">
-              <HiOutlineChatAlt2 size={26} />
-            </div>
             <div className="soporte-contacto-texto">
-              <h2>¿No encontraste la respuesta?</h2>
+              <div className="soporte-contacto-cabecera">
+                <div className="soporte-contacto-icono" aria-hidden="true">
+                  <HiOutlineChatAlt2 size={26} />
+                </div>
+                <h2>¿No encontraste la respuesta?</h2>
+              </div>
               <p>
                 Escríbenos directamente a{" "}
-                <a className="soporte-link" href="mailto:aprendizmagnus@gmail.com">
-                  <HiOutlineMail size={16} /> aprendizmagnus@gmail.com
+                <a className="soporte-link" href="mailto:centrodeayudamagnus@gmail.com">
+                  <HiOutlineMail size={16} /> centrodeayudamagnus@gmail.com
                 </a>{" "}
                 o cuéntanos aquí tu problema:
               </p>
