@@ -176,6 +176,7 @@ export default function Soporte() {
   const [contenido, setContenido] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [seccion, setSeccion] = useState("faq");
+  const [abierto, setAbierto] = useState(null); // mensaje expandido en "Mis mensajes"
   const [misMensajes, setMisMensajes] = useState([]);
 
   function cargarMisMensajes() {
@@ -236,6 +237,7 @@ export default function Soporte() {
   async function handleEnviar(e) {
     e.preventDefault();
     setErrorEnvio("");
+    setEnviado(false);
     setEnviando(true);
     try {
       await crearTicketSoporte(token, mensaje);
@@ -433,9 +435,10 @@ export default function Soporte() {
                 </a>{" "}
                 o cuéntanos aquí tu problema:
               </p>
-              {enviado ? (
-                <p className="soporte-exito">¡Gracias! Recibimos tu mensaje, te responderemos pronto.</p>
-              ) : (
+              {enviado && (
+                <p className="soporte-exito" role="status">¡Gracias! Recibimos tu mensaje, te responderemos pronto. Si necesitas algo más, puedes escribir otro abajo.</p>
+              )}
+              {(
                 <form onSubmit={handleEnviar} className="soporte-form">
                   <textarea
                     rows={4}
@@ -443,7 +446,10 @@ export default function Soporte() {
                     aria-required="true"
                     placeholder="Describe tu problema o duda..."
                     value={mensaje}
-                    onChange={(e) => setMensaje(e.target.value)}
+                    onChange={(e) => {
+                      setMensaje(e.target.value);
+                      if (enviado) setEnviado(false);
+                    }}
                     required
                   />
                   {errorEnvio && <p className="soporte-error">{errorEnvio}</p>}
@@ -461,24 +467,39 @@ export default function Soporte() {
               <p className="soporte-mensajes__vacio">Aún no has enviado mensajes al soporte.</p>
             ) : (
               <ul className="soporte-mensajes__lista">
-                {pagMisMensajes.items.map((m) => (
-                  <li className="soporte-mensajes__item" key={m.id}>
-                    <div className="soporte-mensajes__meta">
-                      <span className="soporte-mensajes__fecha">{formatearFechaMensaje(m.creadoEn)}</span>
-                      <span className={`soporte-mensajes__chip soporte-mensajes__chip--${m.estado === "RESUELTO" ? "resuelto" : "pendiente"}`}>
-                        {m.estado === "RESUELTO" ? "Resuelto" : "Pendiente"}
-                      </span>
-                    </div>
-                    <p className="soporte-mensajes__texto">{m.mensaje}</p>
-                    {m.respuesta && (
-                      <div className="soporte-mensajes__respuesta">
-                        <strong>Respuesta del administrador</strong>
-                        <p>{m.respuesta}</p>
-                        <span className="soporte-mensajes__fecha">{formatearFechaMensaje(m.respondidoEn)}</span>
-                      </div>
-                    )}
-                  </li>
-                ))}
+                {pagMisMensajes.items.map((m) => {
+                  const expandible = Boolean(m.respuesta) || m.mensaje.length > 90;
+                  const abierta = abierto === m.id;
+                  return (
+                    <li className={`soporte-mensajes__item ${abierta ? "soporte-mensajes__item--abierto" : ""}`} key={m.id}>
+                      <button
+                        type="button"
+                        className="soporte-mensajes__fila"
+                        aria-expanded={expandible ? abierta : undefined}
+                        disabled={!expandible}
+                        onClick={() => setAbierto(abierta ? null : m.id)}
+                      >
+                        <span className="soporte-mensajes__texto">{m.mensaje}</span>
+                        <span className="soporte-mensajes__meta">
+                          <span className="soporte-mensajes__fecha">{formatearFechaMensaje(m.creadoEn)}</span>
+                          <span className={`soporte-mensajes__chip soporte-mensajes__chip--${m.estado === "RESUELTO" ? "resuelto" : "pendiente"}`}>
+                            {m.estado === "RESUELTO" ? "Resuelto" : "Pendiente"}
+                          </span>
+                          {expandible && (
+                            <span className="soporte-mensajes__mas">{abierta ? "Ocultar" : m.respuesta ? "Ver respuesta" : "Ver más"}</span>
+                          )}
+                        </span>
+                      </button>
+                      {abierta && m.respuesta && (
+                        <div className="soporte-mensajes__respuesta">
+                          <strong>Respuesta del administrador</strong>
+                          <p>{m.respuesta}</p>
+                          <span className="soporte-mensajes__fecha">{formatearFechaMensaje(m.respondidoEn)}</span>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
             <div className="soporte-mensajes__paginacion">

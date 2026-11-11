@@ -478,6 +478,34 @@ export default function Checkout() {
                 </div>
               </div>
 
+              {/* QUÉ SIGUE */}
+              <div className="checkout-siguiente">
+                <h3>¿Qué pasa después de pagar?</h3>
+                <ol>
+                  <li>
+                    <span>1</span>
+                    <div>
+                      <strong>Pagas en el checkout de Wompi</strong>
+                      <small>Eliges el medio de pago disponible y confirmas.</small>
+                    </div>
+                  </li>
+                  <li>
+                    <span>2</span>
+                    <div>
+                      <strong>Confirmamos tu pago</strong>
+                      <small>Se verifica automáticamente, no tienes que hacer nada más.</small>
+                    </div>
+                  </li>
+                  <li>
+                    <span>3</span>
+                    <div>
+                      <strong>Tus baterías quedan disponibles</strong>
+                      <small>Las verás en tu empresa y el recibo en Perfil → Historial de compras.</small>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+
               {/* TOTAL */}
               <div className="checkout-payment-amount">
                 <span>Total a pagar</span>

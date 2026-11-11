@@ -723,3 +723,58 @@
   }
   .soporte-card { padding: 20px 18px; }
 }
+
+/* Confirmación de envío: el formulario sigue disponible para otro mensaje */
+.soporte-exito {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(134, 239, 172, 0.45);
+  color: #dcfce7;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* ---------- Mis mensajes: filas compactas (se expanden al tocar) ---------- */
+.soporte-mensajes__lista { gap: 8px; }
+.soporte-mensajes__item { padding: 0; gap: 0; overflow: hidden; }
+.soporte-mensajes__item--abierto { border-color: #cfc9ee; }
+.soporte-mensajes__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.soporte-mensajes__fila:disabled { cursor: default; }
+.soporte-mensajes__fila:not(:disabled):hover { background: #faf9ff; }
+.soporte-mensajes__fila:focus-visible { outline: 2px solid var(--gold-500); outline-offset: -2px; }
+.soporte-mensajes__fila .soporte-mensajes__texto {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+.soporte-mensajes__item--abierto .soporte-mensajes__texto { -webkit-line-clamp: unset; }
+.soporte-mensajes__fila .soporte-mensajes__meta { flex: 0 0 auto; gap: 8px; }
+.soporte-mensajes__chip { padding: 1px 9px; font-size: 11.5px; }
+.soporte-mensajes__mas { font-size: 12px; font-weight: 700; color: var(--navy-800, #1f2a4d); text-decoration: underline; white-space: nowrap; }
+.soporte-mensajes__item .soporte-mensajes__respuesta { margin: 0 12px 12px; }
+
+@media (max-width: 600px) {
+  .soporte-mensajes__fila { flex-direction: column; align-items: stretch; gap: 6px; }
+  .soporte-mensajes__fila .soporte-mensajes__meta { flex-wrap: wrap; }
+  .soporte-mensajes__mas { margin-left: auto; }
+}

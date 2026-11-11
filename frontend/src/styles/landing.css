@@ -877,7 +877,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 15px;
+  gap: 28px;
   flex: 0 1 auto;
   min-width: 0;
 }
@@ -892,35 +892,35 @@
 }
 
 .nav__logo--magnus {
-  max-width: 210px;
-  max-height: 80px;
+  max-width: 150px;
+  max-height: 58px;
 }
 
 .nav__logo--javeriana {
-  max-width: 135px;
-  max-height: 56px;
+  max-width: 110px;
+  max-height: 42px;
 }
 
 .nav__logo--ministerio {
-  max-width: 135px;
-  max-height: 72px;
+  max-width: 64px;
+  max-height: 60px;
 }
 
 /* Pantallas anchas: logos más grandes */
 @media (min-width: 1280px) {
   .nav__logo--magnus {
-    max-width: 260px;
-    max-height: 100px;
+    max-width: 170px;
+    max-height: 66px;
   }
 
   .nav__logo--javeriana {
-    max-width: 190px;
-    max-height: 72px;
+    max-width: 125px;
+    max-height: 48px;
   }
 
   .nav__logo--ministerio {
-    max-width: 150px;
-    max-height: 92px;
+    max-width: 70px;
+    max-height: 66px;
   }
 }
 
@@ -930,7 +930,7 @@
   }
 
   .nav__logos {
-    gap: 10px;
+    gap: 14px;
   }
 
   .nav__logo--magnus {

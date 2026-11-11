@@ -261,7 +261,7 @@ export default function Catalogo() {
                             disabled={manejaStock(producto) && (producto.stock <= 0 || (carrito[producto.id] || 0) >= producto.stock)}
                             onClick={() => cambiarCantidad(producto.id, 1)}
                           >
-                            {manejaStock(producto) && producto.stock <= 0 ? "Agotado" : manejaStock(producto) && (carrito[producto.id] || 0) >= producto.stock ? "Stock máximo" : "Añadir al carrito"}
+                            {manejaStock(producto) && producto.stock <= 0 ? "Agotado" : manejaStock(producto) && (carrito[producto.id] || 0) >= producto.stock ? "Stock máximo" : <>Añadir<span className="catalogo-btn__extra"> al carrito</span></>}
                           </button>
                         </div>
                       </article>
@@ -276,7 +276,7 @@ export default function Catalogo() {
                 )}
               </section>
 
-              <aside className="carrito" aria-label="Carrito de compras">
+              <aside className="carrito" id="carrito-resumen" aria-label="Carrito de compras">
                 <h2>
                   Carrito{" "}
                   {unidades > 0 && (
@@ -365,6 +365,15 @@ export default function Catalogo() {
                   </>
                 )}
               </aside>
+
+              {unidades > 0 && (
+                <a className="carrito-flotante" href="#carrito-resumen">
+                  <span>
+                    Ver carrito <b>{unidades}</b>
+                  </span>
+                  <strong>{formatearCOP(total)}</strong>
+                </a>
+              )}
             </div>
           )}
 

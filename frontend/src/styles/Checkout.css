@@ -933,3 +933,89 @@ body:has(.waybox-modal) {
     line-height: 1.35;
   }
 }
+
+/* =========================================================
+   "¿Qué pasa después de pagar?" (rellena la tarjeta de pago)
+   ========================================================= */
+.checkout-siguiente {
+  margin: 20px 0 4px;
+  padding: 18px 18px 6px;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  background: #fafbfd;
+}
+.checkout-siguiente h3 {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #12314b;
+}
+.checkout-siguiente ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.checkout-siguiente li {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+.checkout-siguiente li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: 2px;
+  width: 2px;
+  background: #d9e2ec;
+}
+.checkout-siguiente li > span {
+  flex: 0 0 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e2f7f2;
+  color: #0e8f73;
+  font-size: 13px;
+  font-weight: 800;
+}
+.checkout-siguiente strong { display: block; font-size: 13.5px; color: #12314b; }
+.checkout-siguiente small { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.45; color: #6b7690; }
+
+/* =========================================================
+   Móvil (≤950px: una sola columna)
+   ========================================================= */
+@media (max-width: 950px) {
+  /* Solo aporta en escritorio, donde la tarjeta de pago queda corta */
+  .checkout-siguiente { display: none; }
+  /* La numeración 02 → 01 no tiene sentido al invertir el orden */
+  .checkout-section-number { display: none; }
+  /* Ya se muestra en el resumen y en el botón */
+  .checkout-payment-amount { display: none; }
+  .checkout-summary-security { display: none; }
+  .checkout-grid { gap: 18px; }
+}
+@media (max-width: 700px) {
+  .checkout-plan-section select.field__input {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 48px;
+    padding: 0 40px 0 14px;
+    font-size: 16px;
+    border-radius: 12px;
+    background: #f7f9fc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7690' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
+  }
+  /* Cantidad: etiqueta a la izquierda y control a la derecha */
+  .checkout-quantity-section { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+  .checkout-stepper { align-self: auto; }
+  .checkout-pay-btn--large { position: sticky; bottom: 12px; z-index: 5; box-shadow: 0 10px 26px rgba(15, 23, 42, .35); }
+  .checkout-terms { margin-top: 14px; }
+}
+
+/* Deja sitio a la flecha del botón en pantallas estrechas */
+@media (max-width: 420px) {
+  .checkout-pay-btn--large { padding: 12px 44px 12px 14px; font-size: 13.5px; }
+}
