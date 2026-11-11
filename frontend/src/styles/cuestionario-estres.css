@@ -566,7 +566,8 @@ button {
   border-color: #087bd1;
 }
 
-.answer-option input:focus-visible + .custom-radio {
+.answer-option input:focus-visible + .custom-radio,
+.answer-option input:focus + .custom-radio {
   outline: 2px solid #087bd1;
   outline-offset: 2px;
   box-shadow: 0 0 0 3px rgba(8, 123, 209, 0.25);

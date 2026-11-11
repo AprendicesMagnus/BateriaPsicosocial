@@ -166,6 +166,14 @@ fieldset.ficha-field legend {
   cursor: pointer;
 }
 
+.ficha-opcion input[type="radio"]:focus-visible,
+.ficha-opcion input[type="checkbox"]:focus-visible,
+.ficha-opcion input[type="radio"]:focus,
+.ficha-opcion input[type="checkbox"]:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
 /* =========================================================
    ANTIGÜEDAD (checkbox "menos de 1 año" + input numérico)
 ========================================================= */
