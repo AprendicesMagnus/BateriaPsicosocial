@@ -1354,3 +1354,15 @@
     max-height: 50px;
   }
 }
+
+/* Cabecera hero en vertical y móvil: muestra imagen completa sin recorte */
+@media (max-width: 768px), (max-width: 1024px) and (orientation: portrait) {
+  section.hero { display: block; min-height: 0; overflow: hidden; }
+  section.hero .hero__background { position: relative; inset: auto; width: 100%; height: auto; aspect-ratio: 3 / 2; background: #0b1538; }
+  section.hero .hero__background:has(.hero__background-video) { aspect-ratio: 16 / 9; }
+  section.hero .hero__background-image,
+  section.hero .hero__background-video { object-fit: contain; object-position: center; }
+  section.hero .hero__overlay { display: none; }
+  section.hero .hero__inner { min-height: 0; padding: 28px 20px 40px; }
+}
+
