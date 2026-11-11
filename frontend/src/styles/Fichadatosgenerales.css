@@ -167,9 +167,7 @@ fieldset.ficha-field legend {
 }
 
 .ficha-opcion input[type="radio"]:focus-visible,
-.ficha-opcion input[type="checkbox"]:focus-visible,
-.ficha-opcion input[type="radio"]:focus,
-.ficha-opcion input[type="checkbox"]:focus {
+.ficha-opcion input[type="checkbox"]:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }

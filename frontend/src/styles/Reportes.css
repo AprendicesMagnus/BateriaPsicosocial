@@ -320,6 +320,18 @@
   font: inherit;
   font-size: 14px;
 }
+
+@media (max-width: 480px) {
+  .reportes-filtros {
+    padding: 12px 14px;
+  }
+  .reportes-filtros__buscar,
+  .reportes-filtros__select {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+}
 .reportes-vacio-filtros {
   padding: 32px;
   text-align: center;
