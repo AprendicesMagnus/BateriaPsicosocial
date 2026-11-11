@@ -1,0 +1,179 @@
+/* ============================================
+   Verificar NIT (paso 1 del registro de empresa)
+   ============================================ */
+
+.nit-card {
+  max-width: 480px;
+  padding: 32px 36px 34px;
+}
+
+/* ---- Pasos ---- */
+.nit-pasos {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.nit-paso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-500);
+  white-space: nowrap;
+}
+
+.nit-paso__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e6e9f2;
+  color: var(--ink-500);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.nit-paso--activo {
+  color: var(--ink-900);
+}
+
+.nit-paso--activo .nit-paso__num {
+  background: var(--navy-900);
+  color: #fff;
+}
+
+.nit-paso__linea {
+  flex: 1;
+  min-width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: #e6e9f2;
+}
+
+/* ---- Encabezado ---- */
+.nit-encabezado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.nit-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #16224f 0%, #2d3f82 100%);
+  color: #ffd27a;
+  box-shadow: 0 10px 22px rgba(22, 34, 79, 0.28);
+}
+
+.nit-titulo {
+  margin: 0 0 6px;
+  font-size: 24px;
+  color: var(--ink-900);
+}
+
+.nit-subtitulo {
+  margin: 0;
+  max-width: 340px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-500);
+}
+
+/* ---- Formulario ---- */
+.nit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nit-input {
+  position: relative;
+  display: block;
+}
+
+.nit-input .field__input {
+  height: 52px;
+  padding-right: 44px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.nit-input .field__input::placeholder {
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #a3abbd;
+}
+
+.nit-input__ok {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #1f9d55;
+}
+
+.nit-ayuda {
+  font-size: 12.5px;
+  color: var(--ink-500);
+}
+
+.nit-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f3f5fb;
+  color: #2d3f82;
+}
+
+.nit-info svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.nit-info p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+
+.nit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 50px;
+}
+
+@media (max-width: 520px) {
+  .nit-card {
+    padding: 24px 20px 26px;
+  }
+  .nit-paso__txt {
+    display: none;
+  }
+  .nit-paso--activo .nit-paso__txt {
+    display: inline;
+  }
+  .nit-titulo {
+    font-size: 22px;
+  }
+}

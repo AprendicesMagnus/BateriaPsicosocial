@@ -1,13 +1,13 @@
-/* Ventana "Planes" de la Landing (solo informativa) */
+/* Ventana informativa "Planes" de la Landing */
 .planes-fondo {
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: 16px;
-  background: rgba(15, 23, 42, 0.6);
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.56);
   overflow-y: auto;
 }
 
@@ -15,82 +15,119 @@
   margin: auto;
   width: 100%;
   max-width: 760px;
-  padding: 28px 24px;
-  border-radius: 16px;
+  padding: 26px 26px 24px;
+  border: 1px solid #e5eaf1;
+  border-top: 3px solid #d6a64b;
+  border-radius: 14px;
   background: #ffffff;
   color: #12314b;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 42px rgba(15, 35, 60, 0.2);
 }
 
 .planes-modal__cabecera {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e8edf3;
 }
 
 .planes-modal h2 {
-  margin: 0 0 4px;
-  font-size: 22px;
+  margin: 0 0 5px;
+  color: #12314b;
+  font-size: 21px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.2px;
 }
 
 .planes-modal p {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.5;
   color: #64748b;
 }
 
 .planes-modal__cerrar {
-  border: none;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
   background: transparent;
-  font-size: 26px;
+  font-size: 25px;
   line-height: 1;
   cursor: pointer;
   color: #64748b;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.planes-modal__cerrar:hover {
+  background: #f1f5f9;
+  color: #12314b;
+}
+
+.planes-modal__cerrar:focus-visible {
+  outline: 2px solid #315b7d;
+  outline-offset: 2px;
 }
 
 .planes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .plan-tarjeta {
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 18px;
+  min-width: 0;
+  border: 1px solid #e1e8f0;
+  border-radius: 11px;
+  padding: 16px 15px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 5px;
+  background: #fbfcfe;
 }
 
 .plan-tarjeta__rango {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
   color: #64748b;
 }
 
 .plan-tarjeta__nombre {
-  font-size: 17px;
-  font-weight: 800;
-  color: #0b1538;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #12314b;
 }
 
 .plan-tarjeta__precio {
-  font-size: 24px;
-  font-weight: 800;
-  color: #b7791f;
+  margin-top: 5px;
+  font-size: 23px;
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -0.3px;
+  color: #12314b;
+  font-variant-numeric: tabular-nums;
 }
 
 .plan-tarjeta__nota {
   font-size: 12px;
+  line-height: 1.4;
   color: #64748b;
 }
 
 .planes-vacio,
 .planes-error {
-  padding: 24px;
+  padding: 22px 16px;
   text-align: center;
   font-size: 14px;
   color: #64748b;
@@ -98,6 +135,32 @@
 
 .planes-error {
   color: #b42318;
+}
+
+@media (max-width: 640px) {
+  .planes-fondo {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .planes-modal {
+    margin: auto 0;
+    padding: 21px 18px 18px;
+    border-radius: 12px;
+  }
+
+  .planes-grid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .plan-tarjeta {
+    padding: 13px 14px;
+  }
+
+  .plan-tarjeta__precio {
+    font-size: 21px;
+  }
 }
 
 /* Administración en el Panel */

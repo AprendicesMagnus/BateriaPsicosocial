@@ -85,7 +85,8 @@
 }
 
 .checkout-grid--modern {
-  align-items: stretch;
+  /* Evita que la tarjeta más corta se estire y deje un bloque vacío. */
+  align-items: start;
 }
 
 
@@ -867,4 +868,68 @@ body:has(.waybox-modal) {
 
 .waybox-modal {
   height: 100% !important;
+}
+
+/* Ajustes de adaptación móvil de la pasarela de Planes */
+@media (max-width: 700px) {
+  .checkout-page {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 14px 28px;
+  }
+
+  .checkout-grid--modern {
+    gap: 14px;
+    align-items: start;
+  }
+
+  .checkout-payment-card,
+  .checkout-summary-card--modern {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .checkout-heading {
+    margin-bottom: 14px;
+  }
+
+  .checkout-heading .app-title {
+    font-size: clamp(25px, 7vw, 32px);
+    line-height: 1.15;
+  }
+
+  .checkout-heading .app-subtitle {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .checkout-section-header {
+    gap: 10px;
+  }
+
+  .checkout-price-row,
+  .checkout-total {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .checkout-page {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .checkout-payment-card,
+  .checkout-summary-card--modern {
+    padding: 16px;
+  }
+
+  .checkout-pay-btn--large {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 14px;
+    white-space: normal;
+    line-height: 1.35;
+  }
 }

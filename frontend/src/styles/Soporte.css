@@ -229,16 +229,44 @@
 }
 
 /* ---------- Contacto ---------- */
+.soporte-btn-primary {
+  align-self: flex-start;
+  background: var(--gold-500, #f5a623);
+  color: #16224f;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.soporte-btn-primary:hover {
+  background: var(--gold-600, #dd8f13);
+}
+
+
 .soporte-card--contacto {
-  display: flex;
-  gap: 18px;
+  display: block;
+  width: 100%;
   background: linear-gradient(135deg, #16224f 0%, #2d3f82 100%);
   color: #fff;
   border: none;
 }
 
+.soporte-contacto-texto {
+  width: 100%;
+  min-width: 0;
+}
+
+.soporte-contacto-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
 .soporte-contacto-icono {
-  flex: none;
+  flex: 0 0 48px;
   width: 48px;
   height: 48px;
   border-radius: 14px;
@@ -248,18 +276,16 @@
   justify-content: center;
 }
 
-.soporte-contacto-texto {
-  flex: 1;
-  min-width: 0;
-}
-
 .soporte-card--contacto h2 {
   color: #fff;
+  margin: 0;
 }
 
 .soporte-card--contacto p {
+  width: 100%;
   margin: 0 0 16px;
   color: #d8def2;
+  line-height: 1.55;
 }
 
 .soporte-link {
@@ -279,9 +305,14 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
 }
 
 .soporte-form textarea {
+  display: block;
+  width: 100%;
+  min-height: 108px;
+  box-sizing: border-box;
   resize: vertical;
   padding: 12px 14px;
   border: none;
@@ -289,27 +320,6 @@
   font: inherit;
   background: rgba(255, 255, 255, 0.92);
   color: var(--ink-900);
-}
-
-.soporte-btn-primary {
-  align-self: flex-start;
-  background: var(--gold-500, #f5a623);
-  color: #16224f;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 22px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.soporte-btn-primary:hover {
-  background: var(--gold-600, #dd8f13);
-}
-
-.soporte-exito {
-  color: #8df5b3;
-  font-weight: 700;
 }
 
 /* ---------- Manual de usuario (desactivado) ---------- */
@@ -557,56 +567,40 @@
   color: var(--adm-muted);
 }
 
-/* Móvil: el ícono queda junto al título y el resto del cuadro ocupa todo el ancho */
+/* Móvil: encabezado compacto y contenido/formulario a todo el ancho */
 @media (max-width: 600px) {
   .soporte-card--contacto {
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
-    column-gap: 14px;
-    row-gap: 0;
-    align-items: center;
+    display: block;
   }
 
-  .soporte-contacto-texto {
-    display: contents;
+  .soporte-contacto-cabecera {
+    gap: 12px;
+    margin-bottom: 14px;
   }
 
   .soporte-contacto-icono {
+    flex-basis: 44px;
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    grid-column: 1;
-    grid-row: 1;
   }
 
   .soporte-card--contacto h2 {
-    grid-column: 2;
-    grid-row: 1;
-    margin: 0;
     font-size: 18px;
     line-height: 1.25;
   }
 
-  .soporte-card--contacto p,
-  .soporte-card--contacto .soporte-form {
-    grid-column: 1 / -1;
-  }
-
   .soporte-card--contacto p {
-    margin: 14px 0 14px;
+    margin: 0 0 14px;
     font-size: 15px;
     line-height: 1.55;
   }
 
   .soporte-link {
-    display: inline;
-    white-space: nowrap;
+    display: inline-flex;
+    white-space: normal;
+    overflow-wrap: anywhere;
     font-size: 14px;
-  }
-
-  .soporte-link svg {
-    vertical-align: -3px;
-    margin-right: 4px;
   }
 
   .soporte-form textarea {
@@ -619,4 +613,113 @@
     width: 100%;
     padding: 12px 22px;
   }
+}
+/* ============================================
+   Rediseño: navegación por secciones
+   Escritorio: lista lateral · Móvil: selector desplegable
+   ============================================ */
+.soporte-page { max-width: 1040px; }
+
+.soporte-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.soporte-panel {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+/* Con búsqueda no hay navegación: los resultados ocupan todo el ancho */
+.soporte-layout:not(:has(.soporte-nav)) { grid-template-columns: minmax(0, 1fr); }
+.soporte-layout:not(:has(.soporte-nav)) .soporte-panel { grid-column: 1; }
+
+.soporte-nav {
+  grid-column: 1;
+  grid-row: 1;
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #ece9f7;
+  border-radius: 20px;
+  box-shadow: 0 16px 40px -28px rgba(22, 34, 79, 0.35);
+}
+.soporte-panel { grid-row: 1; }
+.soporte-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-500);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.soporte-nav__item svg { flex: 0 0 auto; }
+.soporte-nav__item:hover { background: #f5f3ff; color: var(--ink-900); }
+.soporte-nav__item--activo,
+.soporte-nav__item--activo:hover {
+  background: var(--navy-900, #16224f);
+  color: #fff;
+}
+.soporte-nav__item:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 2px; }
+
+.soporte-selector { display: none; }
+
+@media (max-width: 820px) {
+  .soporte-layout,
+  .soporte-layout:not(:has(.soporte-nav)) { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .soporte-panel,
+  .soporte-layout:not(:has(.soporte-nav)) .soporte-panel { grid-column: 1; grid-row: auto; }
+  .soporte-nav { display: none; }
+  .soporte-selector { display: block; }
+  .soporte-selector label {
+    display: block;
+    margin: 0 0 6px 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink-500);
+  }
+  .soporte-selector__caja { position: relative; }
+  .soporte-selector__caja select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 52px;
+    padding: 0 44px 0 16px;
+    border: 1px solid #d9d4f0;
+    border-radius: 14px;
+    background: #fff;
+    color: var(--ink-900);
+    font: inherit;
+    font-size: 16px; /* evita el zoom en iPhone */
+    font-weight: 600;
+    box-shadow: 0 10px 24px -18px rgba(22, 34, 79, .5);
+  }
+  .soporte-selector__caja select:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 2px; }
+  .soporte-selector__caja svg {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--ink-500);
+  }
+  .soporte-card { padding: 20px 18px; }
 }

@@ -13,6 +13,10 @@ import {
   HiOutlineSpeakerphone,
   HiOutlineClock,
   HiOutlineSearch,
+  HiOutlineQuestionMarkCircle,
+  HiOutlineFlag,
+  HiOutlineCollection,
+  HiOutlineChevronDown,
 } from "react-icons/hi";
 import { useAuth } from "../context/AuthContext";
 import { crearTicketSoporte, fetchContenidoSoporte, fetchMisTicketsSoporte } from "../api/soporte";
@@ -171,6 +175,7 @@ export default function Soporte() {
   // Contenido editable (si el servidor no responde, se usan las guías y preguntas por defecto de este archivo).
   const [contenido, setContenido] = useState(null);
   const [busqueda, setBusqueda] = useState("");
+  const [seccion, setSeccion] = useState("faq");
   const [misMensajes, setMisMensajes] = useState([]);
 
   function cargarMisMensajes() {
@@ -214,6 +219,20 @@ export default function Soporte() {
 
   const pagMisMensajes = usePaginacion(misMensajes, 5, []);
 
+  // Navegación por secciones: lista lateral en escritorio, selector desplegable en móvil.
+  const opciones = [
+    { id: "faq", titulo: "Preguntas frecuentes", icono: HiOutlineQuestionMarkCircle },
+    { id: "pasos", titulo: "Primeros pasos", icono: HiOutlineFlag },
+    ...(seccionesVisibles.length
+      ? seccionesVisibles.map(({ clave, titulo, icono }) => ({ id: clave, titulo, icono }))
+      : [{ id: "recursos", titulo: "Más recursos", icono: HiOutlineCollection }]),
+    { id: "manual", titulo: "Manual de usuario", icono: HiOutlineDownload },
+    { id: "contacto", titulo: "Contacto y mis mensajes", icono: HiOutlineChatAlt2 },
+  ];
+  const activa = opciones.some((o) => o.id === seccion) ? seccion : "faq";
+  // Con una búsqueda se muestran los resultados de todas las secciones; sin ella, solo la elegida.
+  const ver = (id) => (buscando ? ["faq", "contacto"].includes(id) || seccionesVisibles.some((x) => x.clave === id) : activa === id);
+
   async function handleEnviar(e) {
     e.preventDefault();
     setErrorEnvio("");
@@ -252,7 +271,7 @@ export default function Soporte() {
               type="search"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar en preguntas frecuentes y guías informativas"
+              placeholder="Buscar en el Centro de ayuda"
               aria-label="Buscar en el Centro de ayuda"
             />
           </div>
@@ -264,8 +283,39 @@ export default function Soporte() {
             </p>
           )}
 
-          {/* Preguntas frecuentes (primero) */}
-          {preguntasVisibles.length > 0 && (
+          <div className="soporte-layout">
+          {!buscando && (
+            <>
+              <nav className="soporte-nav" aria-label="Secciones del Centro de ayuda">
+                {opciones.map(({ id, titulo, icono: Icono }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className={`soporte-nav__item ${activa === id ? "soporte-nav__item--activo" : ""}`}
+                    aria-current={activa === id ? "page" : undefined}
+                    onClick={() => setSeccion(id)}
+                  >
+                    <Icono size={18} aria-hidden="true" />
+                    <span>{titulo}</span>
+                  </button>
+                ))}
+              </nav>
+              <div className="soporte-selector">
+                <label htmlFor="soporte-seccion">Ir a la sección</label>
+                <div className="soporte-selector__caja">
+                  <select id="soporte-seccion" value={activa} onChange={(e) => setSeccion(e.target.value)}>
+                    {opciones.map((o) => (
+                      <option key={o.id} value={o.id}>{o.titulo}</option>
+                    ))}
+                  </select>
+                  <HiOutlineChevronDown size={18} aria-hidden="true" />
+                </div>
+              </div>
+            </>
+          )}
+          <div className="soporte-panel">
+          {/* Preguntas frecuentes */}
+          {ver("faq") && preguntasVisibles.length > 0 && (
             <section className="soporte-card">
               <h2>Preguntas frecuentes</h2>
               <div className="soporte-faq-lista">
@@ -277,7 +327,7 @@ export default function Soporte() {
           )}
 
           {/* Primeros pasos (solo sin búsqueda) */}
-          {!buscando && (
+          {ver("pasos") && (
           <section className="soporte-card soporte-card--guia">
             <h2>Primeros pasos</h2>
             <div className="soporte-tabs">
@@ -312,7 +362,7 @@ export default function Soporte() {
           )}
 
           {/* Secciones informativas editables: cada una aparece una sola vez */}
-          {seccionesVisibles.map(({ clave, titulo, icono: Icono, items }) => (
+          {seccionesVisibles.filter((x) => ver(x.clave)).map(({ clave, titulo, icono: Icono, items }) => (
             <section className="soporte-card" key={clave}>
               <h2 className="soporte-info-titulo">
                 <Icono size={20} /> {titulo}
@@ -329,7 +379,7 @@ export default function Soporte() {
           ))}
 
           {/* Recursos fijos: solo si el administrador aún no cargó secciones propias */}
-          {!buscando && seccionesVisibles.length === 0 && (
+          {ver("recursos") && seccionesVisibles.length === 0 && (
           <section className="soporte-card">
             <h2>Más recursos</h2>
             <div className="soporte-recursos">
@@ -350,7 +400,7 @@ export default function Soporte() {
 
           )}
 
-          {!buscando && (
+          {ver("manual") && (
           <section className="soporte-card soporte-manual">
             <div className="soporte-manual-icono">
               <HiOutlineDownload size={24} />
@@ -366,16 +416,20 @@ export default function Soporte() {
           </section>
           )}
 
+          {ver("contacto") && (
+          <>
           <section className="soporte-card soporte-card--contacto">
-            <div className="soporte-contacto-icono">
-              <HiOutlineChatAlt2 size={26} />
-            </div>
             <div className="soporte-contacto-texto">
-              <h2>¿No encontraste la respuesta?</h2>
+              <div className="soporte-contacto-cabecera">
+                <div className="soporte-contacto-icono" aria-hidden="true">
+                  <HiOutlineChatAlt2 size={26} />
+                </div>
+                <h2>¿No encontraste la respuesta?</h2>
+              </div>
               <p>
                 Escríbenos directamente a{" "}
-                <a className="soporte-link" href="mailto:aprendizmagnus@gmail.com">
-                  <HiOutlineMail size={16} /> aprendizmagnus@gmail.com
+                <a className="soporte-link" href="mailto:centrodeayudamagnus@gmail.com">
+                  <HiOutlineMail size={16} /> centrodeayudamagnus@gmail.com
                 </a>{" "}
                 o cuéntanos aquí tu problema:
               </p>
@@ -431,6 +485,10 @@ export default function Soporte() {
               <Paginador paginacion={pagMisMensajes} />
             </div>
           </section>
+          </>
+          )}
+          </div>
+          </div>
         </div>
       </main>
     </div>
