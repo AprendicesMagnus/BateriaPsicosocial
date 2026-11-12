@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import useModalAccesible from "../hooks/useModalAccesible";
 import { Link, useLocation } from "react-router-dom";
+import { HiOutlineOfficeBuilding } from "react-icons/hi";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
 import { useAuth } from "../context/AuthContext";
@@ -215,78 +216,98 @@ export default function MisEmpresas() {
           {aviso && <div className="mis-empresas-ok">{aviso}</div>}
           {error && <div className="mis-empresas-error">{error}</div>}
 
-          <div className="app-card mis-empresas-card">
-            {cargando ? (
+          {cargando ? (
+            <div className="app-card mis-empresas-card">
               <p className="mis-empresas-vacio">Cargando empresas...</p>
-            ) : empresas.length === 0 ? (
-              <div className="mis-empresas-vacio">
-                <p>Todavía no has creado ninguna empresa.</p>
-                <Link to="/verificar-nit" className="btn-primary mis-empresas-btn">
-                  Crear empresa
+            </div>
+          ) : empresas.length === 0 ? (
+            <div className="app-card mis-empresas-card mis-empresas-vacio">
+              <span className="empresa-card__avatar empresa-card__avatar--vacio" aria-hidden="true">
+                <HiOutlineOfficeBuilding size={28} />
+              </span>
+              <h2>Todavía no has creado ninguna empresa</h2>
+              <p>Registra tu primera empresa para empezar a aplicar la batería.</p>
+              <Link to="/verificar-nit" className="btn-primary mis-empresas-btn">
+                Crear empresa
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="mis-empresas-barra">
+                <p>
+                  <strong>{empresas.length}</strong> {empresas.length === 1 ? "empresa registrada" : "empresas registradas"}
+                </p>
+                <Link to="/verificar-nit" className="btn-primary mis-empresas-nueva">
+                  + Nueva empresa
                 </Link>
               </div>
-            ) : (
-              <div className="mis-empresas-tabla-wrap" tabIndex={0} role="region" aria-label="Listado de empresas">
-                <table className="mis-empresas-tabla">
-                  <caption className="sr-only">Listado de empresas</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Razón social</th>
-                      <th scope="col">NIT</th>
-                      <th scope="col">Sector</th>
-                      <th scope="col">Ciudad</th>
-                      <th scope="col">Correo</th>
-                      <th scope="col">Celular</th>
-                      <th scope="col">Creada</th>
-                      <th scope="col">Acciones</th>
 
+              <ul className="mis-empresas-lista" aria-label="Listado de empresas">
+                {empresas.map((empresa) => {
+                  const activa = usuario?.organizacionId === empresa.id;
+                  return (
+                    <li key={empresa.id} className={`empresa-card ${activa ? "empresa-card--activa" : ""}`}>
+                      <div className="empresa-card__cabecera">
+                        <span className="empresa-card__avatar" aria-hidden="true">
+                          {(empresa.nombre || "?").trim().charAt(0).toUpperCase()}
+                        </span>
+                        <div className="empresa-card__titulo">
+                          <h2>{empresa.nombre}</h2>
+                          <span className="empresa-card__nit">NIT {empresa.nit}</span>
+                        </div>
+                        {activa && <span className="empresa-card__activa">Activa</span>}
+                      </div>
 
+                      <dl className="empresa-card__datos">
+                        <div>
+                          <dt>Sector</dt>
+                          <dd>{empresa.sector ?? "—"}</dd>
+                        </div>
+                        <div>
+                          <dt>Ciudad</dt>
+                          <dd>{empresa.municipio ?? "—"}</dd>
+                        </div>
+                        <div className="empresa-card__dato--ancho">
+                          <dt>Correo</dt>
+                          <dd>{empresa.email ?? "—"}</dd>
+                        </div>
+                        <div>
+                          <dt>Celular</dt>
+                          <dd>{empresa.telefono ?? "—"}</dd>
+                        </div>
+                        <div>
+                          <dt>Creada</dt>
+                          <dd>{formatearFecha(empresa.creadoEn)}</dd>
+                        </div>
+                      </dl>
 
-
-
-
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {empresas.map((empresa) => (
-                      <tr key={empresa.id}>
-                        <td>{empresa.nombre}</td>
-                        <td>{empresa.nit}</td>
-                        <td>{empresa.sector ?? "—"}</td>
-                        <td>{empresa.municipio ?? "—"}</td>
-                        <td>{empresa.email ?? "—"}</td>
-                        <td>{empresa.telefono ?? "—"}</td>
-                        <td>{formatearFecha(empresa.creadoEn)}</td>
-                        <td>
-                          <div className="mis-empresas-acciones">
-                            <button
-                              type="button"
-                              className="mis-empresas-accion"
-                              onClick={() => abrirEdicion(empresa)}
-                              aria-label={`Editar ${empresa.nombre}`}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              className="mis-empresas-accion mis-empresas-accion--peligro"
-                              onClick={() => {
-                                setErrorEliminar("");
-                                setEliminando(empresa);
-                              }}
-                              aria-label={`Eliminar ${empresa.nombre}`}
-                            >
-                              Eliminar
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                      <div className="mis-empresas-acciones">
+                        <button
+                          type="button"
+                          className="mis-empresas-accion"
+                          onClick={() => abrirEdicion(empresa)}
+                          aria-label={`Editar ${empresa.nombre}`}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="mis-empresas-accion mis-empresas-accion--peligro"
+                          onClick={() => {
+                            setErrorEliminar("");
+                            setEliminando(empresa);
+                          }}
+                          aria-label={`Eliminar ${empresa.nombre}`}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
         </div>
       </main>
 

@@ -1145,12 +1145,8 @@ export default function Dashboard() {
               </>
             ) : !cuestionarioSeleccionado ? (
               <>
-                <div className="modal-icon">
-                  <img
-                    src="/logob1.png"
-                    alt="Magnus"
-                    style={{ height: 60, marginRight: "auto" }}
-                  />
+                <div className="modal-logo">
+                  <img src="/logo-color.png" alt="Magnus SIG" />
                 </div>
 
                 <h2 id="modal-cuestionario-titulo">¿Qué cuestionario deseas realizar?</h2>

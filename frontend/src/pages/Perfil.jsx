@@ -988,7 +988,7 @@ export default function Perfil() {
           <p className="app-subtitle">Consulta y administra la información de tu cuenta.</p>
 
           <div className="perfil-tabs" role="tablist" aria-label="Secciones del perfil">
-            {[["cuenta", "Mi cuenta"], ["seguridad", "Seguridad"], ["compras", "Compras y pedidos"]].map(([id, texto]) => (
+            {[["cuenta", "Mi cuenta"], ["seguridad", "Seguridad"], ["compras", "Compras"], ["pedidos", "Pedidos"]].map(([id, texto]) => (
               <button key={id} type="button" role="tab" aria-selected={pestana === id} className={`perfil-tab${pestana === id ? " perfil-tab--activa" : ""}`} onClick={() => setPestana(id)}>{texto}</button>
             ))}
           </div>
@@ -1430,6 +1430,7 @@ export default function Perfil() {
                               : "baterías"}
                           </span>
                           <span
+                            className="compras-estado"
                             style={estiloEstadoCompra(
                               compra.estado
                             )}
@@ -1461,17 +1462,7 @@ export default function Perfil() {
                           </span>
                           {compra.estado ===
                             "PENDIENTE" && (
-                              <div
-                                style={{
-                                  display:
-                                    "flex",
-                                  flexWrap:
-                                    "wrap",
-                                  gap: "8px",
-                                  alignItems:
-                                    "center",
-                                }}
-                              >
+                              <div className="compras-acciones">
                                 <button
                                   type="button"
                                   className="btn-primary compras-row-action"
@@ -1522,9 +1513,9 @@ export default function Perfil() {
                 )
               )}
             </div>
-            <div className="app-card compras-card" data-seccion="compras">
+            <div className="app-card compras-card" data-seccion="pedidos">
               <h2 className="compras-titulo">Historial de pedidos</h2>
-              <p className="compras-subtitulo">Productos del catálogo comprados</p>
+              <p className="compras-subtitulo">Productos del catálogo que has comprado</p>
               {loadingPedidos && (
                 <p style={{ fontSize: "14px", color: "#64748b" }}>Cargando pedidos...</p>
               )}
@@ -1538,8 +1529,8 @@ export default function Perfil() {
                       <span className="compras-row-icon"><ReceiptIcon /></span>
                       <div className="compras-row-main">
                         <span className="compras-row-qty">{pedido.numero}</span>
-                        <span className="compras-row-date">{resumenItemsPedido(pedido.items)}</span>
-                        <span style={estiloEstadoCompra(pedido.estado)}>{etiquetaEstadoPedido(pedido.estado)}</span>
+                        <span className="compras-estado" style={estiloEstadoCompra(pedido.estado)}>{etiquetaEstadoPedido(pedido.estado)}</span>
+                        <span className="compras-row-items">{resumenItemsPedido(pedido.items)}</span>
                         <span className="compras-row-date">{formatearFechaHora(pedido.creadoEn || pedido.fecha)}</span>
                         <span className="compras-row-total">
                           Total:{" "}

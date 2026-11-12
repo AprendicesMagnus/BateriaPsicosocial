@@ -1344,3 +1344,27 @@ body {
   .modal-overlay { align-items: flex-start; }
   .questionnaire-modal { max-height: calc(100dvh - 24px); }
 }
+
+/* Logo del modal de cuestionarios: versión a color sobre fondo blanco (antes el logo claro casi no se veía) */
+.modal-logo {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 18px;
+  padding: 12px 22px;
+  width: fit-content;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  box-shadow: 0 8px 22px -14px rgba(23, 50, 77, 0.35);
+}
+.modal-logo img {
+  display: block;
+  height: 72px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+@media (max-width: 520px) {
+  .modal-logo { padding: 10px 16px; }
+  .modal-logo img { height: 58px; }
+}
