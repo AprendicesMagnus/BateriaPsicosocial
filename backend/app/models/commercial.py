@@ -20,6 +20,11 @@ class Compra(Base):
     usuario_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=False)
     organizacion_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("organizaciones.id"), nullable=True)
     bateria_nombre: Mapped[str] = mapped_column(String(150), default="Batería de Riesgo Psicosocial", nullable=False)
+    # Referencia y nombre histórico del plan elegido al comprar (se conserva aunque el plan cambie o se elimine).
+    plan_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("planes_baterias.id", ondelete="SET NULL"), nullable=True
+    )
+    plan_nombre: Mapped[str | None] = mapped_column(String(150))
     cantidad: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     tarifa_unitario: Mapped[float] = mapped_column(Float, nullable=False, default=10000.0)
     subtotal: Mapped[float] = mapped_column(Float, nullable=False)

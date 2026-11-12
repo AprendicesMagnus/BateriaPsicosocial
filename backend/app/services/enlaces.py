@@ -28,6 +28,8 @@ from app.models.evaluation import (
     ParticipanteInstrumento,
 )
 from app.models.survey import CuestionarioVersion
+from app.services.baterias import saldo_por_organizacion
+from app.models.organization import Organizacion
 from app.db.seed import ROLES
 from app.models.user import Rol, Usuario
 from app.services.auth import usuario_publico
@@ -92,6 +94,13 @@ def _inicializar_instrumento_unico(db: Session, evaluacion: Evaluacion, codigo: 
     db.add(EvaluacionInstrumento(evaluacion_id=evaluacion.id, version_id=version.id, orden=orden, obligatorio=True))
 
 
+def obtener_saldo_baterias(db: Session, actual: Usuario) -> dict:
+    """Saldo de baterías pagadas de la empresa activa. El Super Administrador es ilimitado."""
+    if actual.rol.codigo == "SUPER_ADMINISTRADOR":
+        return {"ilimitado": True, "compradas": None, "consumidas": 0, "disponibles": None}
+    return {"ilimitado": False, **saldo_por_organizacion(db, actual.organizacion_id)}
+
+
 def crear_enlace(
     db: Session,
     nombre: str,
@@ -103,6 +112,15 @@ def crear_enlace(
         raise AppError(400, "Tu usuario no tiene una organización asociada; no se puede crear el enlace.")
     if instrumento is not None and instrumento not in INSTRUMENTOS_ENLACE:
         raise AppError(400, "El cuestionario seleccionado no es válido.")
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR":
+        saldo = obtener_saldo_baterias(db, actual)
+        if saldo["disponibles"] <= 0:
+            mensaje = (
+                "Tu empresa no tiene baterías disponibles. Solicita al administrador que realice una compra."
+                if actual.rol.codigo == "RESPONSABLE_SST"
+                else "No tienes baterías disponibles. Compra un plan para poder generar nuevos enlaces."
+            )
+            raise AppError(402, mensaje)
     version = version_vigente(db)
     evaluacion = Evaluacion(
         organizacion_id=actual.organizacion_id,
@@ -115,6 +133,7 @@ def crear_enlace(
         enlace_token=secrets.token_urlsafe(24),
         enlace_instrumento=instrumento,
         enlace_ruta=ruta.strip() if ruta else None,
+        bateria_controlada=actual.rol.codigo != "SUPER_ADMINISTRADOR",
     )
     db.add(evaluacion)
     db.flush()
@@ -225,6 +244,12 @@ def info_publica(db: Session, token: str) -> dict:
         "activo": evaluacion.estado != "FINALIZADA",
         # Ya hay un paciente respondiendo con este enlace (solo lo puede continuar él)
         "enUso": len(evaluacion.participantes) > 0,
+        # Los enlaces existentes también se bloquean si la empresa agotó su saldo.
+        "sinBaterias": (
+            evaluacion.bateria_controlada
+            and evaluacion.bateria_consumida_en is None
+            and saldo_por_organizacion(db, evaluacion.organizacion_id)["disponibles"] <= 0
+        ),
         # Si el enlace es de un solo cuestionario, ruta del frontend a la que se le envía
         # directamente al empezar (null = batería completa, empieza por la Ficha)
         "ruta": evaluacion.enlace_ruta,
@@ -232,14 +257,47 @@ def info_publica(db: Session, token: str) -> dict:
 
 
 def iniciar_como_invitado(db: Session, token: str, ip: str | None) -> dict:
-    """Crea el paciente invitado, su participación y su consentimiento, y le abre sesión."""
-    evaluacion = _evaluacion_por_token(db, token)
+    """Registra al paciente. La batería se consume al guardar su primera respuesta."""
+    evaluacion_inicial = _evaluacion_por_token(db, token)
+
+    # Serializa el uso de un mismo enlace y comprueba que exista saldo al iniciar.
+    # El consumo efectivo se registra después, al guardar la primera respuesta.
+    if evaluacion_inicial.bateria_controlada:
+        organizacion = (
+            db.query(Organizacion)
+            .filter(Organizacion.id == evaluacion_inicial.organizacion_id)
+            .with_for_update()
+            .first()
+        )
+        if organizacion is None:
+            raise AppError(400, "La empresa asociada a este enlace ya no está disponible.")
+
+    evaluacion = (
+        db.query(Evaluacion)
+        .filter(Evaluacion.enlace_token == token)
+        .with_for_update()
+        .first()
+    )
+    if evaluacion is None:
+        raise AppError(404, "El enlace no existe o fue eliminado.")
     if evaluacion.estado == "FINALIZADA":
         raise AppError(400, "Este enlace ya fue cerrado.")
-    # Un enlace = un paciente: si otra persona ya empezó a responder, no se puede reutilizar
-    if evaluacion.participantes:
+
+    # Un enlace = un paciente: consultar directamente evita usar una colección cargada antes del bloqueo.
+    ya_iniciado = db.query(EvaluacionParticipante.id).filter(
+        EvaluacionParticipante.evaluacion_id == evaluacion.id
+    ).first()
+    if ya_iniciado:
         raise AppError(400, "Este enlace ya está siendo usado por otro paciente. Pide un enlace nuevo a tu psicólogo.")
 
+    if evaluacion.bateria_controlada:
+        saldo = saldo_por_organizacion(db, evaluacion.organizacion_id)
+        if saldo["disponibles"] <= 0:
+            db.rollback()
+            raise AppError(402, "Esta empresa no tiene baterías disponibles. Solicita al administrador que compre un nuevo plan.")
+
+    # Cargar las relaciones que se usan más abajo después de bloquear la fila.
+    evaluacion = _evaluacion_por_token(db, token)
     rol = _rol_paciente(db)
 
     # Nombre provisional: se reemplaza con el nombre completo de la Ficha de datos

@@ -6,6 +6,10 @@ export async function fetchEnlaces(token) {
   return request("/enlaces", { token });
 }
 
+export async function fetchSaldoBaterias(token) {
+  return request("/enlaces/saldo", { token });
+}
+
 // opciones.instrumento restringe el enlace a un solo cuestionario (FICHA_DATOS, ESTRES,
 // EXTRALABORAL, INTRALABORAL_A o INTRALABORAL_B); opciones.ruta es la página (Forma A/B) a la
 // que se envía al paciente al empezar. Sin opciones se crea el enlace de la batería completa.

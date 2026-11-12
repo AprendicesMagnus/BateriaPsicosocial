@@ -36,6 +36,11 @@ class Evaluacion(Base):
     enlace_instrumento: Mapped[str | None] = mapped_column(String(20))
     # Ruta del frontend (Forma A o B) a la que se redirige al paciente al empezar ese enlace
     enlace_ruta: Mapped[str | None] = mapped_column(String(60))
+    # True cuando este enlace consume una batería al iniciar el paciente. Los enlaces
+    # creados por Super Administrador y los registros históricos quedan exentos.
+    bateria_controlada: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Momento en que el paciente guardó su primera respuesta; consume una batería una sola vez.
+    bateria_consumida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     organizacion: Mapped["Organizacion"] = relationship(back_populates="evaluaciones")
     evaluador: Mapped["Usuario"] = relationship(foreign_keys=[evaluador_id])

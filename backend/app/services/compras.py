@@ -33,6 +33,8 @@ def _compra_publica(compra: Compra) -> dict:
             else None
         ),
         "bateriaNombre": compra.bateria_nombre,
+        "planId": str(compra.plan_id) if compra.plan_id else None,
+        "planNombre": compra.plan_nombre,
         "cantidad": compra.cantidad,
         "tarifaUnitario": compra.tarifa_unitario,
         "subtotal": compra.subtotal,
@@ -291,10 +293,23 @@ def crear_compra(
     # CREAR COMPRA
     # ==================================================
 
+    plan_seleccionado = None
+    plan_id = getattr(data, "planId", None)
+    if plan_id:
+        plan_seleccionado = db.query(PlanBateria).filter(
+            PlanBateria.id == plan_id, PlanBateria.activo.is_(True)
+        ).first()
+
     compra = Compra(
         usuario_id=actual.id,
         organizacion_id=organizacion_id,
         bateria_nombre=bateria_nombre,
+        plan_id=plan_seleccionado.id if plan_seleccionado else None,
+        plan_nombre=(
+            f"{plan_seleccionado.nombre} · {plan_seleccionado.cantidad_min} a "
+            f"{plan_seleccionado.cantidad_max if plan_seleccionado.cantidad_max is not None else 'en adelante'} baterías"
+            if plan_seleccionado else None
+        ),
         cantidad=cantidad,
         tarifa_unitario=tarifa,
         subtotal=subtotal,

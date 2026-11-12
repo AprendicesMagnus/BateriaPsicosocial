@@ -21,6 +21,7 @@ import Paginador from "../components/Paginador";
 import PanelSoporte from "../components/PanelSoporte";
 import PanelTienda from "../components/PanelTienda";
 import PanelEvolucion from "../components/PanelEvolucion";
+import PanelSeguimientoBaterias from "../components/PanelSeguimientoBaterias";
 import "../styles/PanelAcciones.css";
 import { usePaginacion } from "../hooks/usePaginacion";
 import { normalizar } from "../utils/encuestas";
@@ -67,6 +68,7 @@ const SECCIONES = [
   { id: "empresas", label: "Empresas" },
   { id: "evolucion", label: "Evolución mensual" },
   { id: "tienda", label: "Gestión de tienda" },
+  { id: "baterias", label: "Seguimiento de baterías" },
   { id: "soporte", label: "Centro de ayuda" },
   { id: "auditoria", label: "Auditoría" },
 ];
@@ -551,6 +553,8 @@ export default function Panel() {
             {seccion === "evolucion" && <PanelEvolucion token={token} />}
 
             {seccion === "tienda" && <PanelTienda />}
+
+            {seccion === "baterias" && <PanelSeguimientoBaterias token={token} />}
 
             {seccion === "soporte" && <PanelSoporte />}
 

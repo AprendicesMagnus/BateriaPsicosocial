@@ -1,0 +1,41 @@
+.adm-seguimiento-baterias { display: flex; flex-direction: column; gap: 18px; }
+.adm-seguimiento-baterias__head { align-items: flex-start; gap: 14px; }
+.adm-seguimiento-baterias__acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.adm-seguimiento-baterias__metricas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.adm-seguimiento-baterias__metrica { min-width: 0; padding: 15px 16px; border: 1px solid var(--adm-line); border-radius: 12px; background: #fff; display: flex; flex-direction: column; gap: 7px; }
+.adm-seguimiento-baterias__metrica span { color: var(--adm-muted); font-size: 12px; }
+.adm-seguimiento-baterias__metrica strong { color: var(--adm-navy-2); font-size: 25px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.adm-seguimiento-baterias__controles { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.adm-seguimiento-baterias__tabs { display: flex; gap: 5px; padding: 4px; border: 1px solid var(--adm-line); border-radius: 10px; background: #f7f9fc; }
+.adm-seguimiento-baterias__tabs button { border: 0; border-radius: 7px; padding: 8px 12px; background: transparent; color: var(--adm-muted); font: inherit; font-weight: 700; cursor: pointer; }
+.adm-seguimiento-baterias__tabs button.activo { background: var(--adm-navy-2); color: #fff; }
+.adm-seguimiento-baterias__controles .adm-input { min-width: 190px; flex: 1 1 190px; }
+.adm-seguimiento-baterias__sub { display: block; margin-top: 3px; color: var(--adm-muted); font-size: 11px; }
+.adm-seguimiento-baterias__estado { white-space: nowrap; }
+.adm-seguimiento-baterias__estado--agotadas { background: #fee2e2; color: #991b1b; }
+.adm-seguimiento-baterias__estado--sin_compra { background: #f1f5f9; color: #475569; }
+.adm-seguimiento-baterias__estado--por_agotarse { background: #fef3c7; color: #92400e; }
+.adm-seguimiento-baterias__estado--disponibles { background: #dcfce7; color: #166534; }
+.adm-seguimiento-baterias__ref { max-width: 150px; overflow-wrap: anywhere; font-size: 11px; color: var(--adm-muted); }
+.adm-seguimiento-baterias__nota { margin: 0; color: var(--adm-muted); font-size: 12px; line-height: 1.5; }
+.adm-seguimiento-baterias__error { margin: 0; padding: 10px 12px; border-radius: 8px; background: #fff1f2; color: #9f1239; }
+.adm-btn-secundario, .adm-btn-principal { border-radius: 8px; padding: 9px 13px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.adm-btn-secundario { border: 1px solid var(--adm-line-2); background: #fff; color: var(--adm-ink); }
+.adm-btn-principal { border: 1px solid var(--adm-navy-2); background: var(--adm-navy-2); color: #fff; }
+.adm-btn-secundario:disabled, .adm-btn-principal:disabled { opacity: .55; cursor: wait; }
+@media (max-width: 900px) { .adm-seguimiento-baterias__metricas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .adm-seguimiento-baterias__head { flex-direction: column; }
+  .adm-seguimiento-baterias__acciones { width: 100%; }
+  .adm-seguimiento-baterias__acciones button { flex: 1; }
+  .adm-seguimiento-baterias__metricas { gap: 8px; }
+  .adm-seguimiento-baterias__metrica { padding: 12px; }
+  .adm-seguimiento-baterias__metrica strong { font-size: 21px; }
+  .adm-seguimiento-baterias__controles { align-items: stretch; }
+  .adm-seguimiento-baterias__tabs { width: 100%; }
+  .adm-seguimiento-baterias__tabs button { flex: 1; padding: 8px 5px; font-size: 12px; }
+  .adm-seguimiento-baterias__controles .adm-input { width: 100%; flex-basis: 100%; }
+}
+.adm-seguimiento-baterias__fecha { display: flex; align-items: center; gap: 7px; color: var(--adm-muted); font-size: 12px; white-space: nowrap; }
+.adm-seguimiento-baterias__fecha .adm-input { min-width: 145px; }
+@media (max-width: 600px) { .adm-seguimiento-baterias__fecha { width: 100%; justify-content: space-between; } .adm-seguimiento-baterias__fecha .adm-input { width: 70%; } }

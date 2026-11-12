@@ -16,6 +16,7 @@ from app.models.evaluation import (
 from app.models.survey import CuestionarioVersion, Dimension, Pregunta
 from app.models.user import Usuario
 from app.services.cuestionarios import version_vigente
+from app.services.baterias import consumir_bateria_primera_respuesta
 from app.services.notificaciones import notificar
 from app.services.tabulacion import tabular_participante
 
@@ -218,6 +219,9 @@ def guardar_ficha_datos(db: Session, evaluacion_id, data, actual: Usuario) -> di
     participante = _participante_trabajador(db, evaluacion_id, actual)
     if participante.consentimiento is None:
         raise AppError(403, "Debe aceptar el consentimiento informado antes de acceder a la Ficha de Datos Generales.")
+
+    # La batería se consume en la primera respuesta real, no al crear/abrir el enlace.
+    consumir_bateria_primera_respuesta(db, participante)
 
     # 1. Guardar/actualizar respuestas de la Ficha en la tabla respuestas
     version_ficha = db.query(CuestionarioVersion).filter(CuestionarioVersion.codigo == "FICHA_DATOS").first()
@@ -487,6 +491,10 @@ def guardar_respuesta(db: Session, evaluacion_id, data, actual: Usuario) -> dict
     elif pregunta.tipo_respuesta == "LIKERT":
         # Una pregunta Likert no acepta texto
         raise AppError(400, "Esta pregunta requiere un valor numérico.")
+
+    # Consume una sola batería al persistir la primera respuesta del paciente.
+    consumir_bateria_primera_respuesta(db, participante)
+
     existente = (
         db.query(Respuesta)
         .filter(Respuesta.participante_id == participante.id, Respuesta.pregunta_id == pregunta.id)

@@ -52,7 +52,7 @@ class TestRespuestaValorRangeSchema:
 
 
 class TestRespuestaEndpointRange:
-    def test_endpoint_rechaza_valor_fuera_de_rango_autenticado(self, client):
+    def test_endpoint_rechaza_valor_fuera_de_rango_autenticado(self, client, acreditar_baterias):
         res = client.post(
             "/api/auth/login",
             json={
@@ -98,6 +98,7 @@ class TestRespuestaEndpointRange:
             },
         )
         assert res_eval_user.status_code in (200, 201), res_eval_user.text
+        acreditar_baterias(org_id, res_eval_user.json()["id"])
 
         res_login_eval = client.post(
             "/api/auth/login",

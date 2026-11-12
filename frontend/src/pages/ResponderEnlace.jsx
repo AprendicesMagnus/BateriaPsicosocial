@@ -188,7 +188,7 @@ export default function ResponderEnlace() {
         </PrimaryButton>
       </section>
     );
-  } else if (!info.activo || info.enUso) {
+  } else if (!info.activo || info.enUso || info.sinBaterias) {
     contenido = (
       <section className="enlace__estado">
         <div className="enlace__icono enlace__icono--alerta">!</div>
@@ -196,7 +196,9 @@ export default function ResponderEnlace() {
         <h1>{info.nombre}</h1>
 
         <FormMessage type="error">
-          {info.activo
+          {info.sinBaterias
+            ? "La empresa que generó este enlace no tiene baterías disponibles en este momento. Comunícate con la persona que te lo compartió."
+            : info.activo
             ? "Este enlace ya está siendo usado por otro paciente. Solicita uno nuevo a tu psicólogo."
             : "Este enlace ya fue cerrado. Solicita uno nuevo a tu psicólogo."}
         </FormMessage>

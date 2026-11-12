@@ -14,7 +14,7 @@ import { fetchIndicadores, fetchIndicadoresPorCategoria, fetchHistoricoIndicador
 import { fetchAnalisisPredictivo } from "../api/prediccion";
 
 import { descargarInformesEmpresaZip } from "../api/informes";
-import { crearEnlace } from "../api/enlaces";
+import { crearEnlace, fetchSaldoBaterias } from "../api/enlaces";
 import AppSidebar from "../components/AppSidebar";
 import BotonRegresar from "../components/BotonRegresar";
 import { esSuperAdmin, rutaInicial } from "../utils/roles";
@@ -177,6 +177,18 @@ export default function Dashboard() {
   const [errorEnlace, setErrorEnlace] = useState(null);
   const [enlaceCopiado, setEnlaceCopiado] = useState(false);
   const [mostrarQr, setMostrarQr] = useState(false);
+  const [saldoBaterias, setSaldoBaterias] = useState(null);
+
+  useEffect(() => {
+    if (!token || !puedeCrearEnlaces) return;
+    let activo = true;
+    fetchSaldoBaterias(token)
+      .then((saldo) => { if (activo) setSaldoBaterias(saldo); })
+      .catch(() => { if (activo) setSaldoBaterias({ error: true, disponibles: 0 }); });
+    return () => { activo = false; };
+  }, [token, puedeCrearEnlaces]);
+
+  const tieneBaterias = usuario?.rol === "SUPER_ADMINISTRADOR" || saldoBaterias?.ilimitado || (saldoBaterias?.disponibles ?? 0) > 0;
 
   const categoriaActiva = TODAS_CATEGORIAS.find((c) => c.id === categoriaActivaId);
 
@@ -372,6 +384,7 @@ export default function Dashboard() {
       });
       setEnlaceCreado(`${window.location.origin}/responder/${enlace.token}`);
       cerrarModal();
+      fetchSaldoBaterias(token).then(setSaldoBaterias).catch(() => {});
     } catch (err) {
       setErrorEnlace(err.message || "No se pudo crear el enlace.");
     } finally {
@@ -441,7 +454,10 @@ export default function Dashboard() {
           <button
             className="welcome-button"
             type="button"
-            onClick={() => setMostrarModal(true)}
+            onClick={() => {
+              setMostrarModal(true);
+              if (token && puedeCrearEnlaces) fetchSaldoBaterias(token).then(setSaldoBaterias).catch(() => setSaldoBaterias({ error: true, disponibles: 0 }));
+            }}
             aria-label="Seleccionar cuestionario"
           >
             ✓
@@ -1062,6 +1078,28 @@ export default function Dashboard() {
               ×
             </button>
 
+            {puedeCrearEnlaces && (
+              <div className={`saldo-baterias-aviso ${tieneBaterias ? "saldo-baterias-aviso--ok" : "saldo-baterias-aviso--bloqueado"}`}>
+                {!saldoBaterias ? (
+                  <span>Consultando disponibilidad de baterías…</span>
+                ) : saldoBaterias.error ? (
+                  <span>No fue posible consultar el saldo. Por seguridad, la generación de enlaces permanece bloqueada hasta verificarlo.</span>
+                ) : saldoBaterias.ilimitado ? (
+                  <span>Uso ilimitado de baterías para Super Administrador.</span>
+                ) : tieneBaterias ? (
+                  <span><strong>{saldoBaterias.disponibles}</strong> batería(s) disponible(s). El consumo se registra cuando el paciente guarda su primera respuesta.</span>
+                ) : (
+                  <div>
+                    <strong>No hay baterías disponibles.</strong>
+                    <p>{usuario?.rol === "RESPONSABLE_SST" ? "Solicita al administrador de tu empresa que compre un nuevo plan." : "Compra un plan para habilitar la generación de enlaces."}</p>
+                    {usuario?.rol !== "RESPONSABLE_SST" && (
+                      <button type="button" className="saldo-baterias-aviso__accion" onClick={() => navigate("/pago")}>Comprar plan</button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {enlaceSoloObjetivo ? (
               <>
                 <h2 id="modal-cuestionario-titulo">Enlace para un solo cuestionario</h2>
@@ -1100,7 +1138,7 @@ export default function Dashboard() {
                   className="modal-main-button"
                   type="button"
                   onClick={handleCrearEnlaceSolo}
-                  disabled={creandoEnlace || !nombreEnlaceSolo.trim()}
+                  disabled={creandoEnlace || !nombreEnlaceSolo.trim() || !tieneBaterias}
                 >
                   {creandoEnlace ? "Creando enlace..." : "Crear enlace"}
                 </button>
@@ -1142,6 +1180,7 @@ export default function Dashboard() {
                       <button
                         type="button"
                         className="modal-type-btn modal-type-btn--enlace"
+                        disabled={!tieneBaterias}
                         onClick={() =>
                           setEnlaceSoloObjetivo({
                             titulo: `${cuestionarioSeleccionado.titulo} (Forma A)`,
@@ -1156,6 +1195,7 @@ export default function Dashboard() {
                       <button
                         type="button"
                         className="modal-type-btn modal-type-btn--enlace"
+                        disabled={!tieneBaterias}
                         onClick={() =>
                           setEnlaceSoloObjetivo({
                             titulo: `${cuestionarioSeleccionado.titulo} (Forma B)`,

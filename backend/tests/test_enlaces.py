@@ -46,7 +46,7 @@ def setup_seed_instrumentos(db_session):
     db_session.commit()
 
 
-def _psicologo(client):
+def _psicologo(client, acreditar_baterias, cantidad=20):
     res = client.post("/api/auth/login", json={"email": "admin@magnussig.com", "password": "Admin1234"})
     headers_admin = {"Authorization": f"Bearer {res.json()['token']}"}
     nit_base = f"9{str(uuid.uuid4().int)[:8]}"
@@ -70,13 +70,14 @@ def _psicologo(client):
         },
     )
     assert res_user.status_code in (200, 201), res_user.text
+    acreditar_baterias(org_id, res_user.json()["id"], cantidad)
     res_login = client.post("/api/auth/login", json={"email": email, "password": "Evaluador1234"})
     assert res_login.status_code == 200, res_login.text
     return {"Authorization": f"Bearer {res_login.json()['token']}"}
 
 
-def test_flujo_completo_enlace_paciente(client):
-    headers_psico = _psicologo(client)
+def test_flujo_completo_enlace_paciente(client, acreditar_baterias):
+    headers_psico = _psicologo(client, acreditar_baterias)
 
     # 1. El psicólogo crea el enlace y lo ve en su lista
     res = client.post("/api/enlaces", headers=headers_psico, json={"nombre": "Pacientes septiembre"})
@@ -140,8 +141,8 @@ def _iniciar_paciente(client, headers_psico):
     return token, datos["evaluacionId"], {"Authorization": f"Bearer {datos['token']}"}
 
 
-def test_enlace_es_de_un_solo_paciente(client):
-    headers_psico = _psicologo(client)
+def test_enlace_es_de_un_solo_paciente(client, acreditar_baterias):
+    headers_psico = _psicologo(client, acreditar_baterias)
     token, _, _ = _iniciar_paciente(client, headers_psico)
 
     assert client.get(f"/api/enlaces/publico/{token}").json()["enUso"] is True
@@ -153,8 +154,8 @@ def test_enlace_es_de_un_solo_paciente(client):
     assert otro.status_code == 400
 
 
-def test_enlace_se_cierra_al_terminar_la_bateria(client):
-    headers_psico = _psicologo(client)
+def test_enlace_se_cierra_al_terminar_la_bateria(client, acreditar_baterias):
+    headers_psico = _psicologo(client, acreditar_baterias)
     token, eval_id, headers_pac = _iniciar_paciente(client, headers_psico)
     assert client.post(f"/api/evaluaciones/{eval_id}/ficha", headers=headers_pac, json=FICHA).status_code == 200
 
@@ -184,8 +185,8 @@ def test_enlace_se_cierra_al_terminar_la_bateria(client):
     assert otro.status_code == 400
 
 
-def test_eliminar_enlace_sin_usar_lo_borra(client):
-    headers_psico = _psicologo(client)
+def test_eliminar_enlace_sin_usar_lo_borra(client, acreditar_baterias):
+    headers_psico = _psicologo(client, acreditar_baterias)
     enlace = client.post("/api/enlaces", headers=headers_psico, json={"nombre": "Sin usar"}).json()
 
     res = client.delete(f"/api/enlaces/{enlace['evaluacionId']}", headers=headers_psico)
@@ -197,8 +198,8 @@ def test_eliminar_enlace_sin_usar_lo_borra(client):
     assert client.delete(f"/api/enlaces/{enlace['evaluacionId']}", headers=headers_psico).status_code == 404
 
 
-def test_eliminar_enlace_usado_conserva_la_encuesta(client):
-    headers_psico = _psicologo(client)
+def test_eliminar_enlace_usado_conserva_la_encuesta(client, acreditar_baterias):
+    headers_psico = _psicologo(client, acreditar_baterias)
     token, eval_id, headers_pac = _iniciar_paciente(client, headers_psico)
     client.post(f"/api/evaluaciones/{eval_id}/ficha", headers=headers_pac, json=FICHA)
 
@@ -212,10 +213,10 @@ def test_eliminar_enlace_usado_conserva_la_encuesta(client):
     assert cuestionario["codigo"] == "ESTRES"
 
 
-def test_limpieza_automatica_vacia_la_lista(client, db_session):
+def test_limpieza_automatica_vacia_la_lista(client, db_session, acreditar_baterias):
     from app.services.enlaces import limpiar_enlaces
 
-    headers_psico = _psicologo(client)
+    headers_psico = _psicologo(client, acreditar_baterias)
     client.post("/api/enlaces", headers=headers_psico, json={"nombre": "Para limpiar"})
     _, eval_id, _ = _iniciar_paciente(client, headers_psico)
     assert len(client.get("/api/enlaces", headers=headers_psico).json()) == 2
@@ -252,10 +253,10 @@ VISTAS = {
         ("Operario, operador, ayudante, servicios generales", False, "INTRALABORAL_B", {"CLIENTES": True}),
     ],
 )
-def test_vistas_de_cuestionarios_guardan_y_finalizan(client, tipo_cargo, tiene_personal_a_cargo, codigo_intra, filtros):
+def test_vistas_de_cuestionarios_guardan_y_finalizan(client, acreditar_baterias, tipo_cargo, tiene_personal_a_cargo, codigo_intra, filtros):
     """Recorre la batería como lo hacen las vistas: código "<prefijo><n>", valores de la escala de la
     página y, en el intralaboral, solo las preguntas visibles según los filtros (Sí/No)."""
-    headers_psico = _psicologo(client)
+    headers_psico = _psicologo(client, acreditar_baterias)
     _, eval_id, headers_pac = _iniciar_paciente(client, headers_psico)
     res = client.post(
         f"/api/evaluaciones/{eval_id}/ficha",
@@ -306,3 +307,62 @@ def test_vistas_de_cuestionarios_guardan_y_finalizan(client, tipo_cargo, tiene_p
     assert vistos == ["ESTRES", "EXTRALABORAL", codigo_intra]
     assert final.json()["completadoTotal"] is True
     assert final.json()["resultados"]
+
+
+def test_control_baterias_consume_primera_respuesta_y_bloquea_al_agotar(client, acreditar_baterias):
+    headers_psico = _psicologo(client, acreditar_baterias, cantidad=1)
+
+    saldo_inicial = client.get("/api/enlaces/saldo", headers=headers_psico)
+    assert saldo_inicial.status_code == 200, saldo_inicial.text
+    assert saldo_inicial.json()["disponibles"] == 1
+
+    # Crear enlaces y abrirlos no consume baterías.
+    enlace_1 = client.post("/api/enlaces", headers=headers_psico, json={"nombre": "Primer enlace"})
+    enlace_2 = client.post("/api/enlaces", headers=headers_psico, json={"nombre": "Segundo enlace"})
+    assert enlace_1.status_code == 200, enlace_1.text
+    assert enlace_2.status_code == 200, enlace_2.text
+    assert client.get("/api/enlaces/saldo", headers=headers_psico).json()["disponibles"] == 1
+
+    inicio = client.post(
+        f"/api/enlaces/publico/{enlace_1.json()['token']}/iniciar",
+        json={"aceptaConsentimiento": True},
+    )
+    assert inicio.status_code == 200, inicio.text
+    headers_paciente = {"Authorization": f"Bearer {inicio.json()['token']}"}
+    evaluacion_id = inicio.json()["evaluacionId"]
+    assert client.get("/api/enlaces/saldo", headers=headers_psico).json()["disponibles"] == 1
+
+    # La primera respuesta real (guardar la Ficha) consume la unidad, no el clic en Comenzar.
+    respuesta = client.post(
+        f"/api/evaluaciones/{evaluacion_id}/ficha",
+        headers=headers_paciente,
+        json=FICHA,
+    )
+    assert respuesta.status_code == 200, respuesta.text
+    assert client.get("/api/enlaces/saldo", headers=headers_psico).json()["disponibles"] == 0
+
+    # Al agotarse no se pueden crear enlaces ni iniciar enlaces pendientes.
+    bloqueado = client.post("/api/enlaces", headers=headers_psico, json={"nombre": "Tercer enlace"})
+    assert bloqueado.status_code == 402
+    info_segundo = client.get(f"/api/enlaces/publico/{enlace_2.json()['token']}")
+    assert info_segundo.status_code == 200
+    assert info_segundo.json()["sinBaterias"] is True
+    inicio_segundo = client.post(
+        f"/api/enlaces/publico/{enlace_2.json()['token']}/iniciar",
+        json={"aceptaConsentimiento": True},
+    )
+    assert inicio_segundo.status_code == 402
+
+
+def test_superadministrador_no_tiene_limite_de_baterias(client):
+    login = client.post(
+        "/api/auth/login",
+        json={"email": "admin@magnussig.com", "password": "Admin1234"},
+    )
+    assert login.status_code == 200, login.text
+    headers = {"Authorization": f"Bearer {login.json()['token']}"}
+
+    saldo = client.get("/api/enlaces/saldo", headers=headers)
+    assert saldo.status_code == 200, saldo.text
+    assert saldo.json()["ilimitado"] is True
+    assert saldo.json()["disponibles"] is None

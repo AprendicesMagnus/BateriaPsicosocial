@@ -749,6 +749,8 @@ body {
   justify-content: center;
   z-index: 9999;
   padding: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 
@@ -759,6 +761,11 @@ body {
 
   width: 100%;
   max-width: 500px;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: white;
   border-radius: 20px;
   padding: 35px;
@@ -1119,4 +1126,221 @@ body {
     gap: 7px;
     padding: 4px;
   }
+}
+
+
+/* Modal de cuestionarios: evita recortes en pantallas bajas y móviles */
+@media (max-height: 760px) {
+  .questionnaire-modal {
+    padding-top: 28px;
+    padding-bottom: 24px;
+  }
+
+  .modal-icon {
+    width: 88px;
+    height: 88px;
+    margin-bottom: 14px;
+  }
+
+  .questionnaire-modal > p {
+    margin-bottom: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .questionnaire-modal {
+    width: 100%;
+    max-width: 500px;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    margin: auto;
+    padding: 28px 18px 20px;
+    border-radius: 16px;
+  }
+
+  .questionnaire-modal h2 {
+    padding: 0 22px;
+    font-size: 18px;
+    line-height: 1.35;
+  }
+
+  .questionnaire-modal > p {
+    margin: 9px auto 18px;
+    font-size: 13px;
+  }
+
+  .questionnaire-options {
+    gap: 8px;
+  }
+
+  .questionnaire-options button {
+    padding: 12px 13px;
+  }
+
+  .modal-close {
+    top: 8px;
+    right: 9px;
+    z-index: 2;
+  }
+}
+
+
+/* ==========================================================
+   AVISO DE BATERIAS AGOTADAS EN EL MODAL DE ENLACES
+   Mantiene visible el aviso y mejora su presentación.
+========================================================== */
+.modal-overlay {
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.questionnaire-modal {
+  box-sizing: border-box;
+  max-height: calc(100dvh - 24px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #c7d4d9 transparent;
+}
+
+.questionnaire-modal::-webkit-scrollbar { width: 7px; }
+.questionnaire-modal::-webkit-scrollbar-thumb {
+  background: #c7d4d9;
+  border-radius: 20px;
+}
+.questionnaire-modal::-webkit-scrollbar-track { background: transparent; }
+
+.saldo-baterias-aviso {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 22px;
+  padding: 16px 18px;
+  border: 1px solid #d8e4e8;
+  border-radius: 14px;
+  background: #f6f9fa;
+  color: #244257;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.saldo-baterias-aviso--ok {
+  border-color: #c7e4da;
+  background: #f2faf7;
+  color: #245b4e;
+}
+
+.saldo-baterias-aviso--bloqueado {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  border-color: #f0d8bd;
+  background: linear-gradient(135deg, #fffaf4 0%, #fff5e9 100%);
+  color: #654523;
+  box-shadow: 0 5px 16px rgba(112, 76, 35, 0.06);
+}
+
+.saldo-baterias-aviso--bloqueado::before {
+  content: "!";
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: #ffebd5;
+  color: #a85b16;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.saldo-baterias-aviso--bloqueado > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.saldo-baterias-aviso--bloqueado strong {
+  display: block;
+  margin: 0 28px 5px 0;
+  color: #713f16;
+  font-size: 15px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.saldo-baterias-aviso--bloqueado p {
+  margin: 0;
+  color: #765b40;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.saldo-baterias-aviso__accion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 39px;
+  margin-top: 13px;
+  padding: 9px 17px;
+  border: 1px solid #12375e;
+  border-radius: 9px;
+  background: #12375e;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.saldo-baterias-aviso__accion:hover {
+  background: #1b4a78;
+  border-color: #1b4a78;
+  transform: translateY(-1px);
+}
+
+.saldo-baterias-aviso__accion:focus-visible,
+.modal-close:focus-visible {
+  outline: 3px solid rgba(46, 120, 105, .35);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .questionnaire-modal {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .saldo-baterias-aviso {
+    margin-bottom: 18px;
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .saldo-baterias-aviso--bloqueado { gap: 10px; }
+
+  .saldo-baterias-aviso--bloqueado::before {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .saldo-baterias-aviso--bloqueado strong { font-size: 14px; }
+  .saldo-baterias-aviso--bloqueado p { font-size: 12.5px; }
+  .saldo-baterias-aviso__accion { width: 100%; min-height: 40px; margin-top: 12px; }
+}
+
+@media (max-height: 620px) {
+  .modal-overlay { align-items: flex-start; }
+  .questionnaire-modal { max-height: calc(100dvh - 24px); }
 }

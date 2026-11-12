@@ -37,3 +37,7 @@ export async function fetchHistorialComprasTienda(token) {
 }
 
 export const fetchVentasProductos = (token) => request("/panel/ventas-productos", { token });
+
+export async function fetchSeguimientoBaterias(token) {
+  return request("/panel/seguimiento-baterias", { token });
+}
