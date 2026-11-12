@@ -664,6 +664,15 @@ button {
 
 }
 
+@media (max-width: 1024px) {
+  .answers-header,
+  .question-row {
+    grid-template-columns: 32px 1fr repeat(var(--num-opciones, 5), minmax(68px, 92px));
+    min-width: 0;
+    gap: 8px;
+  }
+}
+
 
 @media (max-width: 1000px) {
 

@@ -1129,3 +1129,13 @@ body {
     padding: 4px;
   }
 }
+
+@media (max-width: 480px) {
+  .dashboard__mobile-toolbar .app-profile-role {
+    display: none !important;
+  }
+  .dashboard__mobile-toolbar .app-profile-name {
+    max-width: 90px !important;
+  }
+}
+
