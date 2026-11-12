@@ -86,6 +86,19 @@ const GUIAS_POR_ROL = {
 
 const ORDEN_ROLES = ["SUPER_ADMINISTRADOR", "JEFE", "ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"];
 
+// El backend conserva EVALUADOR_SST como código interno; se aceptan también
+// las variantes de nombre que pueden llegar desde perfiles o sesiones antiguas.
+function normalizarRolSoporte(rol) {
+  const codigo = String(rol?.codigo || rol || "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s-]+/g, "_");
+  if (["PSICOLOGO", "PSICOLOGA", "EVALUADOR", "EVALUADOR_SST"].includes(codigo)) return "EVALUADOR_SST";
+  return ORDEN_ROLES.includes(codigo) ? codigo : null;
+}
+
 const FAQ = [
   {
     pregunta: "¿Cómo cambio mi número de resolución?",
@@ -168,9 +181,14 @@ export default function Soporte() {
   const [enviado, setEnviado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
-  const [rolActivo, setRolActivo] = useState(
-    ORDEN_ROLES.includes(usuario?.rol) ? usuario.rol : "SUPER_ADMINISTRADOR"
-  );
+  const rolUsuario = normalizarRolSoporte(usuario?.rol);
+  const [rolActivo, setRolActivo] = useState(rolUsuario || "EVALUADOR_SST");
+
+  // AuthContext puede cargar el usuario después del primer render. Sin este efecto,
+  // el Centro de ayuda podía conservar una guía incorrecta al entrar.
+  useEffect(() => {
+    if (rolUsuario) setRolActivo(rolUsuario);
+  }, [rolUsuario]);
 
   // Contenido editable (si el servidor no responde, se usan las guías y preguntas por defecto de este archivo).
   const [contenido, setContenido] = useState(null);
@@ -209,12 +227,13 @@ export default function Soporte() {
   const preguntasVisibles = buscando
     ? preguntas.filter((p) => coincide(p.pregunta, p.respuesta))
     : preguntas;
-  const seccionesVisibles = SECCIONES_INFO.map((seccion) => ({
+  const seccionesContenido = SECCIONES_INFO.map((seccion) => ({
     ...seccion,
     items: (contenido?.[seccion.clave] || []).filter(
       (item) => !buscando || coincide(item.titulo, item.texto)
     ),
-  })).filter((seccion) => seccion.items.length > 0);
+  }));
+  const seccionesVisibles = seccionesContenido.filter((seccion) => seccion.items.length > 0);
   const totalResultados =
     preguntasVisibles.length + seccionesVisibles.reduce((suma, seccion) => suma + seccion.items.length, 0);
 
@@ -224,9 +243,7 @@ export default function Soporte() {
   const opciones = [
     { id: "faq", titulo: "Preguntas frecuentes", icono: HiOutlineQuestionMarkCircle },
     { id: "pasos", titulo: "Primeros pasos", icono: HiOutlineFlag },
-    ...(seccionesVisibles.length
-      ? seccionesVisibles.map(({ clave, titulo, icono }) => ({ id: clave, titulo, icono }))
-      : [{ id: "recursos", titulo: "Más recursos", icono: HiOutlineCollection }]),
+    ...SECCIONES_INFO.map(({ clave, titulo, icono }) => ({ id: clave, titulo, icono })),
     { id: "manual", titulo: "Manual de usuario", icono: HiOutlineDownload },
     { id: "contacto", titulo: "Contacto y mis mensajes", icono: HiOutlineChatAlt2 },
   ];
@@ -346,7 +363,7 @@ export default function Soporte() {
                   >
                     <Icono size={18} />
                     {etiquetaRol(rol)}
-                    {rol === usuario?.rol && <span className="soporte-tab-tu">tú</span>}
+                    {rol === rolUsuario && <span className="soporte-tab-tu">tú</span>}
                   </button>
                 );
               })}
@@ -363,20 +380,24 @@ export default function Soporte() {
           </section>
           )}
 
-          {/* Secciones informativas editables: cada una aparece una sola vez */}
-          {seccionesVisibles.filter((x) => ver(x.clave)).map(({ clave, titulo, icono: Icono, items }) => (
-            <section className="soporte-card" key={clave}>
+          {/* Secciones informativas: siempre se muestran en la navegación, aunque estén vacías. */}
+          {seccionesContenido.filter((x) => ver(x.clave)).map(({ clave, titulo, icono: Icono, items }) => (
+            <section className="soporte-card soporte-card--informativa" key={clave}>
               <h2 className="soporte-info-titulo">
-                <Icono size={20} /> {titulo}
+                <span className="soporte-info-icono"><Icono size={20} /></span> {titulo}
               </h2>
-              <dl className="soporte-info-lista">
-                {items.map((item) => (
-                  <div className="soporte-info-item" key={item.id}>
-                    <dt>{item.titulo}</dt>
-                    <dd>{item.texto}</dd>
-                  </div>
-                ))}
-              </dl>
+              {items.length > 0 ? (
+                <dl className="soporte-info-lista">
+                  {items.map((item) => (
+                    <div className="soporte-info-item" key={item.id}>
+                      <dt>{item.titulo}</dt>
+                      <dd>{item.texto}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : (
+                <p className="soporte-seccion-vacia">Esta sección todavía no tiene contenido publicado.</p>
+              )}
             </section>
           ))}
 
