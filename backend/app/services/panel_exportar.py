@@ -19,7 +19,7 @@ from app.models.user import Usuario
 from app.services import panel as panel_service
 from app.services.panel import TIPO_POR_ACCION
 
-TABLAS_VALIDAS = {"usuarios", "empresas", "compras", "auditoria", "productos", "historial_compras"}
+TABLAS_VALIDAS = {"usuarios", "empresas", "compras", "auditoria", "productos", "historial_compras", "seguimiento_baterias"}
 
 TEXTO_ACCION = {
     "LOGIN": "inició sesión",
@@ -249,6 +249,28 @@ def exportar_tabla_excel(
             ])
             ws.cell(row=ws.max_row, column=7).number_format = '"$"#,##0'
 
+    elif tabla == "seguimiento_baterias":
+        datos = panel_service.obtener_seguimiento_baterias(db)
+        ws.title = "Resumen"
+        ws.append(["Indicador", "Cantidad"])
+        for clave, valor in datos["resumen"].items():
+            ws.append([clave, valor])
+
+        ws_empresas = wb.create_sheet("Empresas")
+        ws_empresas.append(["Empresa", "NIT", "Responsable SST", "Usuarios", "Compradas", "Consumidas", "Disponibles", "Estado", "Última compra", "Última actividad"])
+        for e in datos["empresas"]:
+            ws_empresas.append([e["nombre"], e["nit"], e["responsable"], e["usuarios"], e["compradas"], e["consumidas"], e["disponibles"], e["estado"], _formato_fecha(e["ultimaCompra"]), _formato_fecha(e["ultimaActividad"])])
+
+        ws_usuarios = wb.create_sheet("Usuarios")
+        ws_usuarios.append(["Usuario", "Correo", "Rol", "Empresa", "Compras", "Compradas por usuario", "Consumidas por usuario", "Saldo empresa", "Estado", "Última compra", "Última actividad"])
+        for u in datos["usuarios"]:
+            ws_usuarios.append([u["nombre"], u["correo"], u["rol"], u["empresa"], u["compras"], u["compradas"], u["consumidas"], u["disponiblesEmpresa"], u["estado"], _formato_fecha(u["ultimaCompra"]), _formato_fecha(u["ultimaActividad"])])
+
+        ws_mov = wb.create_sheet("Movimientos")
+        ws_mov.append(["Fecha", "Movimiento", "Empresa", "Usuario", "Detalle", "Cantidad (+/-)", "Referencia", "Valor COP"])
+        for m in datos["movimientos"]:
+            ws_mov.append([_formato_fecha(m["fecha"]), m["tipo"], m["empresa"], m["usuario"], m["detalle"], m["cantidad"], m["referencia"], m["valor"]])
+
     elif tabla == "productos":
         ws.title = "Inventario de productos"
         ws.append(["Producto", "Categoría", "Precio (COP)", "Stock", "Estado", "Imagen", "Creado", "Actualizado"])
@@ -305,18 +327,18 @@ def exportar_tabla_excel(
                 detalle,
             ])
 
-    # Estilos de encabezado y congelamiento de fila
-    for cell in ws[1]:
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal="center", vertical="center")
-    ws.row_dimensions[1].height = 24
-    ws.freeze_panes = "A2"
-
-    for col in ws.columns:
-        max_len = max(len(str(cell.value or "")) for cell in col)
-        col_letter = get_column_letter(col[0].column)
-        ws.column_dimensions[col_letter].width = max(max_len + 4, 14)
+    # Estilos de encabezado y congelamiento de fila en todas las hojas.
+    for hoja in wb.worksheets:
+        for cell in hoja[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+        hoja.row_dimensions[1].height = 24
+        hoja.freeze_panes = "A2"
+        for col in hoja.columns:
+            max_len = max(len(str(cell.value or "")) for cell in col)
+            col_letter = get_column_letter(col[0].column)
+            hoja.column_dimensions[col_letter].width = min(max(max_len + 4, 14), 55)
 
     _FORMULA_PREFIXES = ("=", "+", "-", "@")
     for sheet in wb.worksheets:

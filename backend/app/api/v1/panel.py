@@ -27,6 +27,15 @@ def obtener_panel(
     return panel_service.obtener_panel(db)
 
 
+@router.get("/seguimiento-baterias")
+def obtener_seguimiento_baterias(
+    db: Session = Depends(get_db),
+    _actual: Usuario = Depends(require_admin),
+):
+    """Seguimiento de baterías por empresa, usuario y movimientos. Solo Super Administrador."""
+    return panel_service.obtener_seguimiento_baterias(db)
+
+
 @router.get("/historial-compras")
 def obtener_historial_compras_tienda(
     db: Session = Depends(get_db),

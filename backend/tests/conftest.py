@@ -16,6 +16,7 @@ from app.core.config import get_settings
 from app.core.crypto import hash_password
 from app.db.base import Base
 from app.models.user import Rol, Usuario
+from app.models.commercial import Compra
 import app.models
 from app.services import auth as auth_service
 
@@ -180,3 +181,23 @@ def anonimato_minimo_1(monkeypatch):
     quien las ejecute. No cambia la configuracion real de la aplicacion.
     """
     monkeypatch.setattr(get_settings(), "min_grupo_anonimato", 1)
+
+@pytest.fixture
+def acreditar_baterias(db_session):
+    """Acredita una compra pagada para pruebas que generan enlaces de pacientes."""
+    def _acreditar(organizacion_id, usuario_id, cantidad=20):
+        compra = Compra(
+            usuario_id=uuid.UUID(str(usuario_id)),
+            organizacion_id=uuid.UUID(str(organizacion_id)),
+            bateria_nombre="Batería de Riesgo Psicosocial",
+            cantidad=cantidad,
+            tarifa_unitario=10000.0,
+            subtotal=float(cantidad * 10000),
+            iva=float(cantidad * 1900),
+            total=float(cantidad * 11900),
+            estado="PAGADA",
+        )
+        db_session.add(compra)
+        db_session.commit()
+        return compra
+    return _acreditar

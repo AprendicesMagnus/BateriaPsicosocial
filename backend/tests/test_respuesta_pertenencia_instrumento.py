@@ -20,7 +20,7 @@ def setup_seed(db_session):
 
 
 @pytest.fixture
-def participante_enlace(client):
+def participante_enlace(client, acreditar_baterias):
     res = client.post(
         "/api/auth/login",
         json={"email": "admin@magnussig.com", "password": "Admin1234"},
@@ -52,6 +52,7 @@ def participante_enlace(client):
         },
     )
     assert res_user.status_code in (200, 201), res_user.text
+    acreditar_baterias(org_id, res_user.json()["id"])
 
     res_login = client.post(
         "/api/auth/login",

@@ -28,6 +28,16 @@ class IniciarEnlaceRequest(BaseModel):
     aceptaConsentimiento: bool
 
 
+
+
+@router.get("/saldo")
+def consultar_saldo_baterias(
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_gestor),
+):
+    return enlaces_service.obtener_saldo_baterias(db, actual)
+
+
 @router.get("")
 def listar_enlaces(
     db: Session = Depends(get_db),

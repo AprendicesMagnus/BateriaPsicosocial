@@ -285,7 +285,6 @@ export default function Respuestas() {
                 </svg>
                 <input
                   type="search"
-                  aria-label="Buscar respuestas por nombre o ID"
                   placeholder="Buscar por nombre o ID"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
