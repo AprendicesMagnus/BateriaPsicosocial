@@ -10,13 +10,13 @@
 .adm-seguimiento-baterias__tabs button { border: 0; border-radius: 7px; padding: 8px 12px; background: transparent; color: var(--adm-muted); font: inherit; font-weight: 700; cursor: pointer; }
 .adm-seguimiento-baterias__tabs button.activo { background: var(--adm-navy-2); color: #fff; }
 .adm-seguimiento-baterias__controles .adm-input { min-width: 190px; flex: 1 1 190px; }
-.adm-seguimiento-baterias__sub { display: block; margin-top: 3px; color: var(--adm-muted); font-size: 11px; }
+.adm-seguimiento-baterias__sub { display: block; margin-top: 3px; color: var(--adm-muted); font-size: 12px; }
 .adm-seguimiento-baterias__estado { white-space: nowrap; }
 .adm-seguimiento-baterias__estado--agotadas { background: #fee2e2; color: #991b1b; }
 .adm-seguimiento-baterias__estado--sin_compra { background: #f1f5f9; color: #475569; }
 .adm-seguimiento-baterias__estado--por_agotarse { background: #fef3c7; color: #92400e; }
 .adm-seguimiento-baterias__estado--disponibles { background: #dcfce7; color: #166534; }
-.adm-seguimiento-baterias__ref { max-width: 150px; overflow-wrap: anywhere; font-size: 11px; color: var(--adm-muted); }
+.adm-seguimiento-baterias__ref { max-width: 150px; overflow-wrap: anywhere; font-size: 12px; color: var(--adm-muted); }
 .adm-seguimiento-baterias__nota { margin: 0; color: var(--adm-muted); font-size: 12px; line-height: 1.5; }
 .adm-seguimiento-baterias__error { margin: 0; padding: 10px 12px; border-radius: 8px; background: #fff1f2; color: #9f1239; }
 .adm-btn-secundario, .adm-btn-principal { border-radius: 8px; padding: 9px 13px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
