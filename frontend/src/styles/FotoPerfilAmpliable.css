@@ -1,0 +1,113 @@
+.foto-perfil-ampliable {
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.foto-perfil-ampliable:focus-visible {
+  outline: 2px solid #16b8a6;
+  outline-offset: 3px;
+}
+
+.foto-perfil-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  box-sizing: border-box;
+  background: rgba(5, 12, 30, 0.88);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: fotoPerfilAparecer 160ms ease-out;
+}
+
+.foto-perfil-lightbox__dialog {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(92vw, 760px);
+  max-width: 92vw;
+  max-height: 88vh;
+  max-height: 88dvh;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+}
+
+.foto-perfil-lightbox__image {
+  display: block;
+  max-width: 100%;
+  max-height: calc(88vh - 24px);
+  max-height: calc(88dvh - 24px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.foto-perfil-lightbox__close {
+  position: absolute;
+  z-index: 1;
+  top: -14px;
+  right: -14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: #fff;
+  color: #14264a;
+  font: inherit;
+  font-size: 27px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.25);
+}
+
+.foto-perfil-lightbox__close:hover {
+  background: #eef3f8;
+}
+
+@keyframes fotoPerfilAparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 600px) {
+  .foto-perfil-lightbox {
+    padding: 18px;
+  }
+
+  .foto-perfil-lightbox__dialog {
+    max-width: 96vw;
+    max-height: 84vh;
+    max-height: 84dvh;
+    padding: 8px;
+    border-radius: 14px;
+  }
+
+  .foto-perfil-lightbox__image {
+    max-height: calc(84vh - 16px);
+    max-height: calc(84dvh - 16px);
+  }
+
+  .foto-perfil-lightbox__close {
+    top: -12px;
+    right: -8px;
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .foto-perfil-lightbox { animation: none; }
+}
