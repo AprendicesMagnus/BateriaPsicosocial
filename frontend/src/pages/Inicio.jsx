@@ -13,6 +13,7 @@ import { esSuperAdmin, etiquetaRol } from "../utils/roles";
 import CampanaNotificaciones from "../components/CampanaNotificaciones";
 import TiendaMenu from "../components/TiendaMenu";
 import PrimerosPasos from "../components/PrimerosPasos";
+import FotoPerfilAmpliable from "../components/FotoPerfilAmpliable";
 
 
 
@@ -221,7 +222,7 @@ export default function Inicio() {
                 aria-expanded={menuPerfilAbierto}
               >
                 {usuario?.fotoUrl ? (
-                  <img src={urlArchivo(usuario.fotoUrl)} alt={nombreUsuario} className="app-avatar app-avatar--foto" />
+                  <FotoPerfilAmpliable src={urlArchivo(usuario.fotoUrl)} alt={`Foto de ${nombreUsuario}`} className="app-avatar app-avatar--foto" />
                 ) : (
                   <span className="app-avatar">{iniciales}</span>
                 )}
@@ -382,9 +383,9 @@ export default function Inicio() {
                 aria-expanded={menuPerfilAbierto}
               >
                 {usuario?.fotoUrl ? (
-                  <img
+                  <FotoPerfilAmpliable
                     src={urlArchivo(usuario.fotoUrl)}
-                    alt={nombreUsuario}
+                    alt={`Foto de ${nombreUsuario}`}
                     className="app-avatar app-avatar--foto"
                   />
                 ) : (

@@ -1,0 +1,145 @@
+/* Refinamiento visual del contenido de las secciones del Panel.
+   No modifica el encabezado, menú lateral ni comportamiento de componentes. */
+.adm-main > .adm-card,
+.adm-main > .adm-dos-columnas > .adm-card,
+.adm-main .adm-seguimiento-baterias,
+.adm-main .adm-card {
+  border: 1px solid #e5eaf1;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(17, 35, 68, .055);
+  overflow: hidden;
+}
+.adm-main .adm-card__head {
+  padding: 22px 24px;
+  gap: 16px;
+  border-bottom: 1px solid #edf0f5;
+  background: linear-gradient(180deg, #fff 0%, #fbfcfe 100%);
+}
+.adm-main .adm-card__head h2 {
+  margin: 0 0 6px;
+  color: #14264b;
+  font-size: clamp(17px, 1.5vw, 20px);
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+.adm-main .adm-card__head span {
+  color: #68758a;
+  line-height: 1.55;
+}
+.adm-main .adm-tabla-wrap {
+  margin: 0 20px 18px;
+  border: 1px solid #e9edf3;
+  border-radius: 13px;
+  background: #fff;
+  overflow-x: auto;
+}
+.adm-main .adm-tabla {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 680px;
+}
+.adm-main .adm-tabla thead th {
+  padding: 14px 15px;
+  background: #f5f7fb;
+  color: #52617a;
+  border-bottom: 1px solid #e5eaf1;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.adm-main .adm-tabla tbody td {
+  padding: 14px 15px;
+  border-bottom: 1px solid #eef1f5;
+  color: #34425c;
+  vertical-align: middle;
+}
+.adm-main .adm-tabla tbody tr:last-child td { border-bottom: 0; }
+.adm-main .adm-tabla tbody tr { transition: background .16s ease; }
+.adm-main .adm-tabla tbody tr:hover { background: #f8faff; }
+.adm-main .adm-celda-doble strong { color: #1b2d50; font-weight: 750; }
+.adm-main .adm-celda-doble span { margin-top: 3px; color: #7a879b; font-size: 12px; }
+.adm-main .adm-chip {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+.adm-main .adm-btn,
+.adm-main .adm-accion,
+.adm-main .adm-btn-principal,
+.adm-main .adm-btn-secundario {
+  border-radius: 10px;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.adm-main .adm-btn:hover:not(:disabled),
+.adm-main .adm-accion:hover:not(:disabled),
+.adm-main .adm-btn-principal:hover:not(:disabled),
+.adm-main .adm-btn-secundario:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 13px rgba(20, 38, 75, .10);
+}
+.adm-main .adm-input,
+.adm-main select,
+.adm-main textarea {
+  border-radius: 10px;
+  border-color: #dce3ed;
+  color: #263653;
+}
+.adm-main .adm-input:focus,
+.adm-main select:focus,
+.adm-main textarea:focus {
+  outline: 3px solid rgba(37, 99, 235, .13);
+  border-color: #6b8fca;
+}
+.adm-main .adm-vacio {
+  padding: 30px 18px;
+  color: #738097;
+  text-align: center;
+  background: #fafbfd;
+  border-radius: 12px;
+}
+.adm-main .adm-dos-columnas { gap: 20px; }
+.adm-main .adm-saldo,
+.adm-main .adm-seguimiento-baterias__metrica,
+.adm-main .ventas-resumen > * {
+  border-radius: 15px;
+}
+.adm-main .adm-filtros,
+.adm-main .adm-seguimiento-baterias__tabs {
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.adm-main .adm-filtro,
+.adm-main .adm-seguimiento-baterias__tabs button {
+  border-radius: 999px;
+}
+.adm-main .adm-timeline__item {
+  padding: 15px 17px;
+  border: 1px solid #edf0f5;
+  border-radius: 12px;
+  background: #fff;
+}
+.adm-main .adm-tabla-wrap + .paginador,
+.adm-main .adm-card > .paginador { padding: 0 20px 18px; }
+@media (max-width: 760px) {
+  .adm-main > .adm-card,
+  .adm-main > .adm-dos-columnas > .adm-card,
+  .adm-main .adm-card { border-radius: 14px; }
+  .adm-main .adm-card__head { padding: 17px 16px; align-items: flex-start; }
+  .adm-main .adm-card__head > div:last-child { max-width: 100%; }
+  .adm-main .adm-card__head button { min-height: 40px; }
+  .adm-main .adm-tabla-wrap { margin: 0 12px 14px; border-radius: 10px; }
+  .adm-main .adm-tabla thead th,
+  .adm-main .adm-tabla tbody td { padding: 12px 11px; }
+  .adm-main .adm-dos-columnas { grid-template-columns: minmax(0, 1fr); }
+  .adm-main .adm-acciones { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adm-main .adm-btn, .adm-main .adm-accion,
+  .adm-main .adm-btn-principal, .adm-main .adm-btn-secundario,
+  .adm-main .adm-tabla tbody tr { transition: none; }
+}

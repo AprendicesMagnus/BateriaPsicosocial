@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { recuperarPagoPendiente } from "../utils/pagoPendiente";
 import AppTopbar from "../components/AppTopbar";
 import BotonRegresar from "../components/BotonRegresar";
+import FotoPerfilAmpliable from "../components/FotoPerfilAmpliable";
 import "../styles/app-shell.css";
 import "../styles/Perfil.css";
 import { request, urlArchivo } from "../api/client";
@@ -38,6 +39,15 @@ const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FOTO_BYTES = 2 * 1024 * 1024; // 2 MB (el backend valida lo mismo)
 const POR_PAGINA_DIRECTORIO = 10;
 const INTERVALO_ACTUALIZACION_COMPRAS = 30 * 1000;
+
+function colorTextoSobreFondo(hex) {
+  const limpio = String(hex || "#101c3a").replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(limpio)) return "#ffffff";
+  const canales = [0, 2, 4].map((i) => parseInt(limpio.slice(i, i + 2), 16) / 255);
+  const lineal = canales.map((c) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const luminancia = 0.2126 * lineal[0] + 0.7152 * lineal[1] + 0.0722 * lineal[2];
+  return luminancia > 0.42 ? "#172033" : "#ffffff";
+}
 
 function formatearFecha(fechaIso) {
   if (!fechaIso) return "—";
@@ -221,6 +231,8 @@ export default function Perfil() {
   const [apellido, setApellido] = useState("");
   const [foto, setFoto] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
+  const [colorFondoPerfil, setColorFondoPerfil] = useState("#101c3a");
+  const [colorFondoBorrador, setColorFondoBorrador] = useState("#101c3a");
   const [passwordActual, setPasswordActual] = useState("");
   const [passwordNueva, setPasswordNueva] = useState("");
   const [passwordConfirmar, setPasswordConfirmar] = useState("");
@@ -234,6 +246,20 @@ export default function Perfil() {
   const [mensajeResolucion, setMensajeResolucion] = useState("");
   const resolucionBloqueada = Boolean(usuario?.resolucionBloqueadaHasta);
   const intentosRestantes = Math.max(0, 3 - (usuario?.resolucionIntentos ?? 0));
+
+  const claveColorPerfil = `magnus:perfil-header-color:${usuario?.id ?? "usuario"}`;
+  useEffect(() => {
+    try {
+      const colorGuardado = window.localStorage.getItem(claveColorPerfil);
+      const colorValido = /^#[0-9a-fA-F]{6}$/.test(colorGuardado || "");
+      const color = colorValido ? colorGuardado : "#101c3a";
+      setColorFondoPerfil(color);
+      setColorFondoBorrador(color);
+    } catch {
+      setColorFondoPerfil("#101c3a");
+      setColorFondoBorrador("#101c3a");
+    }
+  }, [claveColorPerfil]);
 
   async function handleGuardarResolucion() {
     setErrorResolucion("");
@@ -590,6 +616,7 @@ export default function Perfil() {
     setApellido(usuario?.apellido ?? "");
     setFoto(null);
     setFotoPreview(null);
+    setColorFondoBorrador(colorFondoPerfil);
     setModo("perfil");
   }
   function abrirCambioPassword() {
@@ -605,6 +632,7 @@ export default function Perfil() {
     setErrorForm("");
     setFoto(null);
     setFotoPreview(null);
+    setColorFondoBorrador(colorFondoPerfil);
   }
   function handleFoto(e) {
     const archivo = e.target.files?.[0];
@@ -672,27 +700,25 @@ export default function Perfil() {
     if (foto) {
       cambios.foto = foto;
     }
-    if (
-      Object.keys(cambios).length === 0
-    ) {
-      setErrorForm(
-        "No hiciste ningún cambio."
-      );
+    const cambioColor = colorFondoBorrador !== colorFondoPerfil;
+    if (Object.keys(cambios).length === 0 && !cambioColor) {
+      setErrorForm("No hiciste ningún cambio.");
       return;
     }
     setGuardando(true);
     try {
-      const res = await editarPerfil(
-        token,
-        cambios
-      );
-      actualizarUsuario(res.usuario);
+      if (Object.keys(cambios).length > 0) {
+        const res = await editarPerfil(token, cambios);
+        actualizarUsuario(res.usuario);
+      }
+      if (cambioColor) {
+        window.localStorage.setItem(claveColorPerfil, colorFondoBorrador);
+        setColorFondoPerfil(colorFondoBorrador);
+      }
       setModo(null);
       setFoto(null);
       setFotoPreview(null);
-      setMensajeOk(
-        "Tu perfil se actualizó correctamente."
-      );
+      setMensajeOk("Tu perfil se actualizó correctamente.");
     } catch (err) {
       setErrorForm(
         err.message ||
@@ -996,9 +1022,9 @@ export default function Perfil() {
           <div className="perfil-layout" data-pestana={pestana}>
             {/* ===================== PERFIL ===================== */}
             <div className="app-card perfil-card" data-seccion="cuenta">
-              <div className="perfil-header">
+              <div className="perfil-header" style={{ "--perfil-header-color": modo === "perfil" ? colorFondoBorrador : colorFondoPerfil, "--perfil-header-text": colorTextoSobreFondo(modo === "perfil" ? colorFondoBorrador : colorFondoPerfil) }}>
                 {fotoMostrada ? (
-                  <img
+                  <FotoPerfilAmpliable
                     src={fotoMostrada}
                     alt={nombreUsuario ? `Foto de perfil de ${nombreUsuario}` : "Foto de perfil"}
                     className="perfil-avatar perfil-avatar--foto"
@@ -1074,6 +1100,34 @@ export default function Perfil() {
                       onChange={handleFoto}
                     />
                   </label>
+                  <div className="perfil-color-editor">
+                    <div className="perfil-color-editor__texto">
+                      <span className="field__label">Color de fondo de tu perfil</span>
+                      <small>Personaliza el encabezado donde aparecen tu foto y tu nombre.</small>
+                    </div>
+                    <div className="perfil-color-editor__controles">
+                      <input
+                        className="perfil-color-input"
+                        type="color"
+                        value={colorFondoBorrador}
+                        aria-label="Elegir color de fondo del perfil"
+                        onChange={(e) => setColorFondoBorrador(e.target.value)}
+                      />
+                      <span className="perfil-color-valor">{colorFondoBorrador.toUpperCase()}</span>
+                      {[["#101c3a", "Azul noche"], ["#1b2a5c", "Azul institucional"], ["#176b66", "Verde petróleo"], ["#5b477f", "Violeta"], ["#344054", "Gris" ]].map(([color, etiqueta]) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className={`perfil-color-muestra${colorFondoBorrador.toLowerCase() === color.toLowerCase() ? " is-selected" : ""}`}
+                          style={{ "--muestra-color": color }}
+                          aria-label={`Usar ${etiqueta}`}
+                          title={etiqueta}
+                          aria-pressed={colorFondoBorrador.toLowerCase() === color.toLowerCase()}
+                          onClick={() => setColorFondoBorrador(color)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                   {!esSuperAdmin && (
                     <p className="perfil-aviso">
                       Solo puedes editar tu perfil una vez cada 5 días.
@@ -1383,7 +1437,7 @@ export default function Perfil() {
               <p className="sesiones-nota">La opción de confiar en un dispositivo dura 4 horas. Después de ese tiempo, se solicitará nuevamente el código de seguridad en los roles protegidos.</p>
             </div>
             {/* ===================== HISTORIAL DE COMPRAS ===================== */}
-            <div className="app-card compras-card" data-seccion="compras">
+            <div className="app-card compras-card compras-card--baterias" data-seccion="compras">
               <h2 className="compras-titulo">
                 Historial de compras
               </h2>
@@ -1416,7 +1470,7 @@ export default function Perfil() {
                   {compras.map(
                     (compra) => (
                       <div
-                        className="compras-row"
+                        className="compras-row compras-row--bateria"
                         key={compra.id}
                       >
                         <span className="compras-row-icon">
@@ -1513,7 +1567,7 @@ export default function Perfil() {
                 )
               )}
             </div>
-            <div className="app-card compras-card" data-seccion="pedidos">
+            <div className="app-card compras-card compras-card--pedidos" data-seccion="pedidos">
               <h2 className="compras-titulo">Historial de pedidos</h2>
               <p className="compras-subtitulo">Productos del catálogo que has comprado</p>
               {loadingPedidos && (
@@ -1525,7 +1579,7 @@ export default function Perfil() {
               {!loadingPedidos && pedidos.length > 0 && (
                 <div className="compras-list">
                   {pedidos.map((pedido) => (
-                    <div className="compras-row" key={pedido.id}>
+                    <div className="compras-row compras-row--pedido" key={pedido.id}>
                       <span className="compras-row-icon"><ReceiptIcon /></span>
                       <div className="compras-row-main">
                         <span className="compras-row-qty">{pedido.numero}</span>

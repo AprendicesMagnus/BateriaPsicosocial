@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/app-shell.css";
+import FotoPerfilAmpliable from "./FotoPerfilAmpliable";
 
 // Botón de perfil (foto o iniciales + nombre y rol) con menú desplegable.
 // Compartido por AppTopbar y Dashboard.
@@ -83,7 +84,7 @@ export default function ProfileMenu() {
         aria-label="Perfil de usuario"
       >
         {usuario?.fotoUrl ? (
-          <img src={urlArchivo(usuario.fotoUrl)} alt={nombreUsuario} className="app-avatar app-avatar--foto" />
+          <FotoPerfilAmpliable src={urlArchivo(usuario.fotoUrl)} alt={`Foto de ${nombreUsuario}`} className="app-avatar app-avatar--foto" />
         ) : (
           <div className="app-avatar">{iniciales}</div>
         )}

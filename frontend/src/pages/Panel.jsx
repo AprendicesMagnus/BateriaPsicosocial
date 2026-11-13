@@ -16,6 +16,7 @@ import ModalUsuarioAdmin from "../components/ModalUsuarioAdmin";
 import ModalEmpresaAdmin from "../components/ModalEmpresaAdmin";
 import "../styles/dashboard.css";
 import "../styles/Panel.css";
+import "../styles/PanelSecciones.css";
 import BotonRegresar from "../components/BotonRegresar";
 import Paginador from "../components/Paginador";
 import PanelSoporte from "../components/PanelSoporte";
