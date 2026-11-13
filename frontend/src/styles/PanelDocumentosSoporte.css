@@ -1,0 +1,21 @@
+/* Documentos del Centro de ayuda (Panel de administración) */
+.docs-nota {
+  margin: 0 0 16px; padding: 12px 14px; font-size: 13.5px; line-height: 1.5;
+  background: #f1f5fb; border-left: 3px solid #2d3f82; border-radius: 8px; color: #2a3558;
+}
+.docs-archivo {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; cursor: pointer;
+  padding: 10px 12px; border: 1.5px dashed var(--adm-line-2, #d5dce6); border-radius: 12px; background: #fafbfd;
+  font-weight: 500;
+}
+.docs-archivo:hover { border-color: #2d3f82; background: #f4f7fd; }
+.docs-archivo input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.docs-archivo:focus-within { outline: 2px solid #12314b; outline-offset: 2px; }
+.docs-archivo__boton {
+  padding: 8px 14px; border-radius: 9px; background: #16224f; color: #fff; font-weight: 700; font-size: 13px;
+}
+.docs-archivo__nombre { font-size: 13px; color: var(--adm-muted, #5b6478); overflow-wrap: anywhere; min-width: 0; }
+.docs-archivo-nombre { display: block; margin-top: 2px; font-size: 12px; color: var(--adm-muted, #5b6478); overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .docs-archivo { flex-direction: column; align-items: stretch; text-align: center; }
+}

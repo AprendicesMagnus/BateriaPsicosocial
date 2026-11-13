@@ -911,6 +911,13 @@ class SoporteItemCreate(BaseModel):
     activo: bool = True
 
 
+class SoporteDocumentoUpdate(BaseModel):
+    titulo: str | None = Field(default=None, max_length=200)
+    descripcion: str | None = Field(default=None, max_length=500)
+    orden: int | None = Field(default=None, ge=0, le=10000)
+    activo: bool | None = None
+
+
 class SoporteItemUpdate(BaseModel):
     titulo: str | None = Field(default=None, max_length=200)
     texto: str | None = Field(default=None, min_length=2, max_length=2000)

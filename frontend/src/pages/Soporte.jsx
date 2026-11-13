@@ -19,7 +19,14 @@ import {
   HiOutlineChevronDown,
 } from "react-icons/hi";
 import { useAuth } from "../context/AuthContext";
-import { crearTicketSoporte, fetchContenidoSoporte, fetchMisTicketsSoporte } from "../api/soporte";
+import {
+  crearTicketSoporte,
+  descargarDocumentoSoporte,
+  fetchContenidoSoporte,
+  fetchDocumentosSoporte,
+  fetchMisTicketsSoporte,
+} from "../api/soporte";
+import { etiquetaTipoDocumento, formatearTamano } from "../utils/documentos";
 import Paginador from "../components/Paginador";
 import { usePaginacion } from "../hooks/usePaginacion";
 import { etiquetaRol } from "../utils/roles";
@@ -175,6 +182,26 @@ function formatearFechaMensaje(iso) {
   });
 }
 
+// Documentos oficiales incluidos con la plataforma (están en /public). Los que sube el administrador se suman a estos.
+const DOCUMENTOS_BASE = [
+  {
+    id: "base-manual",
+    titulo: "Manual rápido: cómo generar enlaces para aplicar las baterías",
+    descripcion: "Paso a paso para crear, copiar y compartir los enlaces de evaluación y consultar su estado.",
+    extension: "pdf",
+    href: "/Manual_rapido_enlaces_bateria.pdf",
+    nombreArchivo: "Manual_rapido_enlaces_bateria.pdf",
+  },
+  {
+    id: "base-normativa",
+    titulo: "Marco normativo de la batería de riesgo psicosocial",
+    descripcion: "Leyes, decretos y resoluciones oficiales relacionados con la batería, explicados por tema.",
+    extension: "pdf",
+    href: "/Marco_normativo_bateria_riesgo_psicosocial.pdf",
+    nombreArchivo: "Marco_normativo_bateria_riesgo_psicosocial.pdf",
+  },
+];
+
 export default function Soporte() {
   const { usuario, token } = useAuth();
   const [mensaje, setMensaje] = useState("");
@@ -196,6 +223,9 @@ export default function Soporte() {
   const [seccion, setSeccion] = useState("faq");
   const [abierto, setAbierto] = useState(null); // mensaje expandido en "Mis mensajes"
   const [misMensajes, setMisMensajes] = useState([]);
+  const [docsSubidos, setDocsSubidos] = useState([]);
+  const [descargando, setDescargando] = useState(null);
+  const [errorDescarga, setErrorDescarga] = useState("");
 
   function cargarMisMensajes() {
     if (!token) return;
@@ -214,6 +244,25 @@ export default function Soporte() {
       .then(setContenido)
       .catch(() => {});
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchDocumentosSoporte(token)
+      .then((res) => setDocsSubidos(Array.isArray(res) ? res : []))
+      .catch(() => {});
+  }, [token]);
+
+  async function bajarDocumento(doc) {
+    setErrorDescarga("");
+    setDescargando(doc.id);
+    try {
+      await descargarDocumentoSoporte(token, doc);
+    } catch (err) {
+      setErrorDescarga(err.message || "No se pudo descargar el documento.");
+    } finally {
+      setDescargando(null);
+    }
+  }
 
   const guia = GUIAS_POR_ROL[rolActivo];
   const pasos = contenido?.[`guia_${rolActivo}`]?.length ? contenido[`guia_${rolActivo}`].map((i) => i.texto) : guia.pasos;
@@ -234,8 +283,12 @@ export default function Soporte() {
     ),
   }));
   const seccionesVisibles = seccionesContenido.filter((seccion) => seccion.items.length > 0);
+  const documentos = [...DOCUMENTOS_BASE, ...docsSubidos];
+  const documentosVisibles = buscando ? documentos.filter((d) => coincide(d.titulo, d.descripcion || "")) : documentos;
   const totalResultados =
-    preguntasVisibles.length + seccionesVisibles.reduce((suma, seccion) => suma + seccion.items.length, 0);
+    preguntasVisibles.length +
+    documentosVisibles.length * (buscando ? 1 : 0) +
+    seccionesVisibles.reduce((suma, seccion) => suma + seccion.items.length, 0);
 
   const pagMisMensajes = usePaginacion(misMensajes, 5, []);
 
@@ -244,12 +297,14 @@ export default function Soporte() {
     { id: "faq", titulo: "Preguntas frecuentes", icono: HiOutlineQuestionMarkCircle },
     { id: "pasos", titulo: "Primeros pasos", icono: HiOutlineFlag },
     ...SECCIONES_INFO.map(({ clave, titulo, icono }) => ({ id: clave, titulo, icono })),
-    { id: "manual", titulo: "Manual de usuario", icono: HiOutlineDownload },
+    { id: "documentos", titulo: "Documentos y manuales", icono: HiOutlineDownload },
     { id: "contacto", titulo: "Contacto y mis mensajes", icono: HiOutlineChatAlt2 },
   ];
   const activa = opciones.some((o) => o.id === seccion) ? seccion : "faq";
   // Con una búsqueda se muestran los resultados de todas las secciones; sin ella, solo la elegida.
-  const ver = (id) => (buscando ? ["faq", "contacto"].includes(id) || seccionesVisibles.some((x) => x.clave === id) : activa === id);
+  const ver = (id) => (buscando
+      ? ["faq", "contacto"].includes(id) || (id === "documentos" && documentosVisibles.length > 0) || seccionesVisibles.some((x) => x.clave === id)
+      : activa === id);
 
   async function handleEnviar(e) {
     e.preventDefault();
@@ -423,19 +478,50 @@ export default function Soporte() {
 
           )}
 
-          {ver("manual") && (
-          <section className="soporte-card soporte-manual">
-            <div className="soporte-manual-icono">
-              <HiOutlineDownload size={24} />
+          {ver("documentos") && (
+          <section className="soporte-card soporte-docs">
+            <div className="soporte-docs__cabecera">
+              <div className="soporte-manual-icono">
+                <HiOutlineDownload size={24} />
+              </div>
+              <div className="soporte-manual-texto">
+                <h2>Documentos y manuales</h2>
+                <p>Descarga las guías y documentos oficiales de la plataforma.</p>
+              </div>
             </div>
-            <div className="soporte-manual-texto">
-              <h2>Manual de usuario</h2>
-              <p>Guía completa del sistema en PDF. Estará disponible muy pronto.</p>
-            </div>
-            <button type="button" className="soporte-btn-descarga" disabled title="Aún no hay manual disponible">
-              Descargar PDF
-              <span className="soporte-badge-pronto">Próximamente</span>
-            </button>
+            {errorDescarga && <p className="soporte-docs__error" role="alert">{errorDescarga}</p>}
+            <ul className="soporte-docs__lista">
+              {documentosVisibles.map((doc) => (
+                <li key={doc.id} className="soporte-doc">
+                  <span className={`soporte-doc__tipo soporte-doc__tipo--${doc.extension}`} aria-hidden="true">
+                    {String(doc.extension).slice(0, 4).toUpperCase()}
+                  </span>
+                  <div className="soporte-doc__texto">
+                    <strong>{doc.titulo}</strong>
+                    {doc.descripcion && <p>{doc.descripcion}</p>}
+                    <small>
+                      {etiquetaTipoDocumento(doc.extension)}
+                      {doc.tamano ? ` · ${formatearTamano(doc.tamano)}` : ""}
+                    </small>
+                  </div>
+                  {doc.href ? (
+                    <a className="soporte-btn-descarga" href={doc.href} download={doc.nombreArchivo} aria-label={`Descargar ${doc.titulo}`}>
+                      <HiOutlineDownload size={18} aria-hidden="true" /> Descargar
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      className="soporte-btn-descarga"
+                      onClick={() => bajarDocumento(doc)}
+                      disabled={descargando === doc.id}
+                      aria-label={`Descargar ${doc.titulo}`}
+                    >
+                      <HiOutlineDownload size={18} aria-hidden="true" /> {descargando === doc.id ? "Descargando..." : "Descargar"}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
           </section>
           )}
 

@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { crearContenido, editarContenido, eliminarContenido, fetchContenidoAdmin } from "../api/soporte";
 import PanelMensajesSoporte from "./PanelMensajesSoporte";
+import PanelDocumentosSoporte from "./PanelDocumentosSoporte";
 import "../styles/Planes.css";
 import "../styles/PanelAcciones.css";
 import ModalConfirmacion from "./ModalConfirmacion";
@@ -18,6 +19,7 @@ const SECCIONES = [
   { clave: "glosario", label: "Glosario", conTitulo: true },
   { clave: "novedades", label: "Novedades y avisos", conTitulo: true },
   { clave: "atencion", label: "Horarios y canales de atención", conTitulo: true },
+  { clave: "documentos", label: "Documentos descargables" },
   { clave: "mensajes", label: "Mensajes de soporte (usuarios)" },
 ];
 
@@ -125,6 +127,7 @@ export default function PanelSoporte() {
     </select>
   );
 
+  if (seccion === "documentos") return <PanelDocumentosSoporte selector={selectorSeccion} />;
   if (seccion === "mensajes") return <PanelMensajesSoporte selector={selectorSeccion} />;
 
   return (

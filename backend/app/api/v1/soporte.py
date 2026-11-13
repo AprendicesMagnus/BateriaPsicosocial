@@ -1,14 +1,17 @@
+from urllib.parse import quote
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, UploadFile
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_admin
 from app.db.session import get_db
 from app.models.user import Usuario
-from app.schemas.common import SoporteItemCreate, SoporteItemUpdate, TicketSoporteCreate, TicketSoporteRespuesta
+from app.schemas.common import SoporteDocumentoUpdate, SoporteItemCreate, SoporteItemUpdate, TicketSoporteCreate, TicketSoporteRespuesta
 from app.services import soporte as soporte_service
 from app.services import soporte_contenido as contenido_service
+from app.services import soporte_documentos as documentos_service
 
 router = APIRouter()
 
@@ -81,3 +84,64 @@ def editar_contenido(item_id: UUID, data: SoporteItemUpdate, db: Session = Depen
 @router.delete("/contenido/{item_id}")
 def eliminar_contenido(item_id: UUID, db: Session = Depends(get_db), _actual: Usuario = Depends(require_admin)):
     return contenido_service.eliminar_item(db, item_id)
+
+
+# --- Documentos descargables del Centro de ayuda -----------------------------------------------
+
+
+@router.get("/documentos")
+def documentos_publicos(db: Session = Depends(get_db), _actual: Usuario = Depends(get_current_user)):
+    """Documentos visibles para cualquier usuario con sesión (solo metadatos)."""
+    return documentos_service.listar_publico(db)
+
+
+@router.get("/documentos/admin")
+def documentos_admin(db: Session = Depends(get_db), _actual: Usuario = Depends(require_admin)):
+    return documentos_service.listar_admin(db)
+
+
+@router.post("/documentos")
+async def subir_documento(
+    archivo: UploadFile = File(...),
+    titulo: str = Form(...),
+    descripcion: str | None = Form(default=None),
+    activo: bool = Form(default=True),
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_admin),
+):
+    """El Super Administrador sube un documento (PDF, Word, Excel o PowerPoint, máx. 10 MB)."""
+    contenido = await archivo.read(documentos_service.MAX_DOCUMENTO_BYTES + 1)
+    return documentos_service.crear(
+        db,
+        nombre=archivo.filename or "",
+        contenido=contenido,
+        titulo=titulo,
+        descripcion=descripcion,
+        activo=activo,
+        usuario_id=actual.id,
+    )
+
+
+@router.get("/documentos/{doc_id}/descargar")
+def descargar_documento(doc_id: UUID, db: Session = Depends(get_db), actual: Usuario = Depends(get_current_user)):
+    doc = documentos_service.obtener_para_descarga(db, doc_id, es_admin=actual.rol.codigo == "SUPER_ADMINISTRADOR")
+    return Response(
+        content=doc.contenido,
+        media_type=doc.tipo_mime,
+        headers={
+            # Siempre como descarga (nunca se abre dentro de la página) y con el tipo fijado por el servidor.
+            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(doc.nombre_archivo)}",
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+@router.patch("/documentos/{doc_id}")
+def editar_documento(doc_id: UUID, data: SoporteDocumentoUpdate, db: Session = Depends(get_db), _actual: Usuario = Depends(require_admin)):
+    return documentos_service.actualizar(db, doc_id, data)
+
+
+@router.delete("/documentos/{doc_id}")
+def eliminar_documento(doc_id: UUID, db: Session = Depends(get_db), _actual: Usuario = Depends(require_admin)):
+    return documentos_service.eliminar(db, doc_id)
