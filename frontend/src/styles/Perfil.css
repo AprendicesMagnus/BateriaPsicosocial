@@ -827,3 +827,29 @@
   .compras-card--baterias .compras-row,
   .compras-card--pedidos .compras-row { padding: 14px 12px 14px 15px; }
 }
+
+
+/* ============================================
+   Scroll independiente para compras y pedidos
+   ============================================ */
+
+.perfil-layout[data-pestana] .compras-card .compras-list {
+  flex: 0 1 auto;
+  max-height: 520px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+/* Mantener el scroll también en móviles */
+@media (max-width: 560px) {
+  .perfil-layout[data-pestana] .compras-card .compras-list {
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+  }
+}
