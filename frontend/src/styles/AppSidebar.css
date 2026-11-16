@@ -110,3 +110,14 @@
   color: #ffffff;
   font-weight: 700;
 }
+/* Icono del menú: ancho fijo y centrado para que todas las etiquetas queden alineadas */
+.sidebar__menu .menu-item > span {
+  flex: 0 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+.sidebar__menu .menu-item {
+  white-space: nowrap;
+}

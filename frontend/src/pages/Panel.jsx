@@ -425,7 +425,7 @@ export default function Panel() {
                     >
                       {exportando ? "Exportando..." : "Exportar a Excel"}
                     </button>
-                    <button type="button" className="adm-btn adm-btn--borde" onClick={() => navigate("/verificar-nit")}>
+                    <button type="button" className="adm-btn adm-btn--oscuro" onClick={() => navigate("/verificar-nit")}>
                       + Crear empresa
                     </button>
                   </div>

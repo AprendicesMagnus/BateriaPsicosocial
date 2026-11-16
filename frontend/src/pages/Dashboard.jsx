@@ -1,7 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import useModalAccesible from "../hooks/useModalAccesible";
-import { BsLockFill, BsExclamationTriangleFill, BsLink45Deg } from "react-icons/bs";
+import {
+  BsLockFill,
+  BsExclamationTriangleFill,
+  BsLink45Deg,
+  BsGrid1X2Fill,
+  BsGearFill,
+  BsFileEarmarkBarGraphFill,
+  BsChatLeftTextFill,
+  BsBoxArrowRight,
+} from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
+import { HiOutlineOfficeBuilding } from "react-icons/hi";
 import ProfileMenu from "../components/ProfileMenu";
 import CampanaNotificaciones from "../components/CampanaNotificaciones";
 import GuiaInterpretacion from "../components/GuiaInterpretacion";
@@ -398,13 +408,13 @@ export default function Dashboard() {
         mostrarPie
         onLogoClick={() => navigate(rutaInicial(usuario?.rol))}
         items={[
-          { key: "dash", label: "Dashboard", icono: "▣", activo: true, onClick: () => navigate("/dashboard") },
-          ...(esSuperAdmin(usuario?.rol) ? [{ key: "panel", label: "Panel Admin", icono: "⚙", onClick: () => navigate("/panel") }] : []),
-          { key: "rep", label: "Reportes", icono: "▤", onClick: () => navigate("/reportes") },
+          { key: "dash", label: "Dashboard", icono: <BsGrid1X2Fill aria-hidden="true" />, activo: true, onClick: () => navigate("/dashboard") },
+          ...(esSuperAdmin(usuario?.rol) ? [{ key: "panel", label: "Panel Admin", icono: <BsGearFill aria-hidden="true" />, onClick: () => navigate("/panel") }] : []),
+          { key: "rep", label: "Reportes", icono: <BsFileEarmarkBarGraphFill aria-hidden="true" />, onClick: () => navigate("/reportes") },
           ...(["SUPER_ADMINISTRADOR", "EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol)
-            ? [{ key: "resp", label: "Respuestas", icono: "☰", onClick: () => navigate("/respuestas") }]
+            ? [{ key: "resp", label: "Respuestas", icono: <BsChatLeftTextFill aria-hidden="true" />, onClick: () => navigate("/respuestas") }]
             : []),
-          { key: "salir", label: "Cerrar sesión", icono: "✕", onClick: handleLogout },
+          { key: "salir", label: "Cerrar sesión", icono: <BsBoxArrowRight aria-hidden="true" />, onClick: handleLogout },
         ]}
       />
 
@@ -419,13 +429,15 @@ export default function Dashboard() {
         <header className="dashboard__header">
           <div>
             {eligeEmpresa && misEmpresas.length > 0 && (
-              <label style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13 }}>
-                <span>Empresa activa:</span>
+              <label className="empresa-activa">
+                <span className="empresa-activa__icono" aria-hidden="true"><HiOutlineOfficeBuilding size={20} /></span>
+                <span className="empresa-activa__texto">
+                  <span className="empresa-activa__etiqueta">Empresa activa</span>
                 <select
+                  className="empresa-activa__select"
                   value={usuario?.organizacionId ?? ""}
                   onChange={handleCambiarEmpresa}
                   disabled={cambiandoEmpresa}
-                  style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 13 }}
                 >
                   {!usuario?.organizacionId && <option value="">Selecciona una empresa</option>}
                   {misEmpresas.map((empresa) => (
@@ -434,6 +446,7 @@ export default function Dashboard() {
                     </option>
                   ))}
                 </select>
+                </span>
               </label>
             )}
           </div>

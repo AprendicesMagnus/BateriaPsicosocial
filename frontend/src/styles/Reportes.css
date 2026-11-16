@@ -14,13 +14,16 @@
 }
 
 .reportes-legal-note {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 12px;
-  margin: 0 0 24px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 18px;
+  max-width: 760px;
 }
 
 .reportes-card {
-  border: 2px solid var(--gold-500);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.55);
   overflow: hidden;
 }
 
@@ -136,11 +139,12 @@
 }
 .reportes-section-title {
   color: var(--white);
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
   margin: 0;
 }
 .reportes-refresh-btn {
+  margin-left: auto;
   background: transparent;
   color: var(--white);
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -172,7 +176,11 @@
 }
 
 .reportes-detalle {
-  padding: 0 24px 20px 76px;
+  margin: 0 24px 18px 76px;
+  padding: 4px 16px 16px;
+  background: var(--bg-100);
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-md);
 }
 .reportes-detalle-title {
   font-size: 12px;
@@ -197,13 +205,15 @@
 .reportes-chip {
   font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 5px 11px;
   border-radius: 999px;
-  background: #eef1fb;
+  background: var(--white);
+  border: 1px solid var(--line-200);
   color: var(--ink-500);
 }
 .reportes-chip--ok {
   background: #e9f8ee;
+  border-color: #bfe8cc;
   color: var(--success-text);
 }
 
@@ -242,7 +252,8 @@
   }
   /* En móvil el detalle usa todo el ancho y la tabla se desplaza si no cabe */
   .reportes-detalle {
-    padding: 0 16px 16px;
+    margin: 0 12px 12px;
+    padding: 4px 12px 12px;
     overflow-x: auto;
   }
   .reportes-item-info {
@@ -297,6 +308,7 @@
   gap: 10px;
   padding: 16px 24px;
   border-bottom: 1px solid var(--line-200);
+  background: #f8fafc;
 }
 .reportes-filtros__buscar {
   flex: 1 1 240px;
@@ -365,4 +377,210 @@
 .reportes-paginacion .adm-paginacion__info {
   font-size: 13px;
   color: var(--ink-500);
+}
+
+
+/* ============================================
+   Rediseño: encabezados de sección, tarjetas y móvil
+   (solo apariencia; la lógica de la pantalla no cambia)
+   ============================================ */
+
+.reportes-tag {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+/* Encabezado de sección: barra dorada + título + contador */
+.reportes-section-header {
+  position: relative;
+  justify-content: flex-start;
+  margin: 34px 0 8px;
+  padding-left: 14px;
+}
+.reportes-section-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  bottom: 3px;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--gold-500);
+}
+.reportes-section-header--primera {
+  margin-top: 0;
+}
+.reportes-count {
+  min-width: 26px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.reportes-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  color: #991b1b;
+  font-size: 14px;
+}
+.reportes-error svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.reportes-cargando {
+  padding: 32px;
+  text-align: center;
+  color: var(--ink-500);
+}
+
+.reportes-card--enlaces {
+  margin-bottom: 8px;
+}
+
+/* Filas con un poco más de vida al pasar el cursor */
+.reportes-item {
+  transition: background 0.15s ease;
+}
+.reportes-card > .reportes-item:hover,
+.reportes-encuesta > .reportes-item:hover {
+  background: #fafbff;
+}
+.reportes-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+.reportes-download-btn {
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+}
+
+/* --- Enlaces para pacientes --- */
+.reportes-enlace-form {
+  background: #f8fafc;
+}
+.reportes-enlace-input {
+  height: 42px;
+  padding: 0 14px;
+  background: var(--white);
+}
+.reportes-enlace-input:focus-visible {
+  outline: 2px solid var(--navy-600);
+  outline-offset: 1px;
+}
+.reportes-enlace-form .reportes-download-btn {
+  height: 42px;
+  padding: 0 20px;
+  background: var(--gold-500);
+  color: var(--navy-950, #0f1a3d);
+}
+.reportes-enlace-form .reportes-download-btn:hover:not(:disabled) {
+  background: #e29412;
+}
+.reportes-enlace-form .reportes-download-btn:disabled {
+  background: #f1d9a8;
+  color: #7a6330;
+}
+.reportes-enlace .reportes-item-title {
+  font-size: 15px;
+}
+.reportes-enlace-url {
+  display: inline-block;
+  align-self: flex-start;
+  max-width: 100%;
+  margin: 3px 0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #eef2ff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.reportes-enlace__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* --- Móvil --- */
+@media (max-width: 680px) {
+  .reportes-item {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+  .reportes-item-info {
+    order: 3;
+  }
+  /* Encuestas y áreas: icono + estado + botón en la primera línea */
+  .reportes-card > .reportes-item > .reportes-download-btn,
+  .reportes-encuesta > .reportes-item > .reportes-download-btn {
+    order: 2;
+    margin-left: auto;
+  }
+  .reportes-card > .reportes-item > .reportes-status,
+  .reportes-encuesta > .reportes-item > .reportes-status {
+    order: 1;
+  }
+
+  /* Enlace: estado arriba, datos, y tres botones iguales abajo */
+  .reportes-enlace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .reportes-enlace > .reportes-status {
+    order: 1;
+    justify-self: start;
+  }
+  .reportes-enlace > .reportes-item-info {
+    order: 2;
+  }
+  .reportes-enlace__acciones {
+    order: 3;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .reportes-enlace__acciones .reportes-download-btn {
+    padding: 10px 6px;
+    font-size: 12.5px;
+  }
+
+  .reportes-enlace-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reportes-enlace-form .reportes-download-btn {
+    width: 100%;
+  }
+
+  .reportes-section-title {
+    font-size: 17px;
+  }
+  .reportes-chips .reportes-download-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+  .reportes-detalle-title {
+    margin-top: 10px;
+  }
+}
+@media (min-width: 681px) {
+  .reportes-chips .reportes-download-btn {
+    margin-left: auto;
+  }
 }

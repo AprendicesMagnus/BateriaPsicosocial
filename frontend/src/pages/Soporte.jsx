@@ -158,6 +158,28 @@ const SECCIONES_INFO = [
   { clave: "atencion", titulo: "Horarios y canales de atención", icono: HiOutlineClock },
 ];
 
+// Lista de términos/ítems informativos; se pagina solo si `porPagina` es menor que la cantidad de ítems.
+function ListaInfo({ items, porPagina }) {
+  const pag = usePaginacion(items, porPagina, [items.length]);
+  return (
+    <>
+      <dl className="soporte-info-lista">
+        {pag.items.map((item) => (
+          <div className="soporte-info-item" key={item.id}>
+            <dt>{item.titulo}</dt>
+            <dd>{item.texto}</dd>
+          </div>
+        ))}
+      </dl>
+      {pag.total > pag.porPagina && (
+        <div className="soporte-mensajes__paginacion">
+          <Paginador paginacion={pag} />
+        </div>
+      )}
+    </>
+  );
+}
+
 function PreguntaFAQ({ item }) {
   const [abierta, setAbierta] = useState(false);
   return (
@@ -442,14 +464,7 @@ export default function Soporte() {
                 <span className="soporte-info-icono"><Icono size={20} /></span> {titulo}
               </h2>
               {items.length > 0 ? (
-                <dl className="soporte-info-lista">
-                  {items.map((item) => (
-                    <div className="soporte-info-item" key={item.id}>
-                      <dt>{item.titulo}</dt>
-                      <dd>{item.texto}</dd>
-                    </div>
-                  ))}
-                </dl>
+                <ListaInfo items={items} porPagina={clave === "glosario" ? 6 : items.length} />
               ) : (
                 <p className="soporte-seccion-vacia">Esta sección todavía no tiene contenido publicado.</p>
               )}

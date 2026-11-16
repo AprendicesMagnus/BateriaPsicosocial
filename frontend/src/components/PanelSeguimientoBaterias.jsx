@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { descargarExportacionPanel, fetchSeguimientoBaterias } from "../api/panel";
+import Paginador from "./Paginador";
+import { usePaginacion } from "../hooks/usePaginacion";
 import "../styles/PanelSeguimientoBaterias.css";
 
 const PESOS = (n) => Number(n || 0).toLocaleString("es-CO");
@@ -71,6 +73,10 @@ export default function PanelSeguimientoBaterias({ token }) {
       (!q || `${m.empresa} ${m.usuario} ${m.detalle} ${m.referencia}`.toLocaleLowerCase("es").includes(q));
   }), [datos, q, empresaFiltro, tipoFiltro, usuarioFiltro, desde, hasta]);
 
+  const pagEmpresas = usePaginacion(empresas, 6, [q]);
+  const pagUsuarios = usePaginacion(usuarios, 6, [q, empresaFiltro]);
+  const pagMovimientos = usePaginacion(movimientos, 6, [q, empresaFiltro, tipoFiltro, usuarioFiltro, desde, hasta]);
+
   const resumen = datos?.resumen || {};
   const metricas = [
     ["Baterías compradas", resumen.bateriasCompradas, "shopping-bag"],
@@ -141,7 +147,7 @@ export default function PanelSeguimientoBaterias({ token }) {
           {vista === "empresas" && (
             <table className="adm-tabla">
               <thead><tr><th>Empresa</th><th>Responsable SST</th><th>Usuarios</th><th>Compradas</th><th>Consumidas</th><th>Disponibles</th><th>Última compra</th><th>Estado</th></tr></thead>
-              <tbody>{empresas.map((e) => <tr key={e.id}>
+              <tbody>{pagEmpresas.items.map((e) => <tr key={e.id}>
                 <td><strong>{e.nombre}</strong><small className="adm-seguimiento-baterias__sub">NIT: {e.nit}</small></td>
                 <td>{e.responsable}</td><td>{e.usuarios}</td><td>{PESOS(e.compradas)}</td><td>{PESOS(e.consumidas)}</td><td><strong>{PESOS(e.disponibles)}</strong></td><td>{FECHA(e.ultimaCompra)}</td>
                 <td><span className={`adm-chip adm-seguimiento-baterias__estado adm-seguimiento-baterias__estado--${e.estado.toLowerCase()}`}>{ESTADOS[e.estado] || e.estado}</span></td>
@@ -151,7 +157,7 @@ export default function PanelSeguimientoBaterias({ token }) {
           {vista === "usuarios" && (
             <table className="adm-tabla">
               <thead><tr><th>Usuario</th><th>Rol</th><th>Empresa</th><th>Compras propias</th><th>Baterías compradas</th><th>Consumo atribuible</th><th>Saldo empresa</th><th>Estado</th></tr></thead>
-              <tbody>{usuarios.map((u) => <tr key={`${u.id}-${u.empresaId || "sin-empresa"}`}>
+              <tbody>{pagUsuarios.items.map((u) => <tr key={`${u.id}-${u.empresaId || "sin-empresa"}`}>
                 <td><strong>{u.nombre}</strong><small className="adm-seguimiento-baterias__sub">{u.correo}</small></td><td>{u.rol === "EVALUADOR_SST" ? "Psicólogo" : u.rol === "RESPONSABLE_SST" ? "Responsable SST" : u.rol}</td><td>{u.empresa}</td><td>{u.compras}</td><td>{PESOS(u.compradas)}</td><td>{PESOS(u.consumidas)}</td><td>{PESOS(u.disponiblesEmpresa)}</td><td><span className="adm-chip">{ESTADOS[u.estado] || u.estado}</span></td>
               </tr>)}{usuarios.length === 0 && <tr><td colSpan="8" className="adm-vacio">No hay usuarios que coincidan con los filtros.</td></tr>}</tbody>
             </table>
@@ -159,13 +165,14 @@ export default function PanelSeguimientoBaterias({ token }) {
           {vista === "movimientos" && (
             <table className="adm-tabla">
               <thead><tr><th>Fecha</th><th>Movimiento</th><th>Empresa</th><th>Usuario</th><th>Plan / detalle</th><th>Cantidad</th><th>Valor pagado</th><th>Referencia</th></tr></thead>
-              <tbody>{movimientos.map((m) => <tr key={m.id}>
+              <tbody>{pagMovimientos.items.map((m) => <tr key={m.id}>
                 <td>{FECHA(m.fecha)}</td><td><span className={`adm-chip ${m.tipo === "COMPRA" ? "adm-chip--info" : "adm-chip--aviso"}`}>{m.tipo === "COMPRA" ? "Compra aprobada" : "Consumo"}</span></td><td>{m.empresa}</td><td>{m.usuario}</td><td>{m.detalle}</td><td><strong>{m.cantidad > 0 ? `+${m.cantidad}` : m.cantidad}</strong></td><td>{m.valor ? `$${PESOS(m.valor)}` : "—"}</td><td className="adm-seguimiento-baterias__ref">{m.referencia}</td>
               </tr>)}{movimientos.length === 0 && <tr><td colSpan="8" className="adm-vacio">No hay movimientos para los filtros seleccionados.</td></tr>}</tbody>
             </table>
           )}
         </div>
       )}
+      {!cargando && <Paginador paginacion={vista === "empresas" ? pagEmpresas : vista === "usuarios" ? pagUsuarios : pagMovimientos} />}
       <p className="adm-seguimiento-baterias__nota">El consumo se registra una sola vez, al guardar la primera respuesta del paciente. Los enlaces creados o abiertos sin responder no descuentan baterías.</p>
     </section>
   );

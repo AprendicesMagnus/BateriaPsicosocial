@@ -15,6 +15,7 @@ import QrEnlaceModal from "../components/QrEnlaceModal";
 import ModalConfirmacion from "../components/ModalConfirmacion";
 import { useNavigate } from "react-router-dom";
 import "../styles/app-shell.css";
+import "../styles/CabeceraModulo.css";
 import "../styles/Reportes.css";
 
 function IconoDocumento({ color }) {
@@ -281,7 +282,7 @@ export default function Reportes() {
   }
 
   return (
-    <div className="app-shell-page">
+    <div className="app-shell-page rep-pagina">
       <AppTopbar />
 
       {/* =================================================
@@ -293,22 +294,24 @@ export default function Reportes() {
         <div className="app-decor app-decor--3" />
 
         <div className="app-content">
-          <BotonRegresar />
+          <header className="rep-banner">
+            <BotonRegresar />
 
-          <div className="app-title-row">
-            <h1 className="app-title">{empresaNombre}</h1>
-            <span className="reportes-tag">{sector}</span>
-          </div>
+            <div className="app-title-row">
+              <h1 className="app-title">{empresaNombre}</h1>
+              <span className="reportes-tag">{sector}</span>
+            </div>
 
-          <p className="app-subtitle">
-            {bateriaNombre} · {rangoFechas}
-          </p>
+            <p className="app-subtitle">
+              {bateriaNombre} · {rangoFechas}
+            </p>
+
+            <p className="reportes-legal-note rep-banner__aviso">
+              Resultados desglosados por área de la organización. Los grupos con menos de 2 participantes se ocultan para proteger el anonimato.
+            </p>
+          </header>
 
           {/* El selector de "Empresa activa" para Jefe/Psicólogo ahora vive en el Dashboard. */}
-
-          <p className="reportes-legal-note">
-            Resultados desglosados por área de la organización. Los grupos con menos de 2 participantes se ocultan para proteger el anonimato.
-          </p>
 
           {/* =================================================
               ENLACES PARA PACIENTES
@@ -317,8 +320,9 @@ export default function Reportes() {
               ================================================= */}
           {puedeCrearEnlaces && (
             <>
-              <div className="reportes-section-header" style={{ marginTop: 0 }}>
+              <div className="reportes-section-header reportes-section-header--primera">
                 <h2 className="reportes-section-title">Enlaces para pacientes</h2>
+                <span className="reportes-count">{enlaces.length}</span>
               </div>
               <p className="reportes-legal-note">
                 Comparte el enlace: el paciente responde sin crear cuenta, empezando por la Ficha de datos generales.
@@ -326,12 +330,12 @@ export default function Reportes() {
               </p>
 
               {errorEnlaces && (
-                <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
+                <div className="reportes-error" role="alert">
                   <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{errorEnlaces}
                 </div>
               )}
 
-              <div className="app-card reportes-card" style={{ marginBottom: 40 }}>
+              <div className="app-card reportes-card reportes-card--enlaces">
                 <form className="reportes-item reportes-enlace-form" onSubmit={handleCrearEnlace}>
                   <input
                     type="text"
@@ -376,18 +380,20 @@ export default function Reportes() {
                     >
                       {enlace.estado === "FINALIZADA" ? "Cerrado" : "Activo"}
                     </span>
-                    <button type="button" className="reportes-download-btn" onClick={() => copiarEnlace(enlace.token)}>
-                      {enlaceCopiado === enlace.token ? "¡Copiado!" : "Copiar enlace"}
-                    </button>
-                    <button type="button" className="reportes-download-btn" onClick={() => setQrEnlace({ url: urlEnlace(enlace.token), titulo: enlace.nombre })}>Ver QR</button>
-                    <button
-                      type="button"
-                      className="reportes-download-btn reportes-eliminar-btn"
-                      onClick={() => handleEliminarEnlace(enlace)}
-                      disabled={eliminandoEnlace === enlace.evaluacionId}
-                    >
-                      {eliminandoEnlace === enlace.evaluacionId ? "Eliminando..." : "Eliminar"}
-                    </button>
+                    <div className="reportes-enlace__acciones">
+                      <button type="button" className="reportes-download-btn" onClick={() => copiarEnlace(enlace.token)}>
+                        {enlaceCopiado === enlace.token ? "¡Copiado!" : "Copiar enlace"}
+                      </button>
+                      <button type="button" className="reportes-download-btn" onClick={() => setQrEnlace({ url: urlEnlace(enlace.token), titulo: enlace.nombre })}>Ver QR</button>
+                      <button
+                        type="button"
+                        className="reportes-download-btn reportes-eliminar-btn"
+                        onClick={() => handleEliminarEnlace(enlace)}
+                        disabled={eliminandoEnlace === enlace.evaluacionId}
+                      >
+                        {eliminandoEnlace === enlace.evaluacionId ? "Eliminando..." : "Eliminar"}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -395,14 +401,19 @@ export default function Reportes() {
           )}
 
           {error && (
-            <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
+            <div className="reportes-error" role="alert">
               <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{error}
             </div>
           )}
 
+          <div className="reportes-section-header">
+            <h2 className="reportes-section-title">Reportes por área</h2>
+            {!loading && <span className="reportes-count">{reportes.length}</span>}
+          </div>
+
           <div className="app-card reportes-card">
             {loading ? (
-              <div style={{ padding: "32px", textAlign: "center", color: "#64748B" }}>
+              <div className="reportes-cargando">
                 Cargando reportes por área...
               </div>
             ) : reportes.length === 0 ? (
@@ -459,6 +470,7 @@ export default function Reportes() {
               ================================================= */}
           <div className="reportes-section-header">
             <h2 className="reportes-section-title">Encuestas realizadas</h2>
+            <span className="reportes-count">{encuestas.length}</span>
             <button type="button" className="reportes-refresh-btn" onClick={cargarEncuestas} disabled={cargandoEncuestas}>
               {cargandoEncuestas ? "Actualizando..." : "Actualizar"}
             </button>
@@ -468,7 +480,7 @@ export default function Reportes() {
           </p>
 
           {errorEncuestas && (
-            <div style={{ padding: "12px 16px", background: "#FEF2F2", color: "#991B1B", borderRadius: "8px", marginBottom: "16px" }}>
+            <div className="reportes-error" role="alert">
               <BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{errorEncuestas}
             </div>
           )}
@@ -514,7 +526,7 @@ export default function Reportes() {
             )}
 
             {cargandoEncuestas && encuestas.length === 0 ? (
-              <div style={{ padding: "32px", textAlign: "center", color: "#64748B" }}>
+              <div className="reportes-cargando">
                 Cargando encuestas realizadas...
               </div>
             ) : encuestas.length === 0 ? (

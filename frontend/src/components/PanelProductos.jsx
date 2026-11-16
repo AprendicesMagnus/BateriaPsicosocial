@@ -7,6 +7,8 @@ import { categoriasDe, CATEGORIAS_PRODUCTO, formatearCOP, imagenDe, manejaStock,
 import "../styles/Planes.css";
 import "../styles/PanelAcciones.css";
 import ModalConfirmacion from "./ModalConfirmacion";
+import Paginador from "./Paginador";
+import { usePaginacion } from "../hooks/usePaginacion";
 import "../styles/Catalogo.css";
 
 const VACIO = {
@@ -24,6 +26,8 @@ export default function PanelProductos() {
     token,
     admin: true,
   });
+
+  const pagProductos = usePaginacion(productos, 10);
 
   const [form, setForm] = useState(null);
   const [mensaje, setMensaje] = useState(null);
@@ -380,7 +384,7 @@ export default function PanelProductos() {
             </thead>
 
             <tbody>
-              {productos.map((producto) => (
+              {pagProductos.items.map((producto) => (
                 <tr key={producto.id}>
                   <td>
                     <img className="producto-mini" src={imagenDe(producto)} alt="" />
@@ -441,6 +445,7 @@ export default function PanelProductos() {
           </table>
         </div>
       )}
+      {!cargando && <Paginador paginacion={pagProductos} />}
       <ModalConfirmacion
         abierto={Boolean(productoPorEliminar)}
         titulo="Eliminar producto"

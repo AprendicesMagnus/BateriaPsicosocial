@@ -15,6 +15,7 @@ import {
   textoRespuesta,
 } from "../utils/encuestas";
 import "../styles/app-shell.css";
+import "../styles/CabeceraModulo.css";
 import "../styles/Respuestas.css";
 
 
@@ -262,16 +263,17 @@ export default function Respuestas() {
 
       <main id="contenido-principal" tabIndex={-1} className="app-hero">
         <div className="app-content">
-          {/* Fondo claro: texto oscuro en el botón */}
-          <BotonRegresar tono="oscuro" />
+          <header className="rep-banner">
+            <BotonRegresar />
 
-          <h1 className="app-title">Respuestas</h1>
-          <p className="app-subtitle">
-            Ficha sociodemográfica y respuestas de cada usuario a los cuestionarios de estrés, extralaboral e intralaboral.
-          </p>
-          <p className="resp-nota-legal">
-            Resultados individuales: información confidencial, visible solo para administradores y evaluadores SST.
-          </p>
+            <h1 className="app-title">Respuestas</h1>
+            <p className="app-subtitle">
+              Ficha sociodemográfica y respuestas de cada usuario a los cuestionarios de estrés, extralaboral e intralaboral.
+            </p>
+            <p className="resp-nota-legal rep-banner__aviso">
+              Resultados individuales: información confidencial, visible solo para administradores y evaluadores SST.
+            </p>
+          </header>
 
           {error && <div className="resp-error"><BsExclamationTriangleFill style={{ marginRight: 6, verticalAlign: "-2px" }} aria-hidden="true" />{error}</div>}
 
@@ -311,11 +313,17 @@ export default function Respuestas() {
                         onClick={() => seleccionar(e.participanteId)}
                         aria-current={e.participanteId === seleccionado}
                       >
-                        <span className="resp-avatar">{iniciales(e.trabajadorNombre)}</span>
+                        <span className={`resp-avatar resp-avatar--${(e.estado || "PENDIENTE").toLowerCase()}`}>{iniciales(e.trabajadorNombre)}</span>
                         <span className="resp-usuario-info">
                           <span className="resp-usuario-nombre">{e.trabajadorNombre}</span>
                           <span className="resp-usuario-meta">
                             ID {e.participanteId.slice(0, 8)} · {e.instrumentosCompletados}/{e.instrumentos.length}
+                          </span>
+                          <span className="resp-progreso" aria-hidden="true">
+                            <span
+                              className="resp-progreso__barra"
+                              style={{ width: `${e.instrumentos.length ? Math.round((e.instrumentosCompletados / e.instrumentos.length) * 100) : 0}%` }}
+                            />
                           </span>
                         </span>
                         <EstadoBadge estado={e.estado} />
@@ -329,7 +337,15 @@ export default function Respuestas() {
             {/* ---------- Detalle del usuario seleccionado ---------- */}
             <section id="resp-detalle" className="resp-panel resp-detalle">
               {!seleccionado ? (
-                <p className="resp-vacio resp-vacio--grande">Selecciona un usuario para ver toda su información.</p>
+                <div className="resp-vacio-caja">
+                  <span className="resp-vacio-icono" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="8" r="3.6" stroke="currentColor" strokeWidth="1.7" />
+                      <path d="M4.5 20c.9-3.6 3.9-5.6 7.5-5.6s6.6 2 7.5 5.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                  <p className="resp-vacio resp-vacio--grande">Selecciona un usuario para ver toda su información.</p>
+                </div>
               ) : (
                 <>
                   {encuesta && (

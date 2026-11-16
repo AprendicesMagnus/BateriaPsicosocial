@@ -5,15 +5,7 @@
    ============================================ */
 
 /* Fondo claro detrás de los paneles (las demás vistas usan el azul oscuro de app-shell) */
-.resp-pagina {
-  background: var(--bg-100);
-}
-.resp-pagina .app-title {
-  color: var(--ink-900);
-}
-.resp-pagina .app-subtitle {
-  color: var(--ink-500);
-}
+/* (fondo claro y banner: ver CabeceraModulo.css) */
 
 .resp-nota-legal {
   color: var(--ink-500);
@@ -467,5 +459,237 @@
     max-width: none;
     text-align: left;
     padding-left: 40px;
+  }
+}
+
+
+/* ============================================
+   Rediseño: lista, estado de selección y detalle
+   (solo apariencia; la lógica de la pantalla no cambia)
+   ============================================ */
+
+.resp-panel {
+  border-radius: 16px;
+}
+
+.resp-buscador {
+  background: #f8fafc;
+}
+.resp-buscador input::placeholder {
+  color: #94a3b8;
+}
+.resp-contador {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: var(--navy-900);
+  font-weight: 700;
+}
+
+.resp-usuarios {
+  padding: 8px;
+}
+.resp-usuario {
+  position: relative;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.resp-usuario + .resp-usuario,
+.resp-usuarios li + li {
+  margin-top: 2px;
+}
+.resp-usuario:hover {
+  background: #f5f7fc;
+}
+.resp-usuario--activo,
+.resp-usuario--activo:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+.resp-usuario--activo::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--gold-500);
+}
+.resp-usuario:focus-visible {
+  outline: 2px solid var(--navy-600);
+  outline-offset: 1px;
+}
+
+/* Avatar: color según el estado de la encuesta */
+.resp-avatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  overflow: hidden;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  background: #f1f5f9;
+  color: var(--ink-500);
+}
+.resp-avatar--completada {
+  background: #def7ec;
+  color: #03543f;
+}
+.resp-avatar--en_progreso {
+  background: #fef3c7;
+  color: #92400e;
+}
+.resp-avatar--pendiente {
+  background: #f1f5f9;
+  color: var(--ink-500);
+}
+.resp-usuario--activo .resp-avatar,
+.resp-usuario--activo .resp-avatar--completada,
+.resp-usuario--activo .resp-avatar--en_progreso,
+.resp-usuario--activo .resp-avatar--pendiente {
+  background: var(--navy-900);
+  color: var(--white);
+}
+.resp-avatar--grande {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  font-size: 17px;
+}
+
+/* Barra de avance (instrumentos completados) */
+.resp-progreso {
+  display: block;
+  height: 4px;
+  margin-top: 4px;
+  border-radius: 4px;
+  background: #e5e9f4;
+  overflow: hidden;
+}
+.resp-progreso__barra {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #2a3f86, #3d5bc4);
+}
+.resp-usuario-meta {
+  font-size: 11.5px;
+}
+
+/* Estado vacío del detalle */
+.resp-vacio-caja {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 64px 24px;
+}
+.resp-vacio-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: var(--navy-600);
+}
+.resp-vacio-caja .resp-vacio--grande {
+  padding: 12px 0 0;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* Cabecera del usuario abierto */
+.resp-cabecera {
+  padding-bottom: 20px;
+}
+.resp-cabecera-info h2 {
+  font-size: 21px;
+}
+.resp-datos {
+  gap: 10px;
+}
+.resp-datos > div {
+  padding: 10px 12px;
+  border: 1px solid var(--line-200);
+  border-radius: 10px;
+  background: #f8fafc;
+  min-width: 0;
+}
+.resp-datos dd {
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+/* Pestañas como "píldoras" */
+.resp-tabs {
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line-200);
+  scrollbar-width: thin;
+}
+.resp-tab {
+  padding: 8px 16px;
+  margin-bottom: 0;
+  border: 1px solid var(--line-200);
+  border-radius: 999px;
+  background: var(--white);
+}
+.resp-tab:hover {
+  background: #f5f7fc;
+  border-color: #c7d2fe;
+}
+.resp-tab--activa,
+.resp-tab--activa:hover {
+  background: var(--navy-900);
+  border-color: var(--navy-900);
+  color: var(--white);
+}
+.resp-tab--activa span {
+  color: #86efac;
+}
+
+.resp-resumen {
+  background: #f8fafc;
+  border-radius: 12px;
+}
+.resp-dimension-cab {
+  border: 1px solid var(--line-200);
+}
+
+@media (max-width: 860px) {
+  .resp-panel {
+    border-radius: 14px;
+  }
+  .resp-usuarios {
+    max-height: 300px;
+  }
+  .resp-vacio-caja {
+    padding: 36px 20px;
+  }
+  .resp-cabecera {
+    gap: 12px;
+  }
+  .resp-cabecera-info h2 {
+    font-size: 18px;
+  }
+  .resp-datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .resp-tab {
+    padding: 8px 14px;
+  }
+  .resp-resumen-conteo {
+    margin-left: 0;
+  }
+}
+@media (max-width: 420px) {
+  .resp-datos {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
