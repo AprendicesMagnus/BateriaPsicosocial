@@ -10,9 +10,10 @@ import { useAuth } from "../context/AuthContext";
 import ProfileMenu from "../components/ProfileMenu";
 import CampanaNotificaciones from "../components/CampanaNotificaciones";
 import { fetchPanel, descargarExportacionPanel } from "../api/panel";
-import { editarUsuarioAdmin, reenviarCodigoVerificacion, verificarResolucion } from "../api/perfil";
+import { editarUsuarioAdmin, eliminarUsuarioAdmin, reenviarCodigoVerificacion, verificarResolucion } from "../api/perfil";
 import AppSidebar from "../components/AppSidebar";
 import ModalUsuarioAdmin from "../components/ModalUsuarioAdmin";
+import ModalConfirmacion from "../components/ModalConfirmacion";
 import ModalEmpresaAdmin from "../components/ModalEmpresaAdmin";
 import "../styles/dashboard.css";
 import "../styles/Panel.css";
@@ -80,6 +81,7 @@ const TEXTO_ACCION = {
   LOGIN_2FA: "inició sesión con verificación en dos pasos",
   LOGIN_GOOGLE: "inició sesión con Google",
   CREAR_USUARIO: "creó un usuario",
+  ELIMINAR_USUARIO: "eliminó un usuario",
   ACTUALIZAR_USUARIO: "actualizó un usuario",
   DESACTIVAR_USUARIO: "desactivó un usuario",
   CAMBIAR_ROL_USUARIO: "cambió el rol de un usuario",
@@ -152,7 +154,7 @@ const porcentaje = (parte, total) => (total ? Math.round((parte / total) * 100) 
 export default function Panel() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token } = useAuth();
+  const { token, usuario: yo } = useAuth();
   const [busqueda, setBusqueda] = useState("");
   const [filtroAuditoria, setFiltroAuditoria] = useState("Todo");
   const [busquedaAuditoria, setBusquedaAuditoria] = useState("");
@@ -162,6 +164,8 @@ export default function Panel() {
   const [version, setVersion] = useState(0); // al cambiar, se vuelve a pedir el panel
   const [modalUsuario, setModalUsuario] = useState(null); // {modo: "invitar" | "editar", usuario?}
   const [modalEmpresa, setModalEmpresa] = useState(null);
+  const [usuarioAEliminar, setUsuarioAEliminar] = useState(null);
+  const [eliminandoUsuario, setEliminandoUsuario] = useState(false);
   const [aviso, setAviso] = useState(null); // {tipo: "ok" | "error", texto}
   const [seccion, setSeccion] = useState(location.state?.seccion ?? "usuarios");
   const [exportando, setExportando] = useState(false);
@@ -209,6 +213,23 @@ export default function Panel() {
       }
     } catch (err) {
       setAviso({ tipo: "error", texto: err.message || "No se pudo completar la acción." });
+    }
+  }
+
+  async function confirmarEliminarUsuario() {
+    if (!usuarioAEliminar) return;
+    setEliminandoUsuario(true);
+    setAviso(null);
+    try {
+      const res = await eliminarUsuarioAdmin(token, usuarioAEliminar.id);
+      setAviso({ tipo: "ok", texto: res?.message || "Usuario eliminado correctamente." });
+      setUsuarioAEliminar(null);
+      setVersion((v) => v + 1);
+    } catch (err) {
+      setUsuarioAEliminar(null);
+      setAviso({ tipo: "error", texto: err.message || "No se pudo eliminar el usuario." });
+    } finally {
+      setEliminandoUsuario(false);
     }
   }
 
@@ -387,6 +408,16 @@ export default function Panel() {
                                   onClick={() => alternarResolucion(u)}
                                 >
                                   {u.resolucionVerificada ? "Quitar verificación" : "✓ Verificar resolución"}
+                                </button>
+                              )}
+                              {u.rol !== "SUPER_ADMINISTRADOR" && u.id !== yo?.id && (
+                                <button
+                                  type="button"
+                                  className="adm-accion adm-accion--peligro"
+                                  onClick={() => setUsuarioAEliminar(u)}
+                                  aria-label={`Eliminar a ${u.nombre}`}
+                                >
+                                  Eliminar
                                 </button>
                               )}
                             </div>
@@ -660,6 +691,17 @@ export default function Panel() {
           }}
         />
       )}
+      <ModalConfirmacion
+        abierto={!!usuarioAEliminar}
+        titulo="Eliminar usuario"
+        mensaje="Se eliminará la cuenta de forma permanente y no se puede deshacer. Si tiene evaluaciones, compras o pedidos no se podrá eliminar; en ese caso desactívala desde «Editar»."
+        resumen={usuarioAEliminar ? `${usuarioAEliminar.nombre} · ${usuarioAEliminar.correo}` : null}
+        textoConfirmar="Sí, eliminar"
+        textoCargando="Eliminando..."
+        cargando={eliminandoUsuario}
+        onConfirmar={confirmarEliminarUsuario}
+        onCancelar={() => !eliminandoUsuario && setUsuarioAEliminar(null)}
+      />
       {modalEmpresa && (
         <ModalEmpresaAdmin
           empresa={modalEmpresa}

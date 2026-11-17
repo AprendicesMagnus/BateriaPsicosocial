@@ -78,6 +78,8 @@ export function verificarResolucion(token, usuarioId, verificada) {
 
 // Panel (Super Administrador): invitar, editar y reenviar el código de verificación de un usuario.
 export const invitarUsuario = (token, body) => request("/usuarios/invitar", { method: "POST", body, token });
+// Elimina la cuenta por completo (solo Super Administrador; se bloquea si tiene actividad).
+export const eliminarUsuarioAdmin = (token, id) => request(`/usuarios/${id}/definitivo`, { method: "DELETE", token });
 export const editarUsuarioAdmin = (token, id, body) => request(`/usuarios/${id}`, { method: "PATCH", body, token });
 
 // Gestión global de empresas desde el Panel del Super Administrador.

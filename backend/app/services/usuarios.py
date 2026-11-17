@@ -1,10 +1,16 @@
 import secrets
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.crypto import hash_password, password_valida
 from app.core.errors import AppError
+from app.models.audit import Auditoria
+from app.models.commercial import Compra
+from app.models.evaluation import Consentimiento, Evaluacion, EvaluacionParticipante, Informe, Notificacion
 from app.models.organization import Area, Organizacion
+from app.models.product_order import PedidoProducto
+from app.models.ticket_soporte import TicketSoporte
 from app.models.user import Rol, Usuario
 from app.services.auth import forgot_password, usuario_publico
 from app.services.empresa_interna import obtener_empresa_interna
@@ -124,6 +130,56 @@ def desactivar_usuario(db: Session, usuario_id, actual: Usuario) -> dict:
         cargo = None
 
     return actualizar_usuario(db, usuario_id, _Data(), actual)
+
+
+def eliminar_usuario_definitivo(db: Session, usuario_id, actual: Usuario) -> dict:
+    """Elimina por completo una cuenta (solo Super Administrador, desde el Panel).
+
+    Se bloquea si la cuenta tiene actividad que no debe perderse (evaluaciones, participaciones,
+    informes, compras o pedidos): en ese caso se debe desactivar. Al eliminarla se borran sus
+    notificaciones, mensajes de soporte, sesiones y códigos; la auditoría queda sin autor.
+    """
+    usuario = db.query(Usuario).options(joinedload(Usuario.rol)).filter(Usuario.id == usuario_id).first()
+    if usuario is None:
+        raise AppError(404, "Usuario no encontrado.")
+    if usuario.id == actual.id:
+        raise AppError(400, "No puedes eliminar tu propia cuenta.")
+    if usuario.rol.codigo == "SUPER_ADMINISTRADOR":
+        raise AppError(403, "No se puede eliminar a un Super Administrador.")
+
+    con_actividad = (
+        db.query(Evaluacion.id).filter(Evaluacion.evaluador_id == usuario.id).first()
+        or db.query(EvaluacionParticipante.id).filter(EvaluacionParticipante.trabajador_id == usuario.id).first()
+        or db.query(Consentimiento.id).filter(Consentimiento.trabajador_id == usuario.id).first()
+        or db.query(Informe.id)
+        .filter((Informe.generado_por == usuario.id) | (Informe.trabajador_id == usuario.id))
+        .first()
+        or db.query(Compra.id).filter(Compra.usuario_id == usuario.id).first()
+        or db.query(PedidoProducto.id).filter(PedidoProducto.usuario_id == usuario.id).first()
+    )
+    if con_actividad:
+        raise AppError(
+            409,
+            "No se puede eliminar: el usuario tiene evaluaciones, compras o pedidos registrados. "
+            "Puedes desactivarlo desde «Editar».",
+        )
+
+    nombre = f"{usuario.nombre} {usuario.apellido}".strip()
+    try:
+        db.query(Notificacion).filter(Notificacion.usuario_id == usuario.id).delete(synchronize_session=False)
+        db.query(TicketSoporte).filter(TicketSoporte.usuario_id == usuario.id).delete(synchronize_session=False)
+        db.query(Auditoria).filter(Auditoria.usuario_id == usuario.id).update(
+            {Auditoria.usuario_id: None}, synchronize_session=False
+        )
+        db.query(Organizacion).filter(Organizacion.creada_por_id == usuario.id).update(
+            {Organizacion.creada_por_id: None}, synchronize_session=False
+        )
+        db.delete(usuario)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise AppError(409, "No se puede eliminar: el usuario tiene información asociada. Puedes desactivarlo desde «Editar».")
+    return {"message": f"{nombre} fue eliminado correctamente."}
 
 
 def listar_trabajadores(db: Session, organizacion_id, actual: Usuario) -> list[dict]:

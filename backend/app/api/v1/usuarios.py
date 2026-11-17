@@ -230,6 +230,26 @@ def desactivar_usuario(
     return res
 
 
+@router.delete("/{usuario_id}/definitivo")
+def eliminar_usuario_definitivo(
+    usuario_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    actual: Usuario = Depends(require_admin),
+):
+    """Elimina una cuenta por completo (Panel del Super Administrador)."""
+    res = usuarios_service.eliminar_usuario_definitivo(db, usuario_id, actual)
+    auditoria_service.registrar_auditoria(
+        db,
+        usuario=actual,
+        accion="ELIMINAR_USUARIO",
+        entidad="Usuario",
+        entidad_id=str(usuario_id),
+        request=request,
+    )
+    return res
+
+
 @router.patch("/{usuario_id}/rol")
 def cambiar_rol_usuario(
     usuario_id: UUID,
