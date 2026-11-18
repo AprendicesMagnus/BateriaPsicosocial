@@ -70,8 +70,5 @@ def preparar_checkout_wompi(
     db: Session = Depends(get_db),
     actual: Usuario = Depends(require_comprador),
 ):
-    return compras_service.preparar_checkout_wompi(
-        db=db,
-        compra_id=compra_id,
-        actual=actual,
-    )
+    from app.core.errors import AppError
+    raise AppError(410, "Wompi fue retirado. Utiliza el pago manual mediante Nequi QR.")

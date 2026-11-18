@@ -55,7 +55,7 @@ export default function PoliticaDatos() {
             <li>Datos de las empresas y áreas registradas en la plataforma.</li>
             <li>Ficha de datos generales, respuestas a los cuestionarios de la batería (intralaboral, extralaboral y estrés) y los resultados calculados a partir de ellas. Las respuestas se almacenan cifradas.</li>
             <li>Constancia del consentimiento informado: fecha, hora, dirección IP y versión del texto aceptado.</li>
-            <li>Compras de baterías y pedidos de productos: referencias, valores y estado del pago. Los datos de pago son procesados directamente por Wompi.</li>
+            <li>Compras de baterías y pedidos de productos: referencias, valores y estado del pago. Los pagos se realizan mediante transferencia a una cuenta Nequi Negocios y el comprobante es revisado manualmente por personal autorizado.</li>
             <li>Mensajes enviados al Centro de ayuda y registros de auditoría de accesos y acciones en la plataforma.</li>
           </ul>
           <p>
@@ -97,7 +97,7 @@ export default function PoliticaDatos() {
             los datos que se registran en la plataforma y no sustituye al psicólogo en su función de custodia.
           </p>
           <p>
-            Para operar el servicio se usan proveedores que tratan datos por cuenta de la plataforma: Wompi para los
+            Para operar el servicio se usan proveedores que tratan datos por cuenta de la plataforma: Nequi Negocios para los
             pagos, Google para el inicio de sesión opcional con Google y un servicio de correo electrónico para los
             códigos y avisos. Cada proveedor trata los datos conforme a sus propias políticas. La plataforma controla
             el acceso por roles y registra en una auditoría las acciones relevantes.

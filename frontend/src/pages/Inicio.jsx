@@ -731,9 +731,7 @@ export default function Inicio() {
               <img
                 src="/logo oscuro.png"
                 alt="Magnus"
-                style={{
-                  height: 80,
-                }}
+                className="footer__logo"
               />
 
               <p>
@@ -806,7 +804,7 @@ export default function Inicio() {
                   rel="noopener noreferrer"
                   aria-label="Facebook"
                 >
-                  <BsFacebook size={16} aria-hidden="true" />
+                  <BsFacebook size={20} aria-hidden="true" />
                 </a>
 
                 <a
@@ -815,7 +813,7 @@ export default function Inicio() {
                   rel="noopener noreferrer"
                   aria-label="Instagram"
                 >
-                  <BsInstagram size={16} aria-hidden="true" />
+                  <BsInstagram size={20} aria-hidden="true" />
                 </a>
 
                 <a
@@ -824,7 +822,7 @@ export default function Inicio() {
                   rel="noopener noreferrer"
                   aria-label="TikTok"
                 >
-                  <BsTiktok size={16} aria-hidden="true" />
+                  <BsTiktok size={20} aria-hidden="true" />
                 </a>
 
               </div>

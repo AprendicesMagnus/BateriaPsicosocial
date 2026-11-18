@@ -1,47 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import {
-  crearPedidoProductos,
-  prepararCheckoutPedidoProductos,
-  confirmarPagoPedidoProductos,
-  obtenerPedidoProductos,
-} from "../api/pedidosProductos";
+import { crearPedidoProductos } from "../api/pedidosProductos";
 import AppTopbar from "../components/AppTopbar";
+import PagoNequi from "../components/PagoNequi";
 import BotonRegresar from "../components/BotonRegresar";
 import { categoriasDe, formatearCOP, imagenDe, manejaStock, useProductos } from "../data/products";
 import "../styles/app-shell.css";
 import "../styles/Catalogo.css";
-
-function cargarWidgetWompi() {
-  return new Promise((resolve, reject) => {
-    if (window.WidgetCheckout) {
-      resolve();
-      return;
-    }
-
-    const existente = document.querySelector(
-      'script[src="https://checkout.wompi.co/widget.js"]'
-    );
-
-    if (existente) {
-      existente.addEventListener("load", resolve, { once: true });
-      existente.addEventListener(
-        "error",
-        () => reject(new Error("No se pudo cargar el Widget de Wompi.")),
-        { once: true }
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.wompi.co/widget.js";
-    script.async = true;
-    script.onload = resolve;
-    script.onerror = () =>
-      reject(new Error("No se pudo cargar el Widget de Wompi."));
-    document.body.appendChild(script);
-  });
-}
 
 export default function Catalogo() {
   const { usuario, token } = useAuth();
@@ -91,105 +56,17 @@ export default function Catalogo() {
 
   async function iniciarPago() {
     if (!lineas.length || procesandoPago) return;
-
     setErrorPago("");
     setProcesandoPago(true);
-
     try {
-      const pedidoCreado = await crearPedidoProductos(
-        token,
-        lineas.map(({ producto, cantidad }) => ({
-          producto_id: producto.id,
-          cantidad,
-        }))
-      );
-
-      const checkout = await prepararCheckoutPedidoProductos(
-        token,
-        pedidoCreado.id
-      );
-
-      await cargarWidgetWompi();
-
-      if (!window.WidgetCheckout) {
-        throw new Error("El Widget de Wompi no está disponible.");
-      }
-
-      const widget = new window.WidgetCheckout({
-        currency: checkout.currency,
-        amountInCents: checkout.amountInCents,
-        reference: checkout.reference,
-        publicKey: checkout.publicKey,
-        signature: {
-          integrity: checkout.signature,
-        },
-      });
-
-      widget.open(async (resultado) => {
-        try {
-          const transaction = resultado?.transaction;
-          if (!transaction?.id) {
-            setErrorPago("El pago no se completó. Puedes revisar o cancelar el pedido desde tu perfil.");
-            return;
-          }
-
-          const resPago = await confirmarPagoPedidoProductos(
-            token,
-            pedidoCreado.id,
-            transaction.id
-          );
-          const pedidoActualizado = await obtenerPedidoProductos(token, pedidoCreado.id);
-          const estadoWompi = String(
-            transaction.status || resPago?.wompiStatus || resPago?.estado || ""
-          ).toUpperCase();
-          const estadoPedido = String(
-            pedidoActualizado?.estado || resPago?.pedidoEstado || ""
-          ).toUpperCase();
-
-          if (estadoWompi === "APPROVED" || estadoPedido === "PAGADA") {
-            setPedido(pedidoActualizado);
-            setCarrito({});
-            setPaso("listo");
-            return;
-          }
-
-          if (estadoWompi === "PENDING" || estadoPedido === "PENDIENTE") {
-            setErrorPago("El pago quedó pendiente de confirmación. Puedes consultar el pedido desde tu perfil.");
-            return;
-          }
-
-          if (estadoWompi === "DECLINED" || estadoPedido === "RECHAZADO") {
-            setErrorPago("El pago fue rechazado por Wompi. Puedes reintentarlo desde el historial de pedidos de tu perfil.");
-            return;
-          }
-
-          if (estadoWompi === "VOIDED" || estadoPedido === "CANCELADA") {
-            setErrorPago("El pago fue cancelado. Puedes realizar un nuevo pedido cuando lo desees.");
-            return;
-          }
-
-          if (estadoWompi === "ERROR" || estadoPedido === "ERROR") {
-            setErrorPago("Wompi reportó un error al procesar el pago. Puedes revisar el pedido desde tu perfil.");
-            return;
-          }
-
-          setErrorPago(
-            resPago?.mensajeRespuesta ||
-              "No fue posible confirmar el resultado del pago. Consulta el estado del pedido desde tu perfil."
-          );
-        } catch (err) {
-          setErrorPago(err.message || "No se pudo confirmar el pago con el servidor.");
-        } finally {
-          setProcesandoPago(false);
-        }
-      });
-
-      setProcesandoPago(false);
+      const pedidoCreado = await crearPedidoProductos(token, lineas.map(({ producto, cantidad }) => ({ producto_id: producto.id, cantidad })));
+      setPedido(pedidoCreado);
+      setCarrito({});
+      setPaso("nequi");
     } catch (err) {
+      setErrorPago(err.message || "No se pudo registrar el pedido.");
+    } finally {
       setProcesandoPago(false);
-      setErrorPago(
-        err.message || "No se pudo iniciar el proceso de pago."
-      );
     }
   }
 
@@ -418,7 +295,7 @@ export default function Catalogo() {
               )}
 
               <p className="catalogo-nota">
-                El valor final de tu pedido se confirma al momento de pagar.
+                Paga mediante el código QR de Nequi y adjunta el comprobante. El pedido solo se confirma cuando el administrador apruebe el pago.
               </p>
 
               <div className="catalogo-pago__acciones">
@@ -442,6 +319,17 @@ export default function Catalogo() {
                     : `Pagar · ${formatearCOP(total)}`}
                 </button>
               </div>
+            </section>
+          )}
+
+          {paso === "nequi" && pedido && (
+            <section className="catalogo-pago">
+              <h2>Pago de tu pedido</h2>
+              <p>Número de pedido: <strong>{pedido.numero}</strong></p>
+              <p>Total exacto: <strong>{formatearCOP(pedido.total)}</strong></p>
+              <PagoNequi tipo="producto" compraId={pedido.id} token={token} total={pedido.total} onComplete={() => setErrorPago("Comprobante recibido. Tu pedido está pendiente de verificación administrativa y podrás consultar su estado en Perfil → Historial de pedidos.")} />
+              {errorPago && <p className="catalogo-nota">{errorPago}</p>}
+              <button type="button" className="catalogo-btn" onClick={() => setPaso("catalogo")}>Volver al catálogo</button>
             </section>
           )}
 

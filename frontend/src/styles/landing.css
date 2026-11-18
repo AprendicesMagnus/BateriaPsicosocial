@@ -1366,3 +1366,69 @@
   section.hero .hero__inner { min-height: 0; padding: 28px 20px 40px; }
 }
 
+
+
+/* =====================================================
+   FOOTER: tamaño más grande y legible
+===================================================== */
+.footer {
+  padding: 72px 0 32px;
+}
+.footer__grid {
+  gap: 40px;
+  padding-bottom: 44px;
+}
+.footer__logo {
+  display: block;
+  height: 112px;
+  width: auto;
+  max-width: 100%;
+}
+.footer__brand p {
+  font-size: 15.5px;
+  line-height: 1.7;
+  margin: 18px 0 0;
+  max-width: 320px;
+}
+.footer__col h5 {
+  font-size: 16px;
+  margin: 0 0 18px;
+}
+.footer__col li {
+  font-size: 15px;
+  padding: 8px 0;
+  overflow-wrap: anywhere;
+}
+.footer__social {
+  gap: 12px;
+  margin-top: 20px;
+}
+.footer__social a {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+.footer__bottom {
+  padding-top: 26px;
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .footer {
+    padding: 52px 0 26px;
+  }
+  .footer__grid {
+    gap: 28px;
+    padding-bottom: 30px;
+  }
+  .footer__logo {
+    height: 96px;
+  }
+  .footer__brand p {
+    font-size: 15px;
+    max-width: none;
+  }
+  .footer__bottom {
+    font-size: 13.5px;
+  }
+}

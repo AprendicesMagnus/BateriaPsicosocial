@@ -1,0 +1,193 @@
+.pago-nequi {
+  margin: 24px 0;
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid #e4e7ec;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, .07);
+}
+
+.pago-nequi__encabezado {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.pago-nequi__encabezado > span {
+  color: #087f67;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: .78rem;
+  letter-spacing: .08em;
+}
+
+.pago-nequi__encabezado h2 {
+  margin: 8px 0;
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  color: #20152b;
+}
+
+.pago-nequi__encabezado p,
+.pago-nequi__detalle p {
+  color: #667085;
+}
+
+.pago-nequi__contenido {
+  display: grid;
+  grid-template-columns: minmax(280px, 460px) minmax(220px, 1fr);
+  gap: clamp(20px, 3vw, 36px);
+  align-items: center;
+  justify-content: center;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.pago-nequi__qr {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 14px;
+  border: 1px solid #e4e7ec;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.pago-nequi__qr img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+}
+
+.pago-nequi__detalle > span {
+  display: block;
+  color: #667085;
+  font-weight: 600;
+}
+
+.pago-nequi__detalle > strong {
+  display: block;
+  margin: 7px 0 18px;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  color: #087f67;
+}
+
+.pago-nequi__detalle p {
+  margin: 9px 0;
+}
+
+.pago-nequi__detalle small {
+  display: block;
+  margin-top: 18px;
+  color: #667085;
+  overflow-wrap: anywhere;
+}
+
+.pago-nequi__subida {
+  display: grid;
+  gap: 12px;
+  max-width: 520px;
+  margin: 24px auto 0;
+}
+
+.pago-nequi__subida label {
+  font-weight: 650;
+  color: #344054;
+}
+
+.pago-nequi__subida input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+}
+
+.pago-nequi__boton {
+  border: 0;
+  border-radius: 10px;
+  padding: 13px 18px;
+  background: #087f67;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pago-nequi__boton:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.pago-nequi__error {
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff1f0;
+  color: #b42318;
+}
+
+.pago-nequi__exito {
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #ecfdf3;
+  color: #067647;
+  text-align: center;
+}
+
+.pago-nequi__exito p {
+  margin-bottom: 0;
+  color: #344054;
+}
+
+@media (max-width: 640px) {
+  .pago-nequi__contenido {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .pago-nequi__qr {
+    width: 100%;
+    max-width: 420px;
+    padding: 10px;
+  }
+
+  .pago-nequi__detalle {
+    text-align: center;
+  }
+}
+
+
+/* Datos de la llave Bre-B: se muestran junto al QR para facilitar la transferencia manual. */
+.pago-nequi__llave {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 13px 12px;
+  border: 1px solid #cceee4;
+  border-radius: 12px;
+  background: #f0fdf9;
+  text-align: center;
+}
+
+.pago-nequi__llave span {
+  color: #087f67;
+  font-size: .76rem;
+  font-weight: 750;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.pago-nequi__llave strong {
+  color: #20152b;
+  font-size: clamp(1.25rem, 2.4vw, 1.55rem);
+  line-height: 1.25;
+  letter-spacing: .045em;
+}
+
+.pago-nequi__llave small {
+  color: #667085;
+  font-size: .85rem;
+}

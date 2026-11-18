@@ -1,0 +1,83 @@
+.verificacion-pagos__qr,.verificacion-pagos__filtros{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px;margin:16px 0;border:1px solid #e4e7ec;border-radius:12px}.verificacion-pagos__qr>div{flex:1;min-width:220px}.verificacion-pagos__qr p{margin:5px 0;color:#667085}.verificacion-pagos__filtros select{padding:9px 12px;border:1px solid #d0d5dd;border-radius:8px}.verificacion-pagos__lista{display:grid;gap:12px}.verificacion-pagos__item{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:16px;border:1px solid #e4e7ec;border-radius:12px}.verificacion-pagos__datos{display:grid;gap:5px;flex:1;min-width:220px}.verificacion-pagos__datos span,.verificacion-pagos__datos small{color:#667085}.verificacion-pagos__datos b{font-size:1.2rem;color:#087f67}.verificacion-pagos__comprobante{font-weight:700;color:#175cd3}.verificacion-pagos__acciones{display:flex;gap:8px}.verificacion-pagos__acciones button{padding:9px 12px;border:0;border-radius:8px;background:#087f67;color:white;font-weight:700;cursor:pointer}.verificacion-pagos__acciones button+button{background:#b42318}.verificacion-pagos__acciones button:disabled{opacity:.5}.verificacion-pagos__error{color:#b42318}
+@media(max-width:640px){.verificacion-pagos__item{align-items:stretch;flex-direction:column}.verificacion-pagos__acciones button{flex:1}}
+
+/* Configuración editable de la llave y del titular de Nequi. */
+.verificacion-pagos__configuracion {
+  display: grid;
+  gap: 16px;
+  margin: 16px 0 22px;
+  padding: 18px;
+  border: 1px solid #dfe7ef;
+  border-radius: 14px;
+  background: #fbfcfe;
+}
+.verificacion-pagos__configuracion-head h3 {
+  margin: 0 0 5px;
+  color: #17233d;
+  font-size: 16px;
+}
+.verificacion-pagos__configuracion-head p {
+  margin: 0;
+  color: #667085;
+  font-size: 13px;
+}
+.verificacion-pagos__campos-config {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.verificacion-pagos__campos-config label {
+  display: grid;
+  gap: 7px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+.verificacion-pagos__campos-config input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #cfd8e3;
+  border-radius: 9px;
+  background: #fff;
+  color: #17233d;
+  font: inherit;
+  font-weight: 500;
+}
+.verificacion-pagos__campos-config input:focus {
+  outline: 3px solid rgba(8, 127, 103, .14);
+  border-color: #087f67;
+}
+.verificacion-pagos__configuracion-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.verificacion-pagos__configuracion-pie small {
+  flex: 1;
+  min-width: 220px;
+  color: #667085;
+  line-height: 1.5;
+}
+.verificacion-pagos__exito {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #ecfdf3;
+  color: #067647;
+  font-size: 13px;
+}
+@media (max-width: 640px) {
+  .verificacion-pagos__campos-config {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .verificacion-pagos__configuracion-pie {
+    align-items: stretch;
+  }
+  .verificacion-pagos__configuracion-pie .adm-btn {
+    width: 100%;
+  }
+}

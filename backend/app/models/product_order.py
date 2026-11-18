@@ -14,6 +14,7 @@ class PedidoProducto(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     usuario_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=False)
+    organizacion_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("organizaciones.id", ondelete="SET NULL"), nullable=True)
     subtotal: Mapped[int] = mapped_column(Integer, nullable=False)
     iva: Mapped[int] = mapped_column(Integer, nullable=False)
     total: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -77,6 +78,10 @@ class PagoPedidoProducto(Base):
     ultimos_digitos: Mapped[str | None] = mapped_column(String(4), nullable=True)
     titular: Mapped[str | None] = mapped_column(String(150), nullable=True)
     mensaje_respuesta: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    comprobante_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    observaciones: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    revisado_por_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=True)
+    revisado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     procesado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     pedido: Mapped["PedidoProducto"] = relationship(back_populates="pagos")

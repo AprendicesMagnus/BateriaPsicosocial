@@ -3,6 +3,7 @@ import PanelPlanes from "./PanelPlanes";
 import PanelProductos from "./PanelProductos";
 import PanelHistorialCompras from "./PanelHistorialCompras";
 import PanelVentasProductos from "./PanelVentasProductos";
+import PanelVerificacionPagos from "./PanelVerificacionPagos";
 import "../styles/PanelTienda.css";
 
 const VISTAS = [
@@ -10,6 +11,7 @@ const VISTAS = [
   { id: "productos", label: "Productos" },
   { id: "historial", label: "Historial de compras" },
   { id: "ventas", label: "Panel de ventas" },
+  { id: "pagos", label: "Verificación de pagos" },
 ];
 
 // Gestión de tienda: incluye planes, productos, historial de compras y panel de ventas.
@@ -40,6 +42,8 @@ export default function PanelTienda() {
         <PanelProductos />
       ) : vista === "historial" ? (
         <PanelHistorialCompras />
+      ) : vista === "pagos" ? (
+        <PanelVerificacionPagos />
       ) : (
         <PanelVentasProductos />
       )}

@@ -7,6 +7,7 @@ from app.core.errors import AppError
 from app.core.nit_utils import validar_nit_con_dv
 from app.models.audit import Auditoria
 from app.models.commercial import Compra
+from app.models.product_order import PedidoProducto
 from app.models.evaluation import Evaluacion, EvaluacionParticipante, Notificacion
 from app.models.organization import Area, Organizacion
 from app.models.user import Rol, Usuario
@@ -114,6 +115,17 @@ def autorregistrar_organizacion(db: Session, data, creador: Usuario | None = Non
         # Jefe/Administrador: la empresa recién creada pasa a ser su empresa activa (la de Reportes).
         if creador is not None and creador.rol.codigo in {"JEFE", "ADMINISTRADOR"}:
             creador.organizacion_id = org.id
+        # Compras previas a la primera empresa se asocian a la empresa recién creada,
+        # sin modificar compras que ya tenían una organización asignada.
+        if creador is not None:
+            db.query(Compra).filter(
+                Compra.usuario_id == creador.id,
+                Compra.organizacion_id.is_(None),
+            ).update({Compra.organizacion_id: org.id}, synchronize_session=False)
+            db.query(PedidoProducto).filter(
+                PedidoProducto.usuario_id == creador.id,
+                PedidoProducto.organizacion_id.is_(None),
+            ).update({PedidoProducto.organizacion_id: org.id}, synchronize_session=False)
         db.commit()
     except Exception:
         db.rollback()

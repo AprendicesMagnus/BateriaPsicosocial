@@ -107,6 +107,11 @@ class Pago(Base):
         String(255),
     )
 
+    comprobante_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    observaciones: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    revisado_por_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios.id"), nullable=True)
+    revisado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     procesado_en: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utcnow,

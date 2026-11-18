@@ -41,6 +41,7 @@ def _compra_publica(compra: Compra) -> dict:
         "iva": compra.iva,
         "total": compra.total,
         "estado": compra.estado,
+        "observacionesPago": next((p.observaciones for p in sorted(compra.pagos, key=lambda x: x.procesado_en, reverse=True) if p.metodo == "nequi" and p.observaciones), None),
         "fecha": compra.creado_en.isoformat(),
         "creadoEn": compra.creado_en.isoformat(),
     }
@@ -58,6 +59,8 @@ def _pago_publico(pago: Pago) -> dict:
         "ultimosDigitos": pago.ultimos_digitos,
         "titular": pago.titular,
         "mensajeRespuesta": pago.mensaje_respuesta,
+        "observaciones": pago.observaciones,
+        "comprobanteUrl": bool(pago.comprobante_path),
         "procesadoEn": pago.procesado_en.isoformat(),
     }
 
@@ -79,9 +82,8 @@ def _tiene_pago_en_curso(
         db.query(Pago.id)
         .filter(
             Pago.compra_id == compra.id,
-            Pago.metodo == "wompi",
-            Pago.wompi_transaction_id.isnot(None),
-            Pago.wompi_status == "PENDING",
+            ((Pago.metodo == "wompi") & Pago.wompi_transaction_id.isnot(None) & (Pago.wompi_status == "PENDING"))
+            | ((Pago.metodo == "nequi") & (Pago.estado == "PENDIENTE_VERIFICACION")),
         )
         .first()
         is not None
@@ -349,6 +351,7 @@ def listar_compras_usuario(
 
     compras = (
         db.query(Compra)
+        .options(joinedload(Compra.pagos))
         .filter(
             Compra.usuario_id == usuario_id,
         )

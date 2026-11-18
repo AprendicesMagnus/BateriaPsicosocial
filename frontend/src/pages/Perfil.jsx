@@ -10,7 +10,12 @@ import FotoPerfilAmpliable from "../components/FotoPerfilAmpliable";
 import "../styles/app-shell.css";
 import "../styles/Perfil.css";
 import { request, urlArchivo } from "../api/client";
-import { listarSesionesActivas, cerrarSesionActiva, cerrarOtrasSesiones, revocarDispositivosConfiables } from "../api/auth";
+import {
+  listarSesionesActivas,
+  cerrarSesionActiva,
+  cerrarOtrasSesiones,
+  revocarDispositivosConfiables,
+} from "../api/auth";
 import {
   editarPerfil,
   cambiarPassword,
@@ -21,13 +26,11 @@ import {
 } from "../api/perfil";
 import {
   listarPedidosUsuarioProductos,
-  prepararCheckoutPedidoProductos,
-  confirmarPagoPedidoProductos,
   cancelarPedidoProductos,
 } from "../api/pedidosProductos";
 import PerfilPrivacidad from "../components/PerfilPrivacidad";
 import ModalConfirmacion from "../components/ModalConfirmacion";
-
+import PagoNequi from "../components/PagoNequi";
 
 import {
   TEXTO_AYUDA_PASSWORD,
@@ -35,30 +38,45 @@ import {
   nombrePersonaValido,
   passwordValida,
 } from "../utils/validaciones";
+
 const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
-const MAX_FOTO_BYTES = 2 * 1024 * 1024; // 2 MB (el backend valida lo mismo)
+const MAX_FOTO_BYTES = 2 * 1024 * 1024;
 const POR_PAGINA_DIRECTORIO = 10;
 const INTERVALO_ACTUALIZACION_COMPRAS = 30 * 1000;
 
 function colorTextoSobreFondo(hex) {
   const limpio = String(hex || "#101c3a").replace("#", "");
   if (!/^[0-9a-fA-F]{6}$/.test(limpio)) return "#ffffff";
-  const canales = [0, 2, 4].map((i) => parseInt(limpio.slice(i, i + 2), 16) / 255);
-  const lineal = canales.map((c) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-  const luminancia = 0.2126 * lineal[0] + 0.7152 * lineal[1] + 0.0722 * lineal[2];
+
+  const canales = [0, 2, 4].map(
+    (i) => parseInt(limpio.slice(i, i + 2), 16) / 255
+  );
+
+  const lineal = canales.map((c) =>
+    c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  );
+
+  const luminancia =
+    0.2126 * lineal[0] +
+    0.7152 * lineal[1] +
+    0.0722 * lineal[2];
+
   return luminancia > 0.42 ? "#172033" : "#ffffff";
 }
 
 function formatearFecha(fechaIso) {
   if (!fechaIso) return "—";
+
   return new Intl.DateTimeFormat("es-CO", {
     day: "numeric",
     month: "long",
     year: "numeric",
   }).format(new Date(fechaIso));
 }
+
 function formatearFechaHora(fechaIso) {
   if (!fechaIso) return "—";
+
   return new Intl.DateTimeFormat("es-CO", {
     day: "numeric",
     month: "long",
@@ -68,6 +86,7 @@ function formatearFechaHora(fechaIso) {
     hour12: true,
   }).format(new Date(fechaIso));
 }
+
 function ReceiptIcon() {
   return (
     <svg
@@ -89,18 +108,22 @@ function ReceiptIcon() {
     </svg>
   );
 }
+
 function etiquetaEstadoCompra(estado) {
   const estados = {
     PAGADA: "Pagada",
     PENDIENTE: "Pendiente de pago",
+    PENDIENTE_VERIFICACION: "Pendiente de verificación",
     RECHAZADO: "Pago rechazado",
     EXPIRADA: "Compra expirada",
     CANCELADA: "Compra cancelada",
     ERROR: "Error de pago",
     VOIDED: "Pago cancelado",
   };
+
   return estados[estado] || "Estado no disponible";
 }
+
 function estiloEstadoCompra(estado) {
   const estilos = {
     PAGADA: {
@@ -110,6 +133,10 @@ function estiloEstadoCompra(estado) {
     PENDIENTE: {
       background: "#fff7e6",
       color: "#9a6700",
+    },
+    PENDIENTE_VERIFICACION: {
+      background: "#eaf2ff",
+      color: "#175cd3",
     },
     RECHAZADO: {
       background: "#fdecec",
@@ -132,6 +159,7 @@ function estiloEstadoCompra(estado) {
       color: "#475569",
     },
   };
+
   return {
     display: "inline-flex",
     alignItems: "center",
@@ -146,26 +174,57 @@ function estiloEstadoCompra(estado) {
     }),
   };
 }
+
 function etiquetaEstadoPedido(estado) {
   const estados = {
     PAGADA: "Pagado",
     ENVIADO: "Pedido enviado",
     ENTREGADO: "Pedido entregado",
     PENDIENTE: "Pendiente de pago",
+    PENDIENTE_PAGO: "Pendiente de pago",
+    PENDIENTE_DE_PAGO: "Pendiente de pago",
+    PENDIENTE_VERIFICACION: "Pendiente de verificación",
     RECHAZADO: "Pago rechazado",
     EXPIRADA: "Pedido expirado",
     CANCELADA: "Pedido cancelado",
     ERROR: "Error de pago",
   };
-  return estados[estado] || "Estado no disponible";
+
+  return estados[normalizarEstadoPedido(estado)] || "Estado no disponible";
 }
-function resumenItemsPedido(items) {
-  return (items || [])
-    .map((item) => `${item.cantidad} x ${item.nombre}`)
-    .join(", ");
+
+function normalizarEstadoPedido(estado) {
+  return String(estado || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
 }
+
+function esPedidoPendienteDePago(estado) {
+  return [
+    "PENDIENTE",
+    "PENDIENTE_PAGO",
+    "PENDIENTE_DE_PAGO",
+    "PENDING",
+  ].includes(normalizarEstadoPedido(estado));
+}
+
+function esEstadoQuePermiteReintento(estado) {
+  return [
+    "PENDIENTE",
+    "PENDIENTE_PAGO",
+    "PENDIENTE_DE_PAGO",
+    "PENDING",
+    "RECHAZADO",
+    "ERROR",
+  ].includes(normalizarEstadoPedido(estado));
+}
+
 function tipoMensajeToast(mensaje) {
   const texto = String(mensaje || "").toLowerCase();
+
   if (
     texto.includes("rechaz") ||
     texto.includes("error") ||
@@ -173,6 +232,7 @@ function tipoMensajeToast(mensaje) {
   ) {
     return "error";
   }
+
   if (
     texto.includes("pendiente") ||
     texto.includes("pendió") ||
@@ -180,48 +240,38 @@ function tipoMensajeToast(mensaje) {
   ) {
     return "pendiente";
   }
+
   return "ok";
-}
-function cargarWidgetWompiPerfil() {
-  return new Promise((resolve, reject) => {
-    if (window.WidgetCheckout) return resolve();
-    const existente = document.querySelector('script[src="https://checkout.wompi.co/widget.js"]');
-    if (existente) {
-      existente.addEventListener("load", resolve, { once: true });
-      existente.addEventListener("error", () => reject(new Error("No se pudo cargar el Widget de Wompi.")), { once: true });
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://checkout.wompi.co/widget.js";
-    script.async = true;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error("No se pudo cargar el Widget de Wompi."));
-    document.body.appendChild(script);
-  });
 }
 
 export default function Perfil() {
   const location = useLocation();
   const navigate = useNavigate();
+
   const { usuario, token, actualizarUsuario } = useAuth();
+
   const [compras, setCompras] = useState([]);
   const [loadingCompras, setLoadingCompras] = useState(false);
   const [errorCompras, setErrorCompras] = useState(null);
   const [cancelandoCompraId, setCancelandoCompraId] = useState(null);
   const [compraPorCancelar, setCompraPorCancelar] = useState(null);
+
   const [confirmacionSesion, setConfirmacionSesion] = useState(null);
   const [sesionesActivas, setSesionesActivas] = useState([]);
   const [cargandoSesiones, setCargandoSesiones] = useState(false);
   const [accionSesiones, setAccionSesiones] = useState(false);
   const [errorSesiones, setErrorSesiones] = useState("");
   const [mensajeSesiones, setMensajeSesiones] = useState("");
+
   const [pedidos, setPedidos] = useState([]);
   const [loadingPedidos, setLoadingPedidos] = useState(false);
   const [errorPedidos, setErrorPedidos] = useState(null);
   const [reintentandoPedidoId, setReintentandoPedidoId] = useState(null);
+  const [pedidoNequi, setPedidoNequi] = useState(null);
   const [pedidoPorCancelar, setPedidoPorCancelar] = useState(null);
   const [cancelandoPedidoId, setCancelandoPedidoId] = useState(null);
-  // ---- edición de perfil / contraseña ----
+
+  // Edición de perfil y contraseña
   const [pestana, setPestana] = useState("cuenta");
   const [modo, setModo] = useState(null);
   const [guardando, setGuardando] = useState(false);
@@ -236,23 +286,37 @@ export default function Perfil() {
   const [passwordActual, setPasswordActual] = useState("");
   const [passwordNueva, setPasswordNueva] = useState("");
   const [passwordConfirmar, setPasswordConfirmar] = useState("");
-  // ---- directorio (solo Super Administrador) ----
+
+  // Directorio
   const esSuperAdmin = usuario?.rol === "SUPER_ADMINISTRADOR";
-  // ---- número de resolución (Psicólogo / Responsable SST): 3 cambios cada 5 días ----
-  const editaResolucion = ["EVALUADOR_SST", "RESPONSABLE_SST"].includes(usuario?.rol);
-  const [numeroResolucion, setNumeroResolucion] = useState(usuario?.numeroResolucion ?? "");
+
+  // Número de resolución
+  const editaResolucion = [
+    "EVALUADOR_SST",
+    "RESPONSABLE_SST",
+  ].includes(usuario?.rol);
+
+  const [numeroResolucion, setNumeroResolucion] = useState(
+    usuario?.numeroResolucion ?? ""
+  );
   const [guardandoResolucion, setGuardandoResolucion] = useState(false);
   const [errorResolucion, setErrorResolucion] = useState("");
   const [mensajeResolucion, setMensajeResolucion] = useState("");
+
   const resolucionBloqueada = Boolean(usuario?.resolucionBloqueadaHasta);
-  const intentosRestantes = Math.max(0, 3 - (usuario?.resolucionIntentos ?? 0));
+  const intentosRestantes = Math.max(
+    0,
+    3 - (usuario?.resolucionIntentos ?? 0)
+  );
 
   const claveColorPerfil = `magnus:perfil-header-color:${usuario?.id ?? "usuario"}`;
+
   useEffect(() => {
     try {
       const colorGuardado = window.localStorage.getItem(claveColorPerfil);
       const colorValido = /^#[0-9a-fA-F]{6}$/.test(colorGuardado || "");
       const color = colorValido ? colorGuardado : "#101c3a";
+
       setColorFondoPerfil(color);
       setColorFondoBorrador(color);
     } catch {
@@ -264,34 +328,47 @@ export default function Perfil() {
   async function handleGuardarResolucion() {
     setErrorResolucion("");
     setMensajeResolucion("");
+
     if (!/^\d{3,6}$/.test(numeroResolucion)) {
-      setErrorResolucion("El número de resolución debe tener entre 3 y 6 dígitos.");
+      setErrorResolucion(
+        "El número de resolución debe tener entre 3 y 6 dígitos."
+      );
       return;
     }
+
     setGuardandoResolucion(true);
+
     try {
       const res = await guardarMiResolucion(token, numeroResolucion);
       actualizarUsuario(res.usuario);
       setMensajeResolucion("Número de resolución actualizado.");
     } catch (err) {
-      setErrorResolucion(err.message || "No se pudo guardar el número de resolución.");
+      setErrorResolucion(
+        err.message || "No se pudo guardar el número de resolución."
+      );
     } finally {
       setGuardandoResolucion(false);
     }
   }
+
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(0);
+
   const [directorio, setDirectorio] = useState({
     total: 0,
     items: [],
   });
+
   const [loadingDirectorio, setLoadingDirectorio] = useState(false);
   const [errorDirectorio, setErrorDirectorio] = useState("");
-  // ---- sesiones activas y dispositivos conectados ----
+
+  // Sesiones activas y dispositivos conectados
   async function cargarSesiones() {
     if (!token) return;
+
     setCargandoSesiones(true);
     setErrorSesiones("");
+
     try {
       const data = await listarSesionesActivas(token);
       setSesionesActivas(Array.isArray(data) ? data : []);
@@ -302,7 +379,9 @@ export default function Perfil() {
     }
   }
 
-  useEffect(() => { cargarSesiones(); }, [token]);
+  useEffect(() => {
+    cargarSesiones();
+  }, [token]);
 
   function handleCerrarSesionDispositivo(id, esActual = false) {
     setConfirmacionSesion({
@@ -318,11 +397,12 @@ export default function Perfil() {
   }
 
   async function ejecutarCerrarSesionDispositivo(id, esActual = false) {
-    /* confirmacion diferida a ModalConfirmacion */
     setAccionSesiones(true);
     setErrorSesiones("");
+
     try {
       await cerrarSesionActiva(token, id);
+
       if (esActual) {
         localStorage.removeItem("magnussing_token");
         localStorage.removeItem("magnussing_ultima_actividad");
@@ -330,17 +410,21 @@ export default function Perfil() {
         navigate("/iniciar-sesion", { replace: true });
         return;
       }
+
       setMensajeSesiones("La sesión seleccionada fue cerrada.");
       await cargarSesiones();
     } catch (err) {
       setErrorSesiones(err.message || "No se pudo cerrar la sesión.");
-    } finally { setAccionSesiones(false); }
+    } finally {
+      setAccionSesiones(false);
+    }
   }
 
   function handleCerrarOtrasSesiones() {
     setConfirmacionSesion({
       titulo: "¿Cerrar las demás sesiones?",
-      mensaje: "Se cerrarán todas las demás sesiones de tu cuenta. La sesión actual permanecerá abierta. ¿Continuar?",
+      mensaje:
+        "Se cerrarán todas las demás sesiones de tu cuenta. La sesión actual permanecerá abierta. ¿Continuar?",
       textoConfirmar: "Sí, cerrar las demás",
       textoCancelar: "Cancelar",
       tipo: "peligro",
@@ -349,20 +433,28 @@ export default function Perfil() {
   }
 
   async function ejecutarCerrarOtrasSesiones() {
-    /* confirmacion diferida a ModalConfirmacion */
     setAccionSesiones(true);
+
     try {
       const resultado = await cerrarOtrasSesiones(token);
-      setMensajeSesiones(resultado.message || "Se cerraron las demás sesiones.");
+      setMensajeSesiones(
+        resultado.message || "Se cerraron las demás sesiones."
+      );
       await cargarSesiones();
-    } catch (err) { setErrorSesiones(err.message || "No se pudieron cerrar las demás sesiones."); }
-    finally { setAccionSesiones(false); }
+    } catch (err) {
+      setErrorSesiones(
+        err.message || "No se pudieron cerrar las demás sesiones."
+      );
+    } finally {
+      setAccionSesiones(false);
+    }
   }
 
   function handleRevocarDispositivosConfiables() {
     setConfirmacionSesion({
       titulo: "¿Revocar dispositivos de confianza?",
-      mensaje: "Se eliminará la confianza de todos tus dispositivos. En el próximo inicio de sesión protegido tendrás que verificar el código. ¿Continuar?",
+      mensaje:
+        "Se eliminará la confianza de todos tus dispositivos. En el próximo inicio de sesión protegido tendrás que verificar el código. ¿Continuar?",
       textoConfirmar: "Sí, revocar confianza",
       textoCancelar: "Cancelar",
       tipo: "peligro",
@@ -371,24 +463,30 @@ export default function Perfil() {
   }
 
   async function ejecutarRevocarDispositivosConfiables() {
-    /* confirmacion diferida a ModalConfirmacion */
     setAccionSesiones(true);
+
     try {
       const resultado = await revocarDispositivosConfiables(token);
       localStorage.removeItem("magnussing_dispositivo_confiable");
-      setMensajeSesiones(resultado.message || "Se revocó la confianza de los dispositivos.");
-    } catch (err) { setErrorSesiones(err.message || "No se pudo revocar la confianza."); }
-    finally { setAccionSesiones(false); }
+      setMensajeSesiones(
+        resultado.message || "Se revocó la confianza de los dispositivos."
+      );
+    } catch (err) {
+      setErrorSesiones(
+        err.message || "No se pudo revocar la confianza."
+      );
+    } finally {
+      setAccionSesiones(false);
+    }
   }
 
-  // ---- cargar historial de compras ----
-
+  // Cargar historial de compras
   useEffect(() => {
-    if (!usuario?.id || !token) {
-      return;
-    }
+    if (!usuario?.id || !token) return;
+
     setLoadingCompras(true);
     setErrorCompras(null);
+
     request(`/usuarios/${usuario.id}/compras`, { token })
       .then((data) => {
         setCompras(data);
@@ -400,83 +498,84 @@ export default function Perfil() {
         setLoadingCompras(false);
       });
   }, [usuario?.id, token]);
-  // ---- recuperar el resultado de un pago que quedó en curso ----
-  //
-  // Si el usuario cerró sesión (o esta venció) mientras pagaba, aquí se
-  // confirma con el backend cómo terminó ese pago.
+
+  // Recuperar el resultado de un pago que quedó en curso
   useEffect(() => {
-    if (!usuario?.id || !token) {
-      return undefined;
-    }
+    if (!usuario?.id || !token) return undefined;
+
     let activo = true;
+
     recuperarPagoPendiente({ usuarioId: usuario.id, token }).then(
       (resultado) => {
-        if (!activo || !resultado) {
-          return;
-        }
+        if (!activo || !resultado) return;
+
         if (resultado.mensaje) {
           setMensajeOk(resultado.mensaje);
         }
+
         request(`/usuarios/${usuario.id}/compras`, { token })
           .then((data) => {
-            if (activo) {
-              setCompras(data);
-            }
+            if (activo) setCompras(data);
           })
-          .catch(() => { });
+          .catch(() => {});
       }
     );
+
     return () => {
       activo = false;
     };
   }, [usuario?.id, token]);
-  // ---- actualizar automáticamente las compras cada 30 segundos ----
+
+  // Actualizar compras cada 30 segundos
   useEffect(() => {
-    if (!usuario?.id || !token) {
-      return undefined;
-    }
+    if (!usuario?.id || !token) return undefined;
+
     let activo = true;
+
     async function actualizarCompras() {
       try {
         const data = await request(
           `/usuarios/${usuario.id}/compras`,
           { token }
         );
-        if (!activo) {
-          return;
-        }
+
+        if (!activo) return;
+
         setCompras(data);
         setErrorCompras(null);
       } catch (err) {
-        // Si falla una actualización automática,
-        // conservamos la información que ya está visible.
+        // Se conserva la información que ya está visible.
       }
     }
+
     const intervalo = setInterval(
       actualizarCompras,
       INTERVALO_ACTUALIZACION_COMPRAS
     );
+
     return () => {
       activo = false;
       clearInterval(intervalo);
     };
   }, [usuario?.id, token]);
-  // ---- cargar y actualizar pedidos de productos ----
+
+  // Cargar y actualizar pedidos de productos
   useEffect(() => {
-    if (!usuario?.id || !token) {
-      return undefined;
-    }
+    if (!usuario?.id || !token) return undefined;
+
     let activo = true;
+
     async function cargarPedidos(inicial) {
       if (inicial) {
         setLoadingPedidos(true);
         setErrorPedidos(null);
       }
+
       try {
         const data = await listarPedidosUsuarioProductos(token, usuario.id);
-        if (!activo) {
-          return;
-        }
+
+        if (!activo) return;
+
         setPedidos(data);
         setErrorPedidos(null);
       } catch (err) {
@@ -489,67 +588,66 @@ export default function Perfil() {
         }
       }
     }
+
     cargarPedidos(true);
+
     const intervalo = setInterval(
       () => cargarPedidos(false),
       INTERVALO_ACTUALIZACION_COMPRAS
     );
+
     return () => {
       activo = false;
       clearInterval(intervalo);
     };
   }, [usuario?.id, token]);
-  // ---- mensaje recibido desde Checkout ----
+
+  // Mensaje recibido desde Checkout
   useEffect(() => {
-    if (!location.state?.message) {
-      return;
-    }
+    if (!location.state?.message) return;
+
     setMensajeOk(location.state.message);
   }, [location.state]);
-  // ---- cualquier mensaje desaparece después de 4 segundos ----
+
+  // Desaparecer mensaje después de 4 segundos
   useEffect(() => {
-    if (!mensajeOk) {
-      return;
-    }
+    if (!mensajeOk) return;
+
     const temporizador = setTimeout(() => {
       setMensajeOk("");
     }, 4000);
+
     return () => clearTimeout(temporizador);
   }, [mensajeOk]);
-  // ---- cargar directorio ----
+
+  // Cargar directorio
   useEffect(() => {
-    if (!esSuperAdmin || !token) {
-      return undefined;
-    }
+    if (!esSuperAdmin || !token) return undefined;
+
     const espera = setTimeout(() => {
       setLoadingDirectorio(true);
       setErrorDirectorio("");
+
       fetchDirectorio(token, {
         q: busqueda.trim(),
         limite: POR_PAGINA_DIRECTORIO,
-        desplazamiento:
-          pagina * POR_PAGINA_DIRECTORIO,
+        desplazamiento: pagina * POR_PAGINA_DIRECTORIO,
       })
         .then(setDirectorio)
-        .catch((err) =>
+        .catch((err) => {
           setErrorDirectorio(
-            err.message ||
-            "No se pudo cargar el listado."
-          )
-        )
+            err.message || "No se pudo cargar el listado."
+          );
+        })
         .finally(() => {
           setLoadingDirectorio(false);
         });
     }, 300);
-    return () => clearTimeout(espera);
-  }, [
-    esSuperAdmin,
-    token,
-    busqueda,
-    pagina,
-  ]);
-  // ---- liberar URL temporal de la foto ----
 
+    return () => clearTimeout(espera);
+  }, [esSuperAdmin, token, busqueda, pagina]);
+
+  // Liberar URL temporal de la foto
   useEffect(() => {
     return () => {
       if (fotoPreview) {
@@ -557,34 +655,43 @@ export default function Perfil() {
       }
     };
   }, [fotoPreview]);
+
   const nombreUsuario = usuario
     ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
     : "Usuario";
+
   const rolUsuario = etiquetaRol(usuario?.rol) || "Sin rol asignado";
   const correoUsuario = usuario?.email ?? usuario?.correo ?? "—";
-  // El Super Administrador no pertenece a ninguna organización creada: su "empresa" es la plataforma misma.
+
   const empresaUsuario =
     usuario?.rol === "SUPER_ADMINISTRADOR"
       ? "MAGNUS | SIG"
       : usuario?.organizacionNombre ?? "—";
 
-  // Jefe, Administrador y Psicólogo pueden manejar varias empresas y eligen con cuál trabajan.
-  // Los demás roles (ej. Responsable SST) ya vienen con la empresa fija que asignó su Jefe/Administrador.
-  const eligeEmpresa = ["JEFE", "ADMINISTRADOR", "EVALUADOR_SST"].includes(usuario?.rol);
+  const eligeEmpresa = [
+    "JEFE",
+    "ADMINISTRADOR",
+    "EVALUADOR_SST",
+  ].includes(usuario?.rol);
+
   const [misEmpresas, setMisEmpresas] = useState([]);
   const [cambiandoEmpresa, setCambiandoEmpresa] = useState(false);
 
   useEffect(() => {
     if (!eligeEmpresa || !token) return;
+
     fetchMisEmpresas(token)
       .then((lista) => setMisEmpresas(lista || []))
-      .catch(() => { });
+      .catch(() => {});
   }, [eligeEmpresa, token]);
 
   async function handleCambiarEmpresa(e) {
     const id = e.target.value;
+
     if (!id || id === usuario?.organizacionId) return;
+
     setCambiandoEmpresa(true);
+
     try {
       await cambiarEmpresaActiva(token, id);
       window.location.reload();
@@ -598,17 +705,12 @@ export default function Perfil() {
       .split(" ")
       .filter(Boolean)
       .slice(0, 2)
-      .map((p) =>
-        p[0]?.toUpperCase()
-      )
+      .map((p) => p[0]?.toUpperCase())
       .join("") || "U";
-  // Regla de 5 días
-  const proximaEdicion =
-    usuario?.proximaEdicionPerfil ??
-    null;
-  const edicionBloqueada =
-    Boolean(proximaEdicion) &&
-    !esSuperAdmin;
+
+  const proximaEdicion = usuario?.proximaEdicionPerfil ?? null;
+  const edicionBloqueada = Boolean(proximaEdicion) && !esSuperAdmin;
+
   function abrirEdicionPerfil() {
     setMensajeOk("");
     setErrorForm("");
@@ -619,6 +721,7 @@ export default function Perfil() {
     setColorFondoBorrador(colorFondoPerfil);
     setModo("perfil");
   }
+
   function abrirCambioPassword() {
     setMensajeOk("");
     setErrorForm("");
@@ -627,6 +730,7 @@ export default function Perfil() {
     setPasswordConfirmar("");
     setModo("password");
   }
+
   function cancelar() {
     setModo(null);
     setErrorForm("");
@@ -634,187 +738,171 @@ export default function Perfil() {
     setFotoPreview(null);
     setColorFondoBorrador(colorFondoPerfil);
   }
+
   function handleFoto(e) {
     const archivo = e.target.files?.[0];
     setErrorForm("");
-    if (!archivo) {
-      return;
-    }
+
+    if (!archivo) return;
+
     if (!TIPOS_FOTO.includes(archivo.type)) {
-      setErrorForm(
-        "La foto debe ser JPG, PNG o WEBP."
-      );
+      setErrorForm("La foto debe ser JPG, PNG o WEBP.");
       e.target.value = "";
       return;
     }
+
     if (archivo.size > MAX_FOTO_BYTES) {
-      setErrorForm(
-        "La foto no puede superar los 2 MB."
-      );
+      setErrorForm("La foto no puede superar los 2 MB.");
       e.target.value = "";
       return;
     }
+
     setFoto(archivo);
-    setFotoPreview(
-      URL.createObjectURL(archivo)
-    );
+    setFotoPreview(URL.createObjectURL(archivo));
   }
+
   async function guardarPerfil(e) {
     e.preventDefault();
     setErrorForm("");
+
     const nombreLimpio = nombre.trim();
     const apellidoLimpio = apellido.trim();
-    if (
-      !nombrePersonaValido(
-        nombreLimpio,
-        100
-      )
-    ) {
+
+    if (!nombrePersonaValido(nombreLimpio, 100)) {
       setErrorForm(
         "El nombre solo puede tener letras y espacios (mínimo 2 caracteres)."
       );
       return;
     }
-    if (
-      !nombrePersonaValido(
-        apellidoLimpio,
-        100
-      )
-    ) {
+
+    if (!nombrePersonaValido(apellidoLimpio, 100)) {
       setErrorForm(
         "El apellido solo puede tener letras y espacios (mínimo 2 caracteres)."
       );
       return;
     }
+
     const cambios = {};
-    if (
-      nombreLimpio !== usuario.nombre
-    ) {
+
+    if (nombreLimpio !== usuario.nombre) {
       cambios.nombre = nombreLimpio;
     }
-    if (
-      apellidoLimpio !== usuario.apellido
-    ) {
+
+    if (apellidoLimpio !== usuario.apellido) {
       cambios.apellido = apellidoLimpio;
     }
-    if (foto) {
-      cambios.foto = foto;
-    }
+
+    if (foto) cambios.foto = foto;
+
     const cambioColor = colorFondoBorrador !== colorFondoPerfil;
+
     if (Object.keys(cambios).length === 0 && !cambioColor) {
       setErrorForm("No hiciste ningún cambio.");
       return;
     }
+
     setGuardando(true);
+
     try {
       if (Object.keys(cambios).length > 0) {
         const res = await editarPerfil(token, cambios);
         actualizarUsuario(res.usuario);
       }
+
       if (cambioColor) {
         window.localStorage.setItem(claveColorPerfil, colorFondoBorrador);
         setColorFondoPerfil(colorFondoBorrador);
       }
+
       setModo(null);
       setFoto(null);
       setFotoPreview(null);
       setMensajeOk("Tu perfil se actualizó correctamente.");
     } catch (err) {
       setErrorForm(
-        err.message ||
-        "No se pudo actualizar el perfil."
+        err.message || "No se pudo actualizar el perfil."
       );
     } finally {
       setGuardando(false);
     }
   }
+
   async function guardarPassword(e) {
     e.preventDefault();
     setErrorForm("");
+
     if (!passwordActual) {
-      setErrorForm(
-        "Ingresa tu contraseña actual."
-      );
+      setErrorForm("Ingresa tu contraseña actual.");
       return;
     }
+
     if (!passwordValida(passwordNueva)) {
-      setErrorForm(
-        TEXTO_AYUDA_PASSWORD
-      );
+      setErrorForm(TEXTO_AYUDA_PASSWORD);
       return;
     }
-    if (
-      passwordNueva === passwordActual
-    ) {
+
+    if (passwordNueva === passwordActual) {
       setErrorForm(
         "La nueva contraseña debe ser distinta de la actual."
       );
       return;
     }
-    if (
-      passwordNueva !== passwordConfirmar
-    ) {
+
+    if (passwordNueva !== passwordConfirmar) {
       setErrorForm(
         "La confirmación no coincide con la nueva contraseña."
       );
       return;
     }
+
     setGuardando(true);
+
     try {
-      const res = await cambiarPassword(
-        token,
-        {
-          passwordActual,
-          passwordNueva,
-        }
-      );
+      const res = await cambiarPassword(token, {
+        passwordActual,
+        passwordNueva,
+      });
+
       actualizarUsuario(res.usuario);
       setModo(null);
-      setMensajeOk(
-        "Tu contraseña se actualizó correctamente."
-      );
+      setMensajeOk("Tu contraseña se actualizó correctamente.");
     } catch (err) {
       setErrorForm(
-        err.message ||
-        "No se pudo cambiar la contraseña."
+        err.message || "No se pudo cambiar la contraseña."
       );
     } finally {
       setGuardando(false);
     }
   }
+
   function continuarPago(compra) {
     if (
       !compra?.id ||
-      compra.estado !== "PENDIENTE"
+      !esEstadoQuePermiteReintento(compra.estado)
     ) {
       return;
     }
+
     navigate("/pago", {
       state: {
         compraId: compra.id,
         bateriaNombre:
-          compra.bateriaNombre ||
-          "Batería de Riesgo Psicosocial",
-        empresaNombre:
-          empresaUsuario,
-        cantidadInicial:
-          Number(
-            compra.cantidad || 1
-          ),
-        totalCompra:
-          Number(
-            compra.total || 0
-          ),
+          compra.bateriaNombre || "Batería de Riesgo Psicosocial",
+        empresaNombre: empresaUsuario,
+        cantidadInicial: Number(compra.cantidad || 1),
+        totalCompra: Number(compra.total || 0),
       },
     });
   }
+
   async function confirmarCancelacionCompra() {
-    if (!compraPorCancelar?.id || cancelandoCompraId) {
-      return;
-    }
+    if (!compraPorCancelar?.id || cancelandoCompraId) return;
+
     const compra = compraPorCancelar;
+
     setCancelandoCompraId(compra.id);
     setErrorCompras(null);
+
     try {
       const res = await request(
         `/compras/${compra.id}/cancelar`,
@@ -823,23 +911,22 @@ export default function Perfil() {
           token,
         }
       );
+
       setCompras((actuales) =>
         actuales.map((item) =>
           item.id === compra.id
             ? {
-              ...item,
-              estado:
-                res.estado ||
-                "CANCELADA",
-            }
+                ...item,
+                estado: res.estado || "CANCELADA",
+              }
             : item
         )
       );
+
       setMensajeOk("La compra fue cancelada correctamente.");
     } catch (err) {
       setErrorCompras(
-        err.message ||
-        "No se pudo cancelar la compra."
+        err.message || "No se pudo cancelar la compra."
       );
     } finally {
       setCancelandoCompraId(null);
@@ -850,91 +937,57 @@ export default function Perfil() {
   function cancelarCompra(compra) {
     if (
       !compra?.id ||
-      compra.estado !== "PENDIENTE" ||
+      !esPedidoPendienteDePago(compra.estado) ||
       cancelandoCompraId
     ) {
       return;
     }
+
     setCompraPorCancelar(compra);
   }
 
-  /*
-  async function cancelarCompra(compra) {
+  function solicitarCancelacionPedido(pedido) {
     if (
-      !compra?.id ||
-      compra.estado !== "PENDIENTE" ||
-      cancelandoCompraId
+      !pedido?.id ||
+      !esPedidoPendienteDePago(pedido.estado) ||
+      cancelandoPedidoId
     ) {
       return;
     }
-    const confirmar = false; // confirmacion reemplazada por ModalConfirmacion
-      "¿Quieres cancelar esta compra?\n\n" +
-      "La compra quedará cancelada y podrás realizar una nueva compra."
-    );
-    if (!confirmar) {
-      return;
-    }
-    setCancelandoCompraId(
-      compra.id
-    );
-    setErrorCompras(null);
-    try {
-      const res = await request(
-        `/compras/${compra.id}/cancelar`,
-        {
-          method: "POST",
-          token,
-        }
-      );
-      setCompras((actuales) =>
-        actuales.map((item) =>
-          item.id === compra.id
-            ? {
-              ...item,
-              estado:
-                res.estado ||
-                "CANCELADA",
-            }
-            : item
-        )
-      );
-      setMensajeOk(
-        "La compra fue cancelada correctamente."
-      );
-    } catch (err) {
-      setErrorCompras(
-        err.message ||
-        "No se pudo cancelar la compra."
-      );
-    } finally {
-      setCancelandoCompraId(
-        null
-      );
-    }
-  }
-  */
-  function solicitarCancelacionPedido(pedido) {
-    if (!pedido?.id || pedido.estado !== "PENDIENTE" || cancelandoPedidoId) return;
+
     setPedidoPorCancelar(pedido);
   }
 
   async function confirmarCancelacionPedido() {
     if (!pedidoPorCancelar?.id || cancelandoPedidoId) return;
+
     const pedidoId = pedidoPorCancelar.id;
+
     setCancelandoPedidoId(pedidoId);
     setErrorPedidos(null);
+
     try {
-      const pedidoCancelado = await cancelarPedidoProductos(token, pedidoId);
+      const pedidoCancelado = await cancelarPedidoProductos(
+        token,
+        pedidoId
+      );
+
       setPedidos((actuales) =>
         actuales.map((pedido) =>
           pedido.id === pedidoId
-            ? { ...pedido, estado: pedidoCancelado?.estado || "CANCELADA" }
+            ? {
+                ...pedido,
+                estado: pedidoCancelado?.estado || "CANCELADA",
+              }
             : pedido
         )
       );
+
       setPedidoPorCancelar(null);
     } catch (err) {
-      setErrorPedidos(err.message || "No se pudo cancelar el pedido.");
+      setErrorPedidos(
+        err.message || "No se pudo cancelar el pedido."
+      );
     } finally {
       setCancelandoPedidoId(null);
     }
@@ -942,58 +995,37 @@ export default function Perfil() {
 
   async function reintentarPagoPedido(pedido) {
     if (!pedido?.id || reintentandoPedidoId) return;
-    setReintentandoPedidoId(pedido.id);
+
     setErrorPedidos(null);
-    try {
-      const checkout = await prepararCheckoutPedidoProductos(token, pedido.id);
-      await cargarWidgetWompiPerfil();
-      if (!window.WidgetCheckout) throw new Error("El Widget de Wompi no está disponible.");
-      const widget = new window.WidgetCheckout({
-        currency: checkout.currency, amountInCents: checkout.amountInCents,
-        reference: checkout.reference, publicKey: checkout.publicKey,
-        signature: { integrity: checkout.signature },
-      });
-      widget.open(async (resultado) => {
-        try {
-          const transaction = resultado?.transaction;
-          if (!transaction?.id) {
-            setErrorPedidos("El pago no se completó. Puedes volver a intentarlo o cancelar el pedido.");
-            return;
-          }
-          await confirmarPagoPedidoProductos(token, pedido.id, transaction.id);
-          const actualizados = await listarPedidosUsuarioProductos(token, usuario.id);
-          setPedidos(actualizados);
-        } catch (err) { setErrorPedidos(err.message || "No fue posible confirmar el pago."); }
-        finally { setReintentandoPedidoId(null); }
-      });
-    } catch (err) {
-      setErrorPedidos(err.message || "No fue posible reintentar el pago.");
-      setReintentandoPedidoId(null);
-    }
+    setReintentandoPedidoId(pedido.id);
+    setPedidoNequi(pedido);
+    setReintentandoPedidoId(null);
   }
 
   const totalPaginas = Math.max(
     1,
-    Math.ceil(
-      directorio.total /
-      POR_PAGINA_DIRECTORIO
-    )
+    Math.ceil(directorio.total / POR_PAGINA_DIRECTORIO)
   );
-  const fotoMostrada =
-    fotoPreview ||
-    urlArchivo(usuario?.fotoUrl);
-  const claseToast =
-    mensajeOk
-      ? `perfil-toast perfil-toast--${tipoMensajeToast(mensajeOk)}`
-      : "perfil-toast";
+
+  const fotoMostrada = fotoPreview || urlArchivo(usuario?.fotoUrl);
+
+  const claseToast = mensajeOk
+    ? `perfil-toast perfil-toast--${tipoMensajeToast(mensajeOk)}`
+    : "perfil-toast";
 
   return (
     <div className="app-shell-page">
       <AppTopbar />
-      <main id="contenido-principal" tabIndex={-1} className="app-hero">
+
+      <main
+        id="contenido-principal"
+        tabIndex={-1}
+        className="app-hero"
+      >
         <div className="app-decor app-decor--1" />
         <div className="app-decor app-decor--2" />
         <div className="app-decor app-decor--3" />
+
         {mensajeOk && (
           <div className={claseToast}>
             <span className="perfil-toast-icon">
@@ -1003,48 +1035,100 @@ export default function Perfil() {
                   ? "!"
                   : "✓"}
             </span>
-            <span>
-              {mensajeOk}
-            </span>
+            <span>{mensajeOk}</span>
           </div>
         )}
-        <div className="app-content perfil-page">
-          <BotonRegresar />
-          <h1 className="app-title">Mi Perfil</h1>
-          <p className="app-subtitle">Consulta y administra la información de tu cuenta.</p>
 
-          <div className="perfil-tabs" role="tablist" aria-label="Secciones del perfil">
-            {[["cuenta", "Mi cuenta"], ["seguridad", "Seguridad"], ["compras", "Compras"], ["pedidos", "Pedidos"]].map(([id, texto]) => (
-              <button key={id} type="button" role="tab" aria-selected={pestana === id} className={`perfil-tab${pestana === id ? " perfil-tab--activa" : ""}`} onClick={() => setPestana(id)}>{texto}</button>
+        <div className="app-content perfil-page">
+          {pedidoNequi && (
+            <PagoNequi
+              tipo="producto"
+              compraId={pedidoNequi.id}
+              token={token}
+              total={pedidoNequi.total}
+              onComplete={async () => {
+                try {
+                  setPedidos(
+                    await listarPedidosUsuarioProductos(token, usuario.id)
+                  );
+                } catch (_) {}
+              }}
+            />
+          )}
+
+          <BotonRegresar />
+
+          <h1 className="app-title">Mi Perfil</h1>
+          <p className="app-subtitle">
+            Consulta y administra la información de tu cuenta.
+          </p>
+
+          <div
+            className="perfil-tabs"
+            role="tablist"
+            aria-label="Secciones del perfil"
+          >
+            {[
+              ["cuenta", "Mi cuenta"],
+              ["seguridad", "Seguridad"],
+              ["compras", "Compras"],
+              ["pedidos", "Pedidos"],
+            ].map(([id, texto]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={pestana === id}
+                className={`perfil-tab${
+                  pestana === id ? " perfil-tab--activa" : ""
+                }`}
+                onClick={() => setPestana(id)}
+              >
+                {texto}
+              </button>
             ))}
           </div>
 
           <div className="perfil-layout" data-pestana={pestana}>
-            {/* ===================== PERFIL ===================== */}
+            {/* PERFIL */}
             <div className="app-card perfil-card" data-seccion="cuenta">
-              <div className="perfil-header" style={{ "--perfil-header-color": modo === "perfil" ? colorFondoBorrador : colorFondoPerfil, "--perfil-header-text": colorTextoSobreFondo(modo === "perfil" ? colorFondoBorrador : colorFondoPerfil) }}>
+              <div
+                className="perfil-header"
+                style={{
+                  "--perfil-header-color":
+                    modo === "perfil"
+                      ? colorFondoBorrador
+                      : colorFondoPerfil,
+                  "--perfil-header-text": colorTextoSobreFondo(
+                    modo === "perfil"
+                      ? colorFondoBorrador
+                      : colorFondoPerfil
+                  ),
+                }}
+              >
                 {fotoMostrada ? (
                   <FotoPerfilAmpliable
                     src={fotoMostrada}
-                    alt={nombreUsuario ? `Foto de perfil de ${nombreUsuario}` : "Foto de perfil"}
+                    alt={
+                      nombreUsuario
+                        ? `Foto de perfil de ${nombreUsuario}`
+                        : "Foto de perfil"
+                    }
                     className="perfil-avatar perfil-avatar--foto"
                   />
                 ) : (
-                  <div className="perfil-avatar">
-                    {iniciales}
-                  </div>
+                  <div className="perfil-avatar">{iniciales}</div>
                 )}
+
                 <div>
-                  <h2 className="perfil-nombre">
-                    {nombreUsuario}
-                  </h2>
-                  <span className="perfil-rol">
-                    {rolUsuario}
-                  </span>
+                  <h2 className="perfil-nombre">{nombreUsuario}</h2>
+                  <span className="perfil-rol">{rolUsuario}</span>
                 </div>
               </div>
+
               <div className="perfil-divider" />
-              {/* ===================== EDITAR PERFIL ===================== */}
+
+              {/* EDITAR PERFIL */}
               {modo === "perfil" && (
                 <form
                   className="perfil-form"
@@ -1053,42 +1137,34 @@ export default function Perfil() {
                 >
                   <div className="perfil-form-row">
                     <label className="field">
-                      <span className="field__label">
-                        Nombre
-                      </span>
+                      <span className="field__label">Nombre</span>
                       <input
                         className="field__input"
                         maxLength={100}
                         value={nombre}
                         onChange={(e) =>
                           setNombre(
-                            filtrarNombrePersona(
-                              e.target.value,
-                              100
-                            )
+                            filtrarNombrePersona(e.target.value, 100)
                           )
                         }
                       />
                     </label>
+
                     <label className="field">
-                      <span className="field__label">
-                        Apellido
-                      </span>
+                      <span className="field__label">Apellido</span>
                       <input
                         className="field__input"
                         maxLength={100}
                         value={apellido}
                         onChange={(e) =>
                           setApellido(
-                            filtrarNombrePersona(
-                              e.target.value,
-                              100
-                            )
+                            filtrarNombrePersona(e.target.value, 100)
                           )
                         }
                       />
                     </label>
                   </div>
+
                   <label className="field">
                     <span className="field__label">
                       Foto de perfil (JPG, PNG o WEBP, máx. 2 MB)
@@ -1100,54 +1176,81 @@ export default function Perfil() {
                       onChange={handleFoto}
                     />
                   </label>
+
                   <div className="perfil-color-editor">
                     <div className="perfil-color-editor__texto">
-                      <span className="field__label">Color de fondo de tu perfil</span>
-                      <small>Personaliza el encabezado donde aparecen tu foto y tu nombre.</small>
+                      <span className="field__label">
+                        Color de fondo de tu perfil
+                      </span>
+                      <small>
+                        Personaliza el encabezado donde aparecen tu foto y tu
+                        nombre.
+                      </small>
                     </div>
+
                     <div className="perfil-color-editor__controles">
                       <input
                         className="perfil-color-input"
                         type="color"
                         value={colorFondoBorrador}
                         aria-label="Elegir color de fondo del perfil"
-                        onChange={(e) => setColorFondoBorrador(e.target.value)}
+                        onChange={(e) =>
+                          setColorFondoBorrador(e.target.value)
+                        }
                       />
-                      <span className="perfil-color-valor">{colorFondoBorrador.toUpperCase()}</span>
-                      {[["#101c3a", "Azul noche"], ["#1b2a5c", "Azul institucional"], ["#176b66", "Verde petróleo"], ["#5b477f", "Violeta"], ["#344054", "Gris" ]].map(([color, etiqueta]) => (
+
+                      <span className="perfil-color-valor">
+                        {colorFondoBorrador.toUpperCase()}
+                      </span>
+
+                      {[
+                        ["#101c3a", "Azul noche"],
+                        ["#1b2a5c", "Azul institucional"],
+                        ["#176b66", "Verde petróleo"],
+                        ["#5b477f", "Violeta"],
+                        ["#344054", "Gris"],
+                      ].map(([color, etiqueta]) => (
                         <button
                           key={color}
                           type="button"
-                          className={`perfil-color-muestra${colorFondoBorrador.toLowerCase() === color.toLowerCase() ? " is-selected" : ""}`}
+                          className={`perfil-color-muestra${
+                            colorFondoBorrador.toLowerCase() ===
+                            color.toLowerCase()
+                              ? " is-selected"
+                              : ""
+                          }`}
                           style={{ "--muestra-color": color }}
                           aria-label={`Usar ${etiqueta}`}
                           title={etiqueta}
-                          aria-pressed={colorFondoBorrador.toLowerCase() === color.toLowerCase()}
+                          aria-pressed={
+                            colorFondoBorrador.toLowerCase() ===
+                            color.toLowerCase()
+                          }
                           onClick={() => setColorFondoBorrador(color)}
                         />
                       ))}
                     </div>
                   </div>
+
                   {!esSuperAdmin && (
                     <p className="perfil-aviso">
                       Solo puedes editar tu perfil una vez cada 5 días.
                     </p>
                   )}
+
                   {errorForm && (
-                    <div className="perfil-error">
-                      {errorForm}
-                    </div>
+                    <div className="perfil-error">{errorForm}</div>
                   )}
+
                   <div className="perfil-form-actions">
                     <button
                       type="submit"
                       className="btn-primary perfil-btn"
                       disabled={guardando}
                     >
-                      {guardando
-                        ? "Guardando..."
-                        : "Guardar cambios"}
+                      {guardando ? "Guardando..." : "Guardar cambios"}
                     </button>
+
                     <button
                       type="button"
                       className="app-btn-secondary"
@@ -1159,7 +1262,8 @@ export default function Perfil() {
                   </div>
                 </form>
               )}
-              {/* ===================== CAMBIAR PASSWORD ===================== */}
+
+              {/* CAMBIAR CONTRASEÑA */}
               {modo === "password" && (
                 <form
                   className="perfil-form"
@@ -1177,15 +1281,11 @@ export default function Perfil() {
                       autoComplete="current-password"
                       value={passwordActual}
                       onChange={(e) =>
-                        setPasswordActual(
-                          e.target.value.slice(
-                            0,
-                            72
-                          )
-                        )
+                        setPasswordActual(e.target.value.slice(0, 72))
                       }
                     />
                   </label>
+
                   <div className="perfil-form-row">
                     <label className="field">
                       <span className="field__label">
@@ -1198,15 +1298,11 @@ export default function Perfil() {
                         autoComplete="new-password"
                         value={passwordNueva}
                         onChange={(e) =>
-                          setPasswordNueva(
-                            e.target.value.slice(
-                              0,
-                              72
-                            )
-                          )
+                          setPasswordNueva(e.target.value.slice(0, 72))
                         }
                       />
                     </label>
+
                     <label className="field">
                       <span className="field__label">
                         Confirmar contraseña
@@ -1218,24 +1314,18 @@ export default function Perfil() {
                         autoComplete="new-password"
                         value={passwordConfirmar}
                         onChange={(e) =>
-                          setPasswordConfirmar(
-                            e.target.value.slice(
-                              0,
-                              72
-                            )
-                          )
+                          setPasswordConfirmar(e.target.value.slice(0, 72))
                         }
                       />
                     </label>
                   </div>
-                  <p className="perfil-aviso">
-                    {TEXTO_AYUDA_PASSWORD}
-                  </p>
+
+                  <p className="perfil-aviso">{TEXTO_AYUDA_PASSWORD}</p>
+
                   {errorForm && (
-                    <div className="perfil-error">
-                      {errorForm}
-                    </div>
+                    <div className="perfil-error">{errorForm}</div>
                   )}
+
                   <div className="perfil-form-actions">
                     <button
                       type="submit"
@@ -1246,6 +1336,7 @@ export default function Perfil() {
                         ? "Guardando..."
                         : "Cambiar contraseña"}
                     </button>
+
                     <button
                       type="button"
                       className="app-btn-secondary"
@@ -1257,26 +1348,25 @@ export default function Perfil() {
                   </div>
                 </form>
               )}
-              {/* ===================== INFORMACIÓN DEL PERFIL ===================== */}
+
+              {/* INFORMACIÓN DEL PERFIL */}
               {modo === null && (
                 <>
                   <div className="perfil-grid">
                     <div className="perfil-field">
-                      <span className="perfil-field-label">
-                        Nombre
-                      </span>
+                      <span className="perfil-field-label">Nombre</span>
                       <span className="perfil-field-value">
                         {usuario?.nombre ?? "—"}
                       </span>
                     </div>
+
                     <div className="perfil-field">
-                      <span className="perfil-field-label">
-                        Apellido
-                      </span>
+                      <span className="perfil-field-label">Apellido</span>
                       <span className="perfil-field-value">
                         {usuario?.apellido ?? "—"}
                       </span>
                     </div>
+
                     <div className="perfil-field">
                       <span className="perfil-field-label">
                         Correo electrónico
@@ -1285,24 +1375,35 @@ export default function Perfil() {
                         {correoUsuario}
                       </span>
                     </div>
+
                     <div className="perfil-field">
-                      <span className="perfil-field-label">
-                        Rol
-                      </span>
+                      <span className="perfil-field-label">Rol</span>
                       <span className="perfil-field-value">
                         {rolUsuario}
                       </span>
                     </div>
+
                     <div className="perfil-field">
                       <span className="perfil-field-label">Empresa</span>
+
                       {eligeEmpresa && misEmpresas.length > 0 ? (
                         <select
                           value={usuario?.organizacionId ?? ""}
                           onChange={handleCambiarEmpresa}
                           disabled={cambiandoEmpresa}
-                          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14 }}
+                          style={{
+                            padding: "6px 10px",
+                            borderRadius: 8,
+                            border: "1px solid #cbd5e1",
+                            fontSize: 14,
+                          }}
                         >
-                          {!usuario?.organizacionId && <option value="">Selecciona una empresa</option>}
+                          {!usuario?.organizacionId && (
+                            <option value="">
+                              Selecciona una empresa
+                            </option>
+                          )}
+
                           {misEmpresas.map((empresa) => (
                             <option key={empresa.id} value={empresa.id}>
                               {empresa.nombre}
@@ -1310,15 +1411,22 @@ export default function Perfil() {
                           ))}
                         </select>
                       ) : (
-                        <span className="perfil-field-value">{empresaUsuario}</span>
+                        <span className="perfil-field-value">
+                          {empresaUsuario}
+                        </span>
                       )}
                     </div>
+
                     {editaResolucion && (
                       <div className="perfil-field">
-                        <span className="perfil-field-label">Número de resolución</span>
+                        <span className="perfil-field-label">
+                          Número de resolución
+                        </span>
+
                         {!usuario?.resolucionVerificada ? (
                           <span className="perfil-field-value">
-                            {usuario?.numeroResolucion ?? "—"} (pendiente de verificación, no editable)
+                            {usuario?.numeroResolucion ?? "—"} (pendiente de
+                            verificación, no editable)
                           </span>
                         ) : (
                           <>
@@ -1328,290 +1436,335 @@ export default function Perfil() {
                                 inputMode="numeric"
                                 maxLength={6}
                                 value={numeroResolucion}
-                                disabled={resolucionBloqueada || guardandoResolucion}
-                                onChange={(e) =>
-                                  setNumeroResolucion(e.target.value.replace(/\D/g, "").slice(0, 6))
+                                disabled={
+                                  resolucionBloqueada || guardandoResolucion
                                 }
-                                style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14, width: 120 }}
+                                onChange={(e) =>
+                                  setNumeroResolucion(
+                                    e.target.value.replace(/\D/g, "").slice(0, 6)
+                                  )
+                                }
+                                style={{
+                                  padding: "6px 10px",
+                                  borderRadius: 8,
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: 14,
+                                  width: 120,
+                                }}
                               />
+
                               <button
                                 type="button"
                                 className="app-btn-secondary"
                                 onClick={handleGuardarResolucion}
-                                disabled={resolucionBloqueada || guardandoResolucion}
+                                disabled={
+                                  resolucionBloqueada || guardandoResolucion
+                                }
                               >
-                                {guardandoResolucion ? "Guardando…" : "Guardar"}
+                                {guardandoResolucion
+                                  ? "Guardando…"
+                                  : "Guardar"}
                               </button>
                             </div>
+
                             {resolucionBloqueada ? (
                               <p className="perfil-aviso">
-                                Ya usaste tus 3 cambios. Podrás volver a intentarlo el{" "}
-                                {formatearFechaHora(usuario.resolucionBloqueadaHasta)}.
+                                Ya usaste tus 3 cambios. Podrás volver a
+                                intentarlo el{" "}
+                                {formatearFechaHora(
+                                  usuario.resolucionBloqueadaHasta
+                                )}
+                                .
                               </p>
                             ) : (
                               <p className="perfil-aviso">
-                                Te quedan {intentosRestantes} cambio(s) en los próximos 5 días.
+                                Te quedan {intentosRestantes} cambio(s) en los
+                                próximos 5 días.
                               </p>
                             )}
-                            {errorResolucion && <div className="perfil-error">{errorResolucion}</div>}
-                            {mensajeResolucion && <p className="perfil-aviso">{mensajeResolucion}</p>}
+
+                            {errorResolucion && (
+                              <div className="perfil-error">
+                                {errorResolucion}
+                              </div>
+                            )}
+
+                            {mensajeResolucion && (
+                              <p className="perfil-aviso">
+                                {mensajeResolucion}
+                              </p>
+                            )}
                           </>
                         )}
                       </div>
                     )}
                   </div>
+
                   <PerfilPrivacidad
                     token={token}
                     puedeSolicitarEliminacion={!esSuperAdmin}
                     onMensaje={setMensajeOk}
                   />
+
                   <div className="perfil-actions">
                     <button
                       type="button"
                       className="app-btn-secondary"
-                      onClick={
-                        abrirEdicionPerfil
-                      }
-                      disabled={
-                        edicionBloqueada
-                      }
+                      onClick={abrirEdicionPerfil}
+                      disabled={edicionBloqueada}
                     >
                       Editar perfil
                     </button>
+
                     <button
                       type="button"
                       className="app-btn-secondary"
-                      onClick={
-                        abrirCambioPassword
-                      }
-                      disabled={
-                        edicionBloqueada
-                      }
+                      onClick={abrirCambioPassword}
+                      disabled={edicionBloqueada}
                     >
                       Cambiar contraseña
                     </button>
                   </div>
+
                   {edicionBloqueada && (
                     <p className="perfil-aviso">
                       Solo puedes editar tu perfil una vez cada 5 días.
                       Podrás hacerlo de nuevo el{" "}
-                      {formatearFechaHora(
-                        proximaEdicion
-                      )}
-                      .
+                      {formatearFechaHora(proximaEdicion)}.
                     </p>
                   )}
                 </>
               )}
             </div>
-            {/* ===================== SEGURIDAD Y SESIONES ACTIVAS ===================== */}
+
+            {/* SEGURIDAD Y SESIONES ACTIVAS */}
             <div className="app-card sesiones-card" data-seccion="seguridad">
-              <h2 className="compras-titulo">Seguridad y sesiones activas</h2>
-              <p className="compras-subtitulo">Dispositivos donde tu cuenta tiene una sesión abierta.</p>
-              {errorSesiones && <p className="sesiones-error">{errorSesiones}</p>}
-              {mensajeSesiones && <p className="sesiones-ok">{mensajeSesiones}</p>}
+              <h2 className="compras-titulo">
+                Seguridad y sesiones activas
+              </h2>
+
+              <p className="compras-subtitulo">
+                Dispositivos donde tu cuenta tiene una sesión abierta.
+              </p>
+
+              {errorSesiones && (
+                <p className="sesiones-error">{errorSesiones}</p>
+              )}
+
+              {mensajeSesiones && (
+                <p className="sesiones-ok">{mensajeSesiones}</p>
+              )}
+
               {cargandoSesiones ? (
                 <p className="sesiones-muted">Cargando dispositivos...</p>
               ) : sesionesActivas.length ? (
                 <div className="sesiones-list">
                   {sesionesActivas.map((sesion) => (
                     <div className="sesion-item" key={sesion.id}>
-                      <div className="sesion-item__icon" aria-hidden="true">{/Android|iPhone|Mobile/i.test(sesion.dispositivo) ? <BsPhone size={18} /> : <BsLaptop size={18} />}</div>
+                      <div
+                        className="sesion-item__icon"
+                        aria-hidden="true"
+                      >
+                        {/Android|iPhone|Mobile/i.test(sesion.dispositivo) ? (
+                          <BsPhone size={18} />
+                        ) : (
+                          <BsLaptop size={18} />
+                        )}
+                      </div>
+
                       <div className="sesion-item__info">
-                        <strong>{/Windows/i.test(sesion.dispositivo) ? "Windows" : /Android/i.test(sesion.dispositivo) ? "Android" : /Mac OS|Macintosh/i.test(sesion.dispositivo) ? "macOS" : /iPhone|iPad/i.test(sesion.dispositivo) ? "iOS" : /Linux/i.test(sesion.dispositivo) ? "Linux" : "Dispositivo"} · {/Edg\//i.test(sesion.dispositivo) ? "Edge" : /OPR\/|Opera/i.test(sesion.dispositivo) ? "Opera" : /Firefox/i.test(sesion.dispositivo) ? "Firefox" : /Chrome|CriOS/i.test(sesion.dispositivo) ? "Chrome" : /Safari/i.test(sesion.dispositivo) ? "Safari" : "Navegador"}</strong>
-                        <small className="sesion-item__ua" title={sesion.dispositivo}>{sesion.dispositivo}</small>
-                        <small>Inicio: {formatearFechaHora(sesion.creadoEn)}</small>
-                        <small>Última actividad: {formatearFechaHora(sesion.ultimoAcceso)}</small>
+                        <strong>
+                          {/Windows/i.test(sesion.dispositivo)
+                            ? "Windows"
+                            : /Android/i.test(sesion.dispositivo)
+                              ? "Android"
+                              : /Mac OS|Macintosh/i.test(sesion.dispositivo)
+                                ? "macOS"
+                                : /iPhone|iPad/i.test(sesion.dispositivo)
+                                  ? "iOS"
+                                  : /Linux/i.test(sesion.dispositivo)
+                                    ? "Linux"
+                                    : "Dispositivo"}{" "}
+                          ·{" "}
+                          {/Edg\//i.test(sesion.dispositivo)
+                            ? "Edge"
+                            : /OPR\/|Opera/i.test(sesion.dispositivo)
+                              ? "Opera"
+                              : /Firefox/i.test(sesion.dispositivo)
+                                ? "Firefox"
+                                : /Chrome|CriOS/i.test(sesion.dispositivo)
+                                  ? "Chrome"
+                                  : /Safari/i.test(sesion.dispositivo)
+                                    ? "Safari"
+                                    : "Navegador"}
+                        </strong>
+
+                        <small
+                          className="sesion-item__ua"
+                          title={sesion.dispositivo}
+                        >
+                          {sesion.dispositivo}
+                        </small>
+
+                        <small>
+                          Inicio: {formatearFechaHora(sesion.creadoEn)}
+                        </small>
+
+                        <small>
+                          Última actividad:{" "}
+                          {formatearFechaHora(sesion.ultimoAcceso)}
+                        </small>
+
                         {sesion.ip && <small>IP: {sesion.ip}</small>}
                       </div>
-                      {sesion.actual && <span className="sesion-actual">Actual</span>}
-                      <button type="button" className="sesion-cerrar" disabled={accionSesiones} onClick={() => handleCerrarSesionDispositivo(sesion.id, sesion.actual)}>Cerrar</button>
+
+                      {sesion.actual && (
+                        <span className="sesion-actual">Actual</span>
+                      )}
+
+                      <button
+                        type="button"
+                        className="sesion-cerrar"
+                        disabled={accionSesiones}
+                        onClick={() =>
+                          handleCerrarSesionDispositivo(
+                            sesion.id,
+                            sesion.actual
+                          )
+                        }
+                      >
+                        Cerrar
+                      </button>
                     </div>
                   ))}
                 </div>
-              ) : <p className="sesiones-muted">No hay sesiones activas registradas.</p>}
+              ) : (
+                <p className="sesiones-muted">
+                  No hay sesiones activas registradas.
+                </p>
+              )}
+
               <div className="sesiones-actions">
-                <button type="button" className="app-btn-secondary" onClick={handleCerrarOtrasSesiones} disabled={accionSesiones || sesionesActivas.filter((s) => !s.actual).length === 0}>Cerrar las demás sesiones</button>
-                <button type="button" className="app-btn-secondary" onClick={handleRevocarDispositivosConfiables} disabled={accionSesiones}>Revocar dispositivos de confianza</button>
+                <button
+                  type="button"
+                  className="app-btn-secondary"
+                  onClick={handleCerrarOtrasSesiones}
+                  disabled={
+                    accionSesiones ||
+                    sesionesActivas.filter((s) => !s.actual).length === 0
+                  }
+                >
+                  Cerrar las demás sesiones
+                </button>
+
+                <button
+                  type="button"
+                  className="app-btn-secondary"
+                  onClick={handleRevocarDispositivosConfiables}
+                  disabled={accionSesiones}
+                >
+                  Revocar dispositivos de confianza
+                </button>
               </div>
-              <p className="sesiones-nota">La opción de confiar en un dispositivo dura 4 horas. Después de ese tiempo, se solicitará nuevamente el código de seguridad en los roles protegidos.</p>
+
+              <p className="sesiones-nota">
+                La opción de confiar en un dispositivo dura 4 horas. Después de
+                ese tiempo, se solicitará nuevamente el código de seguridad en
+                los roles protegidos.
+              </p>
             </div>
-            {/* ===================== HISTORIAL DE COMPRAS ===================== */}
-            <div className="app-card compras-card compras-card--baterias" data-seccion="compras">
-              <h2 className="compras-titulo">
-                Historial de compras
-              </h2>
+
+            {/* HISTORIAL DE COMPRAS */}
+            <div
+              className="app-card compras-card compras-card--baterias"
+              data-seccion="compras"
+            >
+              <h2 className="compras-titulo">Historial de compras</h2>
+
               <p className="compras-subtitulo">
                 Baterías de riesgo psicosocial compradas
               </p>
+
               {loadingCompras && (
-                <p
-                  style={{
-                    fontSize: "14px",
-                    color: "#64748b",
-                  }}
-                >
+                <p style={{ fontSize: "14px", color: "#64748b" }}>
                   Cargando compras...
                 </p>
               )}
+
               {errorCompras && (
-                <p
-                  style={{
-                    fontSize: "14px",
-                    color: "#b91c1c",
-                  }}
-                >
+                <p style={{ fontSize: "14px", color: "#b91c1c" }}>
                   {errorCompras}
                 </p>
               )}
-              {!loadingCompras &&
-                compras.length > 0 ? (
+
+              {!loadingCompras && compras.length > 0 ? (
                 <div className="compras-list">
-                  {compras.map(
-                    (compra) => (
-                      <div
-                        className="compras-row compras-row--bateria"
-                        key={compra.id}
-                      >
-                        <span className="compras-row-icon">
-                          <ReceiptIcon />
-                        </span>
-                        <div className="compras-row-main">
-                          <span className="compras-row-qty">
-                            {compra.cantidad}{" "}
-                            {compra.cantidad === 1
-                              ? "batería"
-                              : "baterías"}
-                          </span>
-                          <span
-                            className="compras-estado"
-                            style={estiloEstadoCompra(
-                              compra.estado
-                            )}
-                          >
-                            {etiquetaEstadoCompra(
-                              compra.estado
-                            )}
-                          </span>
-                          <span className="compras-row-date">
-                            {formatearFechaHora(
-                              compra.creadoEn ||
-                              compra.fecha
-                            )}
-                          </span>
-                          <span className="compras-row-total">
-                            Total:{" "}
-                            {Number(
-                              compra.total || 0
-                            ).toLocaleString(
-                              "es-CO",
-                              {
-                                style:
-                                  "currency",
-                                currency:
-                                  "COP",
-                                maximumFractionDigits: 0,
-                              }
-                            )}
-                          </span>
-                          {compra.estado ===
-                            "PENDIENTE" && (
-                              <div className="compras-acciones">
-                                <button
-                                  type="button"
-                                  className="btn-primary compras-row-action"
-                                  onClick={() =>
-                                    continuarPago(
-                                      compra
-                                    )
-                                  }
-                                  disabled={
-                                    cancelandoCompraId ===
-                                    compra.id
-                                  }
-                                >
-                                  Continuar con el pago
-                                </button>
-                                <button
-                                  type="button"
-                                  className="app-btn-secondary compras-row-action"
-                                  onClick={() =>
-                                    cancelarCompra(
-                                      compra
-                                    )
-                                  }
-                                  disabled={
-                                    cancelandoCompraId ===
-                                    compra.id
-                                  }
-                                >
-                                  {cancelandoCompraId ===
-                                    compra.id
-                                    ? "Cancelando..."
-                                    : "Cancelar compra"}
-                                </button>
-                              </div>
-                            )}
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              ) : (
-                !loadingCompras && (
-                  <div className="compras-empty">
-                    <p>
-                      Aún no has comprado ninguna batería.
-                    </p>
-                  </div>
-                )
-              )}
-            </div>
-            <div className="app-card compras-card compras-card--pedidos" data-seccion="pedidos">
-              <h2 className="compras-titulo">Historial de pedidos</h2>
-              <p className="compras-subtitulo">Productos del catálogo que has comprado</p>
-              {loadingPedidos && (
-                <p style={{ fontSize: "14px", color: "#64748b" }}>Cargando pedidos...</p>
-              )}
-              {errorPedidos && (
-                <p style={{ fontSize: "14px", color: "#b91c1c" }}>{errorPedidos}</p>
-              )}
-              {!loadingPedidos && pedidos.length > 0 && (
-                <div className="compras-list">
-                  {pedidos.map((pedido) => (
-                    <div className="compras-row compras-row--pedido" key={pedido.id}>
-                      <span className="compras-row-icon"><ReceiptIcon /></span>
+                  {compras.map((compra) => (
+                    <div
+                      className="compras-row compras-row--bateria"
+                      key={compra.id}
+                    >
+                      <span className="compras-row-icon">
+                        <ReceiptIcon />
+                      </span>
+
                       <div className="compras-row-main">
-                        <span className="compras-row-qty">{pedido.numero}</span>
-                        <span className="compras-estado" style={estiloEstadoCompra(pedido.estado)}>{etiquetaEstadoPedido(pedido.estado)}</span>
-                        <span className="compras-row-items">{resumenItemsPedido(pedido.items)}</span>
-                        <span className="compras-row-date">{formatearFechaHora(pedido.creadoEn || pedido.fecha)}</span>
+                        <span className="compras-row-qty">
+                          {compra.cantidad}{" "}
+                          {compra.cantidad === 1 ? "batería" : "baterías"}
+                        </span>
+
+                        <span
+                          className="compras-estado"
+                          style={estiloEstadoCompra(compra.estado)}
+                        >
+                          {etiquetaEstadoCompra(compra.estado)}
+                        </span>
+
+                        {compra.observacionesPago && (
+                          <span className="compras-row-items">
+                            Observación: {compra.observacionesPago}
+                          </span>
+                        )}
+
+                        <span className="compras-row-date">
+                          {formatearFechaHora(
+                            compra.creadoEn || compra.fecha
+                          )}
+                        </span>
+
                         <span className="compras-row-total">
                           Total:{" "}
-                          {Number(pedido.total || 0).toLocaleString("es-CO", {
+                          {Number(compra.total || 0).toLocaleString("es-CO", {
                             style: "currency",
                             currency: "COP",
                             maximumFractionDigits: 0,
                           })}
                         </span>
-                        {["PENDIENTE", "RECHAZADO", "ERROR"].includes(pedido.estado) && (
-                          <div className="pedido-acciones">
+
+                        {esEstadoQuePermiteReintento(compra.estado) && (
+                          <div className="compras-acciones">
                             <button
                               type="button"
                               className="btn-primary compras-row-action"
-                              disabled={reintentandoPedidoId === pedido.id || cancelandoPedidoId === pedido.id}
-                              onClick={() => reintentarPagoPedido(pedido)}
+                              onClick={() => continuarPago(compra)}
+                              disabled={cancelandoCompraId === compra.id}
                             >
-                              {reintentandoPedidoId === pedido.id ? "Abriendo pago…" : "Reintentar pago"}
+                              {compra.estado === "PENDIENTE"
+                                ? "Continuar con el pago"
+                                : "Reintentar pago"}
                             </button>
-                            {pedido.estado === "PENDIENTE" && (
+
+                            {esPedidoPendienteDePago(compra.estado) && (
                               <button
                                 type="button"
                                 className="app-btn-secondary compras-row-action"
-                                disabled={cancelandoPedidoId === pedido.id || reintentandoPedidoId === pedido.id}
-                                onClick={() => solicitarCancelacionPedido(pedido)}
+                                onClick={() => cancelarCompra(compra)}
+                                disabled={cancelandoCompraId === compra.id}
                               >
-                                {cancelandoPedidoId === pedido.id ? "Cancelando..." : "Cancelar pedido"}
+                                {cancelandoCompraId === compra.id
+                                  ? "Cancelando..."
+                                  : "Cancelar compra"}
                               </button>
                             )}
                           </div>
@@ -1620,15 +1773,265 @@ export default function Perfil() {
                     </div>
                   ))}
                 </div>
+              ) : (
+                !loadingCompras && (
+                  <div className="compras-empty">
+                    <p>Aún no has comprado ninguna batería.</p>
+                  </div>
+                )
               )}
-              {!loadingPedidos && !errorPedidos && pedidos.length === 0 && (
-                <div className="compras-empty">
-                  <p>Aún no has realizado pedidos de productos.</p>
+            </div>
+
+            {/* HISTORIAL DE PEDIDOS */}
+            <div
+              className="app-card compras-card compras-card--pedidos"
+              data-seccion="pedidos"
+            >
+              <h2 className="compras-titulo">Historial de pedidos</h2>
+
+              <p className="compras-subtitulo">
+                Productos del catálogo que has comprado
+              </p>
+
+              {loadingPedidos && (
+                <p style={{ fontSize: "14px", color: "#64748b" }}>
+                  Cargando pedidos...
+                </p>
+              )}
+
+              {errorPedidos && (
+                <p style={{ fontSize: "14px", color: "#b91c1c" }}>
+                  {errorPedidos}
+                </p>
+              )}
+
+              {!loadingPedidos && pedidos.length > 0 && (
+                <div className="compras-list">
+                  {pedidos.map((pedido) => {
+                    const permiteReintentar = esEstadoQuePermiteReintento(
+                      pedido.estado
+                    );
+                    const permiteCancelar = esPedidoPendienteDePago(
+                      pedido.estado
+                    );
+                    const itemsPedido = Array.isArray(pedido.items)
+                      ? pedido.items
+                      : [];
+
+                    return (
+                      <article className="pedido-card" key={pedido.id}>
+                        <div className="pedido-row-main">
+                          <header className="pedido-row-heading">
+                            <div className="pedido-row-heading__identificador">
+                              <span className="pedido-row-heading__etiqueta">
+                                Número de pedido
+                              </span>
+                              <strong className="pedido-row-heading__numero">
+                                {pedido.numero ||
+                                  `PED-${String(pedido.id || "")
+                                    .slice(0, 8)
+                                    .toUpperCase()}`}
+                              </strong>
+                            </div>
+
+                            <span
+                              className="compras-estado pedido-estado"
+                              style={estiloEstadoCompra(
+                                normalizarEstadoPedido(pedido.estado)
+                              )}
+                            >
+                              {etiquetaEstadoPedido(pedido.estado)}
+                            </span>
+                          </header>
+
+                          <section
+                            className="pedido-descripcion"
+                            aria-label="Detalle de productos comprados"
+                          >
+                            <strong className="pedido-descripcion__titulo">
+                              Detalle de productos
+                            </strong>
+
+                            {itemsPedido.length > 0 ? (
+                              <ul className="pedido-items-list">
+                                {itemsPedido.map((item, index) => {
+                                  const nombreProducto =
+                                    item.nombre ||
+                                    item.nombreProducto ||
+                                    item.nombre_producto ||
+                                    "Producto";
+
+                                  const cantidad = Number(item.cantidad);
+
+                                  const precioUnitarioRaw =
+                                    item.precioUnitario ??
+                                    item.precio_unitario;
+
+                                  const precioUnitario = Number(
+                                    precioUnitarioRaw
+                                  );
+
+                                  const subtotalRaw = item.subtotal;
+                                  const subtotalLinea = Number(subtotalRaw);
+
+                                  const moneda = (valor) =>
+                                    Number(valor).toLocaleString("es-CO", {
+                                      style: "currency",
+                                      currency: "COP",
+                                      maximumFractionDigits: 0,
+                                    });
+
+                                  return (
+                                    <li
+                                      className="pedido-item-line"
+                                      key={item.id || `${pedido.id}-${index}`}
+                                    >
+                                      <div className="pedido-item-line__producto">
+                                        <strong className="pedido-item-line__nombre">
+                                          {nombreProducto}
+                                        </strong>
+
+                                        <span className="pedido-item-line__detalle">
+                                          {Number.isFinite(cantidad) && cantidad > 0
+                                            ? `${cantidad} unidad(es)`
+                                            : "Cantidad no disponible"}
+
+                                          {precioUnitarioRaw != null &&
+                                            Number.isFinite(precioUnitario) &&
+                                            precioUnitario >= 0
+                                            ? ` · ${moneda(precioUnitario)} por unidad`
+                                            : ""}
+                                        </span>
+                                      </div>
+
+                                      {subtotalRaw != null &&
+                                        Number.isFinite(subtotalLinea) && (
+                                          <strong className="pedido-item-line__subtotal">
+                                            {moneda(subtotalLinea)}
+                                          </strong>
+                                        )}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            ) : (
+                              <p className="pedido-descripcion__vacia">
+                                No hay detalle de productos disponible para este
+                                pedido.
+                              </p>
+                            )}
+                          </section>
+
+                          {pedido.observacionesPago && (
+                            <p className="pedido-observacion">
+                              <strong>Observación:</strong>{" "}
+                              {pedido.observacionesPago}
+                            </p>
+                          )}
+
+                          <div className="pedido-resumen">
+                            <span className="pedido-fecha">
+                              Fecha del pedido:{" "}
+                              {formatearFechaHora(
+                                pedido.creadoEn || pedido.fecha
+                              )}
+                            </span>
+
+                            <div className="pedido-totales">
+                              {pedido.subtotal != null && (
+                                <span>
+                                  Subtotal:{" "}
+                                  {Number(pedido.subtotal).toLocaleString(
+                                    "es-CO",
+                                    {
+                                      style: "currency",
+                                      currency: "COP",
+                                      maximumFractionDigits: 0,
+                                    }
+                                  )}
+                                </span>
+                              )}
+
+                              {pedido.iva != null && (
+                                <span>
+                                  IVA:{" "}
+                                  {Number(pedido.iva).toLocaleString("es-CO", {
+                                    style: "currency",
+                                    currency: "COP",
+                                    maximumFractionDigits: 0,
+                                  })}
+                                </span>
+                              )}
+
+                              <strong>
+                                Total:{" "}
+                                {Number(pedido.total || 0).toLocaleString(
+                                  "es-CO",
+                                  {
+                                    style: "currency",
+                                    currency: "COP",
+                                    maximumFractionDigits: 0,
+                                  }
+                                )}
+                              </strong>
+                            </div>
+                          </div>
+
+                          {(permiteReintentar || permiteCancelar) && (
+                            <div className="pedido-acciones">
+                              {permiteReintentar && (
+                                <button
+                                  type="button"
+                                  className="btn-primary compras-row-action"
+                                  disabled={
+                                    reintentandoPedidoId === pedido.id ||
+                                    cancelandoPedidoId === pedido.id
+                                  }
+                                  onClick={() => reintentarPagoPedido(pedido)}
+                                >
+                                  {pedidoNequi?.id === pedido.id
+                                    ? "Pago Nequi abierto arriba"
+                                    : "Reintentar pago"}
+                                </button>
+                              )}
+
+                              {permiteCancelar && (
+                                <button
+                                  type="button"
+                                  className="pedido-accion-cancelar compras-row-action"
+                                  disabled={
+                                    cancelandoPedidoId === pedido.id ||
+                                    reintentandoPedidoId === pedido.id
+                                  }
+                                  onClick={() =>
+                                    solicitarCancelacionPedido(pedido)
+                                  }
+                                >
+                                  {cancelandoPedidoId === pedido.id
+                                    ? "Cancelando..."
+                                    : "Cancelar pedido"}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               )}
+
+              {!loadingPedidos &&
+                !errorPedidos &&
+                pedidos.length === 0 && (
+                  <div className="compras-empty">
+                    <p>Aún no has realizado pedidos de productos.</p>
+                  </div>
+                )}
             </div>
           </div>
         </div>
+
         <ModalConfirmacion
           abierto={Boolean(compraPorCancelar)}
           titulo="¿Cancelar esta compra?"
@@ -1638,16 +2041,21 @@ export default function Perfil() {
               <div>
                 <strong>
                   {compraPorCancelar.cantidad}{" "}
-                  {compraPorCancelar.cantidad === 1 ? "batería" : "baterías"}
+                  {compraPorCancelar.cantidad === 1
+                    ? "batería"
+                    : "baterías"}
                 </strong>
                 {" · "}
                 <span>
                   Total:{" "}
-                  {Number(compraPorCancelar.total || 0).toLocaleString("es-CO", {
-                    style: "currency",
-                    currency: "COP",
-                    maximumFractionDigits: 0,
-                  })}
+                  {Number(compraPorCancelar.total || 0).toLocaleString(
+                    "es-CO",
+                    {
+                      style: "currency",
+                      currency: "COP",
+                      maximumFractionDigits: 0,
+                    }
+                  )}
                 </span>
               </div>
             )
@@ -1674,11 +2082,14 @@ export default function Perfil() {
                 {" · "}
                 <span>
                   Total:{" "}
-                  {Number(pedidoPorCancelar.total || 0).toLocaleString("es-CO", {
-                    style: "currency",
-                    currency: "COP",
-                    maximumFractionDigits: 0,
-                  })}
+                  {Number(pedidoPorCancelar.total || 0).toLocaleString(
+                    "es-CO",
+                    {
+                      style: "currency",
+                      currency: "COP",
+                      maximumFractionDigits: 0,
+                    }
+                  )}
                 </span>
               </div>
             )
@@ -1705,13 +2116,17 @@ export default function Perfil() {
           textoCargando="Procesando..."
           onConfirmar={async () => {
             const accion = confirmacionSesion?.accion;
+
             if (accion) {
               await accion();
             }
+
             setConfirmacionSesion(null);
           }}
           onCancelar={() => {
-            if (!accionSesiones) setConfirmacionSesion(null);
+            if (!accionSesiones) {
+              setConfirmacionSesion(null);
+            }
           }}
         />
       </main>

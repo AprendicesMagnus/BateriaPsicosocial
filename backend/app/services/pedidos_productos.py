@@ -27,10 +27,12 @@ def _pedido_publico(pedido: PedidoProducto, incluir_pagos: bool = False) -> dict
         "id": str(pedido.id),
         "numero": f"PED-{pedido.id.hex[:10].upper()}",
         "usuarioId": str(pedido.usuario_id),
+        "organizacionId": str(pedido.organizacion_id) if pedido.organizacion_id else None,
         "subtotal": pedido.subtotal,
         "iva": pedido.iva,
         "total": pedido.total,
         "estado": pedido.estado,
+        "observacionesPago": next((p.observaciones for p in sorted(pedido.pagos, key=lambda x: x.procesado_en, reverse=True) if p.metodo == "nequi" and p.observaciones), None),
         "fecha": pedido.creado_en.isoformat(),
         "creadoEn": pedido.creado_en.isoformat(),
         "items": [
@@ -63,6 +65,8 @@ def _pago_publico(pago: PagoPedidoProducto) -> dict:
         "wompiTransactionId": pago.wompi_transaction_id,
         "wompiStatus": pago.wompi_status,
         "mensajeRespuesta": pago.mensaje_respuesta,
+        "observaciones": pago.observaciones,
+        "comprobanteUrl": bool(pago.comprobante_path),
         "procesadoEn": pago.procesado_en.isoformat(),
     }
 
@@ -114,8 +118,8 @@ def _tiene_pago_en_curso(db: Session, pedido: PedidoProducto) -> bool:
         db.query(PagoPedidoProducto.id)
         .filter(
             PagoPedidoProducto.pedido_id == pedido.id,
-            PagoPedidoProducto.wompi_transaction_id.isnot(None),
-            PagoPedidoProducto.wompi_status == "PENDING",
+            ((PagoPedidoProducto.metodo == "wompi") & PagoPedidoProducto.wompi_transaction_id.isnot(None) & (PagoPedidoProducto.wompi_status == "PENDING"))
+            | ((PagoPedidoProducto.metodo == "nequi") & (PagoPedidoProducto.estado == "PENDIENTE_VERIFICACION")),
         )
         .first()
         is not None
@@ -226,6 +230,7 @@ def crear_pedido(db: Session, data, actual: Usuario) -> dict:
 
     pedido = PedidoProducto(
         usuario_id=actual.id,
+        organizacion_id=actual.organizacion_id,
         subtotal=subtotal,
         iva=iva,
         total=total,
@@ -248,7 +253,7 @@ def listar_pedidos_usuario(db: Session, usuario_id, actual: Usuario) -> list[dic
 
     pedidos = (
         db.query(PedidoProducto)
-        .options(joinedload(PedidoProducto.items))
+        .options(joinedload(PedidoProducto.items), joinedload(PedidoProducto.pagos))
         .filter(PedidoProducto.usuario_id == usuario_id)
         .order_by(PedidoProducto.creado_en.desc())
         .all()
@@ -496,18 +501,83 @@ def actualizar_estado_envio(db: Session, pedido_id, estado: str, actual: Usuario
 
 
 def cancelar_pedido(db: Session, pedido_id, actual: Usuario) -> dict:
-    pedido = _obtener_pedido(db, pedido_id, actual)
+    # Bloquear únicamente el pedido principal: las relaciones items/pagos se
+    # cargan por separado para evitar FOR UPDATE sobre los lados nullable de
+    # los LEFT OUTER JOIN generados por joinedload.
+    pedido = (
+        db.query(PedidoProducto)
+        .filter(PedidoProducto.id == pedido_id)
+        .with_for_update()
+        .first()
+    )
+    if pedido is None:
+        raise AppError(404, "Pedido no encontrado.")
+
+    if actual.rol.codigo != "SUPER_ADMINISTRADOR" and actual.id != pedido.usuario_id:
+        raise AppError(403, "No tiene acceso a este pedido.")
 
     if pedido.estado != "PENDIENTE":
-        raise AppError(400, "Este pedido no puede cancelarse en su estado actual.")
+        raise AppError(
+            400,
+            f"Este pedido no puede cancelarse porque está en estado {pedido.estado}.",
+        )
 
+    # Mantener la conciliación para transacciones Wompi históricas que aún
+    # tengan un identificador real y puedan haber terminado de forma asíncrona.
     _reconciliar_pagos_pendientes(db, pedido)
-
-    if pedido.estado == "PENDIENTE" and _tiene_pago_en_curso(db, pedido):
-        raise AppError(400, "Este pedido tiene un pago en proceso. Espera la confirmación de Wompi.")
+    db.refresh(pedido)
 
     if pedido.estado != "PENDIENTE":
-        raise AppError(400, "Este pedido no puede cancelarse en su estado actual.")
+        raise AppError(
+            400,
+            f"Este pedido ya no puede cancelarse porque cambió a estado {pedido.estado}.",
+        )
+
+    wompi_en_curso = (
+        db.query(PagoPedidoProducto.id)
+        .filter(
+            PagoPedidoProducto.pedido_id == pedido.id,
+            PagoPedidoProducto.metodo == "wompi",
+            PagoPedidoProducto.wompi_transaction_id.isnot(None),
+            PagoPedidoProducto.wompi_status == "PENDING",
+        )
+        .first()
+    )
+    if wompi_en_curso:
+        raise AppError(
+            409,
+            "No se puede cancelar porque existe una transacción Wompi anterior todavía en proceso.",
+        )
+
+    nequi_en_verificacion = (
+        db.query(PagoPedidoProducto.id)
+        .filter(
+            PagoPedidoProducto.pedido_id == pedido.id,
+            PagoPedidoProducto.metodo == "nequi",
+            PagoPedidoProducto.estado == "PENDIENTE_VERIFICACION",
+        )
+        .first()
+    )
+    if nequi_en_verificacion:
+        raise AppError(
+            409,
+            "No se puede cancelar porque ya enviaste un comprobante y está pendiente de verificación administrativa.",
+        )
+
+    # Si solo se había iniciado el pago Nequi y todavía no se adjuntó
+    # comprobante, el usuario sí puede cancelar el pedido.
+    pagos_nequi_pendientes = (
+        db.query(PagoPedidoProducto)
+        .filter(
+            PagoPedidoProducto.pedido_id == pedido.id,
+            PagoPedidoProducto.metodo == "nequi",
+            PagoPedidoProducto.estado == "PENDIENTE",
+        )
+        .all()
+    )
+    for pago in pagos_nequi_pendientes:
+        pago.estado = "CANCELADO"
+        pago.mensaje_respuesta = "El usuario canceló el pedido antes de enviar el comprobante."
 
     pedido.estado = "CANCELADA"
     _reintegrar_stock(db, pedido)

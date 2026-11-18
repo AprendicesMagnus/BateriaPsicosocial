@@ -103,27 +103,6 @@ class Settings(BaseSettings):
                     "(si no, nadie recibiría el código). Configura el correo o pon DOS_PASOS_ACTIVO=false."
                 )
 
-            if not self.wompi_public_key.strip():
-                raise ValueError(
-                    "En producción es obligatorio configurar WOMPI_PUBLIC_KEY."
-                )
-
-            if not self.wompi_private_key.strip():
-                raise ValueError(
-                    "En producción es obligatorio configurar WOMPI_PRIVATE_KEY."
-                )
-
-            if not self.wompi_integrity_secret.strip():
-                raise ValueError(
-                    "En producción es obligatorio configurar "
-                    "WOMPI_INTEGRITY_SECRET."
-                )
-
-            if not self.wompi_events_secret.strip():
-                raise ValueError(
-                    "En producción es obligatorio configurar "
-                    "WOMPI_EVENTS_SECRET."
-                )
 
     @property
     def sqlalchemy_database_url(self) -> str:
